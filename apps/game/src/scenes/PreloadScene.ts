@@ -34,9 +34,10 @@ export class PreloadScene extends Phaser.Scene {
       loadingText.destroy();
     });
 
-    // Load game assets (placeholders for now)
-    // In production, these would be actual sprite sheets and tilemaps
-    this.load.tilemapTiledJSON('farm_map', '/assets/maps/farm.json');
+    // Placeholder: no external assets to load yet
+    // In production, load sprite sheets and tilemaps here:
+    // this.load.spritesheet('crops', '/assets/sprites/crops.png', { frameWidth: 16, frameHeight: 16 });
+    // this.load.tilemapTiledJSON('farm_map', '/assets/maps/farm.json');
   }
 
   create(): void {

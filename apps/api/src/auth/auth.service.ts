@@ -97,6 +97,11 @@ export class AuthService {
     };
   }
 
+  async logout(): Promise<void> {
+    // JWTs are stateless - the client discards the token.
+    // In production, consider token blocklist for immediate invalidation.
+  }
+
   async login(input: LoginInput): Promise<AuthResult> {
     const client = this.supabaseService.getClient();
 

@@ -21,6 +21,13 @@ export class AuthController {
     return { success: true, data: result };
   }
 
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  async logout() {
+    await this.authService.logout();
+    return { success: true };
+  }
+
   @Get('me')
   @UseGuards(AuthGuard)
   async me(@Request() req: { user: { id: string; email: string } }) {

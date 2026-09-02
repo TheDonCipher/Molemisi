@@ -21,6 +21,7 @@ export class PlotObject extends Phaser.GameObjects.Container {
   private background: Phaser.GameObjects.Rectangle;
   private stateText: Phaser.GameObjects.Text;
   private cropIcon: Phaser.GameObjects.Text;
+  private highlight: Phaser.GameObjects.Rectangle | null = null;
 
   constructor(scene: Phaser.Scene, x: number, y: number, plotId: string, slotIndex: number) {
     super(scene, x, y);
@@ -72,6 +73,24 @@ export class PlotObject extends Phaser.GameObjects.Container {
 
   private handleHoverOut(): void {
     this.updateBackground();
+  }
+
+  select(): void {
+    if (!this.highlight) {
+      this.highlight = this.scene.add.rectangle(0, 0, 68, 68);
+      this.highlight.setStrokeStyle(3, 0xFF8F00);
+      this.highlight.setFillStyle(0xFF8F00, 0.15);
+      this.highlight.setOrigin(0.5);
+      this.add(this.highlight);
+      this.sendToBack(this.highlight);
+    }
+    this.highlight.setVisible(true);
+  }
+
+  deselect(): void {
+    if (this.highlight) {
+      this.highlight.setVisible(false);
+    }
   }
 
   updateState(state: string, crop?: CropData): void {

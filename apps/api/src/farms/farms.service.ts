@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { SimulationService } from '../simulation/simulation.service';
 
 interface FarmWithPlots {
   farm: {
@@ -24,12 +25,26 @@ interface FarmWithPlots {
 
 @Injectable()
 export class FarmsService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private simulationService: SimulationService,
+  ) {}
 
   async getFarmForUser(userId: string): Promise<FarmWithPlots> {
     const adminClient = this.supabaseService.getAdminClient();
 
-    // Get farm
+    // Run simulation to advance time-dependent systems
+    const { data: farmForSim } = await adminClient
+      .from('farms')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (farmForSim) {
+      await this.simulationService.simulateFarm(farmForSim.id);
+    }
+
+    // Get farm (fresh read after simulation)
     const { data: farm, error: farmError } = await adminClient
       .from('farms')
       .select('*')

@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
-import { getCropConfig } from '@molemisi/game-config';
 import { XP_REWARDS } from '@molemisi/game-config';
 
 interface PlantResult {
@@ -45,93 +44,34 @@ export class CropsService {
   ): Promise<PlantResult> {
     const adminClient = this.supabaseService.getAdminClient();
 
-    // 1. Verify plot ownership and state
-    const { data: plot } = await adminClient
-      .from('farm_plots')
-      .select('*')
-      .eq('id', plotId)
-      .eq('farm_id', farmId)
-      .single();
-
-    if (!plot) {
-      throw new NotFoundException('Plot not found');
-    }
-
-    if (plot.state !== 'EMPTY') {
-      throw new BadRequestException('Plot is not empty');
-    }
-
-    // 2. Check crop config
-    const cropConfig = getCropConfig(cropType);
-    if (!cropConfig) {
-      throw new BadRequestException('Invalid crop type');
-    }
-
-    // 3. Check seed in inventory
-    const { data: seed } = await adminClient
-      .from('inventory')
-      .select('*')
-      .eq('id', seedId)
-      .eq('farm_id', farmId)
-      .eq('item_type', `${cropType}_seed`)
-      .gt('quantity', 0)
-      .single();
-
-    if (!seed) {
-      throw new BadRequestException('Seed not found in inventory');
-    }
-
-    // 4. Plant crop (in transaction)
-    const now = new Date().toISOString();
-    const expectedReady = new Date(
-      Date.now() + cropConfig.growthStages * cropConfig.timePerStage * 60 * 1000,
-    ).toISOString();
-
-    // Update plot state
-    await adminClient
-      .from('farm_plots')
-      .update({ state: 'PLANTED', updated_at: now })
-      .eq('id', plotId);
-
-    // Create crop instance
-    const { data: crop } = await adminClient
-      .from('crop_instances')
-      .insert({
-        plot_id: plotId,
-        farm_id: farmId,
-        crop_type: cropType,
-        growth_stage: 0,
-        max_growth_stages: cropConfig.growthStages,
-        hydration: 0.5,
-        health: 1.0,
-        planted_at: now,
-        last_watered_at: now,
-        expected_ready_at: expectedReady,
-      })
-      .select()
-      .single();
-
-    // Deduct seed from inventory
-    await adminClient
-      .from('inventory')
-      .update({ quantity: seed.quantity - 1, updated_at: now })
-      .eq('id', seedId);
-
-    // Record ledger entry
-    await adminClient.from('game_ledger_entries').insert({
-      farm_id: farmId,
-      entry_type: 'SEED_PURCHASE',
-      currency_change: 0,
-      currency_balance_after: 0,
-      item_type: `${cropType}_seed`,
-      item_quantity_change: -1,
-      description: `Planted ${cropType}`,
+    // Use database transaction via RPC
+    const { data: result, error } = await adminClient.rpc('plant_crop_transaction', {
+      p_farm_id: farmId,
+      p_plot_id: plotId,
+      p_crop_type: cropType,
+      p_seed_id: seedId,
+      p_user_id: userId,
     });
 
+    if (error) {
+      throw new BadRequestException(error.message || 'Failed to plant crop');
+    }
+
+    if (!result?.success) {
+      throw new BadRequestException('Failed to plant crop');
+    }
+
+    // Fetch updated plot data
+    const { data: plot } = await adminClient
+      .from('farm_plots')
+      .select('slot_index')
+      .eq('id', plotId)
+      .single();
+
     return {
-      plot: { id: plotId, state: 'PLANTED', slotIndex: plot.slot_index },
+      plot: { id: plotId, state: 'PLANTED', slotIndex: plot?.slot_index ?? 0 },
       crop: {
-        id: crop?.id ?? '',
+        id: result.crop_id as string,
         type: cropType,
         growthStage: 0,
         hydration: 0.5,

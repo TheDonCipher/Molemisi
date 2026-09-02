@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { PlotObject } from '../objects/PlotObject';
-import { ApiClient } from '../services/ApiClient';
+import { ApiClient, ProfileData } from '../services/ApiClient';
+import { CROPS } from '@molemisi/game-config';
+import { MarketPanel } from '../ui/MarketPanel';
 
 interface FarmData {
   farm: {
@@ -28,6 +30,9 @@ export class FarmScene extends Phaser.Scene {
   private apiClient!: ApiClient;
   private selectedPlot: PlotObject | null = null;
   private contextMenu: Phaser.GameObjects.Container | null = null;
+  private farmId: string | null = null;
+  private profile: ProfileData | null = null;
+  private marketPanel!: MarketPanel;
 
   constructor() {
     super({ key: 'FarmScene' });
@@ -38,6 +43,34 @@ export class FarmScene extends Phaser.Scene {
 
     // Set background color
     this.cameras.main.setBackgroundColor('#5A8F3C');
+
+    // Listen for plot click events from PlotObject
+    this.events.on('plot-clicked', (plot: PlotObject) => {
+      // Deselect previous plot
+      if (this.selectedPlot && this.selectedPlot !== plot) {
+        this.selectedPlot.deselect();
+      }
+      this.selectedPlot = plot;
+      plot.select();
+      this.showContextMenu(plot);
+    });
+
+    // Click on empty space closes context menu
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // Only close if not clicking on a plot or the context menu
+      if (!pointer.downElement) return;
+      const hitObjects = this.input.hitTestPointer(pointer);
+      const clickedPlot = hitObjects.some((obj: Phaser.GameObjects.GameObject) =>
+        obj instanceof PlotObject,
+      );
+      if (!clickedPlot && this.contextMenu) {
+        this.hideContextMenu();
+        if (this.selectedPlot) {
+          this.selectedPlot.deselect();
+        }
+        this.selectedPlot = null;
+      }
+    });
 
     // Create farm grid
     this.createFarmGrid();
@@ -73,15 +106,31 @@ export class FarmScene extends Phaser.Scene {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        // No token - show demo mode
         this.showDemoMode();
         return;
       }
 
-      const data = await this.apiClient.get<FarmData>('/farms/current');
-      this.updatePlotsFromServer(data.plots);
+      // Fetch profile and farm data in parallel
+      const [profileData, farmData] = await Promise.all([
+        this.apiClient.getProfile().catch(() => null),
+        this.apiClient.get<FarmData>('/farms/current'),
+      ]);
+
+      if (profileData) {
+        this.profile = profileData;
+        // Emit event so React HUD can update
+        this.game.events.emit('profile-updated', profileData);
+      }
+
+      this.farmId = farmData.farm.id;
+      this.marketPanel = new MarketPanel(
+        this,
+        this.apiClient,
+        this.farmId,
+        () => this.loadFarmData(),
+      );
+      this.updatePlotsFromServer(farmData.plots);
     } catch {
-      // API not available - show demo mode
       this.showDemoMode();
     }
   }
@@ -114,8 +163,21 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private createHUD(): void {
-    // HUD is handled by the React shell
-    // This is just for Phaser-specific visual feedback
+    // Market button in top-right
+    const width = this.cameras.main.width;
+    const marketBtn = this.add.text(width - 80, 16, '🏪 Market', {
+      font: '14px monospace',
+      color: '#FF8F00',
+      backgroundColor: '#3e2723',
+      padding: { x: 8, y: 4 },
+    });
+    marketBtn.setInteractive({ useHandCursor: true });
+    marketBtn.on('pointerdown', () => {
+      if (this.farmId) {
+        this.marketPanel.toggle();
+      }
+    });
+    marketBtn.setDepth(50);
   }
 
   private showContextMenu(plot: PlotObject): void {
@@ -123,6 +185,12 @@ export class FarmScene extends Phaser.Scene {
 
     const actions = plot.getAvailableActions();
     if (actions.length === 0) return;
+
+    // For plant action, show crop picker instead of single button
+    if (actions.length === 1 && actions[0]?.type === 'plant') {
+      this.showCropPicker(plot);
+      return;
+    }
 
     this.contextMenu = this.add.container(plot.x + 40, plot.y);
 
@@ -147,6 +215,51 @@ export class FarmScene extends Phaser.Scene {
     });
   }
 
+  private showCropPicker(plot: PlotObject): void {
+    const farmLevel = this.profile?.farmLevel ?? 1;
+    const availableCrops = Object.values(CROPS).filter((c) => c.unlockLevel <= farmLevel);
+
+    const itemHeight = 28;
+    const panelWidth = 160;
+    const panelHeight = availableCrops.length * itemHeight + 40;
+
+    this.contextMenu = this.add.container(plot.x + 40, plot.y);
+
+    // Background
+    const bg = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x3e2723, 0.95);
+    bg.setStrokeStyle(1, 0x5d4037);
+    this.contextMenu.add(bg);
+
+    // Title
+    const title = this.add.text(0, -panelHeight / 2 + 12, 'Choose Crop:', {
+      font: '11px monospace',
+      color: '#BCAAA4',
+    });
+    title.setOrigin(0.5, 0.5);
+    this.contextMenu.add(title);
+
+    // Crop buttons
+    availableCrops.forEach((crop, index) => {
+      const y = -panelHeight / 2 + 30 + index * itemHeight;
+
+      const btn = this.add.text(0, y, `${crop.name} (${crop.seedCost}P)`, {
+        font: '12px monospace',
+        color: '#F5E6D3',
+      });
+      btn.setOrigin(0.5, 0.5);
+      btn.setInteractive({ useHandCursor: true });
+
+      btn.on('pointerover', () => btn.setColor('#FF8F00'));
+      btn.on('pointerout', () => btn.setColor('#F5E6D3'));
+      btn.on('pointerdown', () => {
+        this.executePlantAction(plot, crop.id);
+        this.hideContextMenu();
+      });
+
+      this.contextMenu?.add(btn);
+    });
+  }
+
   private hideContextMenu(): void {
     if (this.contextMenu) {
       this.contextMenu.destroy();
@@ -154,35 +267,67 @@ export class FarmScene extends Phaser.Scene {
     }
   }
 
+  private async executePlantAction(plot: PlotObject, cropType: string): Promise<void> {
+    const token = localStorage.getItem('token');
+    if (!token || !this.farmId) {
+      this.simulateAction(plot, 'plant');
+      return;
+    }
+
+    try {
+      // Find a seed of this type in inventory
+      const inventory = await this.apiClient.get<
+        Array<{ id: string; itemType: string; quantity: number }>
+      >(`/farms/${this.farmId}/inventory`);
+
+      const seed = inventory.find(
+        (item) => item.itemType === `${cropType}_seed` && item.quantity > 0,
+      );
+
+      if (!seed) {
+        this.showFloatingText(plot.x, plot.y - 20, `No ${cropType} seeds!`, '#F44336');
+        return;
+      }
+
+      await this.apiClient.post(`/farms/${this.farmId}/plots/${plot.plotId}/plant`, {
+        cropType,
+        seedId: seed.id,
+      });
+
+      await this.loadFarmData();
+    } catch (error) {
+      console.error('Plant failed:', error);
+      this.showFloatingText(plot.x, plot.y - 20, 'Plant failed!', '#F44336');
+    }
+  }
+
   private async executeAction(plot: PlotObject, actionType: string): Promise<void> {
     const token = localStorage.getItem('token');
-    if (!token) {
-      // Demo mode - simulate action locally
+    if (!token || !this.farmId) {
       this.simulateAction(plot, actionType);
       return;
     }
 
     try {
-      let result: unknown;
+      const farmId = this.farmId;
+      const plotId = plot.plotId;
       switch (actionType) {
         case 'plant':
-          result = await this.apiClient.post(`/farms/current/plots/${plot.plotId}/plant`, {
-            cropType: 'sorghum',
-            seedId: 'seed_sorghum_001',
-          });
-          break;
+          // Default to sorghum if called without crop picker
+          await this.executePlantAction(plot, 'sorghum');
+          return;
         case 'water':
-          result = await this.apiClient.post(`/farms/current/plots/${plot.plotId}/water`, {});
+          await this.apiClient.post(`/farms/${farmId}/plots/${plotId}/water`, {});
           break;
         case 'harvest':
-          result = await this.apiClient.post(`/farms/current/plots/${plot.plotId}/harvest`, {});
+          await this.apiClient.post(`/farms/${farmId}/plots/${plotId}/harvest`, {});
           break;
       }
-      console.log('Action result:', result);
-      // Refresh plot state
+      // Refresh plot state from server
       await this.loadFarmData();
     } catch (error) {
       console.error('Action failed:', error);
+      this.showFloatingText(plot.x, plot.y - 20, 'Action failed!', '#F44336');
     }
   }
 

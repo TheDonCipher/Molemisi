@@ -1,5 +1,16 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
+export interface ProfileData {
+  id: string;
+  displayName: string;
+  farmName: string;
+  farmLevel: number;
+  farmXp: number;
+  currency: number;
+  energy: number;
+  maxEnergy: number;
+}
+
 export class ApiClient {
   private baseUrl: string;
 
@@ -33,6 +44,10 @@ export class ApiClient {
     }
 
     return data.data as T;
+  }
+
+  async getProfile(): Promise<ProfileData> {
+    return this.get<ProfileData>('/profile');
   }
 
   async post<T>(path: string, body: unknown): Promise<T> {
