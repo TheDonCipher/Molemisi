@@ -7,6 +7,8 @@ import { BuildPanel } from '../ui/BuildPanel';
 import { InventoryPanel } from '../ui/InventoryPanel';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { LivestockPanel } from '../ui/LivestockPanel';
+import { ContractsPanel } from '../ui/ContractsPanel';
+import { ProgressPanel } from '../ui/ProgressPanel';
 
 interface FarmData {
   farm: {
@@ -43,6 +45,8 @@ export class FarmScene extends Phaser.Scene {
   private buildPanel!: BuildPanel;
   private inventoryPanel!: InventoryPanel;
   private livestockPanel!: LivestockPanel;
+  private contractsPanel!: ContractsPanel;
+  private progressPanel!: ProgressPanel;
   private tutorial!: TutorialOverlay;
 
   constructor() {
@@ -159,6 +163,13 @@ export class FarmScene extends Phaser.Scene {
         this.farmId,
         () => this.loadFarmData(),
       );
+      this.contractsPanel = new ContractsPanel(
+        this,
+        this.apiClient,
+        this.farmId,
+        () => this.loadFarmData(),
+      );
+      this.progressPanel = new ProgressPanel(this, this.apiClient);
       this.updatePlotsFromServer(farmData.plots);
 
       // Show welcome-back notification if simulation ran
@@ -258,8 +269,23 @@ export class FarmScene extends Phaser.Scene {
   private createHUD(): void {
     const width = this.cameras.main.width;
 
+    // Contracts button
+    const contractsBtn = this.add.text(width - 80, 16, '📋 Jobs', {
+      font: '14px monospace',
+      color: '#FFB74D',
+      backgroundColor: '#3e2723',
+      padding: { x: 8, y: 4 },
+    });
+    contractsBtn.setInteractive({ useHandCursor: true });
+    contractsBtn.on('pointerdown', () => {
+      if (this.farmId) {
+        this.contractsPanel.toggle();
+      }
+    });
+    contractsBtn.setDepth(50);
+
     // Livestock button
-    const livestockBtn = this.add.text(width - 80, 16, '🐄 Farm', {
+    const livestockBtn = this.add.text(width - 80, 48, '🐄 Farm', {
       font: '14px monospace',
       color: '#E91E63',
       backgroundColor: '#3e2723',
@@ -274,7 +300,7 @@ export class FarmScene extends Phaser.Scene {
     livestockBtn.setDepth(50);
 
     // Inventory button
-    const invBtn = this.add.text(width - 80, 48, '📦 Bag', {
+    const invBtn = this.add.text(width - 80, 80, '📦 Bag', {
       font: '14px monospace',
       color: '#BCAAA4',
       backgroundColor: '#3e2723',
@@ -289,7 +315,7 @@ export class FarmScene extends Phaser.Scene {
     invBtn.setDepth(50);
 
     // Build button
-    const buildBtn = this.add.text(width - 80, 80, '🏗️ Build', {
+    const buildBtn = this.add.text(width - 80, 112, '🏗️ Build', {
       font: '14px monospace',
       color: '#81C784',
       backgroundColor: '#3e2723',
@@ -304,7 +330,7 @@ export class FarmScene extends Phaser.Scene {
     buildBtn.setDepth(50);
 
     // Market button in top-right
-    const marketBtn = this.add.text(width - 80, 112, '🏪 Market', {
+    const marketBtn = this.add.text(width - 80, 144, '🏪 Market', {
       font: '14px monospace',
       color: '#FF8F00',
       backgroundColor: '#3e2723',

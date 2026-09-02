@@ -7,7 +7,7 @@
 
 ## Current Milestone
 
-**M8 — Economy & Market**
+**M9 — Contracts & Progression**
 
 ## Milestone Status
 
@@ -21,6 +21,7 @@ M5  Time & Offline Simulation     [COMPLETE — weather, livestock, buildings]
 M6  Farm Management               [COMPLETE — buildings, inventory, tutorial]
 M7  Livestock & Production        [COMPLETE — purchase, feed, collect, pet]
 M8  Economy & Market              [COMPLETE — dynamic pricing, events]
+M9  Contracts & Progression       [IN PROGRESS — API + UI complete]
 ```
 
 ---
@@ -94,6 +95,14 @@ M8  Economy & Market              [COMPLETE — dynamic pricing, events]
 - Price trends display (up/down/stable indicators)
 - Event banners in market panel
 - Supply/demand decay over time
+
+### M9: Contracts & Progression (In Progress)
+- ContractsModule with list, accept, complete endpoints
+- 6 pre-defined contracts (local, community, commercial)
+- ProgressionModule with XP, levels, unlocks, achievements
+- 10 achievements (first harvest, merchant, wealthy, etc.)
+- ContractsPanel UI (view available/active contracts, accept/complete)
+- ProgressPanel UI (XP bar, level, unlocks, achievements)
 
 ---
 
