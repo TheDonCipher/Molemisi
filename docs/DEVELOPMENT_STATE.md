@@ -73,10 +73,12 @@ M6  Farm Management               [NOT STARTED]
 
 ### M6: Farm Management (In Progress)
 - Building construction API (list, construct, upgrade, maintain)
-- Build panel UI (view available buildings, construct)
+- Build panel UI with upgrade and maintenance actions
 - Inventory panel UI (view items by category)
 - Crop growth stage visuals (crop-specific emoji per stage)
 - Hydration bar on plots
+- Onboarding tutorial overlay (5 steps)
+- Harvest yield calculation (random within crop range, quality tiers)
 
 ---
 

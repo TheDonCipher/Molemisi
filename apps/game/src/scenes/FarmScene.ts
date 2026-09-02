@@ -5,6 +5,7 @@ import { CROPS } from '@molemisi/game-config';
 import { MarketPanel } from '../ui/MarketPanel';
 import { BuildPanel } from '../ui/BuildPanel';
 import { InventoryPanel } from '../ui/InventoryPanel';
+import { TutorialOverlay } from '../ui/TutorialOverlay';
 
 interface FarmData {
   farm: {
@@ -40,6 +41,7 @@ export class FarmScene extends Phaser.Scene {
   private marketPanel!: MarketPanel;
   private buildPanel!: BuildPanel;
   private inventoryPanel!: InventoryPanel;
+  private tutorial!: TutorialOverlay;
 
   constructor() {
     super({ key: 'FarmScene' });
@@ -87,6 +89,12 @@ export class FarmScene extends Phaser.Scene {
 
     // Create HUD elements
     this.createHUD();
+
+    // Show tutorial for new players
+    if (TutorialOverlay.shouldShow()) {
+      this.tutorial = new TutorialOverlay(this, () => {});
+      this.time.delayedCall(500, () => this.tutorial.start());
+    }
   }
 
   private createFarmGrid(): void {

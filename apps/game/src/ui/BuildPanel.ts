@@ -66,8 +66,8 @@ export class BuildPanel {
     this.container.add(overlay);
 
     // Panel background
-    const panelWidth = Math.min(500, width - 40);
-    const panelHeight = Math.min(450, height - 80);
+    const panelWidth = Math.min(520, width - 40);
+    const panelHeight = Math.min(480, height - 80);
     const panel = this.scene.add.rectangle(0, 0, panelWidth, panelHeight, 0x2d1b0e, 0.98);
     panel.setStrokeStyle(2, 0x8b5e3c);
     this.container.add(panel);
@@ -99,7 +99,6 @@ export class BuildPanel {
     this.container.add(loading);
 
     try {
-      // Fetch available buildings and owned buildings in parallel
       const [available, owned] = await Promise.all([
         this.apiClient.get<AvailableBuilding[]>(`/farms/${this.farmId}/buildings/available`),
         this.apiClient.get<OwnedBuilding[]>(`/farms/${this.farmId}/buildings`),
@@ -120,21 +119,23 @@ export class BuildPanel {
   ): void {
     if (!this.container) return;
 
-    const ownedMap = new Map(owned.map((b) => [b.buildingType, b]));
     const scrollY = -panelHeight / 2 + 50;
+    let y = scrollY;
 
-    // Render owned buildings first
+    // Render owned buildings
     if (owned.length > 0) {
-      const ownedTitle = this.scene.add.text(-panelWidth / 2 + 20, scrollY, 'Your Buildings:', {
+      const ownedTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Your Buildings:', {
         font: '12px monospace',
         color: '#81C784',
       });
       this.container.add(ownedTitle);
+      y += 22;
 
-      owned.forEach((building, index) => {
-        const y = scrollY + 25 + index * 40;
+      owned.forEach((building) => {
         const config = available.find((a) => a.id === building.buildingType);
         const name = config?.name || building.buildingType;
+
+        // State emoji
         const stateEmoji =
           building.state === 'ACTIVE'
             ? '✅'
@@ -144,48 +145,92 @@ export class BuildPanel {
                 ? '⚠️'
                 : '❌';
 
+        // Building name and level
         const text = this.scene.add.text(
           -panelWidth / 2 + 30,
           y,
-          `${stateEmoji} ${name} Lv.${building.level} - ${building.state}`,
+          `${stateEmoji} ${name} Lv.${building.level}`,
           { font: '11px monospace', color: '#F5E6D3' },
         );
         this.container.add(text);
 
-        // Show wear bar
+        // State label
+        const stateLabel = this.scene.add.text(
+          -panelWidth / 2 + 30,
+          y + 14,
+          building.state === 'CONSTRUCTION'
+            ? `Building... (${building.constructionEndsAt ? new Date(building.constructionEndsAt).toLocaleTimeString() : '...'})`
+            : building.state,
+          { font: '9px monospace', color: '#BCAAA4' },
+        );
+        this.container.add(stateLabel);
+
+        // Action buttons on the right
+        let btnX = panelWidth / 2 - 30;
+
+        // Upgrade button (only for ACTIVE buildings below max level)
+        if (building.state === 'ACTIVE' && building.level < 3) {
+          const upgradeBtn = this.scene.add.text(btnX, y + 7, '⬆️ Upgrade', {
+            font: '10px monospace',
+            color: '#FFB74D',
+            backgroundColor: '#4a3000',
+            padding: { x: 6, y: 3 },
+          });
+          upgradeBtn.setOrigin(1, 0.5);
+          upgradeBtn.setInteractive({ useHandCursor: true });
+          upgradeBtn.on('pointerdown', () => this.handleUpgrade(building.id));
+          this.container.add(upgradeBtn);
+          btnX -= 90;
+        }
+
+        // Maintain button (for MAINTENANCE_NEEDED or DISABLED)
+        if (building.state === 'MAINTENANCE_NEEDED' || building.state === 'DISABLED') {
+          const maintainBtn = this.scene.add.text(btnX, y + 7, '🔧 Repair', {
+            font: '10px monospace',
+            color: '#4CAF50',
+            backgroundColor: '#1b5e20',
+            padding: { x: 6, y: 3 },
+          });
+          maintainBtn.setOrigin(1, 0.5);
+          maintainBtn.setInteractive({ useHandCursor: true });
+          maintainBtn.on('pointerdown', () => this.handleMaintain(building.id));
+          this.container.add(maintainBtn);
+          btnX -= 80;
+        }
+
+        // Wear bar for active buildings
         if (building.state === 'ACTIVE' && building.wear > 0) {
           const wearPercent = Math.round(building.wear * 100);
           const wearColor = wearPercent > 80 ? '#F44336' : wearPercent > 50 ? '#FF9800' : '#4CAF50';
-          const wearText = this.scene.add.text(
-            panelWidth / 2 - 30,
-            y,
+          const wearLabel = this.scene.add.text(
+            btnX,
+            y + 7,
             `Wear: ${wearPercent}%`,
-            { font: '10px monospace', color: wearColor },
+            { font: '9px monospace', color: wearColor },
           );
-          wearText.setOrigin(1, 0.5);
-          this.container.add(wearText);
+          wearLabel.setOrigin(1, 0.5);
+          this.container.add(wearLabel);
         }
+
+        y += 40;
       });
     }
 
-    // Render available buildings
-    const availableStartY = scrollY + 25 + owned.length * 40 + 20;
-    const availableTitle = this.scene.add.text(
-      -panelWidth / 2 + 20,
-      availableStartY,
-      'Build New:',
-      { font: '12px monospace', color: '#FFB74D' },
-    );
-    this.container.add(availableTitle);
+    // Render available buildings to construct
+    const availableToBuild = available.filter((b) => !b.owned);
+    if (availableToBuild.length > 0) {
+      y += 10;
+      const availableTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Build New:', {
+        font: '12px monospace',
+        color: '#FFB74D',
+      });
+      this.container.add(availableTitle);
+      y += 22;
 
-    available
-      .filter((b) => !b.owned)
-      .forEach((building, index) => {
-        const y = availableStartY + 25 + index * 50;
-
+      availableToBuild.forEach((building) => {
         // Building name
         const nameText = this.scene.add.text(-panelWidth / 2 + 30, y, building.name, {
-          font: '12px monospace',
+          font: '11px monospace',
           color: '#F5E6D3',
         });
         this.container!.add(nameText);
@@ -195,18 +240,18 @@ export class BuildPanel {
         const timeStr = `${building.constructionTime}min`;
         const detailText = this.scene.add.text(
           -panelWidth / 2 + 30,
-          y + 16,
-          `Cost: ${costStr} | Time: ${timeStr}`,
-          { font: '10px monospace', color: '#BCAAA4' },
+          y + 14,
+          `Cost: ${costStr} | Time: ${timeStr} | Cap: ${building.capacity}`,
+          { font: '9px monospace', color: '#BCAAA4' },
         );
         this.container!.add(detailText);
 
         // Build button
-        const buildBtn = this.scene.add.text(panelWidth / 2 - 30, y + 8, '🔨 Build', {
-          font: '11px monospace',
+        const buildBtn = this.scene.add.text(panelWidth / 2 - 30, y + 7, '🔨 Build', {
+          font: '10px monospace',
           color: '#4CAF50',
           backgroundColor: '#1b5e20',
-          padding: { x: 8, y: 4 },
+          padding: { x: 6, y: 3 },
         });
         buildBtn.setOrigin(1, 0.5);
         buildBtn.setInteractive({ useHandCursor: true });
@@ -214,19 +259,19 @@ export class BuildPanel {
         buildBtn.on('pointerout', () => buildBtn.setColor('#4CAF50'));
         buildBtn.on('pointerdown', () => this.handleBuild(building.id));
         this.container!.add(buildBtn);
-      });
 
-    // If no available buildings to build
-    const availableCount = available.filter((b) => !b.owned).length;
-    if (availableCount === 0) {
-      const noBuildings = this.scene.add.text(
-        0,
-        availableStartY + 25,
-        'All buildings constructed!',
-        { font: '12px monospace', color: '#BCAAA4' },
-      );
-      noBuildings.setOrigin(0.5, 0.5);
-      this.container.add(noBuildings);
+        y += 38;
+      });
+    }
+
+    // If nothing to show
+    if (owned.length === 0 && availableToBuild.length === 0) {
+      const empty = this.scene.add.text(0, 0, 'No buildings available', {
+        font: '14px monospace',
+        color: '#BCAAA4',
+      });
+      empty.setOrigin(0.5, 0.5);
+      this.container.add(empty);
     }
   }
 
@@ -238,27 +283,56 @@ export class BuildPanel {
 
       this.close();
       this.onRefresh();
-
-      // Show success feedback
-      const width = this.scene.cameras.main.width;
-      const text = this.scene.add.text(width / 2, 100, '🏗️ Construction started!', {
-        font: '16px monospace',
-        color: '#4CAF50',
-        backgroundColor: '#1b5e20',
-        padding: { x: 12, y: 6 },
-      });
-      text.setOrigin(0.5, 0.5);
-      text.setDepth(200);
-      this.scene.tweens.add({
-        targets: text,
-        y: 80,
-        alpha: 0,
-        duration: 2000,
-        onComplete: () => text.destroy(),
-      });
+      this.showFeedback('🏗️ Construction started!', '#4CAF50');
     } catch (error) {
       console.error('Build failed:', error);
+      this.showFeedback('Build failed!', '#F44336');
     }
+  }
+
+  private async handleUpgrade(buildingId: string): Promise<void> {
+    try {
+      await this.apiClient.post(`/farms/${this.farmId}/buildings/${buildingId}/upgrade`, {});
+
+      this.close();
+      this.onRefresh();
+      this.showFeedback('⬆️ Upgrade started!', '#FFB74D');
+    } catch (error) {
+      console.error('Upgrade failed:', error);
+      this.showFeedback('Upgrade failed!', '#F44336');
+    }
+  }
+
+  private async handleMaintain(buildingId: string): Promise<void> {
+    try {
+      await this.apiClient.post(`/farms/${this.farmId}/buildings/${buildingId}/maintain`, {});
+
+      this.close();
+      this.onRefresh();
+      this.showFeedback('🔧 Building repaired!', '#4CAF50');
+    } catch (error) {
+      console.error('Maintenance failed:', error);
+      this.showFeedback('Repair failed!', '#F44336');
+    }
+  }
+
+  private showFeedback(message: string, color: string): void {
+    const width = this.scene.cameras.main.width;
+    const text = this.scene.add.text(width / 2, 100, message, {
+      font: '16px monospace',
+      color,
+      backgroundColor: '#3e2723',
+      padding: { x: 12, y: 6 },
+    });
+    text.setOrigin(0.5, 0.5);
+    text.setDepth(200);
+    this.scene.tweens.add({
+      targets: text,
+      y: 80,
+      alpha: 0,
+      duration: 2000,
+      onComplete: () => text.destroy(),
+    });
   }
 
   private close(): void {

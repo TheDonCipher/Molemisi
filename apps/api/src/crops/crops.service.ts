@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
-import { XP_REWARDS } from '@molemisi/game-config';
+import { XP_REWARDS, getCropConfig } from '@molemisi/game-config';
 
 interface PlantResult {
   plot: { id: string; state: string; slotIndex: number };
