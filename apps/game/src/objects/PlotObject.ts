@@ -96,11 +96,46 @@ export class PlotObject extends Phaser.GameObjects.Container {
   }
 
   updateState(state: string, crop?: CropData): void {
+    const prevState = this.state;
+    const prevStage = this.crop?.growthStage;
     this.state = state;
     this.crop = crop;
     this.updateBackground();
     this.updateDisplay();
     this.updateHydrationBar();
+
+    // Pulse animation when crop advances to a new growth stage
+    if (
+      crop &&
+      (state === 'GROWING' || state === 'READY') &&
+      (prevState !== state || (prevStage !== undefined && crop.growthStage > prevStage))
+    ) {
+      this.playGrowthPulse();
+    }
+  }
+
+  private playGrowthPulse(): void {
+    // Quick scale-up then back to normal
+    this.scene.tweens.add({
+      targets: this,
+      scaleX: 1.15,
+      scaleY: 1.15,
+      duration: 150,
+      yoyo: true,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Emit a small particle burst at the crop position
+    const particles = this.scene.add.particles(this.x, this.y, '✨', {
+      speed: { min: 20, max: 50 },
+      angle: { min: 0, max: 360 },
+      lifespan: 600,
+      quantity: 5,
+      scale: { start: 0.5, end: 0 },
+      emitting: false,
+    });
+    particles.explode(5);
+    this.scene.time.delayedCall(700, () => particles.destroy());
   }
 
   private updateHydrationBar(): void {
