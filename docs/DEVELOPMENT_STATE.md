@@ -7,7 +7,7 @@
 
 ## Current Milestone
 
-**M7 — Livestock & Production**
+**M8 — Economy & Market**
 
 ## Milestone Status
 
@@ -19,7 +19,8 @@ M3  Phaser Rendering Foundation   [PARTIAL]
 M4  First Playable Vertical Slice [COMPLETE — core loop functional]
 M5  Time & Offline Simulation     [COMPLETE — weather, livestock, buildings]
 M6  Farm Management               [COMPLETE — buildings, inventory, tutorial]
-M7  Livestock & Production        [IN PROGRESS — API + UI complete]
+M7  Livestock & Production        [COMPLETE — purchase, feed, collect, pet]
+M8  Economy & Market              [COMPLETE — dynamic pricing, events]
 ```
 
 ---
@@ -81,11 +82,18 @@ M7  Livestock & Production        [IN PROGRESS — API + UI complete]
 - Onboarding tutorial overlay (5 steps)
 - Harvest yield calculation (random within crop range, quality tiers)
 
-### M7: Livestock & Production (In Progress)
+### M7: Livestock & Production (Complete)
 - LivestockModule with purchase, feed, collect, pet endpoints
 - Building capacity validation for animal housing
 - LivestockPanel UI (view animals, feed, collect, pet, buy)
 - Animal status display (hunger bar, sick state, product ready)
+
+### M8: Economy & Market (Complete)
+- Dynamic pricing based on supply/demand
+- Market events system (random price modifiers)
+- Price trends display (up/down/stable indicators)
+- Event banners in market panel
+- Supply/demand decay over time
 
 ---
 

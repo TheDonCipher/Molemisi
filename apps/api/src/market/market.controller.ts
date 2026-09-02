@@ -11,8 +11,12 @@ export class MarketController {
 
   @Get('prices')
   async getPrices() {
-    const prices = await this.marketService.getPrices();
-    return { success: true, data: { prices } };
+    return this.marketService.getPrices();
+  }
+
+  @Get('events')
+  async getEvents() {
+    return this.marketService.getActiveEvents();
   }
 
   @Post('sell')

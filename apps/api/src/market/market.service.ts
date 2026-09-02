@@ -23,9 +23,34 @@ interface BuyResult {
   newCurrencyBalance: number;
 }
 
+interface MarketPrice {
+  itemType: string;
+  basePrice: number;
+  currentPrice: number;
+  trend: 'up' | 'down' | 'stable';
+  supply: number;
+  demand: number;
+}
+
+interface MarketEvent {
+  id: string;
+  name: string;
+  description: string;
+  effect: string;
+  multiplier: number;
+  endsAt: string;
+}
+
 @Injectable()
 export class MarketService {
   constructor(private supabaseService: SupabaseService) {}
+
+  // Price multiplier bounds
+  private readonly MIN_PRICE_MULT = 0.5;
+  private readonly MAX_PRICE_MULT = 2.0;
+  private readonly SUPPLY_IMPACT = 0.002; // per unit sold
+  private readonly DEMAND_IMPACT = 0.001; // per unit bought
+  private readonly PRICE_DECAY = 0.02; // price moves toward base per update
 
   async sellItem(
     farmId: string,
@@ -60,25 +85,15 @@ export class MarketService {
       throw new BadRequestException('Insufficient items in inventory');
     }
 
-    // 3. Get current market price
-    const { data: priceData } = await adminClient
-      .from('market_prices')
-      .select('current_price')
-      .eq('item_type', itemType)
-      .single();
-
-    const pricePerUnit = priceData?.current_price ?? 0;
+    // 3. Get dynamic market price
+    const pricePerUnit = await this.getDynamicPrice(itemType);
     if (pricePerUnit <= 0) {
       throw new BadRequestException('Item has no market value');
     }
 
-    const totalPrice = pricePerUnit * quality === 'excellent'
-      ? pricePerUnit * 2 * quantity
-      : quality === 'good'
-        ? Math.round(pricePerUnit * 1.5) * quantity
-        : quality === 'poor'
-          ? Math.round(pricePerUnit * 0.5) * quantity
-          : pricePerUnit * quantity;
+    // Apply quality multiplier
+    const qualityMult = this.getQualityMultiplier(quality);
+    const totalPrice = Math.round(pricePerUnit * qualityMult * quantity);
 
     const now = new Date().toISOString();
 
@@ -126,16 +141,19 @@ export class MarketService {
       transaction_type: 'SELL',
       item_type: itemType,
       quantity,
-      price_per_unit: pricePerUnit,
+      price_per_unit: Math.round(pricePerUnit * qualityMult),
       total_price: totalPrice,
       quality,
     });
+
+    // 8. Update supply/demand (selling increases supply, lowers price)
+    await this.updateSupplyDemand(itemType, quantity, 0);
 
     return {
       transaction: {
         itemType,
         quantity,
-        pricePerUnit,
+        pricePerUnit: Math.round(pricePerUnit * qualityMult),
         totalPrice,
       },
       currencyAdded: totalPrice,
@@ -162,14 +180,8 @@ export class MarketService {
       throw new NotFoundException('Farm not found');
     }
 
-    // 2. Get market price
-    const { data: priceData } = await adminClient
-      .from('market_prices')
-      .select('current_price')
-      .eq('item_type', itemType)
-      .single();
-
-    const pricePerUnit = priceData?.current_price ?? 0;
+    // 2. Get dynamic market price
+    const pricePerUnit = await this.getDynamicPrice(itemType);
     if (pricePerUnit <= 0) {
       throw new BadRequestException('Item not available for purchase');
     }
@@ -250,6 +262,9 @@ export class MarketService {
       quality: 'normal',
     });
 
+    // 8. Update supply/demand (buying increases demand, raises price)
+    await this.updateSupplyDemand(itemType, 0, quantity);
+
     return {
       transaction: {
         itemType,
@@ -262,16 +277,166 @@ export class MarketService {
     };
   }
 
-  async getPrices(): Promise<Array<{ itemType: string; currentPrice: number }>> {
+  async getPrices(): Promise<MarketPrice[]> {
     const adminClient = this.supabaseService.getAdminClient();
 
     const { data: prices } = await adminClient
       .from('market_prices')
-      .select('item_type, current_price');
+      .select('*');
 
-    return (prices ?? []).map((p: Record<string, unknown>) => ({
-      itemType: p.item_type as string,
-      currentPrice: p.current_price as number,
+    if (!prices) return [];
+
+    return await Promise.all(
+      (prices ?? []).map(async (p: Record<string, unknown>) => {
+        const itemType = p.item_type as string;
+        const basePrice = p.base_price as number;
+        const currentPrice = await this.getDynamicPrice(itemType);
+        const supply = (p.supply as number) || 0;
+        const demand = (p.demand as number) || 0;
+        const trend = currentPrice > basePrice ? 'up' : currentPrice < basePrice ? 'down' : 'stable';
+
+        return {
+          itemType,
+          basePrice,
+          currentPrice,
+          trend,
+          supply,
+          demand,
+        };
+      }),
+    );
+  }
+
+  async getActiveEvents(): Promise<MarketEvent[]> {
+    const adminClient = this.supabaseService.getAdminClient();
+
+    const now = new Date().toISOString();
+
+    const { data: events } = await adminClient
+      .from('market_events')
+      .select('*')
+      .gt('ends_at', now);
+
+    return (events ?? []).map((e: Record<string, unknown>) => ({
+      id: e.id as string,
+      name: e.name as string,
+      description: e.description as string,
+      effect: e.effect as string,
+      multiplier: e.multiplier as number,
+      endsAt: e.ends_at as string,
     }));
+  }
+
+  /**
+   * Calculate dynamic price based on supply/demand and active events.
+   */
+  private async getDynamicPrice(itemType: string): Promise<number> {
+    const adminClient = this.supabaseService.getAdminClient();
+
+    const { data: priceData } = await adminClient
+      .from('market_prices')
+      .select('base_price, supply, demand')
+      .eq('item_type', itemType)
+      .single();
+
+    if (!priceData) return 0;
+
+    const basePrice = priceData.base_price as number;
+    const supply = (priceData.supply as number) || 0;
+    const demand = (priceData.demand as number) || 0;
+
+    // Supply/demand modifier
+    const supplyDemandRatio = supply > 0 ? demand / supply : 1;
+    const supplyDemandModifier = Math.max(-0.3, Math.min(0.3, (supplyDemandRatio - 1) * 0.3));
+
+    // Check for active market events
+    const eventModifier = await this.getEventModifier(itemType);
+
+    // Calculate final price
+    const priceMultiplier = 1 + supplyDemandModifier + eventModifier;
+    const finalPrice = Math.round(
+      basePrice *
+        Math.max(this.MIN_PRICE_MULT, Math.min(this.MAX_PRICE_MULT, priceMultiplier)),
+    );
+
+    return finalPrice;
+  }
+
+  /**
+   * Get event-based price modifier for an item type.
+   */
+  private async getEventModifier(itemType: string): Promise<number> {
+    const adminClient = this.supabaseService.getAdminClient();
+    const now = new Date().toISOString();
+
+    const { data: events } = await adminClient
+      .from('market_events')
+      .select('effect, multiplier')
+      .gt('ends_at', now);
+
+    if (!events || events.length === 0) return 0;
+
+    let modifier = 0;
+    for (const event of events) {
+      const effect = event.effect as string;
+      const multiplier = event.multiplier as number;
+
+      // Check if this event affects this item type
+      if (
+        effect === 'all' ||
+        (effect === 'grain' && ['sorghum', 'maize', 'millet'].includes(itemType)) ||
+        (effect === 'food' && !itemType.includes('_seed')) ||
+        (effect === 'materials' && ['wood', 'stone', 'iron'].includes(itemType)) ||
+        (effect === itemType)
+      ) {
+        modifier += multiplier - 1;
+      }
+    }
+
+    return modifier;
+  }
+
+  /**
+   * Update supply/demand counters after a transaction.
+   */
+  private async updateSupplyDemand(
+    itemType: string,
+    supplyIncrease: number,
+    demandIncrease: number,
+  ): Promise<void> {
+    const adminClient = this.supabaseService.getAdminClient();
+
+    // Get current values
+    const { data: current } = await adminClient
+      .from('market_prices')
+      .select('supply, demand')
+      .eq('item_type', itemType)
+      .single();
+
+    if (!current) return;
+
+    const currentSupply = (current.supply as number) || 0;
+    const currentDemand = (current.demand as number) || 0;
+
+    // Update with decay (supply/demand naturally decay over time)
+    const decayedSupply = Math.max(0, currentSupply * (1 - this.PRICE_DECAY) + supplyIncrease);
+    const decayedDemand = Math.max(0, currentDemand * (1 - this.PRICE_DECAY) + demandIncrease);
+
+    await adminClient
+      .from('market_prices')
+      .update({
+        supply: Math.round(decayedSupply),
+        demand: Math.round(decayedDemand),
+      })
+      .eq('item_type', itemType);
+  }
+
+  private getQualityMultiplier(quality: string): number {
+    switch (quality) {
+      case 'excellent': return 2.0;
+      case 'good': return 1.5;
+      case 'poor': return 0.5;
+      default: return 1.0;
+    }
   }
 }

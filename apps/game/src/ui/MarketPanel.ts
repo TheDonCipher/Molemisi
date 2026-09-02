@@ -12,7 +12,20 @@ interface InventoryItem {
 
 interface MarketPrice {
   itemType: string;
+  basePrice: number;
   currentPrice: number;
+  trend: 'up' | 'down' | 'stable';
+  supply: number;
+  demand: number;
+}
+
+interface MarketEvent {
+  id: string;
+  name: string;
+  description: string;
+  effect: string;
+  multiplier: number;
+  endsAt: string;
 }
 
 export class MarketPanel {
@@ -54,31 +67,18 @@ export class MarketPanel {
     this.container.setDepth(100);
 
     // Dark overlay
-    const overlay = this.scene.add.rectangle(
-      width / 2,
-      height / 2,
-      width,
-      height,
-      0x000000,
-      0.6,
-    );
+    const overlay = this.scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6);
     overlay.setInteractive();
     overlay.on('pointerdown', () => this.close());
     this.container.add(overlay);
 
     // Panel background
-    const panelWidth = Math.min(500, width - 40);
-    const panelHeight = Math.min(400, height - 80);
+    const panelWidth = Math.min(520, width - 40);
+    const panelHeight = Math.min(450, height - 80);
     const panelX = width / 2;
     const panelY = height / 2;
 
-    const panel = this.scene.add.rectangle(
-      panelX,
-      panelY,
-      panelWidth,
-      panelHeight,
-      0x2c1810,
-    );
+    const panel = this.scene.add.rectangle(panelX, panelY, panelWidth, panelHeight, 0x2c1810);
     panel.setStrokeStyle(2, 0x5d4037);
     this.container.add(panel);
 
@@ -89,29 +89,6 @@ export class MarketPanel {
     });
     title.setOrigin(0.5, 0.5);
     this.container.add(title);
-
-    // Tab buttons
-    const buyTab = this.scene.add.text(
-      panelX - 80,
-      panelY - panelHeight / 2 + 50,
-      '[ Buy Seeds ]',
-      { font: '12px monospace', color: '#4CAF50' },
-    );
-    buyTab.setOrigin(0.5, 0.5);
-    buyTab.setInteractive({ useHandCursor: true });
-    buyTab.on('pointerdown', () => this.showBuyTab());
-    this.container.add(buyTab);
-
-    const sellTab = this.scene.add.text(
-      panelX + 80,
-      panelY - panelHeight / 2 + 50,
-      '[ Sell Crops ]',
-      { font: '12px monospace', color: '#FF8F00' },
-    );
-    sellTab.setOrigin(0.5, 0.5);
-    sellTab.setInteractive({ useHandCursor: true });
-    sellTab.on('pointerdown', () => this.showSellTab());
-    this.container.add(sellTab);
 
     // Close button
     const closeBtn = this.scene.add.text(
@@ -124,6 +101,23 @@ export class MarketPanel {
     closeBtn.setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => this.close());
     this.container.add(closeBtn);
+
+    // Tab buttons
+    const buyTab = this.scene.add.text(panelX - 80, panelY - panelHeight / 2 + 50, '[ Buy Seeds ]', {
+      font: '12px monospace', color: '#4CAF50',
+    });
+    buyTab.setOrigin(0.5, 0.5);
+    buyTab.setInteractive({ useHandCursor: true });
+    buyTab.on('pointerdown', () => this.showBuyTab());
+    this.container.add(buyTab);
+
+    const sellTab = this.scene.add.text(panelX + 80, panelY - panelHeight / 2 + 50, '[ Sell Crops ]', {
+      font: '12px monospace', color: '#FF8F00',
+    });
+    sellTab.setOrigin(0.5, 0.5);
+    sellTab.setInteractive({ useHandCursor: true });
+    sellTab.on('pointerdown', () => this.showSellTab());
+    this.container.add(sellTab);
 
     // Show buy tab by default
     await this.showBuyTab();
@@ -139,7 +133,6 @@ export class MarketPanel {
 
   private clearContent(): void {
     if (!this.container) return;
-    // Remove everything except the first 5 elements (overlay, panel, title, tabs, close)
     const children = this.container.getAll();
     while (children.length > 5) {
       const child = children.pop();
@@ -153,61 +146,86 @@ export class MarketPanel {
 
     const width = this.scene.cameras.main.width;
     const height = this.scene.cameras.main.height;
-    const panelWidth = Math.min(500, width - 40);
-    const panelHeight = Math.min(400, height - 80);
+    const panelWidth = Math.min(520, width - 40);
+    const panelHeight = Math.min(450, height - 80);
     const panelX = width / 2;
     const panelY = height / 2;
 
-    // Fetch prices
+    // Fetch prices and events
     let prices: MarketPrice[] = [];
+    let events: MarketEvent[] = [];
     try {
-      const data = await this.apiClient.get<{ prices: MarketPrice[] }>('/market/prices');
-      prices = data.prices;
+      const [priceData, eventData] = await Promise.all([
+        this.apiClient.get<MarketPrice[]>('/market/prices'),
+        this.apiClient.get<MarketEvent[]>('/market/events'),
+      ]);
+      prices = priceData;
+      events = eventData;
     } catch {
-      // Use defaults from game-config
       prices = Object.values(CROPS).map((c) => ({
         itemType: `${c.id}_seed`,
+        basePrice: c.seedCost,
         currentPrice: c.seedCost,
+        trend: 'stable' as const,
+        supply: 0,
+        demand: 0,
       }));
+    }
+
+    // Show active events banner
+    let yOffset = panelY - panelHeight / 2 + 70;
+
+    if (events.length > 0) {
+      const eventBanner = this.scene.add.rectangle(panelX, yOffset + 10, panelWidth - 40, 30, 0x4a3000, 0.8);
+      eventBanner.setStrokeStyle(1, 0xFFB74D);
+      this.container.add(eventBanner);
+
+      const eventText = events.map((e) => `${e.name}: ${e.description}`).join(' | ');
+      const eventLabel = this.scene.add.text(panelX, yOffset + 10, `📢 ${eventText}`, {
+        font: '10px monospace', color: '#FFB74D',
+        wordWrap: { width: panelWidth - 60 },
+      });
+      eventLabel.setOrigin(0.5, 0.5);
+      this.container.add(eventLabel);
+      yOffset += 35;
     }
 
     // Filter to seeds only
     const seedPrices = prices.filter((p) => p.itemType.endsWith('_seed'));
-
-    const startY = panelY - panelHeight / 2 + 70;
-    const itemHeight = 32;
+    const itemHeight = 30;
 
     seedPrices.forEach((seed, index) => {
-      const y = startY + index * itemHeight;
+      const y = yOffset + index * itemHeight;
       const cropId = seed.itemType.replace('_seed', '');
       const crop = CROPS[cropId];
 
+      // Name
       const name = this.scene.add.text(
-        panelX - panelWidth / 2 + 20,
-        y,
+        panelX - panelWidth / 2 + 20, y,
         crop?.name ?? seed.itemType,
-        { font: '12px monospace', color: '#F5E6D3' },
+        { font: '11px monospace', color: '#F5E6D3' },
       );
       this.container!.add(name);
 
+      // Price with trend indicator
+      const trendEmoji = seed.trend === 'up' ? '📈' : seed.trend === 'down' ? '📉' : '➡️';
+      const priceColor = seed.currentPrice > seed.basePrice ? '#FF5252' :
+        seed.currentPrice < seed.basePrice ? '#69F0AE' : '#FFB74D';
+
       const price = this.scene.add.text(
-        panelX + panelWidth / 2 - 100,
-        y,
-        `${seed.currentPrice} P`,
-        { font: '12px monospace', color: '#FF8F00' },
+        panelX + panelWidth / 2 - 110, y,
+        `${trendEmoji} ${seed.currentPrice}P`,
+        { font: '11px monospace', color: priceColor },
       );
       this.container!.add(price);
 
+      // Buy button
       const buyBtn = this.scene.add.text(
-        panelX + panelWidth / 2 - 40,
-        y,
-        '[Buy]',
-        { font: '12px monospace', color: '#4CAF50' },
+        panelX + panelWidth / 2 - 40, y,
+        '[Buy]', { font: '11px monospace', color: '#4CAF50' },
       );
       buyBtn.setInteractive({ useHandCursor: true });
-      buyBtn.on('pointerdown', async () => {
-        await this.buyItem(seed.itemType, 1);
-      });
+      buyBtn.on('pointerdown', () => this.buyItem(seed.itemType, 1));
       buyBtn.on('pointerover', () => buyBtn.setColor('#81C784'));
       buyBtn.on('pointerout', () => buyBtn.setColor('#4CAF50'));
       this.container!.add(buyBtn);
@@ -220,8 +238,8 @@ export class MarketPanel {
 
     const width = this.scene.cameras.main.width;
     const height = this.scene.cameras.main.height;
-    const panelWidth = Math.min(500, width - 40);
-    const panelHeight = Math.min(400, height - 80);
+    const panelWidth = Math.min(520, width - 40);
+    const panelHeight = Math.min(450, height - 80);
     const panelX = width / 2;
     const panelY = height / 2;
 
@@ -231,15 +249,15 @@ export class MarketPanel {
     try {
       const [invData, priceData] = await Promise.all([
         this.apiClient.get<InventoryItem[]>(`/farms/${this.farmId}/inventory`),
-        this.apiClient.get<{ prices: MarketPrice[] }>('/market/prices'),
+        this.apiClient.get<MarketPrice[]>('/market/prices'),
       ]);
       inventory = invData;
-      prices = priceData.prices;
+      prices = priceData;
     } catch {
       // Empty state
     }
 
-    // Filter to sellable items (not seeds, not tools)
+    // Filter to sellable items
     const sellable = inventory.filter(
       (item) =>
         item.itemCategory === 'product' ||
@@ -247,50 +265,50 @@ export class MarketPanel {
         item.itemCategory === 'material',
     );
 
+    const startY = panelY - panelHeight / 2 + 70;
+    const itemHeight = 30;
+
     if (sellable.length === 0) {
-      const empty = this.scene.add.text(panelX, panelY, 'No items to sell', {
-        font: '14px monospace',
-        color: '#BCAAA4',
+      const empty = this.scene.add.text(panelX, panelY, 'No items to sell.\nHarvest crops first!', {
+        font: '14px monospace', color: '#BCAAA4', align: 'center',
       });
       empty.setOrigin(0.5, 0.5);
       this.container.add(empty);
       return;
     }
 
-    const startY = panelY - panelHeight / 2 + 70;
-    const itemHeight = 32;
-
     sellable.forEach((item, index) => {
       const y = startY + index * itemHeight;
       const priceData = prices.find((p) => p.itemType === item.itemType);
       const unitPrice = priceData?.currentPrice ?? 0;
+      const trend = priceData?.trend ?? 'stable';
 
+      // Name
       const name = this.scene.add.text(
-        panelX - panelWidth / 2 + 20,
-        y,
+        panelX - panelWidth / 2 + 20, y,
         `${item.itemType} x${item.quantity}`,
-        { font: '12px monospace', color: '#F5E6D3' },
+        { font: '11px monospace', color: '#F5E6D3' },
       );
       this.container!.add(name);
 
+      // Price with trend
+      const trendEmoji = trend === 'up' ? '📈' : trend === 'down' ? '📉' : '➡️';
+      const priceColor = trend === 'up' ? '#FF5252' : trend === 'down' ? '#69F0AE' : '#FFB74D';
+
       const price = this.scene.add.text(
-        panelX + panelWidth / 2 - 100,
-        y,
-        `${unitPrice} P ea`,
-        { font: '12px monospace', color: '#FF8F00' },
+        panelX + panelWidth / 2 - 110, y,
+        `${trendEmoji} ${unitPrice}P`,
+        { font: '11px monospace', color: priceColor },
       );
       this.container!.add(price);
 
+      // Sell button
       const sellBtn = this.scene.add.text(
-        panelX + panelWidth / 2 - 40,
-        y,
-        '[Sell]',
-        { font: '12px monospace', color: '#FF8F00' },
+        panelX + panelWidth / 2 - 40, y,
+        '[Sell]', { font: '11px monospace', color: '#FF8F00' },
       );
       sellBtn.setInteractive({ useHandCursor: true });
-      sellBtn.on('pointerdown', async () => {
-        await this.sellItem(item.itemType, 1, item.quality);
-      });
+      sellBtn.on('pointerdown', () => this.sellItem(item.itemType, 1, item.quality));
       sellBtn.on('pointerover', () => sellBtn.setColor('#FFB74D'));
       sellBtn.on('pointerout', () => sellBtn.setColor('#FF8F00'));
       this.container!.add(sellBtn);
