@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { PlotObject } from '../objects/PlotObject';
 import { ApiClient, ProfileData } from '../services/ApiClient';
 import { CROPS } from '@molemisi/game-config';

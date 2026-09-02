@@ -133,6 +133,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@molemisi/game-config':
+        specifier: workspace:^
+        version: link:../../packages/game-config
+      '@molemisi/game-types':
+        specifier: workspace:^
+        version: link:../../packages/game-types
       '@molemisi/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -145,6 +151,9 @@ importers:
       next:
         specifier: ^14.2.0
         version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      phaser:
+        specifier: ^3.80.0
+        version: 3.90.0
       react:
         specifier: ^18.3.0
         version: 18.3.1
