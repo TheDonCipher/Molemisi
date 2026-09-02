@@ -7,7 +7,7 @@
 
 ## Current Milestone
 
-**M5 — Time & Offline Simulation**
+**M7 — Livestock & Production**
 
 ## Milestone Status
 
@@ -18,7 +18,8 @@ M2  Authentication & Persistent   [COMPLETE]
 M3  Phaser Rendering Foundation   [PARTIAL]
 M4  First Playable Vertical Slice [COMPLETE — core loop functional]
 M5  Time & Offline Simulation     [COMPLETE — weather, livestock, buildings]
-M6  Farm Management               [NOT STARTED]
+M6  Farm Management               [COMPLETE — buildings, inventory, tutorial]
+M7  Livestock & Production        [IN PROGRESS — API + UI complete]
 ```
 
 ---
@@ -71,7 +72,7 @@ M6  Farm Management               [NOT STARTED]
 - Level formula defined
 - Weather types and season configs
 
-### M6: Farm Management (In Progress)
+### M6: Farm Management (Complete)
 - Building construction API (list, construct, upgrade, maintain)
 - Build panel UI with upgrade and maintenance actions
 - Inventory panel UI (view items by category)
@@ -79,6 +80,12 @@ M6  Farm Management               [NOT STARTED]
 - Hydration bar on plots
 - Onboarding tutorial overlay (5 steps)
 - Harvest yield calculation (random within crop range, quality tiers)
+
+### M7: Livestock & Production (In Progress)
+- LivestockModule with purchase, feed, collect, pet endpoints
+- Building capacity validation for animal housing
+- LivestockPanel UI (view animals, feed, collect, pet, buy)
+- Animal status display (hunger bar, sick state, product ready)
 
 ---
 
