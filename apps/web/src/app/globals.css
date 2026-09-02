@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --molemisi-earth: #C05C3C;
+  --molemisi-brown: #8B5E3C;
+  --molemisi-sand: #E8D5A3;
+  --molemisi-grass: #5A8F3C;
+  --molemisi-sky: #87CEEB;
+  --molemisi-night: #2C1810;
+  --molemisi-panel: #3E2723;
+  --molemisi-border: #5D4037;
+  --molemisi-text: #F5E6D3;
+  --molemisi-muted: #BCAAA4;
+  --molemisi-accent: #FF8F00;
+}
+
+body {
+  background-color: var(--molemisi-night);
+  color: var(--molemisi-text);
+}
+
+/* Pixel-art font rendering */
+.pixel-perfect {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--molemisi-night);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--molemisi-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--molemisi-earth);
+}
