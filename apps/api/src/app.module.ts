@@ -12,6 +12,7 @@ import { BuildingsModule } from './buildings/buildings.module';
 import { LivestockModule } from './livestock/livestock.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { ProgressionModule } from './progression/progression.module';
+import { KgotlaModule } from './kgotla/kgotla.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -32,6 +33,7 @@ import { DatabaseModule } from './database/database.module';
     LivestockModule,
     ContractsModule,
     ProgressionModule,
+    KgotlaModule,
   ],
 })
 export class AppModule {}

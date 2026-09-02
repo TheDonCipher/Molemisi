@@ -7,7 +7,7 @@
 
 ## Current Milestone
 
-**M9 — Contracts & Progression**
+**M10 — Kgotla**
 
 ## Milestone Status
 
@@ -21,7 +21,8 @@ M5  Time & Offline Simulation     [COMPLETE — weather, livestock, buildings]
 M6  Farm Management               [COMPLETE — buildings, inventory, tutorial]
 M7  Livestock & Production        [COMPLETE — purchase, feed, collect, pet]
 M8  Economy & Market              [COMPLETE — dynamic pricing, events]
-M9  Contracts & Progression       [IN PROGRESS — API + UI complete]
+M9  Contracts & Progression       [COMPLETE — contracts, XP, achievements]
+M10 Kgotla                        [IN PROGRESS — NPCs, reputation, projects]
 ```
 
 ---
@@ -96,13 +97,20 @@ M9  Contracts & Progression       [IN PROGRESS — API + UI complete]
 - Event banners in market panel
 - Supply/demand decay over time
 
-### M9: Contracts & Progression (In Progress)
+### M9: Contracts & Progression (Complete)
 - ContractsModule with list, accept, complete endpoints
 - 6 pre-defined contracts (local, community, commercial)
 - ProgressionModule with XP, levels, unlocks, achievements
 - 10 achievements (first harvest, merchant, wealthy, etc.)
 - ContractsPanel UI (view available/active contracts, accept/complete)
 - ProgressPanel UI (XP bar, level, unlocks, achievements)
+
+### M10: Kgotla (In Progress)
+- KgotlaModule with NPCs, reputation, talk, quest, donate endpoints
+- 5 NPCs (Elder Neo, Mama Naledi, Oupa Kabelo, Refilwe, Thabo)
+- Reputation system with tiers (Stranger → Respected)
+- 3 community projects (Water Reservoir, School, Market Square)
+- KgotlaPanel UI (NPCs, reputation bars, quests, donate)
 
 ---
 
