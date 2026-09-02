@@ -15,6 +15,7 @@ import { ProgressionModule } from './progression/progression.module';
 import { KgotlaModule } from './kgotla/kgotla.module';
 import { BushveldModule } from './bushveld/bushveld.module';
 import { WorldEventsModule } from './world-events/world-events.module';
+import { PaymentsModule } from './payments/payments.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -38,6 +39,7 @@ import { DatabaseModule } from './database/database.module';
     KgotlaModule,
     BushveldModule,
     WorldEventsModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}

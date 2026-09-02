@@ -12,6 +12,7 @@ import { ProgressPanel } from '../ui/ProgressPanel';
 import { KgotlaPanel } from '../ui/KgotlaPanel';
 import { BushveldPanel } from '../ui/BushveldPanel';
 import { WorldEventsPanel } from '../ui/WorldEventsPanel';
+import { StorePanel } from '../ui/StorePanel';
 
 interface FarmData {
   farm: {
@@ -53,6 +54,7 @@ export class FarmScene extends Phaser.Scene {
   private kgotlaPanel!: KgotlaPanel;
   private bushveldPanel!: BushveldPanel;
   private worldEventsPanel!: WorldEventsPanel;
+  private storePanel!: StorePanel;
   private tutorial!: TutorialOverlay;
 
   constructor() {
@@ -194,6 +196,7 @@ export class FarmScene extends Phaser.Scene {
         this.farmId,
         () => this.loadFarmData(),
       );
+      this.storePanel = new StorePanel(this);
       this.updatePlotsFromServer(farmData.plots);
 
       // Show welcome-back notification if simulation ran
@@ -412,6 +415,19 @@ export class FarmScene extends Phaser.Scene {
       }
     });
     marketBtn.setDepth(50);
+
+    // Store button
+    const storeBtn = this.add.text(width - 80, 272, '🛒 Store', {
+      font: '14px monospace',
+      color: '#FFD700',
+      backgroundColor: '#3e2723',
+      padding: { x: 8, y: 4 },
+    });
+    storeBtn.setInteractive({ useHandCursor: true });
+    storeBtn.on('pointerdown', () => {
+      this.storePanel.toggle();
+    });
+    storeBtn.setDepth(50);
   }
 
   private updateWeatherDisplay(weather: string, temperature: number, season: string): void {
