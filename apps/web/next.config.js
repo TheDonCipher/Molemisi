@@ -8,9 +8,6 @@ const nextConfig = {
     '@molemisi/game-config',
     '@molemisi/validation',
   ],
-  experimental: {
-    serverActions: true,
-  },
   webpack: (config) => {
     config.resolve.alias['@/game'] = path.resolve(__dirname, '../game/src');
     return config;
