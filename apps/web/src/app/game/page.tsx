@@ -8,9 +8,16 @@ interface ProfileData {
   farmLevel: number;
 }
 
+interface WeatherData {
+  weather: string;
+  temperature: number;
+  season: string;
+}
+
 export default function GamePage() {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const gameRef = useRef<unknown>(null);
 
   useEffect(() => {
@@ -43,6 +50,11 @@ export default function GamePage() {
       game.events.on('profile-updated', (data: ProfileData) => {
         setProfile(data);
       });
+
+      // Listen for weather updates from Phaser
+      game.events.on('weather-updated', (data: WeatherData) => {
+        setWeather(data);
+      });
     };
 
     initGame();
@@ -59,8 +71,19 @@ export default function GamePage() {
       {/* Top HUD */}
       <div className="flex items-center justify-between px-4 py-2 bg-molemisi-panel border-b border-molemisi-border">
         <button className="text-molemisi-text hover:text-molemisi-accent">☰</button>
-        <div className="text-molemisi-muted">
-          {profile ? `Lv.${profile.farmLevel} • ${profile.displayName}` : 'Loading...'}
+        <div className="flex items-center gap-3 text-molemisi-muted">
+          {weather && (
+            <span className="text-xs">
+              {weather.season === 'spring' && '🌱'}
+              {weather.season === 'summer' && '☀️'}
+              {weather.season === 'autumn' && '🍂'}
+              {weather.season === 'winter' && '❄️'}
+              {' '}{weather.weather} {weather.temperature}°C
+            </span>
+          )}
+          <span>
+            {profile ? `Lv.${profile.farmLevel} • ${profile.displayName}` : 'Loading...'}
+          </span>
         </div>
         <div className="text-molemisi-accent font-bold">
           💰 {profile ? profile.currency.toLocaleString() : '---'} P

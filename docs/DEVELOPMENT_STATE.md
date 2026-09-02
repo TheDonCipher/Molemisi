@@ -7,7 +7,7 @@
 
 ## Current Milestone
 
-**M4 — First Playable Vertical Slice**
+**M5 — Time & Offline Simulation**
 
 ## Milestone Status
 
@@ -17,7 +17,7 @@ M1  Repository & Infrastructure   [COMPLETE]
 M2  Authentication & Persistent   [COMPLETE]
 M3  Phaser Rendering Foundation   [PARTIAL]
 M4  First Playable Vertical Slice [COMPLETE — core loop functional]
-M5  Time & Offline Simulation     [NOT STARTED]
+M5  Time & Offline Simulation     [COMPLETE — weather, livestock, buildings]
 M6  Farm Management               [NOT STARTED]
 ```
 
@@ -89,6 +89,52 @@ Removed non-existent `farm.json` tilemap load. Scene now transitions cleanly to 
 ### ✅ Farm Ownership Verification
 All crop endpoints (plant, water, harvest) now verify the authenticated user owns the farm before processing.
 
+## What Was Implemented (M5 — Time & Offline Simulation)
+
+### ✅ Weather Simulation System
+- 5 weather types: clear, cloudy, rain, storm, drought
+- Season-based weather probabilities
+- Temperature and humidity per weather type
+- Weather changes every 6 game hours
+
+### ✅ Season Progression
+- 4 seasons: spring, summer, autumn, winter
+- Season duration: 4 weeks (game time)
+- Growth modifiers per season (spring +10%, winter -20%)
+- Frost risk in winter, pest modifier in summer
+
+### ✅ Weather-Aware Crop Growth
+- Rain adds hydration (+0.2/hour)
+- Storm adds more hydration (+0.3/hour)
+- Disease chance increases in humid weather
+- Pest chance increases in warm weather, decreases in rain
+
+### ✅ Livestock Simulation
+- Hunger decay over time
+- Health decay when starving
+- Happiness decay without petting
+- Production timer advancement
+- Self-sustaining mode after 3 days offline
+- Sick state when health < 0.3
+
+### ✅ Building Simulation
+- Construction timer completion
+- Wear accumulation over time
+- Maintenance state transitions (ACTIVE → MAINTENANCE_NEEDED → DISABLED)
+
+### ✅ Welcome-Back Notifications
+- Banner shows crops ready, withered, or building needs maintenance
+- Auto-hides after 4 seconds
+
+### ✅ Weather Display in HUD
+- FarmScene shows weather emoji, temperature, and season
+- React HUD shows weather info in top bar
+- Weather-updated event bridge between Phaser and React
+
+### ✅ Database Migration
+- Added `last_simulated_at`, `weather_temperature`, `weather_humidity`, `current_day` to farms
+- Added `product_timer_hours` to livestock
+
 ---
 
 ## What Is Still Missing
@@ -141,10 +187,17 @@ Still using emoji placeholders. Acceptable for M4, should be addressed for M6+.
 13. ✅ Database transactions (plant_crop_transaction RPC function)
 
 ### M5 Requirements (Time & Simulation)
-1. ✅ Elapsed-time calculation (basic — crop growth)
-2. ❌ Offline progression (production, livestock)
-3. ❌ Weather simulation
-4. ❌ Season progression
+1. ✅ Elapsed-time calculation (crop growth)
+2. ✅ Offline progression (livestock, buildings)
+3. ✅ Weather simulation (5 weather types, probabilities per season)
+4. ✅ Season progression (4 seasons, growth modifiers, frost/pest effects)
+5. ✅ Livestock simulation (hunger, health, production, self-sustaining mode)
+6. ✅ Building simulation (construction timer, wear, maintenance states)
+7. ✅ Weather-aware crop growth (rain hydration, drought effects)
+8. ✅ Disease/pest simulation based on weather
+9. ✅ Welcome-back notification banner
+10. ✅ Weather display in game HUD
+11. ✅ Database migration for simulation columns
 
 ---
 
@@ -192,20 +245,20 @@ Still using emoji placeholders. Acceptable for M4, should be addressed for M6+.
 
 ## Current Objective
 
-Complete M4 — First Playable Vertical Slice.
+Complete M6 — Farm Management.
 
-The core loop must work end-to-end:
+The farm should feel like a living management game with meaningful choices:
 ```
-Login → Enter Farm → Select Plot → Plant → Wait → Grow → Harvest → Sell → Earn Pula → Buy Seed → Plant Again
+Multiple crops → Growth stages → Watering → Harvest yields → Crop seasons → Soil mechanics
 ```
 
 ---
 
 ## Next Recommended Task
 
-**Make the HUD dynamic** — Fetch real currency from API instead of showing hardcoded `100 P`.
+**Add multiple crop types with varied growth mechanics** — The config already defines 11 crops, but the game needs to display growth stages visually and implement watering mechanics properly.
 
-Then **add seed selection UI** — Let players choose which crop to plant instead of always using sorghum.
+Then **add building construction UI** — Let players build a Well, Coop, or Barn.
 
 ---
 
@@ -222,6 +275,8 @@ Then **add seed selection UI** — Let players choose which crop to plant instea
 9. ~~Add logout endpoint~~ ✅
 10. ~~Add database transactions~~ ✅
 11. ~~Add sell/buy UI to game~~ ✅
-12. **Add integration tests** for the complete planting → growth → harvest → sell flow
-13. **Begin M5: Time & Offline Simulation** — Weather, seasons, offline progression
-14. **Begin M6: Farm Management** — Multiple crops, growth stages, watering mechanics
+12. ~~Implement weather simulation~~ ✅
+13. ~~Implement livestock simulation~~ ✅
+14. ~~Implement building simulation~~ ✅
+15. **Add integration tests** for the complete planting → growth → harvest → sell flow
+16. **Begin M6: Farm Management** — Multiple crops, building construction, watering mechanics

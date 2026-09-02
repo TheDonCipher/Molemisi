@@ -73,7 +73,10 @@ export class FarmsService {
         level: farm.level,
         plotCount: farm.plot_count,
         weather: farm.weather_state,
+        weatherTemperature: farm.weather_temperature,
+        weatherHumidity: farm.weather_humidity,
         season: farm.season,
+        currentDay: farm.current_day,
       },
       plots: (plots ?? []).map((plot: Record<string, unknown>) => ({
         id: plot.id as string,

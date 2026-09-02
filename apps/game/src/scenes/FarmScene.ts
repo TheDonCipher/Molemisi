@@ -11,7 +11,10 @@ interface FarmData {
     level: number;
     plotCount: number;
     weather: string;
+    weatherTemperature: number;
+    weatherHumidity: number;
     season: string;
+    currentDay: number;
   };
   plots: Array<{
     id: string;
@@ -130,6 +133,23 @@ export class FarmScene extends Phaser.Scene {
         () => this.loadFarmData(),
       );
       this.updatePlotsFromServer(farmData.plots);
+
+      // Show welcome-back notification if simulation ran
+      this.showWelcomeBackIfNeeded();
+
+      // Update weather display
+      this.updateWeatherDisplay(
+        farmData.farm.weather,
+        farmData.farm.weatherTemperature,
+        farmData.farm.season,
+      );
+
+      // Emit weather update for React HUD
+      this.game.events.emit('weather-updated', {
+        weather: farmData.farm.weather,
+        temperature: farmData.farm.weatherTemperature,
+        season: farmData.farm.season,
+      });
     } catch {
       this.showDemoMode();
     }
@@ -162,9 +182,56 @@ export class FarmScene extends Phaser.Scene {
     });
   }
 
+  private showWelcomeBackIfNeeded(): void {
+    // Check if there are any crops in READY state — indicates simulation advanced
+    const readyPlots = this.plots.filter((p) => p.state === 'READY');
+    const witheredPlots = this.plots.filter((p) => p.state === 'WITHERED');
+
+    if (readyPlots.length > 0 || witheredPlots.length > 0) {
+      const messages: string[] = [];
+      if (readyPlots.length > 0) {
+        messages.push(`${readyPlots.length} crop(s) ready to harvest!`);
+      }
+      if (witheredPlots.length > 0) {
+        messages.push(`${witheredPlots.length} crop(s) withered!`);
+      }
+
+      // Show a welcome-back banner
+      const width = this.cameras.main.width;
+      const banner = this.add.container(width / 2, 80);
+
+      const bg = this.add.rectangle(0, 0, 300, 50, 0x1b5e20, 0.95);
+      bg.setStrokeStyle(2, 0x4caf50);
+      banner.add(bg);
+
+      const text = this.add.text(0, 0, `🌾 Welcome back! ${messages.join(' ')}`, {
+        font: '12px monospace',
+        color: '#F5E6D3',
+        wordWrap: { width: 280 },
+        align: 'center',
+      });
+      text.setOrigin(0.5, 0.5);
+      banner.add(text);
+
+      banner.setDepth(100);
+
+      // Auto-hide after 4 seconds
+      this.time.delayedCall(4000, () => {
+        this.tweens.add({
+          targets: banner,
+          alpha: 0,
+          y: 60,
+          duration: 500,
+          onComplete: () => banner.destroy(),
+        });
+      });
+    }
+  }
+
   private createHUD(): void {
-    // Market button in top-right
     const width = this.cameras.main.width;
+
+    // Market button in top-right
     const marketBtn = this.add.text(width - 80, 16, '🏪 Market', {
       font: '14px monospace',
       color: '#FF8F00',
@@ -178,6 +245,37 @@ export class FarmScene extends Phaser.Scene {
       }
     });
     marketBtn.setDepth(50);
+  }
+
+  private updateWeatherDisplay(weather: string, temperature: number, season: string): void {
+    // Remove old weather text if exists
+    const existing = this.children.getByName('weatherText');
+    if (existing) existing.destroy();
+
+    const weatherEmoji: Record<string, string> = {
+      clear: '☀️',
+      cloudy: '☁️',
+      rain: '🌧️',
+      storm: '⛈️',
+      drought: '🏜️',
+    };
+    const emoji = weatherEmoji[weather] || '☀️';
+    const seasonEmoji: Record<string, string> = {
+      spring: '🌱',
+      summer: '☀️',
+      autumn: '🍂',
+      winter: '❄️',
+    };
+    const seasonIcon = seasonEmoji[season] || '🌱';
+
+    const weatherText = this.add.text(16, 16, `${emoji} ${weather} ${temperature}°C  ${seasonIcon} ${season}`, {
+      font: '12px monospace',
+      color: '#F5E6D3',
+      backgroundColor: '#3e2723',
+      padding: { x: 8, y: 4 },
+    });
+    weatherText.setName('weatherText');
+    weatherText.setDepth(50);
   }
 
   private showContextMenu(plot: PlotObject): void {
