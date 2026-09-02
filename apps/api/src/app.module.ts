@@ -14,6 +14,7 @@ import { ContractsModule } from './contracts/contracts.module';
 import { ProgressionModule } from './progression/progression.module';
 import { KgotlaModule } from './kgotla/kgotla.module';
 import { BushveldModule } from './bushveld/bushveld.module';
+import { WorldEventsModule } from './world-events/world-events.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -36,6 +37,7 @@ import { DatabaseModule } from './database/database.module';
     ProgressionModule,
     KgotlaModule,
     BushveldModule,
+    WorldEventsModule,
   ],
 })
 export class AppModule {}

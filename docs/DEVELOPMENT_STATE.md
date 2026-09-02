@@ -7,7 +7,7 @@
 
 ## Current Milestone
 
-**M11 — Bushveld**
+**M12 — Seasons & World Events**
 
 ## Milestone Status
 
@@ -23,7 +23,8 @@ M7  Livestock & Production        [COMPLETE — purchase, feed, collect, pet]
 M8  Economy & Market              [COMPLETE — dynamic pricing, events]
 M9  Contracts & Progression       [COMPLETE — contracts, XP, achievements]
 M10 Kgotla                        [COMPLETE — NPCs, reputation, projects]
-M11 Bushveld                      [IN PROGRESS — zones, gather, explore]
+M11 Bushveld                      [COMPLETE — zones, gather, explore]
+M12 Seasons & World Events        [IN PROGRESS — festivals, seasonal effects]
 ```
 
 ---
@@ -113,13 +114,20 @@ M11 Bushveld                      [IN PROGRESS — zones, gather, explore]
 - 3 community projects (Water Reservoir, School, Market Square)
 - KgotlaPanel UI (NPCs, reputation bars, quests, donate)
 
-### M11: Bushveld (In Progress)
+### M11: Bushveld (Complete)
 - BushveldModule with zones, gather, explore endpoints
 - 5 zones (Near Bush, Deep Bush, River Bank, Rocky Outcrop, Ancient Ruins)
 - Resource gathering with chance-based drops
 - Rare discoveries (seed cache, wild saffron, fossils, artifacts)
 - Energy system for exploration
 - BushveldPanel UI (zones, resource previews, gather buttons)
+
+### M12: Seasons & World Events (In Progress)
+- WorldEventsModule with active, available, trigger, effects endpoints
+- 10 world events (festivals, seasonal, market, weather)
+- Season-based event availability
+- Event effects (growth, price, xp, energy modifiers)
+- WorldEventsPanel UI (active events, available events, trigger)
 
 ---
 
