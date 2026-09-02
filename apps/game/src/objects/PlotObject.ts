@@ -22,6 +22,8 @@ export class PlotObject extends Phaser.GameObjects.Container {
   private stateText: Phaser.GameObjects.Text;
   private cropIcon: Phaser.GameObjects.Text;
   private highlight: Phaser.GameObjects.Rectangle | null = null;
+  private hydrationBar: Phaser.GameObjects.Rectangle | null = null;
+  private hydrationBg: Phaser.GameObjects.Rectangle | null = null;
 
   constructor(scene: Phaser.Scene, x: number, y: number, plotId: string, slotIndex: number) {
     super(scene, x, y);
@@ -98,6 +100,33 @@ export class PlotObject extends Phaser.GameObjects.Container {
     this.crop = crop;
     this.updateBackground();
     this.updateDisplay();
+    this.updateHydrationBar();
+  }
+
+  private updateHydrationBar(): void {
+    // Remove old bars
+    if (this.hydrationBg) { this.hydrationBg.destroy(); this.hydrationBg = null; }
+    if (this.hydrationBar) { this.hydrationBar.destroy(); this.hydrationBar = null; }
+
+    // Only show hydration bar for planted/growing crops
+    if ((this.state === 'PLANTED' || this.state === 'GROWING') && this.crop) {
+      const barWidth = 48;
+      const barHeight = 4;
+      const barX = -barWidth / 2;
+      const barY = 26;
+
+      // Background
+      this.hydrationBg = this.scene.add.rectangle(barX, barY, barWidth, barHeight, 0x333333);
+      this.hydrationBg.setOrigin(0, 0.5);
+      this.add(this.hydrationBg);
+
+      // Fill
+      const fillWidth = barWidth * Math.max(0, Math.min(1, this.crop.hydration));
+      const fillColor = this.crop.hydration > 0.5 ? 0x2196F3 : this.crop.hydration > 0.2 ? 0xFF9800 : 0xF44336;
+      this.hydrationBar = this.scene.add.rectangle(barX, barY, fillWidth, barHeight, fillColor);
+      this.hydrationBar.setOrigin(0, 0.5);
+      this.add(this.hydrationBar);
+    }
   }
 
   private updateBackground(): void {
@@ -121,23 +150,46 @@ export class PlotObject extends Phaser.GameObjects.Container {
   }
 
   private updateDisplay(): void {
+    // Crop-specific icons by growth stage
+    const cropIcons: Record<string, string[]> = {
+      sorghum: ['🌱', '🌿', '🌾', '🌾', '🌾'],
+      maize: ['🌱', '🌿', '🌽', '🌽', '🌽'],
+      millet: ['🌱', '🌿', '🌾', '🌾'],
+      cowpeas: ['🌱', '🌿', '🫘', '🫘'],
+      groundnuts: ['🌱', '🌿', '🥜', '🥜', '🥜'],
+      sesame: ['🌱', '🌿', '🌱', '🌾'],
+      watermelon: ['🌱', '🌿', '🍃', '🍃', '🍉', '🍉'],
+      tomatoes: ['🌱', '🌿', '🍅', '🍅', '🍅'],
+      pepper: ['🌱', '🌿', '🌶️', '🌶️'],
+      herbs: ['🌱', '🌿', '🌿'],
+      saffron: ['🌱', '🌿', '🌸', '🌸', '🌸'],
+    };
+
     switch (this.state) {
       case 'EMPTY':
         this.stateText.setText('Empty');
         this.cropIcon.setText('');
         break;
-      case 'PLANTED':
-        this.stateText.setText('Planted');
-        this.cropIcon.setText('🌱');
+      case 'PLANTED': {
+        const icons = this.crop ? (cropIcons[this.crop.type] || ['🌱']) : ['🌱'];
+        this.stateText.setText(this.crop?.type || 'Crop');
+        this.cropIcon.setText(icons[0]);
         break;
-      case 'GROWING':
-        this.stateText.setText(`${this.crop?.type || 'Crop'} (${this.crop?.growthStage || 0})`);
-        this.cropIcon.setText('🌿');
+      }
+      case 'GROWING': {
+        const icons = this.crop ? (cropIcons[this.crop.type] || ['🌿']) : ['🌿'];
+        const stage = this.crop?.growthStage || 0;
+        const iconIndex = Math.min(stage, icons.length - 1);
+        this.stateText.setText(`${this.crop?.type || 'Crop'} (${stage})`);
+        this.cropIcon.setText(icons[iconIndex]);
         break;
-      case 'READY':
+      }
+      case 'READY': {
+        const icons = this.crop ? (cropIcons[this.crop.type] || ['🌾']) : ['🌾'];
         this.stateText.setText('Ready!');
-        this.cropIcon.setText('🌾');
+        this.cropIcon.setText(icons[icons.length - 1]);
         break;
+      }
       case 'WITHERED':
         this.stateText.setText('Withered');
         this.cropIcon.setText('🥀');

@@ -69,6 +69,14 @@ M6  Farm Management               [NOT STARTED]
 - 4 animal types defined
 - XP rewards defined
 - Level formula defined
+- Weather types and season configs
+
+### M6: Farm Management (In Progress)
+- Building construction API (list, construct, upgrade, maintain)
+- Build panel UI (view available buildings, construct)
+- Inventory panel UI (view items by category)
+- Crop growth stage visuals (crop-specific emoji per stage)
+- Hydration bar on plots
 
 ---
 

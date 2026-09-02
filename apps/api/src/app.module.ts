@@ -8,6 +8,7 @@ import { CropsModule } from './crops/crops.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { MarketModule } from './market/market.module';
 import { SimulationModule } from './simulation/simulation.module';
+import { BuildingsModule } from './buildings/buildings.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -24,6 +25,7 @@ import { DatabaseModule } from './database/database.module';
     InventoryModule,
     MarketModule,
     SimulationModule,
+    BuildingsModule,
   ],
 })
 export class AppModule {}

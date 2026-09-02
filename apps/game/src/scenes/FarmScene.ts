@@ -3,6 +3,8 @@ import { PlotObject } from '../objects/PlotObject';
 import { ApiClient, ProfileData } from '../services/ApiClient';
 import { CROPS } from '@molemisi/game-config';
 import { MarketPanel } from '../ui/MarketPanel';
+import { BuildPanel } from '../ui/BuildPanel';
+import { InventoryPanel } from '../ui/InventoryPanel';
 
 interface FarmData {
   farm: {
@@ -36,6 +38,8 @@ export class FarmScene extends Phaser.Scene {
   private farmId: string | null = null;
   private profile: ProfileData | null = null;
   private marketPanel!: MarketPanel;
+  private buildPanel!: BuildPanel;
+  private inventoryPanel!: InventoryPanel;
 
   constructor() {
     super({ key: 'FarmScene' });
@@ -132,6 +136,13 @@ export class FarmScene extends Phaser.Scene {
         this.farmId,
         () => this.loadFarmData(),
       );
+      this.buildPanel = new BuildPanel(
+        this,
+        this.apiClient,
+        this.farmId,
+        () => this.loadFarmData(),
+      );
+      this.inventoryPanel = new InventoryPanel(this, this.apiClient, this.farmId);
       this.updatePlotsFromServer(farmData.plots);
 
       // Show welcome-back notification if simulation ran
@@ -231,8 +242,38 @@ export class FarmScene extends Phaser.Scene {
   private createHUD(): void {
     const width = this.cameras.main.width;
 
+    // Inventory button
+    const invBtn = this.add.text(width - 80, 16, '📦 Bag', {
+      font: '14px monospace',
+      color: '#BCAAA4',
+      backgroundColor: '#3e2723',
+      padding: { x: 8, y: 4 },
+    });
+    invBtn.setInteractive({ useHandCursor: true });
+    invBtn.on('pointerdown', () => {
+      if (this.farmId) {
+        this.inventoryPanel.toggle();
+      }
+    });
+    invBtn.setDepth(50);
+
+    // Build button
+    const buildBtn = this.add.text(width - 80, 48, '🏗️ Build', {
+      font: '14px monospace',
+      color: '#81C784',
+      backgroundColor: '#3e2723',
+      padding: { x: 8, y: 4 },
+    });
+    buildBtn.setInteractive({ useHandCursor: true });
+    buildBtn.on('pointerdown', () => {
+      if (this.farmId) {
+        this.buildPanel.toggle();
+      }
+    });
+    buildBtn.setDepth(50);
+
     // Market button in top-right
-    const marketBtn = this.add.text(width - 80, 16, '🏪 Market', {
+    const marketBtn = this.add.text(width - 80, 80, '🏪 Market', {
       font: '14px monospace',
       color: '#FF8F00',
       backgroundColor: '#3e2723',
