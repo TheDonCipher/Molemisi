@@ -16,6 +16,8 @@ import { KgotlaModule } from './kgotla/kgotla.module';
 import { BushveldModule } from './bushveld/bushveld.module';
 import { WorldEventsModule } from './world-events/world-events.module';
 import { PaymentsModule } from './payments/payments.module';
+import { AdminModule } from './admin/admin.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -40,6 +42,8 @@ import { DatabaseModule } from './database/database.module';
     BushveldModule,
     WorldEventsModule,
     PaymentsModule,
+    AdminModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}
