@@ -67,13 +67,12 @@ export default function GamePage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Top HUD */}
-      <div className="flex items-center justify-between px-4 py-2 bg-molemisi-panel border-b border-molemisi-border">
-        <button className="text-molemisi-text hover:text-molemisi-accent">☰</button>
-        <div className="flex items-center gap-3 text-molemisi-muted">
+    <div className="flex flex-col h-screen touch-none select-none">
+      {/* Top HUD - Mobile Optimized */}
+      <div className="flex items-center justify-between px-3 py-2 bg-molemisi-panel border-b border-molemisi-border">
+        <div className="flex items-center gap-2">
           {weather && (
-            <span className="text-xs">
+            <span className="text-xs px-2 py-1 rounded bg-molemisi-night">
               {weather.season === 'spring' && '🌱'}
               {weather.season === 'summer' && '☀️'}
               {weather.season === 'autumn' && '🍂'}
@@ -81,39 +80,39 @@ export default function GamePage() {
               {' '}{weather.weather} {weather.temperature}°C
             </span>
           )}
-          <span>
-            {profile ? `Lv.${profile.farmLevel} • ${profile.displayName}` : 'Loading...'}
-          </span>
         </div>
-        <div className="text-molemisi-accent font-bold">
+        <div className="text-molemisi-accent font-bold text-sm">
           💰 {profile ? profile.currency.toLocaleString() : '---'} P
+        </div>
+        <div className="text-molemisi-muted text-xs">
+          {profile ? `Lv.${profile.farmLevel}` : '...'}
         </div>
       </div>
 
-      {/* Game Container */}
-      <div ref={gameContainerRef} className="flex-1 bg-black" />
+      {/* Game Container - Flex grow to fill space */}
+      <div ref={gameContainerRef} className="flex-1 bg-black overflow-hidden" />
 
-      {/* Bottom Navigation */}
-      <div className="flex items-center justify-around py-2 bg-molemisi-panel border-t border-molemisi-border">
-        <button className="flex flex-col items-center text-molemisi-accent">
-          <span>🏠</span>
-          <span className="text-xs">Farm</span>
+      {/* Bottom Navigation - Touch Friendly */}
+      <div className="flex items-center justify-around py-2 bg-molemisi-panel border-t border-molemisi-border safe-bottom">
+        <button className="flex flex-col items-center text-molemisi-accent p-2 min-w-[60px]">
+          <span className="text-xl">🏠</span>
+          <span className="text-xs mt-1">Farm</span>
         </button>
-        <button className="flex flex-col items-center text-molemisi-muted hover:text-molemisi-text">
-          <span>🏘️</span>
-          <span className="text-xs">Kgotla</span>
+        <button className="flex flex-col items-center text-molemisi-muted p-2 min-w-[60px]">
+          <span className="text-xl">🏛️</span>
+          <span className="text-xs mt-1">Kgotla</span>
         </button>
-        <button className="flex flex-col items-center text-molemisi-muted hover:text-molemisi-text">
-          <span>🌿</span>
-          <span className="text-xs">Bush</span>
+        <button className="flex flex-col items-center text-molemisi-muted p-2 min-w-[60px]">
+          <span className="text-xl">🌿</span>
+          <span className="text-xs mt-1">Bush</span>
         </button>
-        <button className="flex flex-col items-center text-molemisi-muted hover:text-molemisi-text">
-          <span>📦</span>
-          <span className="text-xs">Bag</span>
+        <button className="flex flex-col items-center text-molemisi-muted p-2 min-w-[60px]">
+          <span className="text-xl">📦</span>
+          <span className="text-xs mt-1">Bag</span>
         </button>
-        <button className="flex flex-col items-center text-molemisi-muted hover:text-molemisi-text">
-          <span>⚙️</span>
-          <span className="text-xs">Settings</span>
+        <button className="flex flex-col items-center text-molemisi-muted p-2 min-w-[60px]">
+          <span className="text-xl">⚙️</span>
+          <span className="text-xs mt-1">More</span>
         </button>
       </div>
     </div>

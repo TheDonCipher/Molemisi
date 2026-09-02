@@ -1,0 +1,23 @@
+{
+  "name": "Molemisi - Farm Management Simulator",
+  "short_name": "Molemisi",
+  "description": "A cozy pixel-art farm management simulator inspired by Botswana",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a0f0a",
+  "theme_color": "#FF8F00",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["games", "entertainment"]
+}

@@ -7,7 +7,7 @@
 
 ## Current Milestone
 
-**M12 — Seasons & World Events**
+**M13 — Mobile/PWA**
 
 ## Milestone Status
 
@@ -24,7 +24,8 @@ M8  Economy & Market              [COMPLETE — dynamic pricing, events]
 M9  Contracts & Progression       [COMPLETE — contracts, XP, achievements]
 M10 Kgotla                        [COMPLETE — NPCs, reputation, projects]
 M11 Bushveld                      [COMPLETE — zones, gather, explore]
-M12 Seasons & World Events        [IN PROGRESS — festivals, seasonal effects]
+M12 Seasons & World Events        [COMPLETE — festivals, seasonal effects]
+M13 Mobile/PWA                    [IN PROGRESS — manifest, responsive, touch]
 ```
 
 ---
@@ -122,12 +123,20 @@ M12 Seasons & World Events        [IN PROGRESS — festivals, seasonal effects]
 - Energy system for exploration
 - BushveldPanel UI (zones, resource previews, gather buttons)
 
-### M12: Seasons & World Events (In Progress)
+### M12: Seasons & World Events (Complete)
 - WorldEventsModule with active, available, trigger, effects endpoints
 - 10 world events (festivals, seasonal, market, weather)
 - Season-based event availability
 - Event effects (growth, price, xp, energy modifiers)
 - WorldEventsPanel UI (active events, available events, trigger)
+
+### M13: Mobile/PWA (In Progress)
+- PWA manifest with icons and theme colors
+- Service worker for offline caching
+- Responsive Phaser canvas (FIT mode)
+- Touch-friendly navigation (44px targets)
+- Safe area insets for notched devices
+- Mobile viewport meta tags
 
 ---
 
