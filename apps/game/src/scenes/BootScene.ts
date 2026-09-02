@@ -14,7 +14,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    // Initialize any global systems here
+    console.log('[BootScene] Created - Phaser is running!');
     this.scene.start('PreloadScene');
   }
 }

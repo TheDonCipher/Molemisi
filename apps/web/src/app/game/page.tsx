@@ -29,11 +29,13 @@ export default function GamePage() {
       const { PreloadScene } = await import('@/game/scenes/PreloadScene');
       const { FarmScene } = await import('@/game/scenes/FarmScene');
 
+      console.log('[Game] Initializing Phaser...');
       const game = new Phaser.Game({
         type: Phaser.AUTO,
+        backgroundColor: '#5A8F3C',
         parent: gameContainerRef.current,
         width: 800,
-        height: 600,
+        height: 480,
         pixelArt: true,
         roundPixels: true,
         antialias: false,
@@ -45,6 +47,7 @@ export default function GamePage() {
       });
 
       gameRef.current = game;
+      console.log('[Game] Phaser game created successfully');
 
       // Listen for profile updates from Phaser
       game.events.on('profile-updated', (data: ProfileData) => {
@@ -57,7 +60,7 @@ export default function GamePage() {
       });
     };
 
-    initGame();
+    initGame().catch((err) => console.error('[Game] Init error:', err));
 
     return () => {
       if (gameRef.current) {
@@ -89,8 +92,12 @@ export default function GamePage() {
         </div>
       </div>
 
-      {/* Game Container - Flex grow to fill space */}
-      <div ref={gameContainerRef} className="flex-1 bg-black overflow-hidden" />
+      {/* Game Container - Explicit min-height for Phaser */}
+      <div
+        ref={gameContainerRef}
+        className="flex-1 min-h-0 overflow-hidden relative"
+        style={{ minHeight: '300px', background: '#1a0f0a' }}
+      />
 
       {/* Bottom Navigation - Touch Friendly */}
       <div className="flex items-center justify-around py-2 bg-molemisi-panel border-t border-molemisi-border safe-bottom">
