@@ -4,7 +4,6 @@
 -- ============================================
 
 -- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
 -- PROFILES (extends Supabase Auth users)
@@ -36,7 +35,7 @@ CREATE TABLE public.profiles (
 -- FARMS
 -- ============================================
 CREATE TABLE public.farms (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL DEFAULT 'My Farm',
   level INTEGER NOT NULL DEFAULT 1,
@@ -57,7 +56,7 @@ CREATE TABLE public.farms (
 -- FARM PLOTS
 -- ============================================
 CREATE TABLE public.farm_plots (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   farm_id UUID NOT NULL REFERENCES public.farms(id) ON DELETE CASCADE,
   slot_index INTEGER NOT NULL,
   state VARCHAR(20) NOT NULL DEFAULT 'EMPTY',
@@ -71,7 +70,7 @@ CREATE TABLE public.farm_plots (
 -- CROP INSTANCES
 -- ============================================
 CREATE TABLE public.crop_instances (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   plot_id UUID NOT NULL REFERENCES public.farm_plots(id) ON DELETE CASCADE,
   farm_id UUID NOT NULL REFERENCES public.farms(id) ON DELETE CASCADE,
   crop_type VARCHAR(50) NOT NULL,
@@ -94,7 +93,7 @@ CREATE TABLE public.crop_instances (
 -- BUILDINGS
 -- ============================================
 CREATE TABLE public.buildings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   farm_id UUID NOT NULL REFERENCES public.farms(id) ON DELETE CASCADE,
   building_type VARCHAR(50) NOT NULL,
   level INTEGER NOT NULL DEFAULT 1,
@@ -113,7 +112,7 @@ CREATE TABLE public.buildings (
 -- LIVESTOCK
 -- ============================================
 CREATE TABLE public.livestock (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   farm_id UUID NOT NULL REFERENCES public.farms(id) ON DELETE CASCADE,
   animal_type VARCHAR(50) NOT NULL,
   name VARCHAR(50),
@@ -135,7 +134,7 @@ CREATE TABLE public.livestock (
 -- INVENTORY
 -- ============================================
 CREATE TABLE public.inventory (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   farm_id UUID NOT NULL REFERENCES public.farms(id) ON DELETE CASCADE,
   item_type VARCHAR(50) NOT NULL,
   item_category VARCHAR(30) NOT NULL,
@@ -150,7 +149,7 @@ CREATE TABLE public.inventory (
 -- GAME LEDGER ENTRIES (audit trail)
 -- ============================================
 CREATE TABLE public.game_ledger_entries (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   farm_id UUID NOT NULL REFERENCES public.farms(id),
   entry_type VARCHAR(30) NOT NULL,
   reference_type VARCHAR(30),

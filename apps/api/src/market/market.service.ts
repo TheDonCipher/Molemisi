@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
-interface SellResult {
+export interface SellResult {
   transaction: {
     itemType: string;
     quantity: number;
@@ -12,7 +12,7 @@ interface SellResult {
   newCurrencyBalance: number;
 }
 
-interface BuyResult {
+export interface BuyResult {
   transaction: {
     itemType: string;
     quantity: number;
@@ -23,7 +23,7 @@ interface BuyResult {
   newCurrencyBalance: number;
 }
 
-interface MarketPrice {
+export interface MarketPrice {
   itemType: string;
   basePrice: number;
   currentPrice: number;
@@ -32,7 +32,7 @@ interface MarketPrice {
   demand: number;
 }
 
-interface MarketEvent {
+export interface MarketEvent {
   id: string;
   name: string;
   description: string;

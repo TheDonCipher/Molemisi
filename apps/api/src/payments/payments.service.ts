@@ -115,7 +115,7 @@ export class PaymentsService {
       .insert({
         player_id: playerId,
         sku: dto.sku,
-        amount: virtualGood.amount * 100, // Convert to cents
+        amount: virtualGood.price * 100, // Convert to cents
         currency: virtualGood.currency,
         provider: this.provider.name,
         status: 'PENDING',

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
-interface InventoryItem {
+export interface InventoryItem {
   id: string;
   itemType: string;
   itemCategory: string;

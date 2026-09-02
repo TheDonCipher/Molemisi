@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
-interface ProgressionData {
+export interface ProgressionData {
   level: number;
   xp: number;
   xpToNextLevel: number;

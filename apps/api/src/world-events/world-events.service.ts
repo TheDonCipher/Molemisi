@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
-interface WorldEvent {
+export interface WorldEvent {
   id: string;
   name: string;
   description: string;
@@ -16,7 +16,7 @@ interface WorldEvent {
   duration: number; // hours
 }
 
-interface ActiveEvent {
+export interface ActiveEvent {
   id: string;
   name: string;
   description: string;

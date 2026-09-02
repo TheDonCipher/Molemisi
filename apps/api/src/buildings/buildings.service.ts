@@ -212,7 +212,7 @@ export class BuildingsService {
       .eq('id', userId);
 
     // Update building
-    const upgradeTime = config.upgradeTimes[buildingRow.level - 1];
+    const upgradeTime = config.upgradeTimes[buildingRow.level - 1] ?? 0;
     const constructionEndsAt = new Date(
       Date.now() + upgradeTime * 60 * 1000,
     ).toISOString();

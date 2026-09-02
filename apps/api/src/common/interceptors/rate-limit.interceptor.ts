@@ -71,7 +71,7 @@ export class RateLimitInterceptor implements NestInterceptor {
     if (req.ip) return `ip:${req.ip}`;
     // Fall back to X-Forwarded-For
     const forwarded = req.headers?.['x-forwarded-for'];
-    if (typeof forwarded === 'string') return `ip:${forwarded.split(',')[0].trim()}`;
+    if (typeof forwarded === 'string') return `ip:${forwarded.split(',')[0]?.trim() ?? 'unknown'}`;
     return 'ip:unknown';
   }
 

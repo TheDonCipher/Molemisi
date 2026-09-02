@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
-interface ProfileData {
+export interface ProfileData {
   id: string;
   displayName: string;
   farmName: string;

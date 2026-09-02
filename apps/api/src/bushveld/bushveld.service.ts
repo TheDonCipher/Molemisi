@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
-interface BushveldZone {
+export interface BushveldZone {
   id: string;
   name: string;
   description: string;
@@ -12,7 +12,7 @@ interface BushveldZone {
   unlockLevel: number;
 }
 
-interface GatherResult {
+export interface GatherResult {
   resources: Array<{ type: string; quantity: number }>;
   rareDiscovery: { type: string; value: number } | null;
   energyUsed: number;

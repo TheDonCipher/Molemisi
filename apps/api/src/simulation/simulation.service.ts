@@ -161,7 +161,7 @@ export class SimulationService {
       cappedHours,
     );
     if (weatherChanges.length > 0) {
-      currentWeather = weatherChanges[weatherChanges.length - 1];
+      currentWeather = weatherChanges[weatherChanges.length - 1]!;
       result.weather = currentWeather;
     }
 
@@ -468,7 +468,7 @@ export class SimulationService {
         newHealth: animal.health,
         newHappiness: animal.happiness,
         productReady: animal.product_ready,
-        newProductTimer: animal.product_timer,
+        newProductTimer: animal.product_timer_hours,
         isSick: animal.is_sick,
         wasFed: false,
         stateChanged: false,

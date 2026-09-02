@@ -3,7 +3,7 @@ import { SupabaseService } from '../database/supabase.service';
 import { RegisterInput, LoginInput } from '@molemisi/validation';
 import { STARTING_CURRENCY, STARTING_PLOTS } from '@molemisi/game-config';
 
-interface AuthResult {
+export interface AuthResult {
   user: { id: string; email: string; displayName: string };
   token: string;
   refreshToken: string;
@@ -30,8 +30,21 @@ export class AuthService {
       throw new BadRequestException(authError.message);
     }
 
-    if (!authData.user || !authData.session) {
+    if (!authData.user) {
       throw new BadRequestException('Registration failed');
+    }
+
+    // If no session (email confirmation required), sign in immediately
+    let session = authData.session;
+    if (!session) {
+      const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
+        email: input.email,
+        password: input.password,
+      });
+      if (signInError || !signInData.session) {
+        throw new BadRequestException('Registration succeeded but auto-login failed. Please confirm your email.');
+      }
+      session = signInData.session;
     }
 
     // Create profile
@@ -92,8 +105,8 @@ export class AuthService {
         email: authData.user.email ?? '',
         displayName: input.displayName,
       },
-      token: authData.session.access_token,
-      refreshToken: authData.session.refresh_token,
+      token: session!.access_token,
+      refreshToken: session!.refresh_token,
     };
   }
 

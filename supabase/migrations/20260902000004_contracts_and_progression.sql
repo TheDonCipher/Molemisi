@@ -1,6 +1,6 @@
 -- Create active_contracts table
 CREATE TABLE IF NOT EXISTS public.active_contracts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   farm_id UUID NOT NULL REFERENCES public.farms(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   contract_id VARCHAR(100) NOT NULL,

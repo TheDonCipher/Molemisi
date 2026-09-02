@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
-interface NPC {
+export interface NPC {
   id: string;
   name: string;
   role: string;
@@ -10,13 +10,13 @@ interface NPC {
   questType: string;
 }
 
-interface NPCRelation {
+export interface NPCRelation {
   npcId: string;
   reputation: number;
   tier: string;
 }
 
-interface KgotlaProject {
+export interface KgotlaProject {
   id: string;
   name: string;
   description: string;

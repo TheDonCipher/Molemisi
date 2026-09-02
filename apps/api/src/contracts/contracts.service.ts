@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
-interface Contract {
+export interface Contract {
   id: string;
   name: string;
   description: string;
@@ -12,7 +12,7 @@ interface Contract {
   timeLimitHours: number;
 }
 
-interface ActiveContract {
+export interface ActiveContract {
   id: string;
   contractId: string;
   name: string;

@@ -2,20 +2,20 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { SupabaseService } from '../database/supabase.service';
 import { XP_REWARDS, getCropConfig } from '@molemisi/game-config';
 
-interface PlantResult {
+export interface PlantResult {
   plot: { id: string; state: string; slotIndex: number };
   crop: { id: string; type: string; growthStage: number; hydration: number };
   xpGained: number;
 }
 
-interface WaterResult {
+export interface WaterResult {
   plot: { id: string; state: string };
   crop: { hydration: number; lastWateredAt: string };
   waterUsed: number;
   xpGained: number;
 }
 
-interface HarvestResult {
+export interface HarvestResult {
   plot: { id: string; state: string };
   harvest: {
     cropType: string;

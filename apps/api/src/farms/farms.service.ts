@@ -2,14 +2,18 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { SupabaseService } from '../database/supabase.service';
 import { SimulationService } from '../simulation/simulation.service';
 
-interface FarmWithPlots {
+export interface FarmWithPlots {
   farm: {
     id: string;
     name: string;
     level: number;
     plotCount: number;
     weather: string;
+    weatherTemperature: number;
+    weatherHumidity: number;
     season: string;
+    currentDay: number;
+    lastSimulatedAt: string;
   };
   plots: Array<{
     id: string;
@@ -77,6 +81,7 @@ export class FarmsService {
         weatherHumidity: farm.weather_humidity,
         season: farm.season,
         currentDay: farm.current_day,
+        lastSimulatedAt: farm.last_simulated_at || new Date().toISOString(),
       },
       plots: (plots ?? []).map((plot: Record<string, unknown>) => ({
         id: plot.id as string,

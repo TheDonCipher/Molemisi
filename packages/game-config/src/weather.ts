@@ -170,7 +170,8 @@ export function generateWeather(season: Season): WeatherState {
 export function getNextSeason(current: Season): Season {
   const order: Season[] = ['spring', 'summer', 'autumn', 'winter'];
   const idx = order.indexOf(current);
-  return order[(idx + 1) % order.length];
+  const nextIdx = ((idx === -1 ? 0 : idx) + 1) % order.length;
+  return order[nextIdx] as Season;
 }
 
 /** Calculate season growth modifier */
