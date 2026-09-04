@@ -127,6 +127,7 @@ export function MarketScreen() {
     sellInventoryItem,
     quickSellProduce,
     showToast,
+    setActiveNav,
   } = useGame();
 
   const [mode, setMode] = React.useState<'buy' | 'sell'>('buy');
@@ -189,283 +190,319 @@ export function MarketScreen() {
   }
 
   return (
-    <div style={{ padding: '16px', maxWidth: 600, margin: '0 auto' }}>
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 16,
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              fontFamily: 'var(--font-headline)',
-              color: 'var(--cream, #f5e6d3)',
-              margin: 0,
-              fontSize: 22,
-            }}
-          >
-            🏪 Village Market
-          </h2>
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--accent-green, #66bb6a)',
-              fontSize: 13,
-            }}
-          >
-            P {pula.toLocaleString()}
+    <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
+      {/* Background */}
+      <div className="absolute inset-0 z-0">
+        <img
+          alt="Village Market"
+          className="w-full h-full object-cover object-center filter saturate-[1.1]"
+          src="/assets/backgrounds/market_scene.png"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface/70 via-transparent to-wood-dark/40 pointer-events-none" />
+      </div>
+
+      {/* Content overlay */}
+      <div className="relative z-10 px-4 pt-4 pb-8 max-w-lg mx-auto">
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                fontFamily: 'var(--font-headline)',
+                color: 'var(--cream, #f5e6d3)',
+                margin: 0,
+                fontSize: 22,
+              }}
+            >
+              🏪 Village Market
+            </h2>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--accent-green, #66bb6a)',
+                fontSize: 13,
+              }}
+            >
+              P {pula.toLocaleString()}
+            </div>
           </div>
+          {mode === 'sell' && sellables.length > 0 && (
+            <button
+              onClick={handleSellAll}
+              style={{
+                padding: '10px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--accent-green, #66bb6a)',
+                color: '#1a1a1a',
+                fontFamily: 'var(--font-headline)',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Quick Sell All
+            </button>
+          )}
         </div>
-        {mode === 'sell' && sellables.length > 0 && (
-          <button
-            onClick={handleSellAll}
-            style={{
-              padding: '10px 18px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--accent-green, #66bb6a)',
-              color: '#1a1a1a',
-              fontFamily: 'var(--font-headline)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Quick Sell All
-          </button>
+
+        {/* Buy / Sell Toggle */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          {(['buy', 'sell'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              style={{
+                flex: 1,
+                padding: '12px',
+                borderRadius: '8px',
+                border: '2px solid',
+                borderColor: mode === m ? 'var(--primary, #d4a853)' : 'var(--outline, #6b5744)',
+                background: mode === m ? 'var(--primary, #d4a853)' : 'transparent',
+                color: mode === m ? '#1a1a1a' : 'var(--cream, #f5e6d3)',
+                fontFamily: 'var(--font-headline)',
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {m === 'buy' ? '🛒 Buy Seeds' : '💰 Sell Produce'}
+            </button>
+          ))}
+        </div>
+
+        {/* Buy Mode */}
+        {mode === 'buy' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {buyables.length === 0 && (
+              <div
+                style={{
+                  color: 'var(--cream, #f5e6d3)',
+                  opacity: 0.6,
+                  textAlign: 'center',
+                  padding: 32,
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                No seeds or tools available yet.
+              </div>
+            )}
+            {buyables.map((item: MarketItem) => {
+              const canAfford = pula >= item.price;
+              const icon = SEED_ICONS[item.id] || item.icon;
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    background: 'var(--surface-container, #1a1209)',
+                    border: '2px solid var(--outline, #6b5744)',
+                    borderRadius: 10,
+                    padding: '12px 14px',
+                  }}
+                >
+                  <span style={{ fontSize: 28 }}>{icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-headline)',
+                        color: 'var(--cream, #f5e6d3)',
+                        fontSize: 15,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {item.name}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        color: 'var(--accent-green, #66bb6a)',
+                        fontSize: 13,
+                      }}
+                    >
+                      P{item.price}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      disabled={!canAfford}
+                      onClick={() => handleBuy(item, 1)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: 6,
+                        border: 'none',
+                        background: canAfford ? 'var(--primary, #d4a853)' : '#333',
+                        color: canAfford ? '#1a1a1a' : '#666',
+                        fontFamily: 'var(--font-headline)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: canAfford ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      x1
+                    </button>
+                    <button
+                      disabled={!canAfford}
+                      onClick={() => handleBuy(item, 5)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: 6,
+                        border: 'none',
+                        background: canAfford ? 'var(--primary, #d4a853)' : '#333',
+                        color: canAfford ? '#1a1a1a' : '#666',
+                        fontFamily: 'var(--font-headline)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: canAfford ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      x5
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
-      </div>
 
-      {/* Buy / Sell Toggle */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {(['buy', 'sell'] as const).map((m) => (
+        {/* Sell Mode */}
+        {mode === 'sell' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {sellables.length === 0 && (
+              <div
+                style={{
+                  color: 'var(--cream, #f5e6d3)',
+                  opacity: 0.6,
+                  textAlign: 'center',
+                  padding: 32,
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                Nothing to sell. Harvest some crops first!
+              </div>
+            )}
+            {sellables.map((item: InventoryItem) => {
+              const qty = item.quantity;
+              const total = item.unitValue * qty;
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    background: 'var(--surface-container, #1a1209)',
+                    border: '2px solid var(--outline, #6b5744)',
+                    borderRadius: 10,
+                    padding: '12px 14px',
+                  }}
+                >
+                  <span style={{ fontSize: 28 }}>{item.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-headline)',
+                        color: 'var(--cream, #f5e6d3)',
+                        fontSize: 15,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {item.name}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 12,
+                        color: 'var(--cream, #f5e6d3)',
+                        opacity: 0.7,
+                      }}
+                    >
+                      ×{qty} · P{item.unitValue} each · Total: P{total}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      disabled={qty < 1}
+                      onClick={() => handleSell(item, 1)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: 6,
+                        border: 'none',
+                        background: qty >= 1 ? 'var(--accent-green, #66bb6a)' : '#333',
+                        color: qty >= 1 ? '#1a1a1a' : '#666',
+                        fontFamily: 'var(--font-headline)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: qty >= 1 ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      +1
+                    </button>
+                    <button
+                      disabled={qty < 1}
+                      onClick={() => handleSell(item, qty)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: 6,
+                        border: 'none',
+                        background: qty >= 1 ? 'var(--accent-green, #66bb6a)' : '#333',
+                        color: qty >= 1 ? '#1a1a1a' : '#666',
+                        fontFamily: 'var(--font-headline)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: qty >= 1 ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      Sell All
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Back to Farm */}
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
           <button
-            key={m}
-            onClick={() => setMode(m)}
+            onClick={() => setActiveNav('Farm')}
             style={{
-              flex: 1,
-              padding: '12px',
-              borderRadius: '8px',
-              border: '2px solid',
-              borderColor: mode === m ? 'var(--primary, #d4a853)' : 'var(--outline, #6b5744)',
-              background: mode === m ? 'var(--primary, #d4a853)' : 'transparent',
-              color: mode === m ? '#1a1a1a' : 'var(--cream, #f5e6d3)',
+              padding: '10px 24px',
+              borderRadius: 8,
+              border: '2px solid var(--outline, #6b5744)',
+              background: 'var(--wood-dark, #1a1209)',
+              color: 'var(--cream, #f5e6d3)',
               fontFamily: 'var(--font-headline)',
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: 600,
               cursor: 'pointer',
             }}
           >
-            {m === 'buy' ? '🛒 Buy Seeds' : '💰 Sell Produce'}
+            ← Back to Farm
           </button>
-        ))}
+        </div>
+
+        {/* Confirmation Dialog */}
+        <ConfirmModal
+          open={confirmState.open}
+          title={confirmState.title}
+          message={confirmState.message}
+          onConfirm={confirmState.fn}
+          onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        />
       </div>
-
-      {/* Buy Mode */}
-      {mode === 'buy' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {buyables.length === 0 && (
-            <div
-              style={{
-                color: 'var(--cream, #f5e6d3)',
-                opacity: 0.6,
-                textAlign: 'center',
-                padding: 32,
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              No seeds or tools available yet.
-            </div>
-          )}
-          {buyables.map((item: MarketItem) => {
-            const canAfford = pula >= item.price;
-            const icon = SEED_ICONS[item.id] || item.icon;
-            return (
-              <div
-                key={item.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  background: 'var(--surface-container, #1a1209)',
-                  border: '2px solid var(--outline, #6b5744)',
-                  borderRadius: 10,
-                  padding: '12px 14px',
-                }}
-              >
-                <span style={{ fontSize: 28 }}>{icon}</span>
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-headline)',
-                      color: 'var(--cream, #f5e6d3)',
-                      fontSize: 15,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {item.name}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      color: 'var(--accent-green, #66bb6a)',
-                      fontSize: 13,
-                    }}
-                  >
-                    P{item.price}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button
-                    disabled={!canAfford}
-                    onClick={() => handleBuy(item, 1)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: 6,
-                      border: 'none',
-                      background: canAfford ? 'var(--primary, #d4a853)' : '#333',
-                      color: canAfford ? '#1a1a1a' : '#666',
-                      fontFamily: 'var(--font-headline)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: canAfford ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    x1
-                  </button>
-                  <button
-                    disabled={!canAfford}
-                    onClick={() => handleBuy(item, 5)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: 6,
-                      border: 'none',
-                      background: canAfford ? 'var(--primary, #d4a853)' : '#333',
-                      color: canAfford ? '#1a1a1a' : '#666',
-                      fontFamily: 'var(--font-headline)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: canAfford ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    x5
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Sell Mode */}
-      {mode === 'sell' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {sellables.length === 0 && (
-            <div
-              style={{
-                color: 'var(--cream, #f5e6d3)',
-                opacity: 0.6,
-                textAlign: 'center',
-                padding: 32,
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              Nothing to sell. Harvest some crops first!
-            </div>
-          )}
-          {sellables.map((item: InventoryItem) => {
-            const qty = item.quantity;
-            const total = item.unitValue * qty;
-            return (
-              <div
-                key={item.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  background: 'var(--surface-container, #1a1209)',
-                  border: '2px solid var(--outline, #6b5744)',
-                  borderRadius: 10,
-                  padding: '12px 14px',
-                }}
-              >
-                <span style={{ fontSize: 28 }}>{item.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-headline)',
-                      color: 'var(--cream, #f5e6d3)',
-                      fontSize: 15,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {item.name}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 12,
-                      color: 'var(--cream, #f5e6d3)',
-                      opacity: 0.7,
-                    }}
-                  >
-                    ×{qty} · P{item.unitValue} each · Total: P{total}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button
-                    disabled={qty < 1}
-                    onClick={() => handleSell(item, 1)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: 6,
-                      border: 'none',
-                      background: qty >= 1 ? 'var(--accent-green, #66bb6a)' : '#333',
-                      color: qty >= 1 ? '#1a1a1a' : '#666',
-                      fontFamily: 'var(--font-headline)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: qty >= 1 ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    +1
-                  </button>
-                  <button
-                    disabled={qty < 1}
-                    onClick={() => handleSell(item, qty)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: 6,
-                      border: 'none',
-                      background: qty >= 1 ? 'var(--accent-green, #66bb6a)' : '#333',
-                      color: qty >= 1 ? '#1a1a1a' : '#666',
-                      fontFamily: 'var(--font-headline)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: qty >= 1 ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    Sell All
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Confirmation Dialog */}
-      <ConfirmModal
-        open={confirmState.open}
-        title={confirmState.title}
-        message={confirmState.message}
-        onConfirm={confirmState.fn}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-      />
     </div>
   );
 }

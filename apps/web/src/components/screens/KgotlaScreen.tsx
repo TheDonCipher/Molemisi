@@ -36,6 +36,14 @@ const NPCS = [
     dialogue: 'The savanna fringe has ripe fruits and mineral caves. Ready to explore?',
     hasContract: false,
   },
+  {
+    name: 'Vendor Kabelo',
+    role: 'Market Trader',
+    avatar: '/assets/sprites/npcs/market_vendor.png',
+    fallback: '🛒',
+    dialogue: 'Everything has a price, friend. What are you looking to trade today?',
+    hasContract: false,
+  },
 ];
 
 const CONTRACTS = [
@@ -60,6 +68,17 @@ const CONTRACTS = [
     time: '3 Days',
     progress: 2,
     target: 5,
+  },
+  {
+    id: 'c3',
+    title: 'Market Delivery',
+    npc: 'Vendor Kabelo',
+    requirement: 'Supply 15 Maize',
+    reward: 'P 320',
+    xp: '+40 XP',
+    time: '1 Day',
+    progress: 0,
+    target: 15,
   },
 ];
 
@@ -119,10 +138,10 @@ export function KgotlaScreen() {
         </div>
       </div>
 
-      {/* NPCs — spatial layout with avatars */}
+      {/* NPCs — spatial layout with centered avatars */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-lg">
-          {/* NPC Grid */}
+          {/* NPC Grid — 2 columns with larger avatar tiles */}
           <div className="grid grid-cols-2 gap-4">
             {NPCS.map((n, i) => (
               <button
@@ -131,19 +150,23 @@ export function KgotlaScreen() {
                   setSelectedNpc(selectedNpc === i ? null : i);
                   setShowContracts(false);
                 }}
-                className={`bg-wood-dark/85 p-4 border text-left transition-all active:scale-95 ${
+                className={`bg-wood-dark/85 p-3 border text-left transition-all active:scale-95 ${
                   selectedNpc === i
                     ? 'border-primary ring-2 ring-primary/50 shadow-lg'
                     : 'border-wood-border hover:border-primary/50'
                 }`}
               >
-                {/* NPC Avatar */}
+                {/* NPC Avatar — bigger, centered face */}
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-surface-container-low border border-wood-border overflow-hidden flex items-center justify-center">
+                  <div
+                    className="w-16 h-16 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center shrink-0 rounded-sm"
+                    style={{ imageRendering: 'pixelated' }}
+                  >
                     <img
                       src={n.avatar}
                       alt={n.name}
-                      className="w-full h-full object-cover"
+                      className="w-14 h-14 object-contain"
+                      style={{ imageRendering: 'pixelated' }}
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                         (e.target as HTMLImageElement).nextElementSibling?.classList.remove(
@@ -151,13 +174,15 @@ export function KgotlaScreen() {
                         );
                       }}
                     />
-                    <span className="text-2xl hidden">{n.fallback}</span>
+                    <span className="text-3xl hidden">{n.fallback}</span>
                   </div>
-                  <div>
-                    <span className="font-headline text-xs text-cream-surface font-bold block">
+                  <div className="min-w-0">
+                    <span className="font-headline text-xs text-cream-surface font-bold block truncate">
                       {n.name}
                     </span>
-                    <span className="font-mono text-[9px] text-on-surface-variant">{n.role}</span>
+                    <span className="font-mono text-[9px] text-on-surface-variant block">
+                      {n.role}
+                    </span>
                   </div>
                 </div>
                 <p className="font-body text-[11px] text-on-surface-variant leading-snug line-clamp-2">
@@ -266,17 +291,21 @@ export function KgotlaScreen() {
         <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
           <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-surface-container-low border border-wood-border overflow-hidden flex items-center justify-center shrink-0">
+              <div
+                className="w-12 h-12 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center shrink-0 rounded-sm"
+                style={{ imageRendering: 'pixelated' }}
+              >
                 <img
                   src={npc.avatar}
                   alt={npc.name}
-                  className="w-full h-full object-cover"
+                  className="w-10 h-10 object-contain"
+                  style={{ imageRendering: 'pixelated' }}
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                     (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
                   }}
                 />
-                <span className="text-xl hidden">{npc.fallback}</span>
+                <span className="text-2xl hidden">{npc.fallback}</span>
               </div>
               <div>
                 <span className="font-headline text-sm text-cream-surface font-bold">
