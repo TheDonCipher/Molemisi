@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { RegisterInput, LoginInput } from '@molemisi/validation';
 import { STARTING_CURRENCY, STARTING_PLOTS } from '@molemisi/game-config';
@@ -145,13 +150,21 @@ export class AuthService {
       throw new BadRequestException('Login failed');
     }
 
-    // Get profile
+    // Get profile and check ban status
     const adminClient = this.supabaseService.getAdminClient();
     const { data: profile } = await adminClient
       .from('profiles')
-      .select('display_name')
+      .select('display_name, is_banned, ban_reason')
       .eq('id', data.user.id)
       .single();
+
+    if (profile?.is_banned) {
+      throw new ForbiddenException(
+        profile.ban_reason
+          ? `Account banned: ${profile.ban_reason}`
+          : 'Account banned by administrator',
+      );
+    }
 
     return {
       user: {

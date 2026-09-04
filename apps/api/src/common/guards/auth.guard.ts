@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { SupabaseService } from '../../database/supabase.service';
 
 export interface AuthenticatedUser {
@@ -22,6 +28,22 @@ export class AuthGuard implements CanActivate {
 
     if (!user) {
       throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    // Check if user is banned (skip for admin routes — admins must be able to manage bans)
+    const requestPath = request.url || '';
+    const isAdminRoute = requestPath.includes('/admin/');
+    if (!isAdminRoute) {
+      const { data: profile } = await this.supabaseService
+        .getAdminClient()
+        .from('profiles')
+        .select('is_banned')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.is_banned) {
+        throw new ForbiddenException('Account banned by administrator');
+      }
     }
 
     // Attach user to request for downstream use
