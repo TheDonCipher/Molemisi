@@ -28,6 +28,19 @@ export class AdminController {
   }
 
   /**
+   * Get player currency history for charting.
+   * GET /api/v1/admin/players/:playerId/currency-history
+   */
+  @Get('players/:playerId/currency-history')
+  async getPlayerCurrencyHistory(
+    @Param('playerId') playerId: string,
+    @Query('limit') limit?: string,
+  ) {
+    this.logger.log(`Admin: currency history for ${playerId}`);
+    return this.adminService.getPlayerCurrencyHistory(playerId, limit ? parseInt(limit) : 200);
+  }
+
+  /**
    * Search players.
    * GET /api/v1/admin/players?q=search
    */

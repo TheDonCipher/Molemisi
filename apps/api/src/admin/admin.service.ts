@@ -93,6 +93,53 @@ export class AdminService {
   }
 
   /**
+   * Get player currency history from ledger entries.
+   * Returns chronological entries with running balance for charting.
+   */
+  async getPlayerCurrencyHistory(playerId: string, limit = 200) {
+    // Get the player's current currency
+    const { data: profile } = await this.supabase
+      .getClient()
+      .from('profiles')
+      .select('currency')
+      .eq('id', playerId)
+      .single();
+
+    // Get all ledger entries for this player, oldest first
+    const { data: entries } = await this.supabase
+      .getClient()
+      .from('game_ledger_entries')
+      .select('entry_type, amount_change, description, created_at')
+      .eq('player_id', playerId)
+      .order('created_at', { ascending: true })
+      .limit(limit);
+
+    if (!entries || entries.length === 0) {
+      return { currentBalance: profile?.currency || 0, entries: [] };
+    }
+
+    // Calculate running balance from the end
+    // We know the current balance. Walk backwards to compute historical balances.
+    const currentBalance = profile?.currency || 0;
+    let running = currentBalance;
+    const withBalance = entries.reverse().map((e) => {
+      const before = running - e.amount_change;
+      running = before;
+      return {
+        ...e,
+        balance_before: before,
+        balance_after: before + e.amount_change,
+      };
+    });
+
+    // Return oldest-first for charting
+    return {
+      currentBalance,
+      entries: withBalance.reverse(),
+    };
+  }
+
+  /**
    * Get recent game ledger entries for economy monitoring.
    */
   async getRecentLedger(limit = 100) {
