@@ -2,44 +2,51 @@
 
 import React, { useState, useCallback } from 'react';
 import { useGame } from '../../lib/gameState';
+import { useTranslation } from '../../lib/useTranslation';
 
 const RESOURCES = [
   {
     id: 'marula',
-    name: 'Wild Marula',
+    nameKey: 'marula' as const,
     icon: '🌿',
     reward: '+3 Marula Fruit',
     energy: 0,
     position: 'left-[8%] bottom-[25%]',
+    lootName: 'Marula Fruit',
   },
   {
     id: 'waterhole',
-    name: 'Fresh Waterhole',
+    nameKey: 'waterhole' as const,
     icon: '💧',
     reward: '+2 River Reeds',
     energy: 5,
     position: 'left-[45%] bottom-[30%]',
+    lootName: 'River Reeds',
   },
   {
     id: 'baobab',
-    name: 'Ancient Baobab',
+    nameKey: 'baobab' as const,
     icon: '🌳',
     reward: '+15 Energy',
     energy: -15,
     position: 'right-[18%] top-[35%]',
+    lootName: undefined,
   },
   {
     id: 'cave',
-    name: 'Granite Cave',
+    nameKey: 'cave' as const,
     icon: '🪨',
     reward: '+2 Raw Stone',
     energy: 10,
     position: 'right-[8%] bottom-[28%]',
+    lootName: 'Granite Stone',
   },
 ];
 
 export function BushveldScreen() {
   const { energy, maxEnergy, forageBushveld, setActiveNav } = useGame();
+  const { tl } = useTranslation();
+
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -53,24 +60,16 @@ export function BushveldScreen() {
 
   const handleForage = (r: (typeof RESOURCES)[0]) => {
     if (r.energy > 0 && energy < r.energy) {
-      showToast('Not enough energy! Rest under the Baobab.');
+      showToast(tl('notEnoughEnergy'));
       return;
     }
-    const lootName =
-      r.id === 'marula'
-        ? 'Marula Fruit'
-        : r.id === 'cave'
-          ? 'Granite Stone'
-          : r.id === 'waterhole'
-            ? 'River Reeds'
-            : undefined;
     forageBushveld(
       r.id,
       r.energy,
       r.reward,
-      `Foraged from ${r.name}`,
+      `Foraged from ${tl(r.nameKey)}`,
       'spa',
-      lootName,
+      r.lootName,
       r.id === 'cave' ? 2 : 2,
     );
     showToast(r.reward);
@@ -86,23 +85,22 @@ export function BushveldScreen() {
           className="w-full h-full object-cover object-center filter saturate-[1.1]"
           src="/assets/backgrounds/bushveld_scene.png"
           onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuATAeRwEE_FMm52FkrWo_6vXz-MMHe3AGwc607kyjIFrEYgBEW054rYKsJxVjInit3vI3AlI_q0aLN0BvlJjOU3LnUjNJs9DXrHTOUTTYvltrO30_KhYjO2lakHBbKU_JIMgYk2fJtInIVUCLh5-LI5ROSxkjCd3TwPDci4bl7KWWsiB51gCe7mgTSlOzTCRHa8Vrs-MWlzPTNswmmFWW1QuajHX1hbd6Kfd-rv2PoenxTNzpTrTnv04Q';
+            (e.target as HTMLImageElement).style.display = 'none';
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
-      {/* Top HUD — Energy + Biome */}
+      {/* Top HUD */}
       <div className="relative z-10 flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-3 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
           <span className="text-lg">🧭</span>
           <div>
             <span className="font-headline text-xs text-primary uppercase font-bold block">
-              Bushveld
+              {tl('bushveld')}
             </span>
             <span className="font-mono text-[9px] text-on-surface-variant">
-              Okavango Savanna Fringe
+              {tl('savannaFringe')}
             </span>
           </div>
         </div>
@@ -124,7 +122,7 @@ export function BushveldScreen() {
         </div>
       </div>
 
-      {/* Resources as spatial points — tap to forage */}
+      {/* Resources */}
       <div className="relative z-10 flex-1 bg-black/25" style={{ minHeight: '60vh' }}>
         {RESOURCES.map((r) => (
           <button
@@ -142,30 +140,32 @@ export function BushveldScreen() {
               {r.icon}
             </div>
             <span className="block text-center font-mono text-[9px] text-cream-surface mt-1 bg-wood-dark/60 px-1">
-              {r.name}
+              {tl(r.nameKey)}
             </span>
           </button>
         ))}
       </div>
 
-      {/* Resource Action Card — Level 2 context */}
+      {/* Resource Action Card */}
       {resource && (
         <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-sm mx-auto animate-slide-up">
           <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">{resource.icon}</span>
               <span className="font-headline text-sm text-cream-surface font-bold">
-                {resource.name}
+                {tl(resource.nameKey)}
               </span>
             </div>
             <p className="font-body text-xs text-on-surface-variant mb-3">
               {resource.reward}
               {resource.energy > 0 && (
-                <span className="text-status-warning ml-1">(-{resource.energy} Energy)</span>
+                <span className="text-status-warning ml-1">
+                  (-{resource.energy} {tl('energy')})
+                </span>
               )}
               {resource.energy < 0 && (
                 <span className="text-status-success ml-1">
-                  (+{Math.abs(resource.energy)} Energy)
+                  (+{Math.abs(resource.energy)} {tl('energy')})
                 </span>
               )}
             </p>
@@ -174,13 +174,13 @@ export function BushveldScreen() {
                 onClick={() => handleForage(resource)}
                 className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
               >
-                {resource.energy < 0 ? 'Rest' : 'Collect'}
+                {resource.energy < 0 ? tl('rest') : tl('collect')}
               </button>
               <button
                 onClick={() => setSelectedResource(null)}
                 className="py-2 px-3 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
               >
-                Leave
+                {tl('leave')}
               </button>
             </div>
           </div>
@@ -193,7 +193,7 @@ export function BushveldScreen() {
           onClick={() => setActiveNav('Farm')}
           className="bg-wood-dark/90 px-3 py-2 border border-wood-border font-mono text-xs text-cream-surface active:scale-95"
         >
-          ← Farm
+          {tl('backToFarm')}
         </button>
       </div>
 

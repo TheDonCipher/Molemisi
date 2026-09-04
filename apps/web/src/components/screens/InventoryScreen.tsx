@@ -2,20 +2,22 @@
 
 import React, { useState } from 'react';
 import { useGame, InventoryItem } from '../../lib/gameState';
-
-const CATEGORIES = [
-  { id: 'all', label: 'All', icon: '📦' },
-  { id: 'seed', label: 'Seeds', icon: '🌱' },
-  { id: 'crops', label: 'Crops', icon: '🌾' },
-  { id: 'animal', label: 'Animal', icon: '🥚' },
-  { id: 'materials', label: 'Materials', icon: '🪵' },
-] as const;
+import { useTranslation } from '../../lib/useTranslation';
 
 export function InventoryScreen() {
   const { inventory, selectedItem, setSelectedItem, sellInventoryItem, setActiveNav } = useGame();
+  const { tl } = useTranslation();
 
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [toast, setToast] = useState<string | null>(null);
+
+  const CATEGORIES = [
+    { id: 'all', label: tl('all'), icon: '📦' },
+    { id: 'seed', label: tl('seeds'), icon: '🌱' },
+    { id: 'crops', label: tl('crops'), icon: '🌾' },
+    { id: 'animal', label: tl('animal'), icon: '🥚' },
+    { id: 'materials', label: tl('materials'), icon: '🪵' },
+  ] as const;
 
   const filtered = inventory.filter((i) => {
     if (activeCategory === 'all') return true;
@@ -32,7 +34,7 @@ export function InventoryScreen() {
 
   const handleSell = (item: InventoryItem, qty?: number) => {
     sellInventoryItem(item, qty);
-    showToast(`Sold ${qty ?? item.quantity}x ${item.name}!`);
+    showToast(`${tl('sold')} ${qty ?? item.quantity}x ${item.name}!`);
     setSelectedItem(null);
   };
 
@@ -41,20 +43,22 @@ export function InventoryScreen() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="font-headline text-lg text-primary uppercase font-bold">Inventory</h1>
+          <h1 className="font-headline text-lg text-primary uppercase font-bold">
+            {tl('inventory')}
+          </h1>
           <span className="font-mono text-[10px] text-on-surface-variant">
-            {totalSlots} / {maxSlots} slots
+            {totalSlots} / {maxSlots} {tl('slots')}
           </span>
         </div>
         <button
           onClick={() => setActiveNav('Farm')}
           className="font-mono text-xs text-primary hover:text-cream-surface px-2 py-1"
         >
-          ← Farm
+          {tl('backToFarm')}
         </button>
       </div>
 
-      {/* Categories — simple tabs */}
+      {/* Categories */}
       <div className="flex gap-1 mb-4 overflow-x-auto">
         {CATEGORIES.map((cat) => (
           <button
@@ -72,7 +76,7 @@ export function InventoryScreen() {
         ))}
       </div>
 
-      {/* Item Grid — tap to inspect */}
+      {/* Item Grid */}
       <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-4">
         {filtered.map((item) => (
           <button
@@ -91,8 +95,9 @@ export function InventoryScreen() {
           </button>
         ))}
 
-        {/* Empty slots */}
-        {Array.from({ length: Math.max(0, 12 - filtered.length) }).map((_, i) => (
+        {Array.from({
+          length: Math.max(0, 12 - filtered.length),
+        }).map((_, i) => (
           <div
             key={`empty-${i}`}
             className="aspect-square bg-surface-container-low/30 border border-wood-border/20 flex items-center justify-center"
@@ -102,7 +107,7 @@ export function InventoryScreen() {
         ))}
       </div>
 
-      {/* Selected Item Detail — Level 2 context */}
+      {/* Selected Item Detail */}
       {selectedItem && (
         <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
           <div className="flex items-start gap-3 mb-3">
@@ -112,7 +117,7 @@ export function InventoryScreen() {
                 {selectedItem.name}
               </h3>
               <p className="font-mono text-[10px] text-on-surface-variant">
-                Quantity: {selectedItem.quantity} • Grade: {selectedItem.grade}
+                {tl('quantity')}: {selectedItem.quantity} • {tl('grade')}: {selectedItem.grade}
               </p>
               <p className="font-body text-xs text-on-surface-variant mt-1">
                 {selectedItem.description}
@@ -126,14 +131,13 @@ export function InventoryScreen() {
             </button>
           </div>
 
-          {/* Contextual actions — only valid ones */}
           <div className="flex gap-2">
             {selectedItem.quantity > 0 && !selectedItem.itemType?.includes('_seed') && (
               <button
                 onClick={() => handleSell(selectedItem)}
                 className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
               >
-                Sell ({selectedItem.quantity * selectedItem.unitValue} P)
+                {tl('sellFor')} ({selectedItem.quantity * selectedItem.unitValue} P)
               </button>
             )}
             {selectedItem.quantity > 0 && !selectedItem.itemType?.includes('_seed') && (
@@ -141,7 +145,7 @@ export function InventoryScreen() {
                 onClick={() => handleSell(selectedItem, 1)}
                 className="py-2 px-3 bg-surface-container-high text-cream-surface font-mono text-xs uppercase font-bold border border-wood-border active:translate-y-0.5"
               >
-                Sell 1
+                {tl('sellOne')}
               </button>
             )}
           </div>

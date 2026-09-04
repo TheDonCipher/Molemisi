@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { useGame, DeliveryContract } from '../../lib/gameState';
+import { useTranslation } from '../../lib/useTranslation';
 
 const NPCS = [
   {
     name: 'Elder Neo',
     role: 'Village Chief',
+    roleKey: 'communityHub' as const,
     avatar: '/assets/sprites/npcs/elder_neo.png',
     fallback: '👴',
     dialogue: 'The community granary runs low before the dry season. Can you help?',
@@ -16,6 +18,7 @@ const NPCS = [
   {
     name: 'Mama Naledi',
     role: 'Produce Trader',
+    roleKey: 'communityHub' as const,
     avatar: '/assets/sprites/npcs/mama_naledi.png',
     fallback: '👩',
     dialogue: 'I pay top Pula for drought-resistant cowpeas. Bring what you grow!',
@@ -25,6 +28,7 @@ const NPCS = [
   {
     name: 'Refilwe',
     role: 'Herbalist',
+    roleKey: 'communityHub' as const,
     avatar: '/assets/sprites/npcs/refilwe.png',
     fallback: '🧙‍♀️',
     dialogue: 'Wild marula bark heals both cattle and elders. Forage me 5 bundles.',
@@ -33,6 +37,7 @@ const NPCS = [
   {
     name: 'Tau',
     role: 'Bush Scout',
+    roleKey: 'communityHub' as const,
     avatar: '/assets/sprites/npcs/bushveld_scout.png',
     fallback: '🧭',
     dialogue: 'The savanna fringe has ripe fruits and mineral caves. Ready to explore?',
@@ -41,6 +46,7 @@ const NPCS = [
   {
     name: 'Vendor Kabelo',
     role: 'Market Trader',
+    roleKey: 'communityHub' as const,
     avatar: '/assets/sprites/npcs/market_vendor.png',
     fallback: '🛒',
     dialogue: 'Everything has a price, friend. What are you looking to trade today?',
@@ -51,6 +57,8 @@ const NPCS = [
 
 export function KgotlaScreen() {
   const { reputation, maxReputation, setActiveNav, contracts, claimContract } = useGame();
+  const { tl } = useTranslation();
+
   const [selectedNpc, setSelectedNpc] = useState<number | null>(null);
   const [showContracts, setShowContracts] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -86,7 +94,9 @@ export function KgotlaScreen() {
             <span className="font-headline text-xs text-primary uppercase font-bold block">
               Kgotla
             </span>
-            <span className="font-mono text-[9px] text-on-surface-variant">Community Hub</span>
+            <span className="font-mono text-[9px] text-on-surface-variant">
+              {tl('communityHub')}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
@@ -97,10 +107,9 @@ export function KgotlaScreen() {
         </div>
       </div>
 
-      {/* NPCs — spatial layout with centered avatars */}
+      {/* NPCs */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8 bg-black/25">
         <div className="w-full max-w-lg">
-          {/* NPC Grid */}
           <div className="grid grid-cols-2 gap-4">
             {NPCS.map((n, i) => (
               <button
@@ -115,7 +124,6 @@ export function KgotlaScreen() {
                     : 'border-wood-border hover:border-primary/50'
                 }`}
               >
-                {/* NPC Avatar */}
                 <div className="flex items-center gap-3 mb-2">
                   <div
                     className="w-16 h-16 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center shrink-0 rounded-sm"
@@ -167,11 +175,11 @@ export function KgotlaScreen() {
               <div className="flex items-center gap-2">
                 <span className="text-lg">📜</span>
                 <span className="font-headline text-xs text-cream-surface font-bold uppercase">
-                  Active Contracts
+                  {tl('activeContracts')}
                 </span>
               </div>
               <span className="font-mono text-[10px] text-on-surface-variant">
-                {contracts.filter((c) => !c.claimed).length} active
+                {contracts.filter((c) => !c.claimed).length}
               </span>
             </div>
           </button>
@@ -200,7 +208,6 @@ export function KgotlaScreen() {
                     <p className="font-body text-[10px] text-on-surface-variant mb-2">
                       {contract.description}
                     </p>
-                    {/* Progress bar */}
                     <div className="mb-2">
                       <div className="flex justify-between font-mono text-[9px] text-on-surface-variant mb-0.5">
                         <span>
@@ -223,18 +230,18 @@ export function KgotlaScreen() {
                       </span>
                       {contract.claimed ? (
                         <span className="px-3 py-1 bg-surface-container-high text-on-surface-variant font-mono text-[10px] uppercase font-bold">
-                          ✓ Claimed
+                          {tl('claimed')}
                         </span>
                       ) : isComplete ? (
                         <button
                           onClick={() => claimContract(contract.id)}
                           className="px-3 py-1 bg-status-success text-wood-dark font-mono text-[10px] uppercase font-bold active:translate-y-0.5"
                         >
-                          Claim Reward
+                          {tl('claimReward')}
                         </button>
                       ) : (
                         <span className="font-mono text-[9px] text-on-surface-variant">
-                          In Progress
+                          {tl('inProgress')}
                         </span>
                       )}
                     </div>
@@ -244,7 +251,7 @@ export function KgotlaScreen() {
               {contracts.length === 0 && (
                 <div className="bg-wood-dark/80 p-4 border border-wood-border text-center">
                   <span className="font-body text-xs text-on-surface-variant">
-                    Talk to the NPCs to discover contracts!
+                    {tl('talkToNpcs')}
                   </span>
                 </div>
               )}
@@ -287,7 +294,6 @@ export function KgotlaScreen() {
               &ldquo;{npc.dialogue}&rdquo;
             </p>
 
-            {/* NPC-specific contracts */}
             {npcContracts.length > 0 && (
               <div className="mb-3">
                 {npcContracts.map((c) => {
@@ -323,21 +329,21 @@ export function KgotlaScreen() {
                         </div>
                         {c.claimed ? (
                           <span className="font-mono text-[9px] text-status-success font-bold">
-                            ✓ Claimed
+                            {tl('claimed')}
                           </span>
                         ) : isComplete ? (
                           <button
                             onClick={() => {
                               claimContract(c.id);
-                              showToast('Reward claimed!');
+                              showToast(tl('claimReward'));
                             }}
                             className="px-2 py-0.5 bg-status-success text-wood-dark font-mono text-[9px] uppercase font-bold active:translate-y-0.5"
                           >
-                            Claim
+                            {tl('claimReward')}
                           </button>
                         ) : (
                           <span className="font-mono text-[9px] text-on-surface-variant">
-                            In progress
+                            {tl('inProgress')}
                           </span>
                         )}
                       </div>
@@ -347,7 +353,6 @@ export function KgotlaScreen() {
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex gap-2">
               {npcContracts.length > 0 && (
                 <button
@@ -357,14 +362,14 @@ export function KgotlaScreen() {
                   }}
                   className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
                 >
-                  📜 View Contracts
+                  {tl('viewContracts')}
                 </button>
               )}
               <button
                 onClick={() => setSelectedNpc(null)}
                 className="py-2 px-4 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
               >
-                Leave
+                {tl('leave')}
               </button>
             </div>
           </div>
@@ -377,7 +382,7 @@ export function KgotlaScreen() {
           onClick={() => setActiveNav('Farm')}
           className="bg-wood-dark/90 px-3 py-2 border border-wood-border font-mono text-xs text-cream-surface active:scale-95"
         >
-          ← Farm
+          {tl('backToFarm')}
         </button>
       </div>
 

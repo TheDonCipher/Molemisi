@@ -2,18 +2,20 @@
 
 import React from 'react';
 import { useGame } from '../lib/gameState';
-
-const NAV_TABS = [
-  { id: 'farm', label: 'Farm' },
-  { id: 'kgotla', label: 'Kgotla' },
-  { id: 'bushveld', label: 'Wild' },
-  { id: 'market', label: 'Market' },
-  { id: 'inventory', label: 'Bag' },
-  { id: 'settings', label: 'Config' },
-];
+import { useTranslation } from '../lib/useTranslation';
 
 export function HeaderNav() {
   const { pula, farmLevel, activeNav, setActiveNav } = useGame();
+  const { tl } = useTranslation();
+
+  const NAV_TABS = [
+    { id: 'farm', label: tl('farm') },
+    { id: 'kgotla', label: tl('kgotla') },
+    { id: 'bushveld', label: tl('wild') },
+    { id: 'market', label: tl('market') },
+    { id: 'inventory', label: tl('bag') },
+    { id: 'settings', label: tl('config') },
+  ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-wood-medium border-b-2 border-wood-border select-none">
@@ -39,15 +41,33 @@ export function HeaderNav() {
           </div>
         </div>
 
-        {/* Nav tabs — scrollable on mobile */}
+        {/* Nav tabs */}
         <nav className="flex-1 flex justify-center overflow-x-auto scrollbar-none">
           <div className="flex items-center gap-0.5">
             {NAV_TABS.map((tab) => {
-              const isActive = activeNav.toLowerCase() === tab.id;
+              const isActive =
+                activeNav.toLowerCase() === tab.id ||
+                (tab.id === 'bushveld' && activeNav.toLowerCase() === 'wild') ||
+                (tab.id === 'inventory' && activeNav.toLowerCase() === 'bag') ||
+                (tab.id === 'settings' && activeNav.toLowerCase() === 'config');
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveNav(tab.label)}
+                  onClick={() => {
+                    const navName =
+                      tab.id === 'farm'
+                        ? 'Farm'
+                        : tab.id === 'kgotla'
+                          ? 'Kgotla'
+                          : tab.id === 'bushveld'
+                            ? 'Bushveld'
+                            : tab.id === 'market'
+                              ? 'Market'
+                              : tab.id === 'inventory'
+                                ? 'Inventory'
+                                : 'Settings';
+                    setActiveNav(navName);
+                  }}
                   className={`px-2 md:px-3 py-1 font-mono text-[10px] md:text-xs uppercase whitespace-nowrap transition-colors ${
                     isActive
                       ? 'text-primary font-bold border-b-2 border-primary'
@@ -61,14 +81,15 @@ export function HeaderNav() {
           </div>
         </nav>
 
-        {/* Profile icon — always visible, right side */}
-        <button
-          onClick={() => setActiveNav('Settings')}
-          className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
-          title="Profile & Settings"
-        >
-          <span className="material-symbols-outlined text-on-primary text-base">person</span>
-        </button>
+        {/* Profile icon */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => setActiveNav('Settings')}
+            className="w-8 h-8 bg-wood-dark border border-wood-border flex items-center justify-center text-sm hover:border-primary/50 transition-colors"
+          >
+            ⚙
+          </button>
+        </div>
       </div>
     </header>
   );

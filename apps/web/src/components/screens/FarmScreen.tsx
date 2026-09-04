@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useGame, Plot } from '../../lib/gameState';
+import { useTranslation } from '../../lib/useTranslation';
 
 const SEED_OPTIONS = [
   { name: 'Sorghum', cost: 15, icon: '🌾', trait: 'Drought Resistant', itemType: 'sorghum_seed' },
@@ -39,6 +40,7 @@ export function FarmScreen() {
     inventory,
     setActiveNav,
   } = useGame();
+  const { tl } = useTranslation();
 
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [showCropPicker, setShowCropPicker] = useState(false);
@@ -77,7 +79,7 @@ export function FarmScreen() {
   const handlePlant = (seed: (typeof seedPicker)[0]) => {
     if (selectedPlot) {
       plantPlot(selectedPlot.id, seed.name, seed.cost, seed.icon);
-      showToast(`Planted ${seed.name}!`);
+      showToast(`${tl('planted')} ${seed.name}`);
       setSelectedPlot(null);
       setShowCropPicker(false);
     }
@@ -86,7 +88,7 @@ export function FarmScreen() {
   const handleWater = () => {
     if (selectedPlot) {
       waterPlot(selectedPlot.id);
-      showToast('Watered!');
+      showToast(tl('watered'));
       setSelectedPlot(null);
     }
   };
@@ -94,19 +96,19 @@ export function FarmScreen() {
   const handleHarvest = () => {
     if (selectedPlot) {
       harvestPlot(selectedPlot.id);
-      showToast('Harvested!');
+      showToast(tl('harvested'));
       setSelectedPlot(null);
     }
   };
 
   const handleQuickWater = () => {
     quickWaterAll();
-    showToast('All fields watered!');
+    showToast(tl('allFieldsWatered'));
   };
 
   const handleQuickHarvest = () => {
     quickHarvestAll();
-    showToast('All ready crops harvested!');
+    showToast(tl('allHarvested'));
   };
 
   const waterPercent = Math.round((waterLevel / maxWater) * 100);
@@ -127,7 +129,7 @@ export function FarmScreen() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
-      {/* Top HUD — minimal: Day, Pula, Water */}
+      {/* Top HUD */}
       <div className="relative z-10 flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-3 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
           <span className="font-mono text-xs text-primary font-bold">☀ Day {currentDay}</span>
@@ -138,15 +140,14 @@ export function FarmScreen() {
         </div>
         <div className="flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
           <span className="font-mono text-[10px] text-sky-blue">
-            {season} • Fertility {soilFertility}%
+            {season} • {tl('growth')} {soilFertility}%
           </span>
         </div>
       </div>
 
-      {/* Main farm world — the plot grid is the interface */}
+      {/* Main farm world */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-6 bg-black/25">
         <div className="w-full max-w-2xl">
-          {/* Plot Grid — tap to interact */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {plots.map((plot) => (
               <button
@@ -162,18 +163,13 @@ export function FarmScreen() {
                         : 'border-wood-border hover:border-primary/50'
                 }`}
               >
-                {/* Crop icon */}
                 <span className="text-3xl sm:text-4xl">{plot.icon}</span>
-
-                {/* Crop name */}
                 <span className="font-headline text-[10px] sm:text-xs text-cream-surface font-bold leading-tight">
                   {plot.cropName}
                 </span>
-
-                {/* State indicator */}
                 {plot.canHarvest && (
                   <span className="font-mono text-[9px] text-gold-currency font-bold tracking-wider animate-bounce">
-                    READY
+                    {tl('ready')}
                   </span>
                 )}
                 {plot.canWater && (
@@ -182,7 +178,7 @@ export function FarmScreen() {
                   </span>
                 )}
                 {plot.state === 'TILLED' && (
-                  <span className="font-mono text-[9px] text-secondary">Empty Soil</span>
+                  <span className="font-mono text-[9px] text-secondary">{tl('emptySoil')}</span>
                 )}
                 {plot.state === 'GROWING' && !plot.canWater && (
                   <div className="w-full h-1.5 bg-surface-container-high overflow-hidden">
@@ -198,7 +194,7 @@ export function FarmScreen() {
         </div>
       </div>
 
-      {/* Contextual Action Panel — only shows when plot selected */}
+      {/* Contextual Action Panel */}
       {selectedPlot && !showCropPicker && (
         <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
           <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
@@ -222,14 +218,13 @@ export function FarmScreen() {
               </button>
             </div>
 
-            {/* Contextual actions — only valid ones */}
             <div className="flex gap-2">
               {selectedPlot.canPlant && (
                 <button
                   onClick={() => setShowCropPicker(true)}
                   className="flex-1 py-2 bg-secondary-container text-on-secondary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
                 >
-                  🌱 Plant
+                  {tl('plant')}
                 </button>
               )}
               {selectedPlot.canWater && (
@@ -237,7 +232,7 @@ export function FarmScreen() {
                   onClick={handleWater}
                   className="flex-1 py-2 bg-sky-deep text-cream-surface font-mono text-xs uppercase font-bold active:translate-y-0.5"
                 >
-                  💧 Water
+                  {tl('water')}
                 </button>
               )}
               {selectedPlot.canHarvest && (
@@ -245,16 +240,15 @@ export function FarmScreen() {
                   onClick={handleHarvest}
                   className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
                 >
-                  🌾 Harvest
+                  {tl('harvest')}
                 </button>
               )}
             </div>
 
-            {/* Progress bar for growing crops */}
             {selectedPlot.state === 'GROWING' && (
               <div className="mt-3">
                 <div className="flex justify-between font-mono text-[10px] text-on-surface-variant mb-1">
-                  <span>Growth</span>
+                  <span>{tl('growth')}</span>
                   <span>{selectedPlot.stageProgress}%</span>
                 </div>
                 <div className="w-full h-2 bg-surface-container-lowest overflow-hidden">
@@ -269,13 +263,13 @@ export function FarmScreen() {
         </div>
       )}
 
-      {/* Crop Picker — compact, tap to plant */}
+      {/* Crop Picker */}
       {selectedPlot && showCropPicker && (
         <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
           <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
             <div className="flex items-center justify-between mb-3">
               <span className="font-headline text-sm text-primary uppercase font-bold">
-                Plant on {selectedPlot.label}
+                {tl('plantOn')} {selectedPlot.label}
               </span>
               <button
                 onClick={() => setShowCropPicker(false)}
@@ -313,38 +307,35 @@ export function FarmScreen() {
         </div>
       )}
 
-      {/* Quick Actions — bottom left, only essential */}
+      {/* Quick Actions */}
       <div className="fixed bottom-20 md:bottom-4 left-4 z-20 flex flex-col gap-2">
-        {/* Water All */}
         <button
           onClick={handleQuickWater}
           className="w-10 h-10 bg-sky-deep/90 text-cream-surface border border-sky-blue flex items-center justify-center shadow-md active:scale-95"
-          title="Water All"
+          title={tl('waterAll')}
         >
           💧
         </button>
-        {/* Harvest All */}
         <button
           onClick={handleQuickHarvest}
           className="w-10 h-10 bg-primary-container/90 text-on-primary-container border border-primary flex items-center justify-center shadow-md active:scale-95"
-          title="Harvest All"
+          title={tl('harvestAll')}
         >
           🌾
         </button>
-        {/* Well */}
         <button
           onClick={() => {
             refillWell();
-            showToast('Well pumped!');
+            showToast(tl('wellPumped'));
           }}
           className="w-10 h-10 bg-wood-dark/90 text-cream-surface border border-wood-border flex items-center justify-center shadow-md active:scale-95"
-          title="Pump Well"
+          title={tl('pumpWell')}
         >
           🚰
         </button>
       </div>
 
-      {/* Water gauge — bottom right */}
+      {/* Water gauge */}
       <div className="fixed bottom-20 md:bottom-4 right-4 z-20">
         <div className="bg-wood-dark/90 px-3 py-2 border border-wood-border">
           <div className="flex items-center gap-2">
@@ -360,7 +351,7 @@ export function FarmScreen() {
         </div>
       </div>
 
-      {/* Micro Feedback Toast */}
+      {/* Toast */}
       {toast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
           <div className="bg-status-success/90 text-wood-dark px-4 py-2 font-mono text-xs font-bold shadow-lg">
@@ -369,12 +360,12 @@ export function FarmScreen() {
         </div>
       )}
 
-      {/* Granary Quick View — tap to open inventory */}
+      {/* Granary Quick View */}
       <button
         onClick={() => setActiveNav('Inventory')}
         className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-20 bg-wood-dark/90 px-4 py-2 border border-wood-border shadow-md flex items-center gap-3 active:scale-95"
       >
-        <span className="font-mono text-[10px] text-on-surface-variant">Granary:</span>
+        <span className="font-mono text-[10px] text-on-surface-variant">{tl('granary')}</span>
         <span className="font-mono text-[10px] text-cream-surface">🌾 {granarySorghum}</span>
         <span className="font-mono text-[10px] text-cream-surface">🌽 {granaryMaize}</span>
         <span className="font-mono text-[10px] text-cream-surface">🥚 {granaryEggs}</span>

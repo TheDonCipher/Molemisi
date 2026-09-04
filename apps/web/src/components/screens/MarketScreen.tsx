@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useGame, type MarketItem, type InventoryItem } from '@/lib/gameState';
+import { useTranslation } from '@/lib/useTranslation';
 
 const SEED_ICONS: Record<string, string> = {
   sorghum_seed: '🌾',
@@ -23,12 +24,16 @@ function ConfirmModal({
   message,
   onConfirm,
   onCancel,
+  confirmLabel,
+  cancelLabel,
 }: {
   open: boolean;
   title: string;
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
 }) {
   if (!open) return null;
   return (
@@ -93,7 +98,7 @@ function ConfirmModal({
               cursor: 'pointer',
             }}
           >
-            Cancel
+            {cancelLabel || 'Cancel'}
           </button>
           <button
             onClick={onConfirm}
@@ -110,7 +115,7 @@ function ConfirmModal({
               cursor: 'pointer',
             }}
           >
-            Confirm
+            {confirmLabel || 'Confirm'}
           </button>
         </div>
       </div>
@@ -129,6 +134,7 @@ export function MarketScreen() {
     showToast,
     setActiveNav,
   } = useGame();
+  const { tl } = useTranslation();
 
   const [mode, setMode] = React.useState<'buy' | 'sell'>('buy');
   const [confirmState, setConfirmState] = React.useState<{
@@ -138,12 +144,10 @@ export function MarketScreen() {
     fn: () => void;
   }>({ open: false, title: '', message: '', fn: () => {} });
 
-  // Buy: seeds and tools from marketItems
   const buyables = [...marketItems].sort((a: MarketItem, b: MarketItem) =>
     a.name.localeCompare(b.name),
   );
 
-  // Sell: non-seed inventory items with quantity
   const sellables = inventory
     .filter((item: InventoryItem) => item.quantity > 0 && item.category !== 'tools')
     .sort((a: InventoryItem, b: InventoryItem) => a.name.localeCompare(b.name));
@@ -152,11 +156,11 @@ export function MarketScreen() {
     const total = item.price * qty;
     setConfirmState({
       open: true,
-      title: `Buy ${item.name}`,
-      message: `Buy ${qty}x ${item.name} for P${total}? Your balance: P${pula}.`,
+      title: `${tl('buyConfirm')} ${item.name}`,
+      message: `${tl('buyConfirm')} ${qty}x ${item.name} P${total}? Pula: P${pula}.`,
       fn: () => {
         buyMarketItem(item, qty);
-        showToast('Bought!', `${qty}x ${item.name} added to inventory`, '🛒', 'success');
+        showToast(tl('bought'), `${qty}x ${item.name}`, '🛒', 'success');
         setConfirmState((s) => ({ ...s, open: false }));
       },
     });
@@ -166,11 +170,11 @@ export function MarketScreen() {
     const total = item.unitValue * qty;
     setConfirmState({
       open: true,
-      title: `Sell ${item.name}`,
-      message: `Sell ${qty}x ${item.name} for P${total}?`,
+      title: `${tl('sellConfirm')} ${item.name}`,
+      message: `${tl('sellConfirm')} ${qty}x ${item.name} P${total}?`,
       fn: () => {
         sellInventoryItem(item, qty);
-        showToast('Sold!', `${qty}x ${item.name} for P${total}`, '💰', 'success');
+        showToast(tl('sold'), `${qty}x ${item.name} P${total}`, '💰', 'success');
         setConfirmState((s) => ({ ...s, open: false }));
       },
     });
@@ -179,11 +183,11 @@ export function MarketScreen() {
   function handleSellAll() {
     setConfirmState({
       open: true,
-      title: 'Sell All Produce',
-      message: 'Sell all harvested crops and animal products?',
+      title: tl('sellAllProduce'),
+      message: tl('sellAllConfirm'),
       fn: () => {
         quickSellProduce();
-        showToast('Sold all!', 'Everything sold at market', '💰', 'success');
+        showToast(tl('sold'), '', '💰', 'success');
         setConfirmState((s) => ({ ...s, open: false }));
       },
     });
@@ -191,7 +195,7 @@ export function MarketScreen() {
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
-      {/* Background — fixed so it never stretches with content */}
+      {/* Background */}
       <div className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-0">
         <img
           alt="Village Market"
@@ -224,7 +228,7 @@ export function MarketScreen() {
                 fontSize: 22,
               }}
             >
-              🏪 Village Market
+              🏪 {tl('villageMarket')}
             </h2>
             <div
               style={{
@@ -251,7 +255,7 @@ export function MarketScreen() {
                 cursor: 'pointer',
               }}
             >
-              Quick Sell All
+              {tl('quickSellAll')}
             </button>
           )}
         </div>
@@ -276,7 +280,7 @@ export function MarketScreen() {
                 cursor: 'pointer',
               }}
             >
-              {m === 'buy' ? '🛒 Buy Seeds' : '💰 Sell Produce'}
+              {m === 'buy' ? tl('buySeeds') : tl('sellProduce')}
             </button>
           ))}
         </div>
@@ -294,7 +298,7 @@ export function MarketScreen() {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                No seeds or tools available yet.
+                {tl('noSeedsAvailable')}
               </div>
             )}
             {buyables.map((item: MarketItem) => {
@@ -390,7 +394,7 @@ export function MarketScreen() {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                Nothing to sell. Harvest some crops first!
+                {tl('nothingToSell')}
               </div>
             )}
             {sellables.map((item: InventoryItem) => {
@@ -429,7 +433,7 @@ export function MarketScreen() {
                         opacity: 0.7,
                       }}
                     >
-                      ×{qty} · P{item.unitValue} each · Total: P{total}
+                      ×{qty} · P{item.unitValue} {tl('each')} · P{total}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -465,7 +469,7 @@ export function MarketScreen() {
                         cursor: qty >= 1 ? 'pointer' : 'not-allowed',
                       }}
                     >
-                      Sell All
+                      {tl('sellAll')}
                     </button>
                   </div>
                 </div>
@@ -490,7 +494,7 @@ export function MarketScreen() {
               cursor: 'pointer',
             }}
           >
-            ← Back to Farm
+            {tl('backToFarm')}
           </button>
         </div>
 
@@ -501,6 +505,8 @@ export function MarketScreen() {
           message={confirmState.message}
           onConfirm={confirmState.fn}
           onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+          confirmLabel={tl('confirm')}
+          cancelLabel={tl('cancel')}
         />
       </div>
     </div>
