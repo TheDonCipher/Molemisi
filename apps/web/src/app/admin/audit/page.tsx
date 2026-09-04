@@ -6,7 +6,7 @@ const API_BASE = 'http://localhost:3001/api/v1';
 
 function getToken() {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('molemisi_token') || localStorage.getItem('token');
+  return localStorage.getItem('molemisi_admin_token');
 }
 
 async function apiFetch<T = unknown>(method: string, path: string): Promise<T> {

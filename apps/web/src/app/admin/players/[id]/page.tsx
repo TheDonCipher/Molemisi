@@ -7,10 +7,7 @@ const API_BASE = 'http://localhost:3001/api/v1';
 
 function getToken() {
   if (typeof window === 'undefined') return null;
-  return (
-    localStorage.getItem('molemisi_token') ||
-    localStorage.getItem('token')
-  );
+  return localStorage.getItem('molemisi_admin_token');
 }
 
 async function apiFetch<T = unknown>(
@@ -62,6 +59,42 @@ interface PlayerOverview {
   }>;
 }
 
+function ModerationCard({
+  title,
+  icon,
+  description,
+  actionLabel,
+  actionColor,
+  onAction,
+}: {
+  title: string;
+  icon: string;
+  description: string;
+  actionLabel: string;
+  actionColor: string;
+  onAction: () => void;
+}) {
+  return (
+    <div className="bg-wood-dark p-4 border border-wood-border">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">{icon}</span>
+        <span className="font-headline text-sm text-cream-surface font-bold">
+          {title}
+        </span>
+      </div>
+      <p className="font-body text-xs text-on-surface-variant mb-3">
+        {description}
+      </p>
+      <button
+        onClick={onAction}
+        className={`px-4 py-2 font-mono text-xs uppercase font-bold ${actionColor} hover:opacity-80 transition-opacity active:translate-y-0.5`}
+      >
+        {actionLabel}
+      </button>
+    </div>
+  );
+}
+
 export default function PlayerDetailPage({
   params,
 }: {
@@ -70,7 +103,7 @@ export default function PlayerDetailPage({
   const { id } = use(params);
   const [player, setPlayer] = useState<PlayerOverview | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'overview' | 'activity' | 'payments'>(
+  const [tab, setTab] = useState<'overview' | 'activity' | 'payments' | 'moderation'>(
     'overview',
   );
 
@@ -185,6 +218,7 @@ export default function PlayerDetailPage({
             { id: 'overview', label: 'Overview' },
             { id: 'activity', label: 'Activity' },
             { id: 'payments', label: 'Payments' },
+            { id: 'moderation', label: 'Moderation' },
           ] as const
         ).map((t) => (
           <button
@@ -321,6 +355,100 @@ export default function PlayerDetailPage({
               </span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Moderation Tab */}
+      {tab === 'moderation' && (
+        <div className="space-y-4">
+          {/* Warning */}
+          <ModerationCard
+            title="Send Warning"
+            icon="⚠️"
+            description="Send a warning notification to this player. They will see it on their next login."
+            actionLabel="Send Warning"
+            actionColor="bg-status-warning text-wood-dark"
+            onAction={() => {
+              if (
+                window.confirm(
+                  `Send a warning to ${profile.display_name || 'this player'}?`,
+                )
+              ) {
+                alert('Warning sent! (API endpoint pending)');
+              }
+            }}
+          />
+
+          {/* Ban */}
+          <ModerationCard
+            title="Ban Player"
+            icon="🚫"
+            description="Disable this player\'s account. They will be unable to log in or access the game."
+            actionLabel="Ban Player"
+            actionColor="bg-status-danger text-white"
+            onAction={() => {
+              const reason = window.prompt(
+                `Enter ban reason for ${profile.display_name || 'this player'}:`,
+              );
+              if (reason) {
+                alert(
+                  `Player banned. Reason: ${reason}\n(API endpoint pending)`,
+                );
+              }
+            }}
+          />
+
+          {/* Reset Farm */}
+          <ModerationCard
+            title="Reset Farm"
+            icon="🗑️"
+            description="Reset this player\'s farm to starting state. This is irreversible — all crops, buildings, and progress will be lost."
+            actionLabel="Reset Farm"
+            actionColor="bg-red-600 text-white"
+            onAction={() => {
+              if (
+                window.confirm(
+                  `RESET FARM for ${profile.display_name || 'this player'}?\n\nThis will delete all crops, buildings, and inventory. This CANNOT be undone.`,
+                )
+              ) {
+                const doubleConfirm = window.confirm(
+                  'Are you absolutely sure? Type YES in your mind and click OK.',
+                );
+                if (doubleConfirm) {
+                  alert('Farm reset! (API endpoint pending)');
+                }
+              }
+            }}
+          />
+
+          {/* Player Info */}
+          <div className="bg-wood-dark p-4 border border-wood-border">
+            <h3 className="font-headline text-xs text-on-surface-variant uppercase tracking-wider mb-3 font-bold">
+              Player Details
+            </h3>
+            <div className="space-y-2 font-mono text-xs">
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant">User ID</span>
+                <span className="text-cream-surface select-all">{profile.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant">Email</span>
+                <span className="text-cream-surface">{profile.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant">Farm ID</span>
+                <span className="text-cream-surface select-all">{farm?.id || '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant">Created</span>
+                <span className="text-cream-surface">
+                  {profile.created_at
+                    ? new Date(profile.created_at).toLocaleString()
+                    : '—'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

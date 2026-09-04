@@ -6,19 +6,16 @@ import { usePathname } from 'next/navigation';
 
 const API_BASE = 'http://localhost:3001/api/v1';
 
-function getToken() {
+function getAdminToken() {
   if (typeof window === 'undefined') return null;
-  return (
-    localStorage.getItem('molemisi_token') ||
-    localStorage.getItem('token')
-  );
+  return localStorage.getItem('molemisi_admin_token');
 }
 
 async function apiFetch<T = unknown>(
   method: string,
   path: string,
 ): Promise<T> {
-  const token = getToken();
+  const token = getAdminToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -34,6 +31,7 @@ const NAV_ITEMS = [
   { href: '/admin/players', label: 'Players', icon: '👥' },
   { href: '/admin/economy', label: 'Economy', icon: '💰' },
   { href: '/admin/audit', label: 'Audit Log', icon: '📜' },
+  { href: '/admin/config', label: 'Config', icon: '⚙' },
   { href: '/game', label: '← Back to Game', icon: '🎮' },
 ];
 
@@ -46,15 +44,18 @@ export default function AdminLayout({
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      window.location.href = '/auth/login';
+    const adminToken = getAdminToken();
+    if (!adminToken) {
+      window.location.href = '/admin/login';
       return;
     }
     // Verify admin access by hitting the admin endpoint
     apiFetch('GET', '/admin/economy')
       .then(() => setAuthorized(true))
-      .catch(() => setAuthorized(false));
+      .catch(() => {
+        localStorage.removeItem('molemisi_admin_token');
+        window.location.href = '/admin/login';
+      });
   }, []);
 
   if (authorized === null) {
