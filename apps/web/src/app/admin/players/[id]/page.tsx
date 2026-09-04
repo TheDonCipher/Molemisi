@@ -10,13 +10,19 @@ function getToken() {
   return localStorage.getItem('molemisi_admin_token');
 }
 
-async function apiFetch<T = unknown>(method: string, path: string): Promise<T> {
+async function apiFetch<T = unknown>(
+  method: string,
+  path: string,
+  body?: Record<string, unknown>,
+): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}${path}`, { method, headers });
+  const opts: RequestInit = { method, headers };
+  if (body && method !== 'GET') opts.body = JSON.stringify(body);
+  const res = await fetch(`${API_BASE}${path}`, opts);
   if (!res.ok) throw new Error(`API error ${res.status}`);
   const json = await res.json();
   return (json?.data ?? json) as T;
@@ -31,6 +37,10 @@ interface PlayerOverview {
     farm_level: number;
     farm_xp: number;
     energy: number;
+    is_banned: boolean;
+    ban_reason: string | null;
+    warning_count: number;
+    last_warning_message: string | null;
     created_at: string;
   } | null;
   farm: {
@@ -383,6 +393,45 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
+      {/* Ban Banner */}
+      {profile.is_banned && (
+        <div className="bg-status-danger/20 border border-status-danger p-4 mb-4 flex items-center justify-between">
+          <div>
+            <p className="font-headline text-sm text-status-danger font-bold">
+              🚫 Player is BANNED
+            </p>
+            {profile.ban_reason && (
+              <p className="font-mono text-xs text-on-surface-variant mt-1">
+                Reason: {profile.ban_reason}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={async () => {
+              if (window.confirm(`Unban ${profile.display_name || 'this player'}?`)) {
+                try {
+                  await apiFetch('POST', `/admin/players/${id}/unban`);
+                  setPlayer((prev) =>
+                    prev?.profile
+                      ? {
+                          ...prev,
+                          profile: { ...prev.profile, is_banned: false, ban_reason: null },
+                        }
+                      : prev,
+                  );
+                  alert('Player unbanned');
+                } catch (err) {
+                  alert(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                }
+              }
+            }}
+            className="px-4 py-2 bg-surface-container-high text-cream-surface font-mono text-xs uppercase font-bold border border-wood-border hover:bg-surface-container-highest transition-colors"
+          >
+            Unban
+          </button>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 mb-4">
         {(
@@ -586,9 +635,20 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
             description="Send a warning notification to this player. They will see it on their next login."
             actionLabel="Send Warning"
             actionColor="bg-status-warning text-wood-dark"
-            onAction={() => {
-              if (window.confirm(`Send a warning to ${profile.display_name || 'this player'}?`)) {
-                alert('Warning sent! (API endpoint pending)');
+            onAction={async () => {
+              const msg = window.prompt(
+                `Enter warning message for ${profile.display_name || 'this player'}:`,
+              );
+              if (msg) {
+                try {
+                  const result = await apiFetch<{ warningCount: number }>(
+                    'POST',
+                    `/admin/players/${id}/warn`,
+                  );
+                  alert(`Warning sent! Total warnings: ${result?.warningCount ?? '?'}`);
+                } catch (err) {
+                  alert(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                }
               }
             }}
           />
@@ -600,12 +660,17 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
             description="Disable this player\'s account. They will be unable to log in or access the game."
             actionLabel="Ban Player"
             actionColor="bg-status-danger text-white"
-            onAction={() => {
+            onAction={async () => {
               const reason = window.prompt(
                 `Enter ban reason for ${profile.display_name || 'this player'}:`,
               );
               if (reason) {
-                alert(`Player banned. Reason: ${reason}\n(API endpoint pending)`);
+                try {
+                  await apiFetch('POST', `/admin/players/${id}/ban`, { reason });
+                  alert(`Player banned: ${reason}`);
+                } catch (err) {
+                  alert(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                }
               }
             }}
           />
@@ -617,17 +682,27 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
             description="Reset this player\'s farm to starting state. This is irreversible — all crops, buildings, and progress will be lost."
             actionLabel="Reset Farm"
             actionColor="bg-red-600 text-white"
-            onAction={() => {
+            onAction={async () => {
               if (
                 window.confirm(
                   `RESET FARM for ${profile.display_name || 'this player'}?\n\nThis will delete all crops, buildings, and inventory. This CANNOT be undone.`,
                 )
               ) {
                 const doubleConfirm = window.confirm(
-                  'Are you absolutely sure? Type YES in your mind and click OK.',
+                  'Are you absolutely sure? Click OK to confirm irreversible farm reset.',
                 );
                 if (doubleConfirm) {
-                  alert('Farm reset! (API endpoint pending)');
+                  try {
+                    const result = await apiFetch<{ farmName: string }>(
+                      'POST',
+                      `/admin/players/${id}/reset-farm`,
+                    );
+                    alert(
+                      `Farm reset: ${result?.farmName ?? 'done'}. Player returned to starting state.`,
+                    );
+                  } catch (err) {
+                    alert(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                  }
                 }
               }
             }}
@@ -651,6 +726,18 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                 <span className="text-on-surface-variant">Farm ID</span>
                 <span className="text-cream-surface select-all">{farm?.id || '—'}</span>
               </div>
+              {profile.warning_count != null && profile.warning_count > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-on-surface-variant">Warnings</span>
+                  <span className="text-status-warning font-bold">{profile.warning_count}</span>
+                </div>
+              )}
+              {profile.is_banned && (
+                <div className="flex justify-between">
+                  <span className="text-on-surface-variant">Status</span>
+                  <span className="text-status-danger font-bold">BANNED</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-on-surface-variant">Created</span>
                 <span className="text-cream-surface">

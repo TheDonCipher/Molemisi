@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Query, Param, Body, UseGuards, Logger } from '@nestjs/common';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { AdminService } from './admin.service';
 
@@ -68,5 +68,45 @@ export class AdminController {
   async getRecentLedger(@Query('limit') limit?: string) {
     this.logger.log('Admin: recent ledger');
     return this.adminService.getRecentLedger(limit ? parseInt(limit) : 100);
+  }
+
+  /**
+   * Ban a player.
+   * POST /api/v1/admin/players/:playerId/ban
+   */
+  @Post('players/:playerId/ban')
+  async banPlayer(@Param('playerId') playerId: string, @Body('reason') reason: string) {
+    this.logger.log(`Admin: ban player ${playerId}`);
+    return this.adminService.banPlayer(playerId, reason || 'No reason provided');
+  }
+
+  /**
+   * Unban a player.
+   * POST /api/v1/admin/players/:playerId/unban
+   */
+  @Post('players/:playerId/unban')
+  async unbanPlayer(@Param('playerId') playerId: string) {
+    this.logger.log(`Admin: unban player ${playerId}`);
+    return this.adminService.unbanPlayer(playerId);
+  }
+
+  /**
+   * Send a warning to a player.
+   * POST /api/v1/admin/players/:playerId/warn
+   */
+  @Post('players/:playerId/warn')
+  async warnPlayer(@Param('playerId') playerId: string, @Body('message') message: string) {
+    this.logger.log(`Admin: warn player ${playerId}`);
+    return this.adminService.warnPlayer(playerId, message || 'Warning from admin');
+  }
+
+  /**
+   * Reset a player's farm.
+   * POST /api/v1/admin/players/:playerId/reset-farm
+   */
+  @Post('players/:playerId/reset-farm')
+  async resetFarm(@Param('playerId') playerId: string, @Body('reason') reason?: string) {
+    this.logger.log(`Admin: reset farm for player ${playerId}`);
+    return this.adminService.resetFarm(playerId, reason);
   }
 }

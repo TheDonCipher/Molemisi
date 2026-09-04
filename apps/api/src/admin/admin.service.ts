@@ -140,6 +140,225 @@ export class AdminService {
   }
 
   /**
+   * Ban a player. Sets is_banned=true and logs the action.
+   */
+  async banPlayer(playerId: string, reason: string) {
+    // Verify player exists
+    const { data: profile, error: fetchErr } = await this.supabase
+      .getClient()
+      .from('profiles')
+      .select('id, display_name, is_banned')
+      .eq('id', playerId)
+      .single();
+
+    if (fetchErr || !profile) {
+      throw new Error(`Player ${playerId} not found`);
+    }
+    if (profile.is_banned) {
+      throw new Error(`Player ${profile.display_name} is already banned`);
+    }
+
+    // Ban the player
+    const { error } = await this.supabase
+      .getClient()
+      .from('profiles')
+      .update({
+        is_banned: true,
+        ban_reason: reason,
+        banned_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', playerId);
+
+    if (error) throw new Error(`Ban failed: ${error.message}`);
+
+    // Log to ledger
+    await this.supabase
+      .getClient()
+      .from('game_ledger_entries')
+      .insert({
+        player_id: playerId,
+        entry_type: 'ADMIN_BAN',
+        amount_change: 0,
+        description: `Banned by admin: ${reason}`,
+        reference_type: 'admin_action',
+      });
+
+    this.logger.warn(`Admin banned player ${profile.display_name}: ${reason}`);
+    return { success: true, player: profile.display_name, action: 'banned' };
+  }
+
+  /**
+   * Unban a player.
+   */
+  async unbanPlayer(playerId: string) {
+    const { error } = await this.supabase
+      .getClient()
+      .from('profiles')
+      .update({
+        is_banned: false,
+        ban_reason: null,
+        banned_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', playerId);
+
+    if (error) throw new Error(`Unban failed: ${error.message}`);
+
+    await this.supabase.getClient().from('game_ledger_entries').insert({
+      player_id: playerId,
+      entry_type: 'ADMIN_UNBAN',
+      amount_change: 0,
+      description: 'Player unbanned by admin',
+      reference_type: 'admin_action',
+    });
+
+    return { success: true, action: 'unbanned' };
+  }
+
+  /**
+   * Send a warning to a player. Increments warning_count.
+   */
+  async warnPlayer(playerId: string, message: string) {
+    const { data: profile, error: fetchErr } = await this.supabase
+      .getClient()
+      .from('profiles')
+      .select('id, display_name, warning_count')
+      .eq('id', playerId)
+      .single();
+
+    if (fetchErr || !profile) {
+      throw new Error(`Player ${playerId} not found`);
+    }
+
+    const newCount = (profile.warning_count || 0) + 1;
+    const { error } = await this.supabase
+      .getClient()
+      .from('profiles')
+      .update({
+        warning_count: newCount,
+        last_warning_at: new Date().toISOString(),
+        last_warning_message: message,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', playerId);
+
+    if (error) throw new Error(`Warning failed: ${error.message}`);
+
+    // Log to ledger
+    await this.supabase
+      .getClient()
+      .from('game_ledger_entries')
+      .insert({
+        player_id: playerId,
+        entry_type: 'ADMIN_WARNING',
+        amount_change: 0,
+        description: `Warning #${newCount}: ${message}`,
+        reference_type: 'admin_action',
+      });
+
+    this.logger.warn(`Admin warned player ${profile.display_name} (#${newCount}): ${message}`);
+    return {
+      success: true,
+      player: profile.display_name,
+      warningCount: newCount,
+      message,
+    };
+  }
+
+  /**
+   * Reset a player's farm to starting state.
+   * Deletes crops, livestock, buildings, inventory, and resets farm values.
+   */
+  async resetFarm(playerId: string, reason?: string) {
+    // Get farm
+    const { data: farm, error: farmErr } = await this.supabase
+      .getClient()
+      .from('farms')
+      .select('id, name')
+      .eq('user_id', playerId)
+      .single();
+
+    if (farmErr || !farm) {
+      throw new Error(`Farm for player ${playerId} not found`);
+    }
+
+    const farmId = farm.id;
+
+    // Delete all farm data (CASCADE handles plots → crops)
+    const deleteResults = await Promise.allSettled([
+      this.supabase.getClient().from('crop_instances').delete().eq('farm_id', farmId),
+      this.supabase.getClient().from('livestock').delete().eq('farm_id', farmId),
+      this.supabase.getClient().from('buildings').delete().eq('farm_id', farmId),
+      this.supabase.getClient().from('inventory').delete().eq('farm_id', farmId),
+      this.supabase.getClient().from('farm_plots').delete().eq('farm_id', farmId),
+    ]);
+
+    const failures = deleteResults.filter((r) => r.status === 'rejected');
+    if (failures.length > 0) {
+      this.logger.error(`Farm reset partial failure: ${failures.length} tables failed`);
+    }
+
+    // Reset farm to defaults
+    const { error: farmResetErr } = await this.supabase
+      .getClient()
+      .from('farms')
+      .update({
+        level: 1,
+        xp: 0,
+        plot_count: 4,
+        weather_state: 'clear',
+        season: 'spring',
+        season_day: 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', farmId);
+
+    if (farmResetErr) throw new Error(`Farm reset failed: ${farmResetErr.message}`);
+
+    // Reset profile currency and XP
+    await this.supabase
+      .getClient()
+      .from('profiles')
+      .update({
+        currency: 100,
+        farm_xp: 0,
+        farm_level: 1,
+        energy: 100,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', playerId);
+
+    // Recreate starting plots
+    const plots = Array.from({ length: 4 }, (_, i) => ({
+      farm_id: farmId,
+      slot_index: i,
+      state: 'EMPTY',
+    }));
+    await this.supabase.getClient().from('farm_plots').insert(plots);
+
+    // Log to ledger
+    await this.supabase
+      .getClient()
+      .from('game_ledger_entries')
+      .insert({
+        player_id: playerId,
+        entry_type: 'ADMIN_RESET',
+        amount_change: 0,
+        description: `Farm reset by admin${reason ? `: ${reason}` : ''}`,
+        reference_type: 'admin_action',
+      });
+
+    this.logger.warn(`Admin reset farm for ${farm.name} (player ${playerId})`);
+    return {
+      success: true,
+      farmName: farm.name,
+      action: 'reset',
+      deletedTables: ['crop_instances', 'livestock', 'buildings', 'inventory', 'farm_plots'],
+    };
+  }
+
+  /**
    * Get recent game ledger entries for economy monitoring.
    */
   async getRecentLedger(limit = 100) {
