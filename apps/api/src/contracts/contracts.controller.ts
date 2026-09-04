@@ -13,7 +13,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ContractsService } from './contracts.service';
 import { FarmsService } from '../farms/farms.service';
 
-@Controller('api/v1/farms/:farmId/contracts')
+@Controller('farms/:farmId/contracts')
 @UseGuards(AuthGuard)
 export class ContractsController {
   constructor(
@@ -31,10 +31,7 @@ export class ContractsController {
   }
 
   @Get('active')
-  async getActiveContracts(
-    @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
-  ) {
+  async getActiveContracts(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.contractsService.getActiveContracts(farmId);
   }

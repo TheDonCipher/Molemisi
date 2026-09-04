@@ -30,9 +30,9 @@ Use **NestJS** as a **modular monolith** for the backend API.
 
 ## Alternatives Rejected
 
-| Alternative | Reason Rejected |
-|------------|-----------------|
-| Microservices | Unnecessary complexity for MVP |
-| Express.js | Less structure, more boilerplate |
-| Fastify | Less mature ecosystem |
-| Django/FastAPI | Wrong language (Python) |
+| Alternative    | Reason Rejected                  |
+| -------------- | -------------------------------- |
+| Microservices  | Unnecessary complexity for MVP   |
+| Express.js     | Less structure, more boilerplate |
+| Fastify        | Less mature ecosystem            |
+| Django/FastAPI | Wrong language (Python)          |

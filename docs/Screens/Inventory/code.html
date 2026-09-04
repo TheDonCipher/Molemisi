@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&amp;family=Space+Grotesk:wght@500;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "cream-surface": "#F5E6D3", "surface-dim": "#210e0b", "tertiary-fixed": "#ffdbd0", "on-surface-variant": "#dcc1ae", "surface-container-high": "#3b2420", "secondary-fixed-dim": "#9cd67a", "on-primary-fixed-variant": "#6d3a00", "surface-container-low": "#2b1613", "surface-variant": "#472f2b", "on-primary-fixed": "#2e1500", "secondary": "#9cd67a", "primary-fixed": "#ffdcc2", "wood-dark": "#2C1810", "on-primary": "#4c2700", "surface": "#210e0b", "inverse-on-surface": "#422a26", "surface-container-lowest": "#1b0906", "on-background": "#ffdad4", "surface-container-highest": "#472f2b", "status-warning": "#FFC107", "on-tertiary-fixed": "#3a0b00", "on-secondary-fixed-variant": "#205102", "outline": "#a48c7a", "on-error": "#690005", "error-container": "#93000a", "wood-medium": "#4E342E", "wood-border": "#5D4037", "inverse-primary": "#8f4e00", "secondary-container": "#225404", "sky-blue": "#87CEEB", "error": "#ffb4ab", "on-surface": "#ffdad4", "surface-bright": "#4c332f", "primary": "#ffb87b", "inverse-surface": "#ffdad4", "outline-variant": "#564334", "on-secondary-fixed": "#082100", "primary-fixed-dim": "#ffb77a", "surface-tint": "#ffb77a", "on-error-container": "#ffdad6", "background": "#210e0b", "tertiary-fixed-dim": "#ffb59e", "primary-container": "#ff8f00", "status-success": "#4CAF50", "tertiary-container": "#fe8c68", "on-primary-container": "#623400", "status-info": "#2196F3", "tertiary": "#ffb59f", "on-tertiary-fixed-variant": "#7e2b0f", "on-secondary-container": "#8fc86d", "gold-currency": "#FFD700", "on-tertiary-container": "#742408", "on-tertiary": "#5e1700", "sky-deep": "#4A7FB5", "surface-container": "#2f1a16", "on-secondary": "#133800", "status-danger": "#C62828", "secondary-fixed": "#b7f393" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-mobile": "0.75rem", "space-sm": "0.5rem", "space-md": "0.75rem", "pixel-1": "0.125rem", "pixel-2": "0.25rem", "space-2xl": "2rem", "space-lg": "1rem", "gutter-desktop": "1.5rem", "space-xl": "1.5rem" }, "fontFamily": { "headline-lg-mobile": [ "spaceGrotesk" ], "headline-lg": [ "spaceGrotesk" ], "headline-md": [ "spaceGrotesk" ], "body-lg": [ "rubik" ], "label-md": [ "spaceMono" ], "headline-sm": [ "spaceGrotesk" ], "label-lg": [ "spaceMono" ], "body-md": [ "rubik" ], "label-sm": [ "spaceMono" ], "body-sm": [ "rubik" ] }, "fontSize": { "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "700" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "label-md": [ "12px", { "lineHeight": "16px", "fontWeight": "700" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "700" } ], "label-lg": [ "14px", { "lineHeight": "18px", "fontWeight": "700" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "label-sm": [ "10px", { "lineHeight": "14px", "fontWeight": "700" } ], "body-sm": [ "12px", { "lineHeight": "16px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface select-none antialiased min-h-screen flex flex-col justify-between"><header class="fixed top-0 left-0 right-0 z-50 bg-wood-medium shadow-[2px_2px_0px_rgba(0,0,0,0.5)] border-b-2 border-wood-border"><div class="h-20 w-full px-gutter-desktop mx-auto flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="Molemisi Game Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMiq7yfXA9gT-3ahsTGXP4-y9c6JWMaLJQuupUvRjTM7X0sHBIuEAUFSRBgkto7oh5Vzzcjstc4tM4BlcHOyrV1J_x8jZJ9AAQItbVjoa6oLkvFbZBt9Kxun_zwb2vPL1tyYI0VERZsU2tqP9nngcDDcbD-najEr9oyp2K2w2UagFzH-NRf-6AaUP_Pbx69D3NiJ4lFXC2VayD67RzsZ53UA3mPjqyT8LYonkH3i-4YCSXIztNIfMRSQ"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-wider uppercase">Molemisi</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Botswana Farm Sim</span></div><div class="hidden xl:flex items-center gap-space-sm ml-space-md bg-wood-dark px-space-md py-pixel-2 border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><div class="flex flex-col gap-pixel-1"><div class="flex items-center justify-between gap-space-md"><span class="font-label-sm text-label-sm text-primary-container font-bold">★ Lv.5 Farm</span><span class="font-label-sm text-label-sm text-on-surface-variant">2,450 / 3,000 XP</span></div><div class="w-36 h-2 bg-surface-container-lowest border border-wood-border rounded-none overflow-hidden"><div class="h-full bg-gold-currency w-[81%]"></div></div></div></div></div><div class="hidden lg:flex items-center gap-space-md"><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-gold-currency text-[18px]">monetization_on</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Funds</span><span class="font-label-md text-label-md text-gold-currency tracking-wider">1,234 P</span></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-status-info text-[18px]">water_drop</span><div class="flex flex-col"><div class="flex justify-between items-center gap-space-sm"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Water</span><span class="font-label-sm text-label-sm text-status-info font-bold">85%</span></div><div class="w-20 h-2 bg-surface-container-lowest border border-wood-border rounded-none mt-pixel-1"><div class="h-full bg-status-info w-[85%]"></div></div></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-primary text-[18px]">wb_sunny</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Daylight</span><span class="font-label-md text-label-md text-cream-surface font-bold">Day - 14:30</span></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-secondary text-[18px]">grass</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Season</span><span class="font-label-md text-label-md text-secondary font-bold">Summer - Day 14</span></div></div></div><nav class="hidden md:flex items-center gap-space-sm bg-wood-dark px-space-sm py-pixel-2 border border-wood-border rounded" data-active-classes="bg-primary-container text-on-primary-container font-bold border-b-2 border-on-primary-container"><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="farm" href="#">Farm</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="kgotla" href="#">Kgotla</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="bushveld" href="#">Bushveld</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="market" href="#">Market</a><a aria-current="page" class="px-space-sm py-pixel-2 uppercase transition-colors bg-primary-container text-on-primary-container font-bold border-b-2 border-on-primary-container" data-path="inventory" href="#">Inventory</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="settings" href="#">Settings</a></nav><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 pb-16 bg-surface"><div class="flex flex-col w-full">
+<!-- Interactive Inventory & Construction Management Dashboard -->
+<div class="w-full px-gutter-mobile md:px-gutter-desktop py-space-md space-y-space-lg">
+<!-- Top Status Banner / Granary Summary Strip -->
+<div class="w-full bg-surface-container-low rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 bg-wood-dark rounded flex items-center justify-center text-primary-container shadow-[inset_0_0_4px_rgba(0,0,0,0.6)]">
+<span class="material-symbols-outlined text-[24px]">warehouse</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-primary tracking-wide uppercase">Farm Compound Ledger</span>
+<span class="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-space-sm py-pixel-1 rounded">Sec. 11.2 - 11.3 Active</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Rural Central District • Morama Kraal Settlement</span>
+</div>
+</div>
+<!-- Quick Resource Tally Counters -->
+<div class="flex flex-wrap items-center gap-space-md">
+<div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-pixel-2 rounded shadow-[2px_2px_0px_rgba(0,0,0,0.35)]">
+<span class="material-symbols-outlined text-primary text-[18px]">inventory_2</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Satchel Load</span>
+<span class="font-label-md text-label-md text-primary font-bold" id="satchel-load-text">28 / 50 SLOTS</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-pixel-2 rounded shadow-[2px_2px_0px_rgba(0,0,0,0.35)]">
+<span class="material-symbols-outlined text-gold-currency text-[18px]">payments</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Pula Purse</span>
+<span class="font-label-md text-label-md text-gold-currency font-bold" id="purse-display">1,234 P</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-pixel-2 rounded shadow-[2px_2px_0px_rgba(0,0,0,0.35)]">
+<span class="material-symbols-outlined text-tertiary text-[18px]">forest</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Lumberyard</span>
+<span class="font-label-md text-label-md text-cream-surface font-bold" id="stock-wood">35 Acacia</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-pixel-2 rounded shadow-[2px_2px_0px_rgba(0,0,0,0.35)]">
+<span class="material-symbols-outlined text-outline text-[18px]">landscape</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Granite Heap</span>
+<span class="font-label-md text-label-md text-cream-surface font-bold" id="stock-stone">18 Granite</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Dual Split Game Console -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT HALF: FARMER'S SATCHEL & GRANARY (COL 7) -->
+<section class="lg:col-span-7 flex flex-col gap-space-md bg-wood-medium/95 rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<!-- Header & Slot Capacity Gauge -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm bg-wood-dark px-space-md py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.4)]">
+<div class="flex items-center gap-space-sm">
+<span class="text-xl">📦</span>
+<div class="flex flex-col">
+<h2 class="font-headline-sm text-headline-sm text-primary uppercase tracking-wider">Farmer's Satchel &amp; Granary</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tswana field crops, harvested yield &amp; raw store</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-pixel-1 min-w-[140px]">
+<div class="flex items-center justify-between w-full text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Capacity:</span>
+<span class="text-primary font-bold">28 / 50</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-none overflow-hidden">
+<div class="h-full bg-primary-container w-[56%] transition-all duration-300"></div>
+</div>
+</div>
+</div>
+<!-- Inventory Category Tabs -->
+<div class="flex flex-wrap items-center gap-pixel-2 bg-wood-dark p-pixel-2 rounded">
+<button class="inv-filter-btn px-space-sm py-pixel-2 font-label-sm text-label-sm uppercase rounded bg-primary-container text-on-primary-container transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" data-filter="all" type="button">
+            [All Items]
+          </button>
+<button class="inv-filter-btn px-space-sm py-pixel-2 font-label-sm text-label-sm uppercase rounded bg-surface-container-high text-on-surface-variant hover:text-cream-surface transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" data-filter="crops" type="button">
+            [Crops &amp; Seeds]
+          </button>
+<button class="inv-filter-btn px-space-sm py-pixel-2 font-label-sm text-label-sm uppercase rounded bg-surface-container-high text-on-surface-variant hover:text-cream-surface transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" data-filter="animal" type="button">
+            [Animal Goods]
+          </button>
+<button class="inv-filter-btn px-space-sm py-pixel-2 font-label-sm text-label-sm uppercase rounded bg-surface-container-high text-on-surface-variant hover:text-cream-surface transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" data-filter="materials" type="button">
+            [Raw Materials]
+          </button>
+<button class="inv-filter-btn px-space-sm py-pixel-2 font-label-sm text-label-sm uppercase rounded bg-surface-container-high text-on-surface-variant hover:text-cream-surface transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" data-filter="tools" type="button">
+            [Tools]
+          </button>
+</div>
+<!-- 5x4 Grid of Pixel Art Inventory Slots -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-[inset_0_0_8px_rgba(0,0,0,0.8)]">
+<div class="grid grid-cols-5 gap-space-sm" id="inventory-grid">
+<!-- Slot 1: Sorghum x24 (Initially Selected) -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] ring-2 ring-primary-container bg-surface-container-high" data-category="crops" data-desc="Hardy golden grain harvested from your field. Can be milled into mealie-meal, traded at the village market, or delivered for Kgotla community contracts." data-icon="🌾" data-id="sorghum" data-name="Sorghum" data-qty="24" data-total-val="240" data-unit-val="10" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🌾</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-primary px-pixel-1 rounded font-bold leading-none">24</span>
+<span class="sr-only">Sorghum 24 items</span>
+</button>
+<!-- Slot 2: Maize x12 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="crops" data-desc="Plump sun-ripened sweetcorn cobs. Excellent for roasting over campfire braai or grinding down for thick samp porridges." data-icon="🌽" data-id="maize" data-name="Sweet Maize" data-qty="12" data-total-val="96" data-unit-val="8" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🌽</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-cream-surface px-pixel-1 rounded font-bold leading-none">12</span>
+<span class="sr-only">Maize 12 items</span>
+</button>
+<!-- Slot 3: Cowpeas x8 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="crops" data-desc="Drought-resistant pulse staple (Dinawa). Essential protein source for community rations and rich soil nitrogen restoration." data-icon="🫘" data-id="cowpeas" data-name="Cowpeas" data-qty="8" data-total-val="96" data-unit-val="12" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🫘</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-cream-surface px-pixel-1 rounded font-bold leading-none">8</span>
+<span class="sr-only">Cowpeas 8 items</span>
+</button>
+<!-- Slot 4: Groundnuts x15 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="crops" data-desc="Earthy peanuts cultivated beneath red Kalahari sands. Prized by traveling merchants for oils and snack batches." data-icon="🥜" data-id="groundnuts" data-name="Groundnuts" data-qty="15" data-total-val="135" data-unit-val="9" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🥜</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-cream-surface px-pixel-1 rounded font-bold leading-none">15</span>
+<span class="sr-only">Groundnuts 15 items</span>
+</button>
+<!-- Slot 5: Tomatoes x5 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="crops" data-desc="Juicy garden tomatoes nurtured under shade-cloth netting. Freshness degrades quickly without proper granary cold-vaulting." data-icon="🍅" data-id="tomatoes" data-name="Tomatoes" data-qty="5" data-total-val="70" data-unit-val="14" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🍅</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-cream-surface px-pixel-1 rounded font-bold leading-none">5</span>
+<span class="sr-only">Tomatoes 5 items</span>
+</button>
+<!-- Slot 6: Fresh Goat Milk x4 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="animal" data-desc="Creamy wholesome milk milked at daybreak from the Boer goats. Can be curdled into soft cheese or traded fresh." data-icon="🥛" data-id="goatmilk" data-name="Fresh Goat Milk" data-qty="4" data-total-val="100" data-unit-val="25" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🥛</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-cream-surface px-pixel-1 rounded font-bold leading-none">4</span>
+<span class="sr-only">Fresh Goat Milk 4 items</span>
+</button>
+<!-- Slot 7: Farm Fresh Eggs x12 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="animal" data-desc="Free-range hen clutch gathered from the perimeter nesting baskets. Essential for baking rustic bushveld cornbread." data-icon="🥚" data-id="fresh-eggs" data-name="Farm Fresh Eggs" data-qty="12" data-total-val="72" data-unit-val="6" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🥚</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-cream-surface px-pixel-1 rounded font-bold leading-none">12</span>
+<span class="sr-only">Farm Fresh Eggs 12 items</span>
+</button>
+<!-- Slot 8: Acacia Wood x35 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="materials" data-desc="Dense, termite-resistant hardwood timbers felled from thornveld ridges. Indispensable for kraal palisades and coop rafters." data-icon="🪵" data-id="acacia-wood" data-name="Acacia Wood" data-qty="35" data-total-val="140" data-unit-val="4" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🪵</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-primary-fixed-dim px-pixel-1 rounded font-bold leading-none">35</span>
+<span class="sr-only">Acacia Wood 35 items</span>
+</button>
+<!-- Slot 9: Granite Stone x18 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="materials" data-desc="Quarried riverbed stone slabs. Ideal for stabilizing well linings, structural footers, and heavy millstone grinding bases." data-icon="🪨" data-id="granite-stone" data-name="Granite Stone" data-qty="18" data-total-val="90" data-unit-val="5" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🪨</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-primary-fixed-dim px-pixel-1 rounded font-bold leading-none">18</span>
+<span class="sr-only">Granite Stone 18 items</span>
+</button>
+<!-- Slot 10: Dried Marula Herbs x7 -->
+<button class="inv-slot group relative aspect-square bg-wood-dark rounded p-pixel-2 flex flex-col items-center justify-center shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors" data-category="materials" data-desc="Fragrant leaves gathered from sacred Marula groves. Highly sought after by village apothecaries for cattle soothing tonics." data-icon="🌿" data-id="marula-herbs" data-name="Dried Marula Herbs" data-qty="7" data-total-val="112" data-unit-val="16" type="button">
+<span class="text-2xl select-none group-hover:scale-110 transition-transform">🌿</span>
+<span class="absolute bottom-1 right-1 font-label-sm text-label-sm bg-wood-dark/90 text-secondary px-pixel-1 rounded font-bold leading-none">7</span>
+<span class="sr-only">Dried Marula Herbs 7 items</span>
+</button>
+<!-- Empty slots 11 to 20 to complete 5x4 satchel visual -->
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">11</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">12</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">13</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">14</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">15</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">16</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">17</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">18</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">19</span>
+</div>
+<div class="aspect-square bg-surface-container-low rounded p-pixel-2 flex items-center justify-center opacity-40 shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]">
+<span class="font-label-sm text-label-sm text-outline-variant select-none">20</span>
+</div>
+</div>
+</div>
+<!-- Selected Item Details Box -->
+<div class="bg-wood-dark p-space-md rounded shadow-[inset_0_0_6px_rgba(0,0,0,0.6)] flex flex-col gap-space-md" id="detail-box">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 bg-surface-container-high rounded flex items-center justify-center text-3xl shadow-[2px_2px_0px_rgba(0,0,0,0.5)]" id="detail-icon-frame">
+                🌾
+              </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<h3 class="font-headline-sm text-headline-sm text-primary tracking-wide" id="detail-title">Sorghum (x24)</h3>
+<span class="font-label-sm text-label-sm px-space-sm py-pixel-1 bg-secondary-container text-on-secondary-container uppercase rounded" id="detail-cat-badge">Crops</span>
+</div>
+<div class="flex items-center gap-space-md font-label-md text-label-md text-on-surface-variant">
+<span>Unit: <span class="text-gold-currency font-bold" id="detail-unit">10 P</span> each</span>
+<span class="text-outline">•</span>
+<span>Total Yield: <span class="text-gold-currency font-bold" id="detail-total">240 Pula</span></span>
+</div>
+</div>
+</div>
+<!-- Granary Grade Seal -->
+<div class="hidden sm:flex flex-col items-center bg-surface-container-low px-space-sm py-pixel-2 rounded">
+<span class="material-symbols-outlined text-primary text-[20px]">verified</span>
+<span class="font-label-sm text-label-sm text-primary uppercase">Grade A Dry</span>
+</div>
+</div>
+<!-- Description -->
+<p class="font-body-md text-body-md text-cream-surface bg-surface-container-lowest/80 p-space-sm rounded" id="detail-desc">
+            Hardy golden grain harvested from your field. Can be milled into mealie-meal, traded at the village market, or delivered for Kgotla community contracts.
+          </p>
+<!-- Satchel Action Buttons -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm pt-pixel-2">
+<button class="flex items-center justify-center gap-space-sm bg-primary-container hover:bg-[#FFA040] active:bg-[#E65100] text-wood-dark font-label-md text-label-md uppercase px-space-md py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" id="btn-sell-market" type="button">
+<span class="material-symbols-outlined text-[18px]">storefront</span>
+<span id="sell-btn-label">Sell at Market (240 P)</span>
+</button>
+<button class="flex items-center justify-center gap-space-sm bg-surface-container-high hover:bg-wood-medium text-cream-surface hover:text-primary font-label-md text-label-md uppercase px-space-md py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" id="btn-mill-flour" type="button">
+<span class="material-symbols-outlined text-[18px]">grain</span>
+<span>Mill into Flour</span>
+</button>
+<button class="flex items-center justify-center gap-space-sm bg-secondary-container hover:bg-[#2e6d08] text-cream-surface font-label-md text-label-md uppercase px-space-md py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" id="btn-donate-kgotla" type="button">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+<span>Donate to Kgotla</span>
+</button>
+</div>
+<!-- Quick Feedback Banner -->
+<div class="hidden items-center gap-space-sm bg-secondary-container/90 text-cream-surface px-space-sm py-pixel-2 rounded font-label-sm text-label-sm" id="satchel-feedback">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span id="feedback-text">Item transaction recorded in the Village Ledger!</span>
+</div>
+</div>
+</section>
+<!-- RIGHT HALF: FARM CONSTRUCTION & UPGRADES (COL 5) -->
+<section class="lg:col-span-5 flex flex-col gap-space-md bg-wood-medium/95 rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<!-- Construction Header -->
+<div class="flex items-center justify-between bg-wood-dark px-space-md py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.4)]">
+<div class="flex items-center gap-space-sm">
+<span class="text-xl">🏗️</span>
+<div class="flex flex-col">
+<h2 class="font-headline-sm text-headline-sm text-primary uppercase tracking-wider">Farm Construction &amp; Upgrades</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Expand compound shelters, enclosures &amp; aquifers</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm bg-primary-container text-on-primary-container px-space-sm py-pixel-1 rounded font-bold">
+            3 BLUEPRINTS
+          </span>
+</div>
+<!-- Project Cards Stack -->
+<div class="space-y-space-md">
+<!-- Card 1: Chicken Coop (Level 1) - READY TO BUILD -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] flex flex-col gap-space-sm" id="project-coop">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl p-pixel-2 bg-wood-dark rounded">🏠</span>
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-primary">Chicken Coop (Level 1)</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Houses up to 6 hens • Produces fresh eggs daily</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-space-sm py-pixel-1 rounded uppercase font-bold tracking-wider">
+                Ready
+              </span>
+</div>
+<!-- Material Requirements Breakdown -->
+<div class="grid grid-cols-3 gap-pixel-2 bg-wood-dark p-space-sm rounded">
+<!-- Pula Cost -->
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Pula Cost</span>
+<span class="font-label-md text-label-md text-gold-currency font-bold">200 P</span>
+<span class="font-label-sm text-label-sm text-secondary">You have: 1,234</span>
+</div>
+<!-- Wood Cost -->
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Acacia Timber</span>
+<span class="font-label-md text-label-md text-tertiary font-bold">20 Wood</span>
+<span class="font-label-sm text-label-sm text-secondary">You have: 35</span>
+</div>
+<!-- Stone Cost -->
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Granite Stone</span>
+<span class="font-label-md text-label-md text-outline font-bold">10 Stone</span>
+<span class="font-label-sm text-label-sm text-secondary">You have: 18</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-pixel-1">
+<span class="font-label-sm text-label-sm text-secondary font-bold flex items-center gap-pixel-1">
+<span class="material-symbols-outlined text-[16px]">check_box</span>
+                All materials ready!
+              </span>
+<!-- Action Button -->
+<button class="flex items-center gap-space-sm bg-primary-container hover:bg-[#FFA040] active:bg-[#E65100] text-wood-dark font-label-md text-label-md uppercase px-space-md py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" id="btn-construct-coop" type="button">
+<span>🔨</span>
+<span>Construct Coop Now</span>
+</button>
+</div>
+</div>
+<!-- Card 2: Goat Kraal / Enclosure - LOCKED (Requires Farm Lv.6) -->
+<div class="bg-surface-container-lowest/80 p-space-md rounded shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] flex flex-col gap-space-sm opacity-85">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl p-pixel-2 bg-wood-dark rounded opacity-60">🐐</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<h3 class="font-headline-sm text-headline-sm text-cream-surface">Goat Kraal / Enclosure</h3>
+<span class="material-symbols-outlined text-outline text-[18px]">lock</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Protective thorn-fenced shelter for Boer milch goats</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm bg-error-container text-on-error-container px-space-sm py-pixel-1 rounded uppercase font-bold tracking-wider">
+                Lv.6 Required
+              </span>
+</div>
+<!-- Material Requirements Breakdown -->
+<div class="grid grid-cols-4 gap-pixel-2 bg-wood-dark p-space-sm rounded">
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Cost</span>
+<span class="font-label-md text-label-md text-gold-currency font-bold">450 P</span>
+<span class="font-label-sm text-label-sm text-secondary">OK</span>
+</div>
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Timber</span>
+<span class="font-label-md text-label-md text-tertiary font-bold">40 Wood</span>
+<span class="font-label-sm text-label-sm text-error">35 / 40</span>
+</div>
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Granite</span>
+<span class="font-label-md text-label-md text-outline font-bold">25 Stone</span>
+<span class="font-label-sm text-label-sm text-error">18 / 25</span>
+</div>
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Farm Level</span>
+<span class="font-label-md text-label-md text-primary font-bold">Lv.6</span>
+<span class="font-label-sm text-label-sm text-error">Current: 5</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-pixel-1">
+<span class="font-label-sm text-label-sm text-error font-bold flex items-center gap-pixel-1">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+                Locked (Requires Farm Lv.6)
+              </span>
+<button class="cursor-not-allowed flex items-center gap-space-sm bg-surface-container text-outline font-label-md text-label-md uppercase px-space-md py-space-sm rounded" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span>Enclosure Locked</span>
+</button>
+</div>
+</div>
+<!-- Card 3: Deep Borehole Well Upgrade - AVAILABLE -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-[inset_0_0_6px_rgba(0,0,0,0.7)] flex flex-col gap-space-sm" id="project-well">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl p-pixel-2 bg-wood-dark rounded">💧</span>
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-sky-blue">Deep Borehole Well Upgrade</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Taps deep subterranean aquifer • Expands water reserve to 300L</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm bg-status-info/20 text-sky-blue px-space-sm py-pixel-1 rounded uppercase font-bold tracking-wider">
+                Aquifer Tech
+              </span>
+</div>
+<!-- Material Breakdown -->
+<div class="grid grid-cols-2 gap-pixel-2 bg-wood-dark p-space-sm rounded">
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Excavation Cost</span>
+<span class="font-label-md text-label-md text-gold-currency font-bold">350 Pula</span>
+<span class="font-label-sm text-label-sm text-secondary">You have: 1,234 P</span>
+</div>
+<div class="flex flex-col items-center justify-center p-pixel-2 bg-surface-container-high rounded text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Casing Masonry</span>
+<span class="font-label-md text-label-md text-outline font-bold">15 Stone</span>
+<span class="font-label-sm text-label-sm text-secondary">You have: 18 Stone</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-pixel-1">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-sky-blue font-bold flex items-center gap-pixel-1">
+<span class="material-symbols-outlined text-[16px]">water_pump</span>
+                  Water Capacity: +150L boost
+                </span>
+</div>
+<button class="flex items-center gap-space-sm bg-wood-dark hover:bg-surface-container-high text-primary font-label-md text-label-md uppercase px-space-md py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" id="btn-upgrade-well" type="button">
+<span class="material-symbols-outlined text-status-info text-[18px]">upgrade</span>
+<span>Upgrade Well</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Village Builder's Notice Slip -->
+<div class="bg-wood-dark p-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.4)] flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">engineering</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Crafting buildings immediately claims wood &amp; stone from the compound yard. Ensure granary roof timbers are protected during rainy storms!
+          </p>
+</div>
+</section>
+</div>
+<!-- Bottom Contextual Illustration & Botswana Lore Insight Card -->
+<div class="w-full bg-wood-medium/90 rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col md:flex-row items-center gap-space-lg">
+<!-- Visual Farmstead Graphic Container -->
+<div class="w-full md:w-1/3 h-40 bg-surface-container-lowest rounded overflow-hidden relative shadow-[inset_0_0_8px_rgba(0,0,0,0.8)] flex items-center justify-center">
+<img class="w-full h-full object-cover opacity-80 hover:scale-105 transition-transform duration-500" data-alt="A warm 16-bit retro pixel art scene of an African rural farmstead in Botswana at dusk with acacia trees, wooden hen coops, a round stone well, and a thatched granary basket under an amber sun." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1bxY_gjcTFl7UqjOQxS6ml_PRRPO5MtDnAdSsRgi-tUWOeWTm3bxeGjL1N0AMS9vL0LRKwUErUpSfvkKbPxsCUr-s_KlhGZ5oo3bDRKzcERmV8HYCKAIdrSa1u_Rkna2RnZaDePkIeidylik-WwlG_SZbDAnBCE7GH09UidzhZTTSLLLK5fejqfFBKILVJnhvgO428XKhSKYmJQWn_aqgxtXSDcAxqZhIE4Q6o5kg8CZLXEjMhhaLMg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-wood-dark via-transparent to-transparent"></div>
+<span class="absolute bottom-2 left-2 font-label-sm text-label-sm bg-wood-dark/90 text-primary px-space-sm py-pixel-1 rounded uppercase">
+          Morama Granary Post
+        </span>
+</div>
+<!-- Rural Agricultural Lore & Mechanical Help -->
+<div class="w-full md:w-2/3 flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">menu_book</span>
+<h4 class="font-headline-sm text-headline-sm text-primary uppercase">Granary Wisdom: The Letlhafula Harvest Season</h4>
+</div>
+<p class="font-body-md text-body-md text-cream-surface">
+          In Botswana farming traditions, balancing your granary stock protects against sudden droughts. Retaining sorghum grains allows emergency planting when seasonal rain showers begin, while surplus cowpeas and sweet maize earn high market dividends in nearby settlements.
+        </p>
+<div class="flex flex-wrap items-center gap-space-md pt-pixel-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="flex items-center gap-pixel-1">
+<span class="material-symbols-outlined text-secondary text-[16px]">eco</span> Tswana Certified Grains
+          </span>
+<span class="flex items-center gap-pixel-1">
+<span class="material-symbols-outlined text-primary-container text-[16px]">bolt</span> Instant Construction
+          </span>
+<span class="flex items-center gap-pixel-1">
+<span class="material-symbols-outlined text-gold-currency text-[16px]">monetization_on</span> Fair Market Trade
+          </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Logic Script -->
+<script>
+    (function() {
+      let currentPula = 1234;
+      let currentWood = 35;
+      let currentStone = 18;
+      let currentSlotsUsed = 28;
+
+      const slotButtons = document.querySelectorAll('.inv-slot');
+      const filterButtons = document.querySelectorAll('.inv-filter-btn');
+      
+      const detailTitle = document.getElementById('detail-title');
+      const detailDesc = document.getElementById('detail-desc');
+      const detailUnit = document.getElementById('detail-unit');
+      const detailTotal = document.getElementById('detail-total');
+      const detailIconFrame = document.getElementById('detail-icon-frame');
+      const detailCatBadge = document.getElementById('detail-cat-badge');
+      const sellBtnLabel = document.getElementById('sell-btn-label');
+
+      const purseDisplay = document.getElementById('purse-display');
+      const stockWoodDisplay = document.getElementById('stock-wood');
+      const stockStoneDisplay = document.getElementById('stock-stone');
+      const satchelLoadText = document.getElementById('satchel-load-text');
+      
+      const feedbackBox = document.getElementById('satchel-feedback');
+      const feedbackText = document.getElementById('feedback-text');
+
+      let activeItem = {
+        id: 'sorghum',
+        name: 'Sorghum',
+        qty: 24,
+        unitVal: 10,
+        totalVal: 240,
+        icon: '🌾',
+        cat: 'crops'
+      };
+
+      function updatePurse(amount) {
+        currentPula += amount;
+        purseDisplay.textContent = currentPula.toLocaleString() + ' P';
+      }
+
+      function showFeedback(msg) {
+        if (!feedbackBox) return;
+        feedbackText.textContent = msg;
+        feedbackBox.classList.remove('hidden');
+        feedbackBox.classList.add('flex');
+        setTimeout(() => {
+          feedbackBox.classList.add('hidden');
+          feedbackBox.classList.remove('flex');
+        }, 3200);
+      }
+
+      // Slot Selection
+      slotButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          slotButtons.forEach(s => {
+            s.classList.remove('ring-2', 'ring-primary-container', 'bg-surface-container-high');
+          });
+          this.classList.add('ring-2', 'ring-primary-container', 'bg-surface-container-high');
+
+          const id = this.dataset.id;
+          const name = this.dataset.name;
+          const qty = parseInt(this.dataset.qty, 10);
+          const icon = this.dataset.icon;
+          const unit = parseInt(this.dataset.unitVal, 10);
+          const total = parseInt(this.dataset.totalVal, 10);
+          const desc = this.dataset.desc;
+          const cat = this.dataset.category || 'crops';
+
+          activeItem = { id, name, qty, unitVal: unit, totalVal: total, icon, cat };
+
+          detailTitle.textContent = `${name} (x${qty})`;
+          detailDesc.textContent = desc;
+          detailUnit.textContent = `${unit} P`;
+          detailTotal.textContent = `${total} Pula`;
+          detailIconFrame.textContent = icon;
+          detailCatBadge.textContent = cat.toUpperCase();
+          sellBtnLabel.textContent = `Sell at Market (${total} P)`;
+        });
+      });
+
+      // Filter Tabs
+      filterButtons.forEach(tab => {
+        tab.addEventListener('click', function() {
+          filterButtons.forEach(t => {
+            t.classList.remove('bg-primary-container', 'text-on-primary-container');
+            t.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+          });
+          this.classList.add('bg-primary-container', 'text-on-primary-container');
+          this.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+
+          const filter = this.dataset.filter;
+          slotButtons.forEach(slot => {
+            const cat = slot.dataset.category;
+            if (filter === 'all' || cat === filter) {
+              slot.classList.remove('hidden');
+            } else {
+              slot.classList.add('hidden');
+            }
+          });
+        });
+      });
+
+      // Sell Item Button
+      const sellBtn = document.getElementById('btn-sell-market');
+      if (sellBtn) {
+        sellBtn.addEventListener('click', function() {
+          updatePurse(activeItem.totalVal);
+          showFeedback(`Sold ${activeItem.name} batch for +${activeItem.totalVal} Pula!`);
+        });
+      }
+
+      // Mill Item Button
+      const millBtn = document.getElementById('btn-mill-flour');
+      if (millBtn) {
+        millBtn.addEventListener('click', function() {
+          showFeedback(`Milled ${activeItem.name} into coarse mealie porridge bags!`);
+        });
+      }
+
+      // Donate to Kgotla
+      const donateBtn = document.getElementById('btn-donate-kgotla');
+      if (donateBtn) {
+        donateBtn.addEventListener('click', function() {
+          showFeedback(`Delivered ${activeItem.name} to the Kgotla elders. +45 Village Rep gained!`);
+        });
+      }
+
+      // Build Chicken Coop
+      const buildCoopBtn = document.getElementById('btn-construct-coop');
+      if (buildCoopBtn) {
+        buildCoopBtn.addEventListener('click', function() {
+          if (currentPula >= 200 && currentWood >= 20 && currentStone >= 10) {
+            updatePurse(-200);
+            currentWood -= 20;
+            currentStone -= 10;
+            stockWoodDisplay.textContent = `${currentWood} Acacia`;
+            stockStoneDisplay.textContent = `${currentStone} Granite`;
+
+            this.disabled = true;
+            this.classList.remove('bg-primary-container', 'hover:bg-[#FFA040]', 'text-wood-dark');
+            this.classList.add('bg-secondary-container', 'text-on-secondary-container', 'cursor-default');
+            this.innerHTML = `<span>✓</span><span>Coop Constructed!</span>`;
+
+            const coopCard = document.getElementById('project-coop');
+            if (coopCard) {
+              const statusTag = coopCard.querySelector('span.uppercase.font-bold');
+              if (statusTag) {
+                statusTag.textContent = 'Completed';
+                statusTag.className = 'font-label-sm text-label-sm bg-primary-container text-on-primary-container px-space-sm py-pixel-1 rounded uppercase font-bold tracking-wider';
+              }
+            }
+
+            showFeedback('Chicken Coop erected! 6 Hens arrived in the compound yard.');
+          }
+        });
+      }
+
+      // Upgrade Borehole Well
+      const upgradeWellBtn = document.getElementById('btn-upgrade-well');
+      if (upgradeWellBtn) {
+        upgradeWellBtn.addEventListener('click', function() {
+          if (currentPula >= 350 && currentStone >= 15) {
+            updatePurse(-350);
+            currentStone -= 15;
+            stockStoneDisplay.textContent = `${currentStone} Granite`;
+
+            this.disabled = true;
+            this.classList.remove('hover:bg-surface-container-high', 'text-primary');
+            this.classList.add('bg-secondary-container', 'text-on-secondary-container', 'cursor-default');
+            this.innerHTML = `<span class="material-symbols-outlined text-[18px]">check</span><span>Borehole Active (300L)</span>`;
+
+            showFeedback('Deep Aquifer Borehole installed! Water limit now 300 Liters.');
+          }
+        });
+      }
+
+    })();
+  </script>
+</div></main><footer class="fixed bottom-0 left-0 right-0 z-40 bg-wood-medium border-t-2 border-wood-border md:hidden"><nav class="h-14 grid grid-cols-6 items-center px-gutter-mobile" data-active-classes="bg-primary-container text-on-primary-container font-bold"><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="farm" href="#"><span class="material-symbols-outlined text-[18px]">agriculture</span><span class="font-label-sm text-label-sm">Farm</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="kgotla" href="#"><span class="material-symbols-outlined text-[18px]">account_balance</span><span class="font-label-sm text-label-sm">Kgotla</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="bushveld" href="#"><span class="material-symbols-outlined text-[18px]">forest</span><span class="font-label-sm text-label-sm">Wild</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="market" href="#"><span class="material-symbols-outlined text-[18px]">storefront</span><span class="font-label-sm text-label-sm">Market</span></a><a aria-current="page" class="flex flex-col items-center justify-center py-pixel-2 bg-primary-container text-on-primary-container font-bold" data-path="inventory" href="#"><span class="material-symbols-outlined text-[18px]">backpack</span><span class="font-label-sm text-label-sm">Bag</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="font-label-sm text-label-sm">Config</span></a></nav></footer></body></html>

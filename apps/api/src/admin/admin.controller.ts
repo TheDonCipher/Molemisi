@@ -32,10 +32,7 @@ export class AdminController {
    * GET /api/v1/admin/players?q=search
    */
   @Get('players')
-  async searchPlayers(
-    @Query('q') query: string,
-    @Query('limit') limit?: string,
-  ) {
+  async searchPlayers(@Query('q') query: string, @Query('limit') limit?: string) {
     this.logger.log(`Admin: player search "${query}"`);
     return this.adminService.searchPlayers(query, limit ? parseInt(limit) : 20);
   }

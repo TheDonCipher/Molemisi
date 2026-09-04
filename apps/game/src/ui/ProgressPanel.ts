@@ -98,11 +98,7 @@ export class ProgressPanel {
     }
   }
 
-  private renderProgression(
-    data: ProgressionData,
-    panelWidth: number,
-    panelHeight: number,
-  ): void {
+  private renderProgression(data: ProgressionData, panelWidth: number, panelHeight: number): void {
     if (!this.container) return;
 
     let y = -panelHeight / 2 + 50;
@@ -124,15 +120,18 @@ export class ProgressPanel {
     this.container.add(barBg);
 
     const barFill = this.scene.add.rectangle(
-      -panelWidth / 2 + 20, y,
-      barWidth * data.xpProgress, barHeight,
-      0xFFB74D,
+      -panelWidth / 2 + 20,
+      y,
+      barWidth * data.xpProgress,
+      barHeight,
+      0xffb74d,
     );
     barFill.setOrigin(0, 0);
     this.container.add(barFill);
 
     const xpLabel = this.scene.add.text(
-      panelWidth / 2 - 20, y + barHeight / 2,
+      panelWidth / 2 - 20,
+      y + barHeight / 2,
       `${data.xp} / ${data.xpToNextLevel} XP`,
       { font: '10px monospace', color: '#F5E6D3' },
     );
@@ -150,7 +149,8 @@ export class ProgressPanel {
 
     // Crops
     const cropText = this.scene.add.text(
-      -panelWidth / 2 + 30, y,
+      -panelWidth / 2 + 30,
+      y,
       `🌱 Crops: ${data.unlockedCrops.length} unlocked`,
       { font: '10px monospace', color: '#BCAAA4' },
     );
@@ -159,7 +159,8 @@ export class ProgressPanel {
 
     // Animals
     const animalText = this.scene.add.text(
-      -panelWidth / 2 + 30, y,
+      -panelWidth / 2 + 30,
+      y,
       `🐄 Animals: ${data.unlockedAnimals.length} unlocked`,
       { font: '10px monospace', color: '#BCAAA4' },
     );
@@ -168,7 +169,8 @@ export class ProgressPanel {
 
     // Buildings
     const buildingText = this.scene.add.text(
-      -panelWidth / 2 + 30, y,
+      -panelWidth / 2 + 30,
+      y,
       `🏗️ Buildings: ${data.unlockedBuildings.length} unlocked`,
       { font: '10px monospace', color: '#BCAAA4' },
     );
@@ -187,7 +189,8 @@ export class ProgressPanel {
     const totalCount = data.achievements.length;
 
     const achCount = this.scene.add.text(
-      panelWidth / 2 - 20, y - 4,
+      panelWidth / 2 - 20,
+      y - 4,
       `${unlockedCount}/${totalCount}`,
       { font: '10px monospace', color: '#BCAAA4' },
     );
@@ -200,18 +203,16 @@ export class ProgressPanel {
       const icon = ach.unlocked ? ach.icon : '🔒';
       const color = ach.unlocked ? '#FFB74D' : '#666666';
 
-      const achText = this.scene.add.text(
-        -panelWidth / 2 + 30, y,
-        `${icon} ${ach.name}`,
-        { font: '10px monospace', color },
-      );
+      const achText = this.scene.add.text(-panelWidth / 2 + 30, y, `${icon} ${ach.name}`, {
+        font: '10px monospace',
+        color,
+      });
       this.container!.add(achText);
 
-      const descText = this.scene.add.text(
-        -panelWidth / 2 + 50, y + 12,
-        ach.description,
-        { font: '9px monospace', color: '#BCAAA4' },
-      );
+      const descText = this.scene.add.text(-panelWidth / 2 + 50, y + 12, ach.description, {
+        font: '9px monospace',
+        color: '#BCAAA4',
+      });
       this.container!.add(descText);
 
       y += 28;

@@ -48,13 +48,13 @@
 
 ### Access Patterns
 
-| Access Pattern | Who | How |
-|---------------|-----|-----|
-| Player reads own data | Player | API + RLS |
-| Player writes own data | Player | API only (no direct DB) |
-| Server modifies economy | Server | Service role |
-| Admin reads any data | Admin | Admin API + service role |
-| Background jobs | Server | Service role |
+| Access Pattern          | Who    | How                      |
+| ----------------------- | ------ | ------------------------ |
+| Player reads own data   | Player | API + RLS                |
+| Player writes own data  | Player | API only (no direct DB)  |
+| Server modifies economy | Server | Service role             |
+| Admin reads any data    | Admin  | Admin API + service role |
+| Background jobs         | Server | Service role             |
 
 ---
 
@@ -145,7 +145,7 @@ CREATE TABLE public.farms (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ,
-  
+
   UNIQUE(user_id)
 );
 
@@ -170,7 +170,7 @@ CREATE TABLE public.farm_plots (
   state VARCHAR(20) NOT NULL DEFAULT 'EMPTY',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   UNIQUE(farm_id, slot_index),
   CHECK (slot_index >= 0 AND slot_index < 20)
 );
@@ -275,7 +275,7 @@ CREATE TABLE public.inventory (
   quality VARCHAR(20) NOT NULL DEFAULT 'normal',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   UNIQUE(farm_id, item_type, quality)
 );
 
@@ -430,7 +430,7 @@ CREATE TABLE public.kgotla_reputation (
   last_interaction_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   UNIQUE(farm_id, npc_id),
   CHECK (reputation >= -100 AND reputation <= 100)
 );
@@ -450,7 +450,7 @@ CREATE TABLE public.bushveld_discoveries (
   discovery_type VARCHAR(50) NOT NULL,
   discovery_name VARCHAR(100) NOT NULL,
   discovered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   UNIQUE(farm_id, discovery_type, discovery_name)
 );
 
@@ -573,7 +573,7 @@ CREATE TABLE public.achievements (
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   UNIQUE(farm_id, achievement_type)
 );
 
@@ -605,7 +605,7 @@ CREATE TABLE public.farm_statistics (
   resources_gathered INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   UNIQUE(farm_id, stat_date)
 );
 
@@ -794,7 +794,7 @@ CREATE POLICY "authenticated_read_market_prices" ON public.market_prices
 -- Contracts: Read available + own active
 CREATE POLICY "players_read_contracts" ON public.contracts
   FOR SELECT USING (
-    status = 'available' OR 
+    status = 'available' OR
     farm_id IN (SELECT id FROM public.farms WHERE user_id = auth.uid())
   );
 ```
@@ -1070,48 +1070,48 @@ erDiagram
 
 ### Player-Readable Tables
 
-| Table | Access | Notes |
-|-------|--------|-------|
-| profiles | Own only | RLS enforced |
-| farms | Own only | RLS enforced |
-| farm_plots | Own only | Via farm_id |
-| crop_instances | Own only | Via farm_id |
-| livestock | Own only | Via farm_id |
-| buildings | Own only | Via farm_id |
-| inventory | Own only | Via farm_id |
-| production_jobs | Own only | Via farm_id |
-| contracts | Available + own | RLS enforced |
-| notifications | Own only | Via farm_id |
-| achievements | Own only | Via farm_id |
-| market_prices | All authenticated | Read-only |
+| Table           | Access            | Notes        |
+| --------------- | ----------------- | ------------ |
+| profiles        | Own only          | RLS enforced |
+| farms           | Own only          | RLS enforced |
+| farm_plots      | Own only          | Via farm_id  |
+| crop_instances  | Own only          | Via farm_id  |
+| livestock       | Own only          | Via farm_id  |
+| buildings       | Own only          | Via farm_id  |
+| inventory       | Own only          | Via farm_id  |
+| production_jobs | Own only          | Via farm_id  |
+| contracts       | Available + own   | RLS enforced |
+| notifications   | Own only          | Via farm_id  |
+| achievements    | Own only          | Via farm_id  |
+| market_prices   | All authenticated | Read-only    |
 
 ### Player-Writable Tables (via API only)
 
-| Table | Write | Notes |
-|-------|-------|-------|
-| profiles | Own | Display name, settings |
-| farm_plots | Own | Via API validation |
-| crop_instances | Own | Via API validation |
-| livestock | Own | Via API validation |
-| buildings | Own | Via API validation |
-| inventory | Own | Via API validation |
-| production_jobs | Own | Via API validation |
-| contracts | Own | Accept/complete |
-| notifications | Own | Mark as read |
+| Table           | Write | Notes                  |
+| --------------- | ----- | ---------------------- |
+| profiles        | Own   | Display name, settings |
+| farm_plots      | Own   | Via API validation     |
+| crop_instances  | Own   | Via API validation     |
+| livestock       | Own   | Via API validation     |
+| buildings       | Own   | Via API validation     |
+| inventory       | Own   | Via API validation     |
+| production_jobs | Own   | Via API validation     |
+| contracts       | Own   | Accept/complete        |
+| notifications   | Own   | Mark as read           |
 
 ### Server-Only Tables
 
-| Table | Access | Notes |
-|-------|--------|-------|
-| market_prices | Service role | Server updates |
-| market_transactions | Service role | Audit only |
-| game_ledger_entries | Service role | Audit only |
-| audit_logs | Service role + Admin | Audit only |
-| resource_nodes | Service role | Server manages |
-| farm_statistics | Service role | Server aggregates |
+| Table               | Access               | Notes             |
+| ------------------- | -------------------- | ----------------- |
+| market_prices       | Service role         | Server updates    |
+| market_transactions | Service role         | Audit only        |
+| game_ledger_entries | Service role         | Audit only        |
+| audit_logs          | Service role + Admin | Audit only        |
+| resource_nodes      | Service role         | Server manages    |
+| farm_statistics     | Service role         | Server aggregates |
 
 ### Admin-Only Tables
 
-| Table | Access | Notes |
-|-------|--------|-------|
+| Table      | Access    | Notes                  |
+| ---------- | --------- | ---------------------- |
 | All tables | Admin API | Full access with audit |

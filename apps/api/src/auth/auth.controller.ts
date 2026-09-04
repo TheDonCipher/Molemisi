@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterSchema, LoginSchema, RegisterInput, LoginInput } from '@molemisi/validation';
+import { RegisterSchema, LoginSchema } from '@molemisi/validation';
 import { AuthGuard } from '../common/guards/auth.guard';
 
 @Controller('auth')

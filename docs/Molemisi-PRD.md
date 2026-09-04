@@ -1,4 +1,5 @@
 # MOLEMISI
+
 ## Product Requirements Document
 
 **Product:** Molemisi  
@@ -712,12 +713,12 @@ Each crop has:
 
 Example:
 
-| Crop | Growth | Water | Yield | Value | Risk |
-|---|---:|---:|---:|---:|---:|
-| Maize | Medium | Medium | High | Medium | Low |
-| Tomato | Fast | High | Medium | High | Medium |
-| Beans | Medium | Low | Medium | Medium | Low |
-| Watermelon | Slow | High | High | Very High | Medium |
+| Crop       | Growth |  Water |  Yield |     Value |   Risk |
+| ---------- | -----: | -----: | -----: | --------: | -----: |
+| Maize      | Medium | Medium |   High |    Medium |    Low |
+| Tomato     |   Fast |   High | Medium |      High | Medium |
+| Beans      | Medium |    Low | Medium |    Medium |    Low |
+| Watermelon |   Slow |   High |   High | Very High | Medium |
 
 Numbers are placeholders and must be balanced through simulation.
 
@@ -3420,23 +3421,23 @@ The game should feel like:
 
 # 96. Technology Decision Summary
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| Game Renderer | **Phaser + TypeScript** | 2D pixel game |
-| Web Application | **Next.js + React + TypeScript** | Shell, UI, accounts, payments |
-| Backend | **NestJS + TypeScript** | Authoritative game API |
-| Database | **PostgreSQL** | Persistent game state |
-| ORM | **Prisma** | Typed DB access |
-| Cache | **Redis** | Caching/rate limiting |
-| Jobs | **BullMQ** | Background processing |
-| Mobile | **Capacitor** | Android/iOS packaging |
-| Assets | **S3-compatible object storage + CDN** | Game assets |
-| Deployment | **Docker + managed cloud infrastructure** | Reproducible deployment |
-| Testing | **Vitest/Jest + Playwright** | Unit/integration/E2E |
-| API Docs | **OpenAPI/Swagger** | API contract |
-| Monitoring | **OpenTelemetry-compatible stack** | Observability |
-| Source Control | **Git + GitHub** | Version control |
-| Monorepo | **pnpm + Turborepo** | Shared packages/builds |
+| Layer           | Technology                                | Purpose                       |
+| --------------- | ----------------------------------------- | ----------------------------- |
+| Game Renderer   | **Phaser + TypeScript**                   | 2D pixel game                 |
+| Web Application | **Next.js + React + TypeScript**          | Shell, UI, accounts, payments |
+| Backend         | **NestJS + TypeScript**                   | Authoritative game API        |
+| Database        | **PostgreSQL**                            | Persistent game state         |
+| ORM             | **Prisma**                                | Typed DB access               |
+| Cache           | **Redis**                                 | Caching/rate limiting         |
+| Jobs            | **BullMQ**                                | Background processing         |
+| Mobile          | **Capacitor**                             | Android/iOS packaging         |
+| Assets          | **S3-compatible object storage + CDN**    | Game assets                   |
+| Deployment      | **Docker + managed cloud infrastructure** | Reproducible deployment       |
+| Testing         | **Vitest/Jest + Playwright**              | Unit/integration/E2E          |
+| API Docs        | **OpenAPI/Swagger**                       | API contract                  |
+| Monitoring      | **OpenTelemetry-compatible stack**        | Observability                 |
+| Source Control  | **Git + GitHub**                          | Version control               |
+| Monorepo        | **pnpm + Turborepo**                      | Shared packages/builds        |
 
 Phaser is the key decision here: it is explicitly designed for 2D browser games, works across desktop/mobile browsers, supports WebGL/Canvas and TypeScript, and can sit inside a broader React/Next.js application.
 

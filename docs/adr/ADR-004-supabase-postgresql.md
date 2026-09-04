@@ -31,9 +31,9 @@ Use **Supabase PostgreSQL** as the primary database.
 
 ## Alternatives Rejected
 
-| Alternative | Reason Rejected |
-|------------|-----------------|
-| Firebase | NoSQL, vendor lock-in |
-| MongoDB | NoSQL, less suitable for relational data |
-| DynamoDB | AWS lock-in, NoSQL |
-| Supabase + other DB | Unnecessary complexity |
+| Alternative         | Reason Rejected                          |
+| ------------------- | ---------------------------------------- |
+| Firebase            | NoSQL, vendor lock-in                    |
+| MongoDB             | NoSQL, less suitable for relational data |
+| DynamoDB            | AWS lock-in, NoSQL                       |
+| Supabase + other DB | Unnecessary complexity                   |

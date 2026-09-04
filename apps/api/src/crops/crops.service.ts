@@ -143,8 +143,9 @@ export class CropsService {
 
     // Calculate yield
     const yieldAmount =
-      Math.floor(Math.random() * ((cropConfig?.yield.max ?? 5) - (cropConfig?.yield.min ?? 3) + 1)) +
-      (cropConfig?.yield.min ?? 3);
+      Math.floor(
+        Math.random() * ((cropConfig?.yield.max ?? 5) - (cropConfig?.yield.min ?? 3) + 1),
+      ) + (cropConfig?.yield.min ?? 3);
 
     // Calculate quality based on hydration consistency and health
     const health = crop.health as number;

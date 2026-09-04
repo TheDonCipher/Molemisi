@@ -7,7 +7,16 @@ export type BuildingState = 'CONSTRUCTION' | 'ACTIVE' | 'MAINTENANCE_NEEDED' | '
 export type ContractStatus = 'available' | 'active' | 'completed' | 'failed' | 'expired';
 export type WeatherType = 'clear' | 'cloudy' | 'rain' | 'storm' | 'drought';
 export type SeasonType = 'spring' | 'summer' | 'autumn' | 'winter';
-export type ItemCategory = 'seed' | 'feed' | 'fertilizer' | 'medicine' | 'material' | 'product' | 'processed' | 'tool' | 'decoration';
+export type ItemCategory =
+  | 'seed'
+  | 'feed'
+  | 'fertilizer'
+  | 'medicine'
+  | 'material'
+  | 'product'
+  | 'processed'
+  | 'tool'
+  | 'decoration';
 export type QualityTier = 'poor' | 'normal' | 'good' | 'excellent';
 export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
 

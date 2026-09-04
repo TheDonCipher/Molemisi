@@ -59,12 +59,15 @@ export class AnalyticsService {
 
     // Persist to database (best-effort — don't block on analytics)
     try {
-      await this.supabase.getClient().from('analytics_events').insert({
-        event,
-        player_id: playerId || null,
-        properties: properties || {},
-        created_at: new Date().toISOString(),
-      });
+      await this.supabase
+        .getClient()
+        .from('analytics_events')
+        .insert({
+          event,
+          player_id: playerId || null,
+          properties: properties || {},
+          created_at: new Date().toISOString(),
+        });
     } catch (error) {
       // Analytics failures should never break gameplay
       this.logger.warn(
@@ -76,10 +79,7 @@ export class AnalyticsService {
   /**
    * Get event counts for a time range.
    */
-  async getEventCounts(
-    event: AnalyticsEvent,
-    since: string,
-  ): Promise<number> {
+  async getEventCounts(event: AnalyticsEvent, since: string): Promise<number> {
     try {
       const { count } = await this.supabase
         .getClient()

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
 export interface NPC {
@@ -36,7 +41,8 @@ export class KgotlaService {
       name: 'Elder Neo',
       role: 'Community Leader',
       personality: 'Wise, patient',
-      greeting: 'Welcome, young farmer. The Kgotla is always open to those who serve the community.',
+      greeting:
+        'Welcome, young farmer. The Kgotla is always open to those who serve the community.',
       questType: 'community',
     },
     {
@@ -175,7 +181,7 @@ export class KgotlaService {
     farmId: string,
     userId: string,
     npcId: string,
-    questType: string,
+    _questType: string,
   ): Promise<{ reputationGain: number; xpReward: number; currencyReward: number }> {
     const adminClient = this.supabaseService.getAdminClient();
 
@@ -294,7 +300,7 @@ export class KgotlaService {
       .eq('project_id', projectId)
       .single();
 
-    const newTotal = (existing?.current_contributions as number || 0) + amount;
+    const newTotal = ((existing?.current_contributions as number) || 0) + amount;
 
     if (existing) {
       await adminClient

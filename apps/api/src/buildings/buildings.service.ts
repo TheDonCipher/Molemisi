@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
-import { getBuildingConfig, type BuildingConfig } from '@molemisi/game-config';
+import { getBuildingConfig } from '@molemisi/game-config';
 
 interface BuildingRow {
   id: string;
@@ -19,15 +24,17 @@ interface BuildingRow {
 export class BuildingsService {
   constructor(private supabaseService: SupabaseService) {}
 
-  async listBuildings(farmId: string): Promise<Array<{
-    id: string;
-    buildingType: string;
-    level: number;
-    state: string;
-    capacity: number;
-    wear: number;
-    constructionEndsAt: string | null;
-  }>> {
+  async listBuildings(farmId: string): Promise<
+    Array<{
+      id: string;
+      buildingType: string;
+      level: number;
+      state: string;
+      capacity: number;
+      wear: number;
+      constructionEndsAt: string | null;
+    }>
+  > {
     const adminClient = this.supabaseService.getAdminClient();
 
     const { data: buildings, error } = await adminClient
@@ -99,9 +106,7 @@ export class BuildingsService {
       .single();
 
     if (!profile || (profile.currency as number) < config.baseCost.currency) {
-      throw new BadRequestException(
-        `Insufficient currency. Need ${config.baseCost.currency} P`,
-      );
+      throw new BadRequestException(`Insufficient currency. Need ${config.baseCost.currency} P`);
     }
 
     // Deduct currency
@@ -200,9 +205,7 @@ export class BuildingsService {
       .single();
 
     if (!profile || (profile.currency as number) < upgradeCost.currency) {
-      throw new BadRequestException(
-        `Insufficient currency. Need ${upgradeCost.currency} P`,
-      );
+      throw new BadRequestException(`Insufficient currency. Need ${upgradeCost.currency} P`);
     }
 
     // Deduct currency
@@ -213,9 +216,7 @@ export class BuildingsService {
 
     // Update building
     const upgradeTime = config.upgradeTimes[buildingRow.level - 1] ?? 0;
-    const constructionEndsAt = new Date(
-      Date.now() + upgradeTime * 60 * 1000,
-    ).toISOString();
+    const constructionEndsAt = new Date(Date.now() + upgradeTime * 60 * 1000).toISOString();
 
     await adminClient
       .from('buildings')
@@ -287,9 +288,7 @@ export class BuildingsService {
       .single();
 
     if (!profile || (profile.currency as number) < maintenanceCost) {
-      throw new BadRequestException(
-        `Insufficient currency. Need ${maintenanceCost} P`,
-      );
+      throw new BadRequestException(`Insufficient currency. Need ${maintenanceCost} P`);
     }
 
     // Deduct currency
@@ -325,15 +324,17 @@ export class BuildingsService {
     };
   }
 
-  async getAvailableBuildings(farmId: string): Promise<Array<{
-    id: string;
-    name: string;
-    description: string;
-    cost: { currency: number; wood?: number; stone?: number; iron?: number };
-    constructionTime: number;
-    capacity: number;
-    owned: boolean;
-  }>> {
+  async getAvailableBuildings(farmId: string): Promise<
+    Array<{
+      id: string;
+      name: string;
+      description: string;
+      cost: { currency: number; wood?: number; stone?: number; iron?: number };
+      constructionTime: number;
+      capacity: number;
+      owned: boolean;
+    }>
+  > {
     const adminClient = this.supabaseService.getAdminClient();
 
     // Get farm level

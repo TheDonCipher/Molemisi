@@ -26,16 +26,16 @@ Use **elapsed-time calculations** for offline simulation, not periodic ticks.
 On player connect:
   elapsed_hours = (now - last_simulated_at) / 60
   capped_hours = min(elapsed_hours, 24)
-  
+
   For each crop:
     advance_growth(crop, capped_hours)
     decay_hydration(crop, capped_hours)
     check_disease(crop, capped_hours)
-  
+
   For each animal:
     decay_hunger(animal, capped_hours)
     advance_production(animal, capped_hours)
-  
+
   Update last_simulated_at = now
 ```
 

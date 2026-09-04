@@ -69,11 +69,6 @@ interface FarmRow {
   current_day: number;
 }
 
-interface PlotRow {
-  id: string;
-  state: string;
-}
-
 export interface SimulationResult {
   cropsSimulated: number;
   cropsAdvanced: number;
@@ -104,11 +99,7 @@ export class SimulationService {
     const adminClient = this.supabaseService.getAdminClient();
 
     // Get farm state
-    const { data: farm } = await adminClient
-      .from('farms')
-      .select('*')
-      .eq('id', farmId)
-      .single();
+    const { data: farm } = await adminClient.from('farms').select('*').eq('id', farmId).single();
 
     if (!farm) {
       return this.emptyResult();
@@ -155,11 +146,7 @@ export class SimulationService {
     };
 
     // Simulate weather changes over elapsed time
-    const weatherChanges = this.simulateWeatherTimeline(
-      currentSeason,
-      currentWeather,
-      cappedHours,
-    );
+    const weatherChanges = this.simulateWeatherTimeline(currentSeason, currentWeather, cappedHours);
     if (weatherChanges.length > 0) {
       currentWeather = weatherChanges[weatherChanges.length - 1]!;
       result.weather = currentWeather;
@@ -280,24 +267,16 @@ export class SimulationService {
 
     // Generate notifications
     if (result.cropsReady > 0) {
-      result.notifications.push(
-        `${result.cropsReady} crop(s) ready for harvest!`,
-      );
+      result.notifications.push(`${result.cropsReady} crop(s) ready for harvest!`);
     }
     if (result.cropsWithered > 0) {
-      result.notifications.push(
-        `${result.cropsWithered} crop(s) withered from lack of water!`,
-      );
+      result.notifications.push(`${result.cropsWithered} crop(s) withered from lack of water!`);
     }
     if (result.livestockProducts > 0) {
-      result.notifications.push(
-        `${result.livestockProducts} animal product(s) ready to collect!`,
-      );
+      result.notifications.push(`${result.livestockProducts} animal product(s) ready to collect!`);
     }
     if (result.buildingsMaintenance > 0) {
-      result.notifications.push(
-        `${result.buildingsMaintenance} building(s) need maintenance!`,
-      );
+      result.notifications.push(`${result.buildingsMaintenance} building(s) need maintenance!`);
     }
 
     // Update farm timestamp and weather
@@ -381,9 +360,7 @@ export class SimulationService {
       const seasonModifier = getSeasonGrowthModifier(weather.season);
 
       // Fertilizer bonus
-      const fertilizerMultiplier = crop.fertilizer_active
-        ? 1 + crop.fertilizer_bonus
-        : 1;
+      const fertilizerMultiplier = crop.fertilizer_active ? 1 + crop.fertilizer_bonus : 1;
 
       // Effective growth hours
       const effectiveGrowthHours =
@@ -486,9 +463,7 @@ export class SimulationService {
     const selfSustaining = offlineDays > SELF_SUSTAINING_THRESHOLD_HOURS / 24;
 
     // Self-sustaining: reduced decay rates
-    const hungerDecayRate = selfSustaining
-      ? config.hungerDecayRate * 0.25
-      : config.hungerDecayRate;
+    const hungerDecayRate = selfSustaining ? config.hungerDecayRate * 0.25 : config.hungerDecayRate;
 
     // Decay hunger over elapsed hours
     const hungerDecay = hungerDecayRate * elapsedHours;
@@ -503,8 +478,7 @@ export class SimulationService {
     // Happiness decay if not petted for 24+ hours
     if (!selfSustaining && animal.last_pet_at) {
       const hoursSincePet =
-        elapsedHours -
-        (Date.now() - new Date(animal.last_pet_at).getTime()) / (1000 * 60 * 60);
+        elapsedHours - (Date.now() - new Date(animal.last_pet_at).getTime()) / (1000 * 60 * 60);
       if (hoursSincePet > 24) {
         happiness = Math.max(0, happiness - config.happinessDecayRate * elapsedHours);
       }
@@ -600,15 +574,13 @@ export class SimulationService {
     // Check if maintenance overdue
     if (newState === 'MAINTENANCE_NEEDED') {
       const hoursSinceMaint =
-        (Date.now() - new Date(building.last_maintained_at).getTime()) /
-        (1000 * 60 * 60);
+        (Date.now() - new Date(building.last_maintained_at).getTime()) / (1000 * 60 * 60);
       if (hoursSinceMaint > config.maintenanceIntervalDays * 24) {
         newState = 'DISABLED';
       }
     }
 
-    const stateChanged =
-      newState !== building.state || wear !== building.wear;
+    const stateChanged = newState !== building.state || wear !== building.wear;
 
     return {
       newState,
@@ -652,8 +624,7 @@ export class SimulationService {
     hydration: number,
   ): number {
     const baseChance = config.diseaseChancePerStage;
-    const humidityModifier =
-      weather.type === 'rain' ? 1.3 : weather.type === 'storm' ? 1.5 : 1.0;
+    const humidityModifier = weather.type === 'rain' ? 1.3 : weather.type === 'storm' ? 1.5 : 1.0;
     const hydrationModifier = hydration < 0.3 ? 1.2 : 1.0;
     return Math.min(baseChance * humidityModifier * hydrationModifier, 0.5);
   }
@@ -661,14 +632,10 @@ export class SimulationService {
   /**
    * Calculate pest chance based on crop config and weather.
    */
-  private getPestChance(
-    config: { pestChancePerStage: number },
-    weather: WeatherState,
-  ): number {
+  private getPestChance(config: { pestChancePerStage: number }, weather: WeatherState): number {
     const baseChance = config.pestChancePerStage;
     const warmthModifier = weather.temperature > 30 ? 1.4 : 1.0;
-    const rainModifier =
-      weather.type === 'rain' || weather.type === 'storm' ? 0.5 : 1.0;
+    const rainModifier = weather.type === 'rain' || weather.type === 'storm' ? 0.5 : 1.0;
     return Math.min(baseChance * warmthModifier * rainModifier, 0.4);
   }
 

@@ -20,9 +20,7 @@ export class StubPaymentProvider implements PaymentProvider {
   readonly name = 'stub';
   private readonly logger = new Logger(StubPaymentProvider.name);
 
-  async createPayment(
-    request: CreatePaymentRequest,
-  ): Promise<CreatePaymentResponse> {
+  async createPayment(request: CreatePaymentRequest): Promise<CreatePaymentResponse> {
     this.logger.log(
       `STUB: Creating payment for player ${request.playerId}, ` +
         `amount ${request.amount} ${request.currency}, ` +
@@ -46,12 +44,8 @@ export class StubPaymentProvider implements PaymentProvider {
     return true;
   }
 
-  async getPaymentStatus(
-    providerPaymentId: string,
-  ): Promise<VerifyPaymentResponse> {
-    this.logger.log(
-      `STUB: Checking status for payment ${providerPaymentId}`,
-    );
+  async getPaymentStatus(providerPaymentId: string): Promise<VerifyPaymentResponse> {
+    this.logger.log(`STUB: Checking status for payment ${providerPaymentId}`);
 
     return {
       verified: true,
@@ -61,12 +55,8 @@ export class StubPaymentProvider implements PaymentProvider {
     };
   }
 
-  async refundPayment(
-    request: RefundPaymentRequest,
-  ): Promise<RefundPaymentResponse> {
-    this.logger.log(
-      `STUB: Refunding payment ${request.providerPaymentId} — ${request.reason}`,
-    );
+  async refundPayment(request: RefundPaymentRequest): Promise<RefundPaymentResponse> {
+    this.logger.log(`STUB: Refunding payment ${request.providerPaymentId} — ${request.reason}`);
 
     return {
       success: true,

@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
-import { getAnimalConfig, type AnimalConfig } from '@molemisi/game-config';
+import { getAnimalConfig } from '@molemisi/game-config';
 
 interface LivestockRow {
   id: string;
@@ -21,19 +26,21 @@ interface LivestockRow {
 export class LivestockService {
   constructor(private supabaseService: SupabaseService) {}
 
-  async listLivestock(farmId: string): Promise<Array<{
-    id: string;
-    animalType: string;
-    name: string | null;
-    hunger: number;
-    health: number;
-    happiness: number;
-    productReady: boolean;
-    productTimerHours: number;
-    isSick: boolean;
-    lastFedAt: string;
-    lastPetAt: string | null;
-  }>> {
+  async listLivestock(farmId: string): Promise<
+    Array<{
+      id: string;
+      animalType: string;
+      name: string | null;
+      hunger: number;
+      health: number;
+      happiness: number;
+      productReady: boolean;
+      productTimerHours: number;
+      isSick: boolean;
+      lastFedAt: string;
+      lastPetAt: string | null;
+    }>
+  > {
     const adminClient = this.supabaseService.getAdminClient();
 
     const { data: animals, error } = await adminClient
@@ -85,9 +92,7 @@ export class LivestockService {
       .single();
 
     if (farm && (farm.level as number) < config.unlockLevel) {
-      throw new BadRequestException(
-        `Farm level ${config.unlockLevel} required for ${config.name}`,
-      );
+      throw new BadRequestException(`Farm level ${config.unlockLevel} required for ${config.name}`);
     }
 
     // Check if player has the required building
@@ -126,9 +131,7 @@ export class LivestockService {
       .single();
 
     if (!profile || (profile.currency as number) < config.purchaseCost) {
-      throw new BadRequestException(
-        `Insufficient currency. Need ${config.purchaseCost} P`,
-      );
+      throw new BadRequestException(`Insufficient currency. Need ${config.purchaseCost} P`);
     }
 
     // Deduct currency
@@ -343,18 +346,20 @@ export class LivestockService {
     return { happiness: newHappiness, xpGained: 1 };
   }
 
-  async getAvailableAnimals(farmId: string): Promise<Array<{
-    id: string;
-    name: string;
-    description: string;
-    purchaseCost: number;
-    productType: string;
-    productQuantity: number;
-    productionCycleHours: number;
-    buildingRequired: string;
-    owned: boolean;
-    count: number;
-  }>> {
+  async getAvailableAnimals(farmId: string): Promise<
+    Array<{
+      id: string;
+      name: string;
+      description: string;
+      purchaseCost: number;
+      productType: string;
+      productQuantity: number;
+      productionCycleHours: number;
+      buildingRequired: string;
+      owned: boolean;
+      count: number;
+    }>
+  > {
     const adminClient = this.supabaseService.getAdminClient();
 
     // Get farm level
@@ -367,9 +372,7 @@ export class LivestockService {
     const farmLevel = (farm?.level as number) || 1;
 
     // Get owned animal counts
-    const { data: ownedAnimals } = await adminClient
-      .from('livestock')
-      .select('animal_type');
+    const { data: ownedAnimals } = await adminClient.from('livestock').select('animal_type');
 
     const counts = new Map<string, number>();
     (ownedAnimals ?? []).forEach((a: Record<string, unknown>) => {

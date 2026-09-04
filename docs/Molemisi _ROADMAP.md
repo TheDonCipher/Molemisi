@@ -1,4 +1,5 @@
 # MOLEMISI
+
 ## Development Guide & Implementation Roadmap
 
 **Document Type:** Development Guide  
@@ -193,24 +194,24 @@ Native packaging may be introduced later through Capacitor.
 
 # 5. Technology Baseline
 
-| System | Technology |
-|---|---|
-| Game Engine | Phaser |
-| Game Language | TypeScript |
-| Web Application | Next.js |
-| UI | React + Tailwind CSS |
-| Backend | NestJS |
-| Database | Supabase PostgreSQL |
-| Authentication | Supabase Auth |
-| File Storage | Supabase Storage |
-| Validation | Shared TypeScript schemas |
-| Package Manager | pnpm |
-| Architecture | Monorepo |
-| Mobile | PWA → Capacitor |
-| Optional Cache | Redis |
-| Optional Jobs | BullMQ |
-| Deployment | Cloud hosting appropriate to each service |
-| CI/CD | GitHub Actions |
+| System          | Technology                                |
+| --------------- | ----------------------------------------- |
+| Game Engine     | Phaser                                    |
+| Game Language   | TypeScript                                |
+| Web Application | Next.js                                   |
+| UI              | React + Tailwind CSS                      |
+| Backend         | NestJS                                    |
+| Database        | Supabase PostgreSQL                       |
+| Authentication  | Supabase Auth                             |
+| File Storage    | Supabase Storage                          |
+| Validation      | Shared TypeScript schemas                 |
+| Package Manager | pnpm                                      |
+| Architecture    | Monorepo                                  |
+| Mobile          | PWA → Capacitor                           |
+| Optional Cache  | Redis                                     |
+| Optional Jobs   | BullMQ                                    |
+| Deployment      | Cloud hosting appropriate to each service |
+| CI/CD           | GitHub Actions                            |
 
 ---
 

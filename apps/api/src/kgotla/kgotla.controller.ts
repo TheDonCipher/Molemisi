@@ -1,19 +1,10 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  Body,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { KgotlaService } from './kgotla.service';
 import { FarmsService } from '../farms/farms.service';
 
-@Controller('api/v1/farms/:farmId/kgotla')
+@Controller('farms/:farmId/kgotla')
 @UseGuards(AuthGuard)
 export class KgotlaController {
   constructor(
@@ -22,10 +13,7 @@ export class KgotlaController {
   ) {}
 
   @Get('npcs')
-  async getNPCs(
-    @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
-  ) {
+  async getNPCs(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.kgotlaService.getNPCs(farmId);
   }
@@ -50,10 +38,7 @@ export class KgotlaController {
   }
 
   @Get('projects')
-  async getProjects(
-    @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
-  ) {
+  async getProjects(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.kgotlaService.getProjects(farmId);
   }

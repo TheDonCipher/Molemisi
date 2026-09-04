@@ -64,7 +64,11 @@ export class RateLimitInterceptor implements NestInterceptor {
   }
 
   private getClientId(request: Record<string, unknown>): string {
-    const req = request as { user?: { sub?: string }; ip?: string; headers?: Record<string, string> };
+    const req = request as {
+      user?: { sub?: string };
+      ip?: string;
+      headers?: Record<string, string>;
+    };
     // Use authenticated user ID if available
     if (req.user?.sub) return `user:${req.user.sub}`;
     // Fall back to IP

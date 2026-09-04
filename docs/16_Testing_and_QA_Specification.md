@@ -28,14 +28,14 @@
 
 ### Testing Tools
 
-| Type | Tool | Purpose |
-|------|------|---------|
-| Unit | Jest | Individual function testing |
-| Integration | Supertest | API endpoint testing |
-| Database | Jest + Supabase | Schema and query testing |
-| E2E | Playwright | Full user flow testing |
-| Visual | Percy | Visual regression |
-| Performance | k6 | Load testing |
+| Type        | Tool            | Purpose                     |
+| ----------- | --------------- | --------------------------- |
+| Unit        | Jest            | Individual function testing |
+| Integration | Supertest       | API endpoint testing        |
+| Database    | Jest + Supabase | Schema and query testing    |
+| E2E         | Playwright      | Full user flow testing      |
+| Visual      | Percy           | Visual regression           |
+| Performance | k6              | Load testing                |
 
 ---
 
@@ -45,16 +45,16 @@
 
 ### Test Coverage Targets
 
-| Module | Target | Minimum |
-|--------|--------|---------|
-| Game Simulation | 95% | 90% |
-| Economy | 95% | 90% |
-| Crop Logic | 90% | 85% |
-| Livestock Logic | 90% | 85% |
-| Building Logic | 85% | 80% |
-| Market Logic | 90% | 85% |
-| Payment Logic | 95% | 90% |
-| API Controllers | 80% | 75% |
+| Module          | Target | Minimum |
+| --------------- | ------ | ------- |
+| Game Simulation | 95%    | 90%     |
+| Economy         | 95%    | 90%     |
+| Crop Logic      | 90%    | 85%     |
+| Livestock Logic | 90%    | 85%     |
+| Building Logic  | 85%    | 80%     |
+| Market Logic    | 90%    | 85%     |
+| Payment Logic   | 95%    | 90%     |
+| API Controllers | 80%    | 75%     |
 
 ### Example Unit Tests
 
@@ -104,7 +104,7 @@ describe('POST /farms/:farmId/plots/:plotId/plant', () => {
   it('should reject planting on occupied plot', async () => {
     // First plant
     await plantCrop(farmId, plotId, 'sorghum');
-    
+
     // Try to plant again
     const response = await request(app)
       .post(`/farms/${farmId}/plots/${plotId}/plant`)
@@ -179,7 +179,7 @@ describe('Economy Balance', () => {
     const balance1 = await getCurrency(farmId);
     await performAction(farmId, 'sell', { itemType: 'sorghum', quantity: 5 });
     const balance2 = await getCurrency(farmId);
-    
+
     expect(balance2).toBeGreaterThan(balance1);
     expect(balance2 - balance1).toBeLessThanOrEqual(100); // Reasonable amount
   });
@@ -200,12 +200,12 @@ describe('New Player Flow', () => {
     await page.fill('input[name="email"]', 'test@example.com');
     await page.fill('input[name="password"]', 'password123');
     await page.click('button:has-text("Register")');
-    
+
     // Complete onboarding
     await page.click('text=Tap this plot');
     await page.click('text=Sorghum');
     await page.click('text=Water');
-    
+
     // Verify crop is planted
     await expect(page.locator('.plot-0')).toHaveClass(/planted/);
   });
@@ -225,9 +225,9 @@ import { check, sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '1m', target: 100 },  // Ramp up
-    { duration: '5m', target: 100 },  // Steady state
-    { duration: '1m', target: 0 },    // Ramp down
+    { duration: '1m', target: 100 }, // Ramp up
+    { duration: '5m', target: 100 }, // Steady state
+    { duration: '1m', target: 0 }, // Ramp down
   ],
 };
 
@@ -242,10 +242,10 @@ export default function () {
 
 ### Performance Targets
 
-| Metric | Target |
-|--------|--------|
-| API response time (p95) | < 200ms |
-| API response time (p99) | < 500ms |
-| Database query time (p95) | < 50ms |
+| Metric                     | Target  |
+| -------------------------- | ------- |
+| API response time (p95)    | < 200ms |
+| API response time (p99)    | < 500ms |
+| Database query time (p95)  | < 50ms  |
 | Simulation time (per farm) | < 100ms |
-| Concurrent users | 100+ |
+| Concurrent users           | 100+    |

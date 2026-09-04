@@ -222,10 +222,6 @@ export function getAvailableGoods(
   });
 }
 
-export function getGoodsByCategory(
-  category: VirtualGood['category'],
-): VirtualGood[] {
-  return VIRTUAL_GOODS.filter(
-    (g) => g.category === category && g.available,
-  );
+export function getGoodsByCategory(category: VirtualGood['category']): VirtualGood[] {
+  return VIRTUAL_GOODS.filter((g) => g.category === category && g.available);
 }

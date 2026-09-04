@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
 export interface BushveldZone {
@@ -36,9 +41,7 @@ export class BushveldService {
         { type: 'stone', chance: 0.4, minQuantity: 1, maxQuantity: 3 },
         { type: 'thatch', chance: 0.6, minQuantity: 1, maxQuantity: 4 },
       ],
-      rareDiscoveries: [
-        { type: 'seed_cache', chance: 0.05, value: 100 },
-      ],
+      rareDiscoveries: [{ type: 'seed_cache', chance: 0.05, value: 100 }],
       unlockLevel: 1,
     },
     {
@@ -70,9 +73,7 @@ export class BushveldService {
         { type: 'fish', chance: 0.4, minQuantity: 1, maxQuantity: 3 },
         { type: 'reeds', chance: 0.5, minQuantity: 2, maxQuantity: 5 },
       ],
-      rareDiscoveries: [
-        { type: 'hidden_spring', chance: 0.03, value: 300 },
-      ],
+      rareDiscoveries: [{ type: 'hidden_spring', chance: 0.03, value: 300 }],
       unlockLevel: 2,
     },
     {
@@ -135,19 +136,13 @@ export class BushveldService {
       explorationCounts.set(zoneId, (explorationCounts.get(zoneId) || 0) + 1);
     });
 
-    return this.ZONES
-      .filter((z) => z.unlockLevel <= farmLevel)
-      .map((z) => ({
-        ...z,
-        explored: explorationCounts.get(z.id) || 0,
-      }));
+    return this.ZONES.filter((z) => z.unlockLevel <= farmLevel).map((z) => ({
+      ...z,
+      explored: explorationCounts.get(z.id) || 0,
+    }));
   }
 
-  async gatherResources(
-    farmId: string,
-    userId: string,
-    zoneId: string,
-  ): Promise<GatherResult> {
+  async gatherResources(farmId: string, userId: string, zoneId: string): Promise<GatherResult> {
     const adminClient = this.supabaseService.getAdminClient();
 
     await this.verifyFarmOwnership(farmId, userId);
@@ -185,8 +180,7 @@ export class BushveldService {
     for (const resource of zone.resources) {
       if (Math.random() < resource.chance) {
         const quantity = Math.floor(
-          Math.random() * (resource.maxQuantity - resource.minQuantity + 1) +
-          resource.minQuantity,
+          Math.random() * (resource.maxQuantity - resource.minQuantity + 1) + resource.minQuantity,
         );
         gatheredResources.push({ type: resource.type, quantity });
       }
@@ -268,9 +262,14 @@ export class BushveldService {
     });
 
     // XP gain
-    const xpGained = zone.difficulty === 'easy' ? 5 :
-      zone.difficulty === 'medium' ? 10 :
-      zone.difficulty === 'hard' ? 15 : 20;
+    const xpGained =
+      zone.difficulty === 'easy'
+        ? 5
+        : zone.difficulty === 'medium'
+          ? 10
+          : zone.difficulty === 'hard'
+            ? 15
+            : 20;
 
     // Add XP
     const { data: currentProfile } = await adminClient
@@ -310,13 +309,15 @@ export class BushveldService {
     };
   }
 
-  async getGatheringHistory(farmId: string): Promise<Array<{
-    zoneId: string;
-    zoneName: string;
-    resourcesGathered: Array<{ type: string; quantity: number }>;
-    rareDiscovery: string | null;
-    exploredAt: string;
-  }>> {
+  async getGatheringHistory(farmId: string): Promise<
+    Array<{
+      zoneId: string;
+      zoneName: string;
+      resourcesGathered: Array<{ type: string; quantity: number }>;
+      rareDiscovery: string | null;
+      exploredAt: string;
+    }>
+  > {
     const adminClient = this.supabaseService.getAdminClient();
 
     const { data: explorations } = await adminClient
@@ -327,11 +328,12 @@ export class BushveldService {
       .limit(20);
 
     return (explorations ?? []).map((e: Record<string, unknown>) => {
-      const zone = this.ZONES.find((z) => z.id === e.zone_id as string);
+      const zone = this.ZONES.find((z) => z.id === (e.zone_id as string));
       return {
         zoneId: e.zone_id as string,
-        zoneName: zone?.name || e.zone_id as string,
-        resourcesGathered: (e.resources_gathered as Array<{ type: string; quantity: number }>) || [],
+        zoneName: zone?.name || (e.zone_id as string),
+        resourcesGathered:
+          (e.resources_gathered as Array<{ type: string; quantity: number }>) || [],
         rareDiscovery: e.rare_discovery as string | null,
         exploredAt: e.created_at as string,
       };

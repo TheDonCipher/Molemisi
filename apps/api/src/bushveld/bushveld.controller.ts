@@ -13,7 +13,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { BushveldService } from './bushveld.service';
 import { FarmsService } from '../farms/farms.service';
 
-@Controller('api/v1/farms/:farmId/bushveld')
+@Controller('farms/:farmId/bushveld')
 @UseGuards(AuthGuard)
 export class BushveldController {
   constructor(
@@ -22,10 +22,7 @@ export class BushveldController {
   ) {}
 
   @Get('zones')
-  async getZones(
-    @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
-  ) {
+  async getZones(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.bushveldService.getZones(farmId);
   }
@@ -41,10 +38,7 @@ export class BushveldController {
   }
 
   @Get('history')
-  async getHistory(
-    @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
-  ) {
+  async getHistory(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.bushveldService.getGatheringHistory(farmId);
   }

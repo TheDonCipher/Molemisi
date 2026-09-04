@@ -33,12 +33,7 @@ export class ContractsPanel {
   private isOpen = false;
   private onRefresh: () => void;
 
-  constructor(
-    scene: Phaser.Scene,
-    apiClient: ApiClient,
-    farmId: string,
-    onRefresh: () => void,
-  ) {
+  constructor(scene: Phaser.Scene, apiClient: ApiClient, farmId: string, onRefresh: () => void) {
     this.scene = scene;
     this.apiClient = apiClient;
     this.farmId = farmId;
@@ -122,6 +117,7 @@ export class ContractsPanel {
     panelHeight: number,
   ): void {
     if (!this.container) return;
+    const container = this.container;
 
     const scrollY = -panelHeight / 2 + 50;
     let y = scrollY;
@@ -132,58 +128,59 @@ export class ContractsPanel {
         font: '12px monospace',
         color: '#81C784',
       });
-      this.container.add(activeTitle);
+      container.add(activeTitle);
       y += 22;
 
       active.forEach((contract) => {
         const categoryEmoji: Record<string, string> = {
-          local: '🏘️', community: '👥', commercial: '💼', seasonal: '🌿', special: '⭐',
+          local: '🏘️',
+          community: '👥',
+          commercial: '💼',
+          seasonal: '🌿',
+          special: '⭐',
         };
         const emoji = categoryEmoji[contract.category] || '📋';
 
         // Contract name
-        const text = this.scene.add.text(
-          -panelWidth / 2 + 30, y,
-          `${emoji} ${contract.name}`,
-          { font: '11px monospace', color: '#F5E6D3' },
-        );
-        this.container.add(text);
+        const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${contract.name}`, {
+          font: '11px monospace',
+          color: '#F5E6D3',
+        });
+        container.add(text);
 
         // Requirements progress
         const reqText = contract.requirements
           .map((r) => `${r.itemType}: ${Math.min(r.current, r.quantity)}/${r.quantity}`)
           .join(' | ');
-        const reqLabel = this.scene.add.text(
-          -panelWidth / 2 + 30, y + 14,
-          reqText,
-          { font: '9px monospace', color: '#BCAAA4' },
-        );
-        this.container.add(reqLabel);
+        const reqLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, reqText, {
+          font: '9px monospace',
+          color: '#BCAAA4',
+        });
+        container.add(reqLabel);
 
         // Time remaining
         const timeLeft = Math.max(0, new Date(contract.expiresAt).getTime() - Date.now());
         const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
         const timeColor = hoursLeft < 6 ? '#F44336' : hoursLeft < 24 ? '#FF9800' : '#4CAF50';
 
-        const timeText = this.scene.add.text(
-          panelWidth / 2 - 30, y + 7,
-          `${hoursLeft}h left`,
-          { font: '10px monospace', color: timeColor },
-        );
+        const timeText = this.scene.add.text(panelWidth / 2 - 30, y + 7, `${hoursLeft}h left`, {
+          font: '10px monospace',
+          color: timeColor,
+        });
         timeText.setOrigin(1, 0.5);
-        this.container.add(timeText);
+        container.add(timeText);
 
         // Complete button (if requirements met)
         const allMet = contract.requirements.every((r) => r.current >= r.quantity);
         if (allMet) {
-          const completeBtn = this.scene.add.text(
-            panelWidth / 2 - 30, y + 22,
-            '✅ Complete', { font: '10px monospace', color: '#4CAF50' },
-          );
+          const completeBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '✅ Complete', {
+            font: '10px monospace',
+            color: '#4CAF50',
+          });
           completeBtn.setOrigin(1, 0.5);
           completeBtn.setInteractive({ useHandCursor: true });
           completeBtn.on('pointerdown', () => this.handleComplete(contract.id));
-          this.container.add(completeBtn);
+          container.add(completeBtn);
         }
 
         y += 45;
@@ -196,7 +193,7 @@ export class ContractsPanel {
       font: '12px monospace',
       color: '#FFB74D',
     });
-    this.container.add(availTitle);
+    container.add(availTitle);
     y += 22;
 
     // Filter out already active
@@ -209,53 +206,56 @@ export class ContractsPanel {
         color: '#BCAAA4',
       });
       none.setOrigin(0.5, 0.5);
-      this.container.add(none);
+      container.add(none);
       return;
     }
 
     availableContracts.forEach((contract) => {
       const categoryEmoji: Record<string, string> = {
-        local: '🏘️', community: '👥', commercial: '💼', seasonal: '🌿', special: '⭐',
+        local: '🏘️',
+        community: '👥',
+        commercial: '💼',
+        seasonal: '🌿',
+        special: '⭐',
       };
       const emoji = categoryEmoji[contract.category] || '📋';
 
       // Name
       const text = this.scene.add.text(
-        -panelWidth / 2 + 30, y,
+        -panelWidth / 2 + 30,
+        y,
         `${emoji} ${contract.name} (${contract.difficulty})`,
         { font: '11px monospace', color: '#F5E6D3' },
       );
-      this.container.add(text);
+      container.add(text);
 
       // Requirements
-      const reqText = contract.requirements
-        .map((r) => `${r.itemType} x${r.quantity}`)
-        .join(', ');
-      const reqLabel = this.scene.add.text(
-        -panelWidth / 2 + 30, y + 14,
-        `Needs: ${reqText}`,
-        { font: '9px monospace', color: '#BCAAA4' },
-      );
-      this.container.add(reqLabel);
+      const reqText = contract.requirements.map((r) => `${r.itemType} x${r.quantity}`).join(', ');
+      const reqLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, `Needs: ${reqText}`, {
+        font: '9px monospace',
+        color: '#BCAAA4',
+      });
+      container.add(reqLabel);
 
       // Rewards
       const rewardText = this.scene.add.text(
-        panelWidth / 2 - 30, y + 7,
+        panelWidth / 2 - 30,
+        y + 7,
         `💰${contract.rewards.currency} ⭐${contract.rewards.xp}XP`,
         { font: '10px monospace', color: '#FFB74D' },
       );
       rewardText.setOrigin(1, 0.5);
-      this.container.add(rewardText);
+      container.add(rewardText);
 
       // Accept button
-      const acceptBtn = this.scene.add.text(
-        panelWidth / 2 - 30, y + 22,
-        '📝 Accept', { font: '10px monospace', color: '#4CAF50' },
-      );
+      const acceptBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '📝 Accept', {
+        font: '10px monospace',
+        color: '#4CAF50',
+      });
       acceptBtn.setOrigin(1, 0.5);
       acceptBtn.setInteractive({ useHandCursor: true });
       acceptBtn.on('pointerdown', () => this.handleAccept(contract.id));
-      this.container.add(acceptBtn);
+      container.add(acceptBtn);
 
       y += 42;
     });

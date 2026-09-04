@@ -10,11 +10,12 @@ const config: Config = {
   collectCoverageFrom: ['**/*.ts', '!**/*.module.ts', '!main.ts'],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
+  // rootDir is 'src' (apps/api/src), so packages live at ../../../packages
   moduleNameMapper: {
-    '^@molemisi/shared$': '<rootDir>/../../packages/shared/src',
-    '^@molemisi/game-types$': '<rootDir>/../../packages/game-types/src',
-    '^@molemisi/game-config$': '<rootDir>/../../packages/game-config/src',
-    '^@molemisi/validation$': '<rootDir>/../../packages/validation/src',
+    '^@molemisi/shared$': '<rootDir>/../../../packages/shared/src',
+    '^@molemisi/game-types$': '<rootDir>/../../../packages/game-types/src',
+    '^@molemisi/game-config$': '<rootDir>/../../../packages/game-config/src',
+    '^@molemisi/validation$': '<rootDir>/../../../packages/validation/src',
   },
 };
 

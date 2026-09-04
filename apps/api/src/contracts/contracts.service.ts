@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 
 export interface Contract {
@@ -132,7 +137,7 @@ export class ContractsService {
 
     return await Promise.all(
       (active ?? []).map(async (a: Record<string, unknown>) => {
-        const contract = this.CONTRACTS.find((c) => c.id === a.contract_id as string);
+        const contract = this.CONTRACTS.find((c) => c.id === (a.contract_id as string));
         if (!contract) return null;
 
         // Check progress for each requirement
@@ -203,9 +208,7 @@ export class ContractsService {
     }
 
     // Accept contract
-    const expiresAt = new Date(
-      Date.now() + contract.timeLimitHours * 60 * 60 * 1000,
-    ).toISOString();
+    const expiresAt = new Date(Date.now() + contract.timeLimitHours * 60 * 60 * 1000).toISOString();
 
     const { data: active, error } = await adminClient
       .from('active_contracts')
@@ -263,7 +266,7 @@ export class ContractsService {
     }
 
     // Get contract definition
-    const contract = this.CONTRACTS.find((c) => c.id === active.contract_id as string);
+    const contract = this.CONTRACTS.find((c) => c.id === (active.contract_id as string));
     if (!contract) {
       throw new BadRequestException('Contract definition not found');
     }

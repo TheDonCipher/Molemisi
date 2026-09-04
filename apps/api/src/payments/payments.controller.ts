@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Logger } from '@nestjs/common';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PaymentsService, CreatePaymentDto } from './payments.service';
@@ -52,13 +44,8 @@ export class PaymentsController {
    * For the stub provider, the payment completes immediately.
    */
   @Post('create')
-  async createPayment(
-    @CurrentUser() user: { sub: string },
-    @Body() dto: CreatePaymentDto,
-  ) {
-    this.logger.log(
-      `Payment request from player ${user.sub} for SKU ${dto.sku}`,
-    );
+  async createPayment(@CurrentUser() user: { sub: string }, @Body() dto: CreatePaymentDto) {
+    this.logger.log(`Payment request from player ${user.sub} for SKU ${dto.sku}`);
 
     const record = await this.paymentsService.createPayment(user.sub, dto);
 
@@ -97,13 +84,8 @@ export class PaymentsController {
    * Request a refund for a payment.
    */
   @Post(':paymentId/refund')
-  async refundPayment(
-    @CurrentUser() user: { sub: string },
-    @Param('paymentId') paymentId: string,
-  ) {
-    this.logger.log(
-      `Refund request from player ${user.sub} for payment ${paymentId}`,
-    );
+  async refundPayment(@CurrentUser() user: { sub: string }, @Param('paymentId') paymentId: string) {
+    this.logger.log(`Refund request from player ${user.sub} for payment ${paymentId}`);
 
     const record = await this.paymentsService.refundPayment(
       user.sub,
@@ -138,9 +120,7 @@ export class PaymentsController {
       signature?: string;
     },
   ) {
-    this.logger.log(
-      `Webhook received: ${body.eventType} for payment ${body.providerPaymentId}`,
-    );
+    this.logger.log(`Webhook received: ${body.eventType} for payment ${body.providerPaymentId}`);
 
     const result = await this.paymentsService.handleWebhook(body);
 

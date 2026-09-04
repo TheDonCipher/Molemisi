@@ -103,17 +103,29 @@ export class MarketPanel {
     this.container.add(closeBtn);
 
     // Tab buttons
-    const buyTab = this.scene.add.text(panelX - 80, panelY - panelHeight / 2 + 50, '[ Buy Seeds ]', {
-      font: '12px monospace', color: '#4CAF50',
-    });
+    const buyTab = this.scene.add.text(
+      panelX - 80,
+      panelY - panelHeight / 2 + 50,
+      '[ Buy Seeds ]',
+      {
+        font: '12px monospace',
+        color: '#4CAF50',
+      },
+    );
     buyTab.setOrigin(0.5, 0.5);
     buyTab.setInteractive({ useHandCursor: true });
     buyTab.on('pointerdown', () => this.showBuyTab());
     this.container.add(buyTab);
 
-    const sellTab = this.scene.add.text(panelX + 80, panelY - panelHeight / 2 + 50, '[ Sell Crops ]', {
-      font: '12px monospace', color: '#FF8F00',
-    });
+    const sellTab = this.scene.add.text(
+      panelX + 80,
+      panelY - panelHeight / 2 + 50,
+      '[ Sell Crops ]',
+      {
+        font: '12px monospace',
+        color: '#FF8F00',
+      },
+    );
     sellTab.setOrigin(0.5, 0.5);
     sellTab.setInteractive({ useHandCursor: true });
     sellTab.on('pointerdown', () => this.showSellTab());
@@ -176,13 +188,21 @@ export class MarketPanel {
     let yOffset = panelY - panelHeight / 2 + 70;
 
     if (events.length > 0) {
-      const eventBanner = this.scene.add.rectangle(panelX, yOffset + 10, panelWidth - 40, 30, 0x4a3000, 0.8);
-      eventBanner.setStrokeStyle(1, 0xFFB74D);
+      const eventBanner = this.scene.add.rectangle(
+        panelX,
+        yOffset + 10,
+        panelWidth - 40,
+        30,
+        0x4a3000,
+        0.8,
+      );
+      eventBanner.setStrokeStyle(1, 0xffb74d);
       this.container.add(eventBanner);
 
       const eventText = events.map((e) => `${e.name}: ${e.description}`).join(' | ');
       const eventLabel = this.scene.add.text(panelX, yOffset + 10, `📢 ${eventText}`, {
-        font: '10px monospace', color: '#FFB74D',
+        font: '10px monospace',
+        color: '#FFB74D',
         wordWrap: { width: panelWidth - 60 },
       });
       eventLabel.setOrigin(0.5, 0.5);
@@ -201,7 +221,8 @@ export class MarketPanel {
 
       // Name
       const name = this.scene.add.text(
-        panelX - panelWidth / 2 + 20, y,
+        panelX - panelWidth / 2 + 20,
+        y,
         crop?.name ?? seed.itemType,
         { font: '11px monospace', color: '#F5E6D3' },
       );
@@ -209,21 +230,26 @@ export class MarketPanel {
 
       // Price with trend indicator
       const trendEmoji = seed.trend === 'up' ? '📈' : seed.trend === 'down' ? '📉' : '➡️';
-      const priceColor = seed.currentPrice > seed.basePrice ? '#FF5252' :
-        seed.currentPrice < seed.basePrice ? '#69F0AE' : '#FFB74D';
+      const priceColor =
+        seed.currentPrice > seed.basePrice
+          ? '#FF5252'
+          : seed.currentPrice < seed.basePrice
+            ? '#69F0AE'
+            : '#FFB74D';
 
       const price = this.scene.add.text(
-        panelX + panelWidth / 2 - 110, y,
+        panelX + panelWidth / 2 - 110,
+        y,
         `${trendEmoji} ${seed.currentPrice}P`,
         { font: '11px monospace', color: priceColor },
       );
       this.container!.add(price);
 
       // Buy button
-      const buyBtn = this.scene.add.text(
-        panelX + panelWidth / 2 - 40, y,
-        '[Buy]', { font: '11px monospace', color: '#4CAF50' },
-      );
+      const buyBtn = this.scene.add.text(panelX + panelWidth / 2 - 40, y, '[Buy]', {
+        font: '11px monospace',
+        color: '#4CAF50',
+      });
       buyBtn.setInteractive({ useHandCursor: true });
       buyBtn.on('pointerdown', () => this.buyItem(seed.itemType, 1));
       buyBtn.on('pointerover', () => buyBtn.setColor('#81C784'));
@@ -235,6 +261,7 @@ export class MarketPanel {
   private async showSellTab(): Promise<void> {
     this.clearContent();
     if (!this.container) return;
+    const container = this.container;
 
     const width = this.scene.cameras.main.width;
     const height = this.scene.cameras.main.height;
@@ -270,10 +297,12 @@ export class MarketPanel {
 
     if (sellable.length === 0) {
       const empty = this.scene.add.text(panelX, panelY, 'No items to sell.\nHarvest crops first!', {
-        font: '14px monospace', color: '#BCAAA4', align: 'center',
+        font: '14px monospace',
+        color: '#BCAAA4',
+        align: 'center',
       });
       empty.setOrigin(0.5, 0.5);
-      this.container.add(empty);
+      container.add(empty);
       return;
     }
 
@@ -285,7 +314,8 @@ export class MarketPanel {
 
       // Name
       const name = this.scene.add.text(
-        panelX - panelWidth / 2 + 20, y,
+        panelX - panelWidth / 2 + 20,
+        y,
         `${item.itemType} x${item.quantity}`,
         { font: '11px monospace', color: '#F5E6D3' },
       );
@@ -296,17 +326,18 @@ export class MarketPanel {
       const priceColor = trend === 'up' ? '#FF5252' : trend === 'down' ? '#69F0AE' : '#FFB74D';
 
       const price = this.scene.add.text(
-        panelX + panelWidth / 2 - 110, y,
+        panelX + panelWidth / 2 - 110,
+        y,
         `${trendEmoji} ${unitPrice}P`,
         { font: '11px monospace', color: priceColor },
       );
       this.container!.add(price);
 
       // Sell button
-      const sellBtn = this.scene.add.text(
-        panelX + panelWidth / 2 - 40, y,
-        '[Sell]', { font: '11px monospace', color: '#FF8F00' },
-      );
+      const sellBtn = this.scene.add.text(panelX + panelWidth / 2 - 40, y, '[Sell]', {
+        font: '11px monospace',
+        color: '#FF8F00',
+      });
       sellBtn.setInteractive({ useHandCursor: true });
       sellBtn.on('pointerdown', () => this.sellItem(item.itemType, 1, item.quality));
       sellBtn.on('pointerover', () => sellBtn.setColor('#FFB74D'));

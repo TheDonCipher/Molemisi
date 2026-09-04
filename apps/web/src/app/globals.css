@@ -16,43 +16,79 @@
   --molemisi-accent: #FF8F00;
 }
 
-body {
-  background-color: var(--molemisi-night);
-  color: var(--molemisi-text);
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+    background-color: #210e0b;
+    color: #ffdad4;
+  }
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    scrollbar-width: none;
+  }
 }
 
-/* Pixel-art font rendering */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  vertical-align: middle;
+}
+
+/* Pixel-art font rendering & pixel borders */
 .pixel-perfect {
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+.pixel-panel {
+  background-color: rgba(62, 39, 35, 0.95);
+  border: 2px solid #5D4037;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
 }
 
-::-webkit-scrollbar-track {
-  background: var(--molemisi-night);
+.pixel-btn-primary {
+  background-color: #FF8F00;
+  color: #2C1810;
+  border: 1px solid #E65100;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+  transition: transform 0.05s ease, background-color 0.1s ease;
+}
+.pixel-btn-primary:hover {
+  background-color: #FFA040;
+}
+.pixel-btn-primary:active {
+  transform: translate(1px, 1px);
+  background-color: #E65100;
+  color: #F5E6D3;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--molemisi-border);
-  border-radius: 4px;
+.pixel-btn-secondary {
+  background-color: #3E2723;
+  color: #F5E6D3;
+  border: 1px solid #5D4037;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.4);
+  transition: transform 0.05s ease, background-color 0.1s ease, color 0.1s ease;
 }
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--molemisi-earth);
+.pixel-btn-secondary:hover {
+  background-color: #4E342E;
+  color: #FF8F00;
 }
-
-/* Mobile safe area insets */
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
+.pixel-btn-secondary:active {
+  transform: translate(1px, 1px);
+  background-color: #2C1810;
 }
 
 /* Touch-friendly targets */
@@ -61,23 +97,9 @@ body {
   min-width: 44px;
 }
 
-/* Prevent text selection on game elements */
 .touch-none {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
-/* PWA standalone mode adjustments */
-@media all and (display-mode: standalone) {
-  body {
-    padding-top: env(safe-area-inset-top);
-  }
-}
-
-/* Mobile-first responsive adjustments */
-@media (max-width: 640px) {
-  .game-container {
-    height: calc(100vh - 100px);
-  }
-}

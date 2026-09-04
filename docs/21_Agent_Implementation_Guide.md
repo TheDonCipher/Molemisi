@@ -58,15 +58,15 @@ molemisi/
 
 ### Naming
 
-| Element | Convention | Example |
-|---------|-----------|---------|
-| Files | kebab-case | `crop.service.ts` |
-| Classes | PascalCase | `CropService` |
-| Functions | camelCase | `calculateYield` |
-| Variables | camelCase | `cropType` |
-| Constants | SCREAMING_SNAKE | `MAX_PLOTS` |
-| Database tables | snake_case | `crop_instances` |
-| API paths | kebab-case | `/crop-instances` |
+| Element         | Convention      | Example           |
+| --------------- | --------------- | ----------------- |
+| Files           | kebab-case      | `crop.service.ts` |
+| Classes         | PascalCase      | `CropService`     |
+| Functions       | camelCase       | `calculateYield`  |
+| Variables       | camelCase       | `cropType`        |
+| Constants       | SCREAMING_SNAKE | `MAX_PLOTS`       |
+| Database tables | snake_case      | `crop_instances`  |
+| API paths       | kebab-case      | `/crop-instances` |
 
 ### File Organization
 
@@ -212,10 +212,10 @@ describe('CropService', () => {
       // Arrange
       const farm = await createTestFarm();
       const plot = await createTestPlot(farm.id, 'EMPTY');
-      
+
       // Act
       const result = await cropService.plantCrop(farm.id, plot.id, 'sorghum');
-      
+
       // Assert
       expect(result.state).toBe('PLANTED');
       expect(result.crop.type).toBe('sorghum');

@@ -58,12 +58,12 @@ Version is included in the URL path. Breaking changes require a new version.
 
 ### Rate Limits
 
-| Scope | Limit | Window |
-|-------|-------|--------|
-| Global per IP | 100 requests | 1 minute |
-| Per endpoint per user | 30 requests | 1 minute |
-| Auth endpoints | 10 requests | 1 minute |
-| Payment endpoints | 5 requests | 1 minute |
+| Scope                 | Limit        | Window   |
+| --------------------- | ------------ | -------- |
+| Global per IP         | 100 requests | 1 minute |
+| Per endpoint per user | 30 requests  | 1 minute |
+| Auth endpoints        | 10 requests  | 1 minute |
+| Payment endpoints     | 5 requests   | 1 minute |
 
 ### Pagination
 
@@ -123,6 +123,7 @@ apikey: <supabase_service_role_key>
 ### Response Format
 
 **Success:**
+
 ```json
 {
   "success": true,
@@ -135,6 +136,7 @@ apikey: <supabase_service_role_key>
 ```
 
 **Error:**
+
 ```json
 {
   "success": false,
@@ -152,21 +154,21 @@ apikey: <supabase_service_role_key>
 
 ### Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| UNAUTHORIZED | 401 | Invalid or missing auth token |
-| FORBIDDEN | 403 | Insufficient permissions |
-| NOT_FOUND | 404 | Resource not found |
-| VALIDATION_ERROR | 400 | Invalid request data |
-| INSUFFICIENT_FUNDS | 400 | Not enough currency |
-| INVENTORY_FULL | 400 | Inventory at capacity |
-| PLOT_OCCUPIED | 400 | Plot already has a crop |
-| CROP_NOT_READY | 400 | Crop not ready for harvest |
-| BUILDING_UNAVAILABLE | 400 | Building not operational |
-| ANIMAL_SICK | 400 | Animal needs treatment |
-| CONTRACT_EXPIRED | 400 | Contract deadline passed |
-| RATE_LIMITED | 429 | Too many requests |
-| SERVER_ERROR | 500 | Internal server error |
+| Code                 | HTTP Status | Description                   |
+| -------------------- | ----------- | ----------------------------- |
+| UNAUTHORIZED         | 401         | Invalid or missing auth token |
+| FORBIDDEN            | 403         | Insufficient permissions      |
+| NOT_FOUND            | 404         | Resource not found            |
+| VALIDATION_ERROR     | 400         | Invalid request data          |
+| INSUFFICIENT_FUNDS   | 400         | Not enough currency           |
+| INVENTORY_FULL       | 400         | Inventory at capacity         |
+| PLOT_OCCUPIED        | 400         | Plot already has a crop       |
+| CROP_NOT_READY       | 400         | Crop not ready for harvest    |
+| BUILDING_UNAVAILABLE | 400         | Building not operational      |
+| ANIMAL_SICK          | 400         | Animal needs treatment        |
+| CONTRACT_EXPIRED     | 400         | Contract deadline passed      |
+| RATE_LIMITED         | 429         | Too many requests             |
+| SERVER_ERROR         | 500         | Internal server error         |
 
 ### Idempotency
 
@@ -187,6 +189,7 @@ The server stores the response for 24 hours and returns the same response for du
 Register a new player.
 
 **Request:**
+
 ```json
 {
   "email": "player@example.com",
@@ -196,6 +199,7 @@ Register a new player.
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -212,6 +216,7 @@ Register a new player.
 ```
 
 **Side effects:**
+
 - Creates Supabase Auth user
 - Creates profile record
 - Creates farm record with default plots
@@ -223,6 +228,7 @@ Register a new player.
 Login existing player.
 
 **Request:**
+
 ```json
 {
   "email": "player@example.com",
@@ -231,6 +237,7 @@ Login existing player.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -251,6 +258,7 @@ Login existing player.
 Refresh JWT token.
 
 **Request:**
+
 ```json
 {
   "refreshToken": "refresh_token"
@@ -258,6 +266,7 @@ Refresh JWT token.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -275,6 +284,7 @@ Logout current session.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true
@@ -292,6 +302,7 @@ Get current player profile.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -323,6 +334,7 @@ Update player profile.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "displayName": "Master Farmer",
@@ -331,6 +343,7 @@ Update player profile.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -353,6 +366,7 @@ Get current farm state.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -384,6 +398,7 @@ Sync farm state (called periodically by client).
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "lastSyncVersion": 42
@@ -391,6 +406,7 @@ Sync farm state (called periodically by client).
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -418,6 +434,7 @@ List all plots for a farm.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -460,6 +477,7 @@ Plant a crop on a plot.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "cropType": "sorghum",
@@ -468,6 +486,7 @@ Plant a crop on a plot.
 ```
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Plot ownership
@@ -476,6 +495,7 @@ Plant a crop on a plot.
 6. Crop type is unlocked
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -505,6 +525,7 @@ Plant a crop on a plot.
 ```
 
 **Side effects:**
+
 - Removes 1 seed from inventory
 - Creates crop instance
 - Updates plot state
@@ -520,6 +541,7 @@ Water a crop on a plot.
 **Headers:** `Authorization: Bearer <token>`
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Plot ownership
@@ -527,6 +549,7 @@ Water a crop on a plot.
 5. Hydration < 1.0
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -546,6 +569,7 @@ Water a crop on a plot.
 ```
 
 **Side effects:**
+
 - Increases hydration by 0.3 (capped at 1.0)
 - Consumes 1 water unit
 - Awards 2 XP
@@ -557,6 +581,7 @@ Fertilize a crop on a plot.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "fertilizerType": "compost"
@@ -564,6 +589,7 @@ Fertilize a crop on a plot.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -589,12 +615,14 @@ Harvest a crop from a plot.
 **Headers:** `Authorization: Bearer <token>`
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Plot ownership
 4. Crop exists and is READY
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -621,6 +649,7 @@ Harvest a crop from a plot.
 ```
 
 **Side effects:**
+
 - Removes crop instance
 - Updates plot state to EMPTY
 - Adds harvested items to inventory
@@ -635,12 +664,14 @@ Clear a withered crop from a plot.
 **Headers:** `Authorization: Bearer <token>`
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Plot ownership
 4. Crop state is WITHERED
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -665,6 +696,7 @@ List all animals on a farm.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -693,6 +725,7 @@ Buy a new animal.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "animalType": "chicken",
@@ -701,6 +734,7 @@ Buy a new animal.
 ```
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Animal type is unlocked
@@ -708,6 +742,7 @@ Buy a new animal.
 5. Building capacity available
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -733,6 +768,7 @@ Feed an animal.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -754,12 +790,14 @@ Collect product from an animal.
 **Headers:** `Authorization: Bearer <token>`
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Animal ownership
 4. Product is ready
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -790,6 +828,7 @@ Pet an animal to increase happiness.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -809,6 +848,7 @@ Treat a sick animal.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "medicineType": "herbal_remedy"
@@ -816,6 +856,7 @@ Treat a sick animal.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -844,6 +885,7 @@ List all buildings on a farm.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -870,6 +912,7 @@ Construct a new building.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "buildingType": "coop"
@@ -877,6 +920,7 @@ Construct a new building.
 ```
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Building type is unlocked
@@ -884,6 +928,7 @@ Construct a new building.
 5. Building not already constructed (if unique)
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -912,6 +957,7 @@ Upgrade a building.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -938,6 +984,7 @@ Repair a building.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -967,6 +1014,7 @@ List all items in inventory.
 **Query:** `?category=seed`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1004,6 +1052,7 @@ List production jobs in a building.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1015,8 +1064,8 @@ List production jobs in a building.
         "progress": 0.65,
         "startedAt": "2026-09-02T09:30:00Z",
         "endsAt": "2026-09-02T10:00:00Z",
-        "inputItems": [{"type": "sorghum", "quantity": 5}],
-        "outputItems": [{"type": "flour", "quantity": 15}]
+        "inputItems": [{ "type": "sorghum", "quantity": 5 }],
+        "outputItems": [{ "type": "flour", "quantity": 15 }]
       }
     ],
     "queueLength": 1,
@@ -1032,16 +1081,16 @@ Start a production job.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "recipeType": "grain_to_flour",
-  "inputItems": [
-    {"type": "sorghum", "quantity": 5}
-  ]
+  "inputItems": [{ "type": "sorghum", "quantity": 5 }]
 }
 ```
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Building is ACTIVE
@@ -1050,6 +1099,7 @@ Start a production job.
 6. Queue not full
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -1075,11 +1125,13 @@ Collect completed production output.
 **Headers:** `Authorization: Bearer <token>`
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Job exists and is complete (progress = 1.0)
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1103,6 +1155,7 @@ Get current market prices.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1135,6 +1188,7 @@ Sell items on the market.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "itemType": "sorghum",
@@ -1144,12 +1198,14 @@ Sell items on the market.
 ```
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm ownership
 3. Player has items in inventory
 4. Quantity available
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1175,6 +1231,7 @@ Buy items from the market.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "itemType": "sorghum_seed",
@@ -1183,6 +1240,7 @@ Buy items from the market.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1216,6 +1274,7 @@ List available and active contracts.
 **Query:** `?status=available|active|completed`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1228,7 +1287,7 @@ List available and active contracts.
         "title": "Grain Delivery",
         "description": "Deliver 10 Sorghum to the market",
         "requirements": {
-          "items": [{"type": "sorghum", "quantity": 10}]
+          "items": [{ "type": "sorghum", "quantity": 10 }]
         },
         "rewards": {
           "currency": 200,
@@ -1249,6 +1308,7 @@ Accept a contract.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1258,7 +1318,7 @@ Accept a contract.
       "status": "active",
       "acceptedAt": "2026-09-02T10:00:00Z",
       "progress": {
-        "sorghum": {"required": 10, "delivered": 0}
+        "sorghum": { "required": 10, "delivered": 0 }
       }
     }
   }
@@ -1272,22 +1332,22 @@ Deliver items for a contract.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
-  "items": [
-    {"type": "sorghum", "quantity": 5}
-  ]
+  "items": [{ "type": "sorghum", "quantity": 5 }]
 }
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
   "data": {
     "contract": {
       "progress": {
-        "sorghum": {"required": 10, "delivered": 5}
+        "sorghum": { "required": 10, "delivered": 5 }
       },
       "status": "active"
     },
@@ -1309,6 +1369,7 @@ List Kgotla NPCs.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1335,6 +1396,7 @@ Interact with an NPC.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1342,9 +1404,9 @@ Interact with an NPC.
     "dialogue": {
       "text": "Welcome, farmer! The community needs your help.",
       "options": [
-        {"id": "quest_1", "text": "Tell me more", "type": "quest"},
-        {"id": "donate", "text": "I'd like to donate", "type": "donate"},
-        {"id": "leave", "text": "Goodbye", "type": "leave"}
+        { "id": "quest_1", "text": "Tell me more", "type": "quest" },
+        { "id": "donate", "text": "I'd like to donate", "type": "donate" },
+        { "id": "leave", "text": "Goodbye", "type": "leave" }
       ]
     }
   }
@@ -1358,16 +1420,16 @@ Donate to the Kgotla.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "npcId": "elder_neo",
-  "items": [
-    {"type": "sorghum", "quantity": 10}
-  ]
+  "items": [{ "type": "sorghum", "quantity": 10 }]
 }
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1390,6 +1452,7 @@ List available Bushveld zones.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1415,6 +1478,7 @@ Explore a Bushveld zone.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "zoneId": "near_bush"
@@ -1422,11 +1486,13 @@ Explore a Bushveld zone.
 ```
 
 **Server validates:**
+
 1. Authenticated player
 2. Farm level requirement met
 3. Sufficient energy
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1434,8 +1500,8 @@ Explore a Bushveld zone.
     "exploration": {
       "zone": "near_bush",
       "resourcesFound": [
-        {"type": "wood", "quantity": 3},
-        {"type": "stone", "quantity": 1}
+        { "type": "wood", "quantity": 3 },
+        { "type": "stone", "quantity": 1 }
       ],
       "discovery": null,
       "energyUsed": 10,
@@ -1456,6 +1522,7 @@ Get level requirements and rewards.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1482,6 +1549,7 @@ Get skill tree status.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1523,6 +1591,7 @@ List player notifications.
 **Query:** `?unread=true`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1533,7 +1602,7 @@ List player notifications.
         "type": "CROP_READY",
         "title": "Crop Ready!",
         "message": "Your Sorghum is ready to harvest",
-        "data": {"plotId": "uuid", "cropType": "sorghum"},
+        "data": { "plotId": "uuid", "cropType": "sorghum" },
         "read": false,
         "createdAt": "2026-09-02T08:00:00Z"
       }
@@ -1550,6 +1619,7 @@ Mark a notification as read.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true
@@ -1563,6 +1633,7 @@ Mark all notifications as read.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1583,12 +1654,11 @@ Create a payment session.
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "provider": "mobile_money",
-  "items": [
-    {"type": "premium_currency_pack", "quantity": 1}
-  ],
+  "items": [{ "type": "premium_currency_pack", "quantity": 1 }],
   "currency": "BWP",
   "amount": 50,
   "phoneNumber": "+267XXXXXXXX"
@@ -1596,6 +1666,7 @@ Create a payment session.
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -1615,6 +1686,7 @@ Payment provider webhook callback.
 **Headers:** `X-Webhook-Signature: <hmac_signature>`
 
 **Request:**
+
 ```json
 {
   "transactionId": "mp_xxxxx",
@@ -1625,12 +1697,14 @@ Payment provider webhook callback.
 ```
 
 **Server validates:**
+
 1. Webhook signature
 2. Transaction ID matches
 3. Amount matches
 4. Payment not already processed
 
 **Side effects:**
+
 - Updates payment status to completed
 - Grants entitlements to player
 - Records ledger entry
@@ -1642,6 +1716,7 @@ Get payment history.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1653,7 +1728,7 @@ Get payment history.
         "amount": 50,
         "currency": "BWP",
         "status": "completed",
-        "itemsPurchased": [{"type": "premium_currency_pack", "quantity": 1}],
+        "itemsPurchased": [{ "type": "premium_currency_pack", "quantity": 1 }],
         "createdAt": "2026-09-02T10:00:00Z"
       }
     ]
@@ -1676,6 +1751,7 @@ List all players.
 **Headers:** `Authorization: Bearer <admin_token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1703,6 +1779,7 @@ Get detailed player information.
 **Headers:** `Authorization: Bearer <admin_token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1726,6 +1803,7 @@ Get economy overview.
 **Headers:** `Authorization: Bearer <admin_token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -1747,6 +1825,7 @@ Update game configuration.
 **Headers:** `Authorization: Bearer <admin_token>`
 
 **Request:**
+
 ```json
 {
   "category": "economy",
@@ -1756,6 +1835,7 @@ Update game configuration.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,

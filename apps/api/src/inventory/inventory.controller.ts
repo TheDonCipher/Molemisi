@@ -10,10 +10,7 @@ export class InventoryController {
   constructor(private inventoryService: InventoryService) {}
 
   @Get()
-  async getInventory(
-    @Param('farmId') farmId: string,
-    @CurrentUser() _user: AuthenticatedUser,
-  ) {
+  async getInventory(@Param('farmId') farmId: string, @CurrentUser() _user: AuthenticatedUser) {
     const result = await this.inventoryService.getInventory(farmId);
     return { success: true, data: { inventory: result } };
   }

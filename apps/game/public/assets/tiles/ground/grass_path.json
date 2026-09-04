@@ -1,0 +1,285 @@
+{
+  "id": "grass_path",
+  "tile_size": {
+    "width": 16,
+    "height": 16
+  },
+  "lower": "short lush savanna grass",
+  "upper": "worn sandy dirt path with small stones",
+  "transition": "dusty path edge",
+  "view": "low top-down",
+  "tiles": [
+    {
+      "name": "wang_13",
+      "id": "13",
+      "corners": {
+        "NW": "upper",
+        "NE": "upper",
+        "SW": "lower",
+        "SE": "upper"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 1, 1, 255],
+        "row_2": [255, 0, 1, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/13.png"
+    },
+    {
+      "name": "wang_10",
+      "id": "10",
+      "corners": {
+        "NW": "upper",
+        "NE": "lower",
+        "SW": "upper",
+        "SE": "lower"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 1, 0, 255],
+        "row_2": [255, 1, 0, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/10.png"
+    },
+    {
+      "name": "wang_4",
+      "id": "4",
+      "corners": {
+        "NW": "lower",
+        "NE": "upper",
+        "SW": "lower",
+        "SE": "lower"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 0, 1, 255],
+        "row_2": [255, 0, 0, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/4.png"
+    },
+    {
+      "name": "wang_12",
+      "id": "12",
+      "corners": {
+        "NW": "upper",
+        "NE": "upper",
+        "SW": "lower",
+        "SE": "lower"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 1, 1, 255],
+        "row_2": [255, 0, 0, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/12.png"
+    },
+    {
+      "name": "wang_6",
+      "id": "6",
+      "corners": {
+        "NW": "lower",
+        "NE": "upper",
+        "SW": "upper",
+        "SE": "lower"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 0, 1, 255],
+        "row_2": [255, 1, 0, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/6.png"
+    },
+    {
+      "name": "wang_8",
+      "id": "8",
+      "corners": {
+        "NW": "upper",
+        "NE": "lower",
+        "SW": "lower",
+        "SE": "lower"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 1, 0, 255],
+        "row_2": [255, 0, 0, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/8.png"
+    },
+    {
+      "name": "wang_0",
+      "id": "fcb5f9b0-bd02-4998-86c4-2bfe9449511c",
+      "corners": {
+        "NW": "lower",
+        "NE": "lower",
+        "SW": "lower",
+        "SE": "lower"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 0, 0, 255],
+        "row_2": [255, 0, 0, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/fcb5f9b0-bd02-4998-86c4-2bfe9449511c.png"
+    },
+    {
+      "name": "wang_1",
+      "id": "1",
+      "corners": {
+        "NW": "lower",
+        "NE": "lower",
+        "SW": "lower",
+        "SE": "upper"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 0, 0, 255],
+        "row_2": [255, 0, 1, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/1.png"
+    },
+    {
+      "name": "wang_11",
+      "id": "11",
+      "corners": {
+        "NW": "upper",
+        "NE": "lower",
+        "SW": "upper",
+        "SE": "upper"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 1, 0, 255],
+        "row_2": [255, 1, 1, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/11.png"
+    },
+    {
+      "name": "wang_3",
+      "id": "3",
+      "corners": {
+        "NW": "lower",
+        "NE": "lower",
+        "SW": "upper",
+        "SE": "upper"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 0, 0, 255],
+        "row_2": [255, 1, 1, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/3.png"
+    },
+    {
+      "name": "wang_2",
+      "id": "2",
+      "corners": {
+        "NW": "lower",
+        "NE": "lower",
+        "SW": "upper",
+        "SE": "lower"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 0, 0, 255],
+        "row_2": [255, 1, 0, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/2.png"
+    },
+    {
+      "name": "wang_5",
+      "id": "5",
+      "corners": {
+        "NW": "lower",
+        "NE": "upper",
+        "SW": "lower",
+        "SE": "upper"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 0, 1, 255],
+        "row_2": [255, 0, 1, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/5.png"
+    },
+    {
+      "name": "wang_15",
+      "id": "c7ed6e5c-9708-4fbf-a182-979fa8f67c7a",
+      "corners": {
+        "NW": "upper",
+        "NE": "upper",
+        "SW": "upper",
+        "SE": "upper"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 1, 1, 255],
+        "row_2": [255, 1, 1, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/c7ed6e5c-9708-4fbf-a182-979fa8f67c7a.png"
+    },
+    {
+      "name": "wang_14",
+      "id": "14",
+      "corners": {
+        "NW": "upper",
+        "NE": "upper",
+        "SW": "upper",
+        "SE": "lower"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 1, 1, 255],
+        "row_2": [255, 1, 0, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/14.png"
+    },
+    {
+      "name": "wang_9",
+      "id": "9",
+      "corners": {
+        "NW": "upper",
+        "NE": "lower",
+        "SW": "lower",
+        "SE": "upper"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 1, 0, 255],
+        "row_2": [255, 0, 1, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/9.png"
+    },
+    {
+      "name": "wang_7",
+      "id": "7",
+      "corners": {
+        "NW": "lower",
+        "NE": "upper",
+        "SW": "upper",
+        "SE": "upper"
+      },
+      "pattern_4x4": {
+        "row_0": [255, 255, 255, 255],
+        "row_1": [255, 0, 1, 255],
+        "row_2": [255, 1, 1, 255],
+        "row_3": [255, 255, 255, 255]
+      },
+      "file": "tiles/ground/grass_path/7.png"
+    }
+  ]
+}

@@ -2,6 +2,11 @@
 const path = require('path');
 
 const nextConfig = {
+  eslint: {
+    // Lint runs separately via `pnpm lint`; ESLint 9 flat config is not
+    // compatible with next build's internal legacy lint invocation.
+    ignoreDuringBuilds: true,
+  },
   transpilePackages: [
     '@molemisi/shared',
     '@molemisi/game-types',

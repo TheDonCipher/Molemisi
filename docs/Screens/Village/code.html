@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&amp;family=Space+Grotesk:wght@500;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "cream-surface": "#F5E6D3", "surface-dim": "#210e0b", "tertiary-fixed": "#ffdbd0", "on-surface-variant": "#dcc1ae", "surface-container-high": "#3b2420", "secondary-fixed-dim": "#9cd67a", "on-primary-fixed-variant": "#6d3a00", "surface-container-low": "#2b1613", "surface-variant": "#472f2b", "on-primary-fixed": "#2e1500", "secondary": "#9cd67a", "primary-fixed": "#ffdcc2", "wood-dark": "#2C1810", "on-primary": "#4c2700", "surface": "#210e0b", "inverse-on-surface": "#422a26", "surface-container-lowest": "#1b0906", "on-background": "#ffdad4", "surface-container-highest": "#472f2b", "status-warning": "#FFC107", "on-tertiary-fixed": "#3a0b00", "on-secondary-fixed-variant": "#205102", "outline": "#a48c7a", "on-error": "#690005", "error-container": "#93000a", "wood-medium": "#4E342E", "wood-border": "#5D4037", "inverse-primary": "#8f4e00", "secondary-container": "#225404", "sky-blue": "#87CEEB", "error": "#ffb4ab", "on-surface": "#ffdad4", "surface-bright": "#4c332f", "primary": "#ffb87b", "inverse-surface": "#ffdad4", "outline-variant": "#564334", "on-secondary-fixed": "#082100", "primary-fixed-dim": "#ffb77a", "surface-tint": "#ffb77a", "on-error-container": "#ffdad6", "background": "#210e0b", "tertiary-fixed-dim": "#ffb59e", "primary-container": "#ff8f00", "status-success": "#4CAF50", "tertiary-container": "#fe8c68", "on-primary-container": "#623400", "status-info": "#2196F3", "tertiary": "#ffb59f", "on-tertiary-fixed-variant": "#7e2b0f", "on-secondary-container": "#8fc86d", "gold-currency": "#FFD700", "on-tertiary-container": "#742408", "on-tertiary": "#5e1700", "sky-deep": "#4A7FB5", "surface-container": "#2f1a16", "on-secondary": "#133800", "status-danger": "#C62828", "secondary-fixed": "#b7f393" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-mobile": "0.75rem", "space-sm": "0.5rem", "space-md": "0.75rem", "pixel-1": "0.125rem", "pixel-2": "0.25rem", "space-2xl": "2rem", "space-lg": "1rem", "gutter-desktop": "1.5rem", "space-xl": "1.5rem" }, "fontFamily": { "headline-lg-mobile": [ "spaceGrotesk" ], "headline-lg": [ "spaceGrotesk" ], "headline-md": [ "spaceGrotesk" ], "body-lg": [ "rubik" ], "label-md": [ "spaceMono" ], "headline-sm": [ "spaceGrotesk" ], "label-lg": [ "spaceMono" ], "body-md": [ "rubik" ], "label-sm": [ "spaceMono" ], "body-sm": [ "rubik" ] }, "fontSize": { "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "700" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "label-md": [ "12px", { "lineHeight": "16px", "fontWeight": "700" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "700" } ], "label-lg": [ "14px", { "lineHeight": "18px", "fontWeight": "700" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "label-sm": [ "10px", { "lineHeight": "14px", "fontWeight": "700" } ], "body-sm": [ "12px", { "lineHeight": "16px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface select-none antialiased min-h-screen flex flex-col justify-between"><header class="fixed top-0 left-0 right-0 z-50 bg-wood-medium shadow-[2px_2px_0px_rgba(0,0,0,0.5)] border-b-2 border-wood-border"><div class="h-20 w-full px-gutter-desktop mx-auto flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="Molemisi Game Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMiq7yfXA9gT-3ahsTGXP4-y9c6JWMaLJQuupUvRjTM7X0sHBIuEAUFSRBgkto7oh5Vzzcjstc4tM4BlcHOyrV1J_x8jZJ9AAQItbVjoa6oLkvFbZBt9Kxun_zwb2vPL1tyYI0VERZsU2tqP9nngcDDcbD-najEr9oyp2K2w2UagFzH-NRf-6AaUP_Pbx69D3NiJ4lFXC2VayD67RzsZ53UA3mPjqyT8LYonkH3i-4YCSXIztNIfMRSQ"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-wider uppercase">Molemisi</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Botswana Farm Sim</span></div><div class="hidden xl:flex items-center gap-space-sm ml-space-md bg-wood-dark px-space-md py-pixel-2 border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><div class="flex flex-col gap-pixel-1"><div class="flex items-center justify-between gap-space-md"><span class="font-label-sm text-label-sm text-primary-container font-bold">★ Lv.5 Farm</span><span class="font-label-sm text-label-sm text-on-surface-variant">2,450 / 3,000 XP</span></div><div class="w-36 h-2 bg-surface-container-lowest border border-wood-border rounded-none overflow-hidden"><div class="h-full bg-gold-currency w-[81%]"></div></div></div></div></div><div class="hidden lg:flex items-center gap-space-md"><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-gold-currency text-[18px]">monetization_on</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Funds</span><span class="font-label-md text-label-md text-gold-currency tracking-wider">1,234 P</span></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-status-info text-[18px]">water_drop</span><div class="flex flex-col"><div class="flex justify-between items-center gap-space-sm"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Water</span><span class="font-label-sm text-label-sm text-status-info font-bold">85%</span></div><div class="w-20 h-2 bg-surface-container-lowest border border-wood-border rounded-none mt-pixel-1"><div class="h-full bg-status-info w-[85%]"></div></div></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-primary text-[18px]">wb_sunny</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Daylight</span><span class="font-label-md text-label-md text-cream-surface font-bold">Day - 14:30</span></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-secondary text-[18px]">grass</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Season</span><span class="font-label-md text-label-md text-secondary font-bold">Summer - Day 14</span></div></div></div><nav class="hidden md:flex items-center gap-space-sm bg-wood-dark px-space-sm py-pixel-2 border border-wood-border rounded" data-active-classes="bg-primary-container text-on-primary-container font-bold border-b-2 border-on-primary-container"><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="farm" href="#">Farm</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="kgotla" href="#">Kgotla</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="bushveld" href="#">Bushveld</a><a aria-current="page" class="px-space-sm py-pixel-2 uppercase transition-colors bg-primary-container text-on-primary-container font-bold border-b-2 border-on-primary-container" data-path="market" href="#">Market</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="inventory" href="#">Inventory</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="settings" href="#">Settings</a></nav><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 pb-16 bg-surface"><div class="flex flex-col w-full">
+<!-- Live Ambient Market Screen Container -->
+<div class="relative w-full overflow-hidden bg-surface-container-lowest">
+<!-- Pixel Art Village Scene Parallax Stage -->
+<div class="relative w-full h-[320px] sm:h-[400px] lg:h-[480px] overflow-hidden select-none">
+<img alt="Maun Village Market Pixel Art" class="w-full h-full object-cover object-center scale-105 filter saturate-[1.1] transition-transform duration-1000 ease-out hover:scale-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgUT_WoQXPtORaW5m-ViB8B0Bt5vecrbJpvVTprpJ64P_LwNklncPKdQj3I5B57WrIN2t-UdlqgVy5of05nv1GSgpyelyqSrxolX2DGUkmkSG-AeLxJLKqkqeu9qoymVdyKYVN6ccvyHR-kIFlGcYMthwVJKJ3QxkrFNW6QZKgNPoxYFMp7pHhFeAD49HVSThmp7B6mzdMywPX7up8LfVcYZrCeORAUKsKxhtj9wI3UK969w8vZoQlQw"/>
+<!-- Dusky Sunset Vignette Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-lowest/70 via-transparent to-surface-container-lowest/70 pointer-events-none"></div>
+<!-- Top Overlay Quick Hub Bar -->
+<div class="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-space-sm z-10">
+<div class="flex items-center gap-space-sm bg-wood-dark/95 px-space-md py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.7)]">
+<span class="material-symbols-outlined text-primary text-[22px]">storefront</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-primary uppercase tracking-wider">Maun Trading Post</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Ngamiland District • Day 14</span>
+</div>
+</div>
+<div class="flex items-center gap-space-md bg-wood-dark/95 px-space-lg py-space-sm rounded shadow-[2px_2px_0px_rgba(0,0,0,0.7)]">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-gold-currency text-[22px]">monetization_on</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Farmer Wallet</span>
+<span class="font-label-lg text-label-lg text-gold-currency tracking-wider font-bold" id="player-wallet">1,234 Pula</span>
+</div>
+</div>
+<div class="h-6 w-0.5 bg-wood-medium"></div>
+<div class="flex items-center gap-space-xs text-status-success">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+<span class="font-label-sm text-label-sm font-bold">+42 P today</span>
+</div>
+</div>
+</div>
+<!-- Interactive Quick Market Live Counters -->
+<div class="absolute bottom-6 left-4 right-4 hidden md:flex items-center justify-center gap-space-md z-10">
+<div class="flex items-center gap-space-sm bg-surface-container-high/90 px-space-md py-pixel-2 rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<span class="w-2.5 h-2.5 rounded-full bg-status-success animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-cream-surface uppercase">Bazaar Open: Peak Hours</span>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-high/90 px-space-md py-pixel-2 rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<span class="material-symbols-outlined text-primary text-[16px]">local_shipping</span>
+<span class="font-label-sm text-label-sm text-primary uppercase">Daily Ox-Cart Arrived</span>
+</div>
+</div>
+</div>
+<!-- Main Interactive Trading Deck -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20 pb-12">
+<!-- Stepped Navigation Tabs -->
+<div class="bg-wood-dark p-pixel-2 rounded shadow-[2px_2px_0px_rgba(0,0,0,0.7)] flex flex-wrap items-center justify-between gap-2">
+<div class="flex flex-wrap items-center gap-pixel-2" id="market-tabs">
+<button class="tab-btn active-tab px-space-lg py-space-sm text-label-md font-label-md uppercase tracking-wider bg-primary-container text-on-primary-container rounded flex items-center gap-space-sm shadow-[1px_1px_0px_rgba(0,0,0,0.4)]" data-tab="buy">
+<span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+            Buy Seeds &amp; Tools
+          </button>
+<button class="tab-btn px-space-lg py-space-sm text-label-md font-label-md uppercase tracking-wider bg-wood-medium text-cream-surface hover:text-primary hover:bg-surface-bright rounded flex items-center gap-space-sm transition-colors" data-tab="sell">
+<span class="material-symbols-outlined text-[18px]">sell</span>
+            Sell Produce
+          </button>
+<button class="tab-btn px-space-lg py-space-sm text-label-md font-label-md uppercase tracking-wider bg-wood-medium text-cream-surface hover:text-primary hover:bg-surface-bright rounded flex items-center gap-space-sm transition-colors" data-tab="contracts">
+<span class="material-symbols-outlined text-[18px]">assignment</span>
+            Delivery Contracts
+            <span class="bg-status-warning text-wood-dark px-1.5 py-0.5 rounded text-[10px] font-bold">2 New</span>
+</button>
+<button class="tab-btn px-space-lg py-space-sm text-label-md font-label-md uppercase tracking-wider bg-wood-medium text-cream-surface hover:text-primary hover:bg-surface-bright rounded flex items-center gap-space-sm transition-colors" data-tab="trends">
+<span class="material-symbols-outlined text-[18px]">insights</span>
+            Market Price Trends
+          </button>
+</div>
+<!-- Quick Sell Produce Trigger -->
+<button class="px-space-lg py-space-sm bg-status-success/20 hover:bg-status-success/30 text-secondary-fixed font-label-md text-label-md uppercase tracking-wider rounded flex items-center gap-space-sm transition-all shadow-[2px_2px_0px_rgba(0,0,0,0.5)]" id="quick-sell-btn">
+<span class="material-symbols-outlined text-gold-currency text-[18px]">payments</span>
+          Quick Sell Produce <span class="text-gold-currency font-bold">(420 P)</span>
+</button>
+</div>
+<!-- Tab Content 1: BUY SEEDS & TOOLS -->
+<div class="tab-panel mt-6" id="tab-buy">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-primary rounded-none"></span>
+<h2 class="font-headline-md text-headline-md text-primary tracking-wide uppercase">Village Nursery &amp; Artisan Depot</h2>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-status-info">water_drop</span>
+            Season: <strong class="text-cream-surface">Kalahari Rains</strong>
+</div>
+</div>
+<!-- Item Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<!-- Item 1: Sorghum -->
+<div class="bg-wood-medium rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col justify-between group hover:bg-surface-container-high transition-all">
+<div>
+<div class="flex items-start justify-between gap-space-sm mb-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 bg-wood-dark rounded flex items-center justify-center text-3xl shadow-[inset_1px_1px_0px_rgba(0,0,0,0.6)]">
+                    🌾
+                  </div>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-bold">Cereal Crop</span>
+<h3 class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Sorghum Seeds</h3>
+<div class="font-label-md text-label-md text-gold-currency font-bold">15 Pula <span class="text-on-surface-variant font-normal text-xs">/ bag</span></div>
+</div>
+</div>
+<span class="bg-wood-dark px-2 py-1 text-[10px] font-label-sm text-status-success rounded font-bold uppercase">Popular</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-space-md">
+                Staple drought-resistant grain suited for sandy veld soil. Brewed locally for traditional Chibuku.
+              </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm border-t-0 bg-surface-container-lowest/40 p-space-sm rounded">
+<button class="flex-1 py-pixel-2 bg-primary-container hover:bg-primary text-on-primary-container font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('Sorghum Seeds', 15, 1)">
+                Buy x1 (15 P)
+              </button>
+<button class="flex-1 py-pixel-2 bg-wood-dark hover:bg-wood-medium text-cream-surface hover:text-primary font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('Sorghum Seeds', 15, 5)">
+                Buy x5 (75 P)
+              </button>
+</div>
+</div>
+<!-- Item 2: White Maize -->
+<div class="bg-wood-medium rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col justify-between group hover:bg-surface-container-high transition-all">
+<div>
+<div class="flex items-start justify-between gap-space-sm mb-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 bg-wood-dark rounded flex items-center justify-center text-3xl shadow-[inset_1px_1px_0px_rgba(0,0,0,0.6)]">
+                    🌽
+                  </div>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-bold">Staple Grain</span>
+<h3 class="font-headline-sm text-headline-sm text-cream-surface leading-tight">White Maize Seeds</h3>
+<div class="font-label-md text-label-md text-gold-currency font-bold">12 Pula <span class="text-on-surface-variant font-normal text-xs">/ bag</span></div>
+</div>
+</div>
+<span class="bg-wood-dark px-2 py-1 text-[10px] font-label-sm text-status-info rounded font-bold uppercase">Wet Season</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-space-md">
+                High yield in wet clay soil along river channels. Ground into maize meal for staple bogobe porridge.
+              </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm bg-surface-container-lowest/40 p-space-sm rounded">
+<button class="flex-1 py-pixel-2 bg-primary-container hover:bg-primary text-on-primary-container font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('White Maize Seeds', 12, 1)">
+                Buy x1 (12 P)
+              </button>
+<button class="flex-1 py-pixel-2 bg-wood-dark hover:bg-wood-medium text-cream-surface hover:text-primary font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('White Maize Seeds', 12, 5)">
+                Buy x5 (60 P)
+              </button>
+</div>
+</div>
+<!-- Item 3: Cowpea -->
+<div class="bg-wood-medium rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col justify-between group hover:bg-surface-container-high transition-all">
+<div>
+<div class="flex items-start justify-between gap-space-sm mb-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 bg-wood-dark rounded flex items-center justify-center text-3xl shadow-[inset_1px_1px_0px_rgba(0,0,0,0.6)]">
+                    🫘
+                  </div>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-bold">Legume &amp; Greens</span>
+<h3 class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Cowpea Seeds</h3>
+<div class="font-label-md text-label-md text-gold-currency font-bold">18 Pula <span class="text-on-surface-variant font-normal text-xs">/ bag</span></div>
+</div>
+</div>
+<span class="bg-wood-dark px-2 py-1 text-[10px] font-label-sm text-secondary rounded font-bold uppercase">+Soil N₂</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-space-md">
+                Enriches plot soil naturally with nitrogen. Both the dried beans and tender green leaves (Morogo) sell rapidly.
+              </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm bg-surface-container-lowest/40 p-space-sm rounded">
+<button class="flex-1 py-pixel-2 bg-primary-container hover:bg-primary text-on-primary-container font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('Cowpea Seeds', 18, 1)">
+                Buy x1 (18 P)
+              </button>
+<button class="flex-1 py-pixel-2 bg-wood-dark hover:bg-wood-medium text-cream-surface hover:text-primary font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('Cowpea Seeds', 18, 5)">
+                Buy x5 (90 P)
+              </button>
+</div>
+</div>
+<!-- Item 4: Groundnut -->
+<div class="bg-wood-medium rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col justify-between group hover:bg-surface-container-high transition-all">
+<div>
+<div class="flex items-start justify-between gap-space-sm mb-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 bg-wood-dark rounded flex items-center justify-center text-3xl shadow-[inset_1px_1px_0px_rgba(0,0,0,0.6)]">
+                    🥜
+                  </div>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-bold">Cash Crop</span>
+<h3 class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Groundnut Seeds</h3>
+<div class="font-label-md text-label-md text-gold-currency font-bold">20 Pula <span class="text-on-surface-variant font-normal text-xs">/ bag</span></div>
+</div>
+</div>
+<span class="bg-wood-dark px-2 py-1 text-[10px] font-label-sm text-primary rounded font-bold uppercase">High Return</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-space-md">
+                Valuable subterranean legume. Excellent market value and can be roasted into traveling snack parcels.
+              </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm bg-surface-container-lowest/40 p-space-sm rounded">
+<button class="flex-1 py-pixel-2 bg-primary-container hover:bg-primary text-on-primary-container font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('Groundnut Seeds', 20, 1)">
+                Buy x1 (20 P)
+              </button>
+<button class="flex-1 py-pixel-2 bg-wood-dark hover:bg-wood-medium text-cream-surface hover:text-primary font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('Groundnut Seeds', 20, 5)">
+                Buy x5 (100 P)
+              </button>
+</div>
+</div>
+<!-- Item 5: Heritage Tomato -->
+<div class="bg-wood-medium rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col justify-between group hover:bg-surface-container-high transition-all">
+<div>
+<div class="flex items-start justify-between gap-space-sm mb-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 bg-wood-dark rounded flex items-center justify-center text-3xl shadow-[inset_1px_1px_0px_rgba(0,0,0,0.6)]">
+                    🍅
+                  </div>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-bold">Specialty</span>
+<h3 class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Botswana Heritage Tomato</h3>
+<div class="font-label-md text-label-md text-gold-currency font-bold">25 Pula <span class="text-on-surface-variant font-normal text-xs">/ bag</span></div>
+</div>
+</div>
+<span class="bg-wood-dark px-2 py-1 text-[10px] font-label-sm text-status-warning rounded font-bold uppercase">Rare</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-space-md">
+                Sun-sweetened heirloom variety adapted to intense midday sun. Essential for rich village stews.
+              </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm bg-surface-container-lowest/40 p-space-sm rounded">
+<button class="w-full py-pixel-2 bg-primary-container hover:bg-primary text-on-primary-container font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('Heritage Tomato', 25, 1)">
+                Buy x1 Seed Packet (25 P)
+              </button>
+</div>
+</div>
+<!-- Item 6: Hardwood Timber -->
+<div class="bg-wood-medium rounded p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col justify-between group hover:bg-surface-container-high transition-all">
+<div>
+<div class="flex items-start justify-between gap-space-sm mb-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 bg-wood-dark rounded flex items-center justify-center text-3xl shadow-[inset_1px_1px_0px_rgba(0,0,0,0.6)]">
+                    🪵
+                  </div>
+<div>
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold">Construction</span>
+<h3 class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Hardwood Timber (x10)</h3>
+<div class="font-label-md text-label-md text-gold-currency font-bold">45 Pula <span class="text-on-surface-variant font-normal text-xs">/ bundle</span></div>
+</div>
+</div>
+<span class="bg-wood-dark px-2 py-1 text-[10px] font-label-sm text-cream-surface rounded font-bold uppercase">Material</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-space-md">
+                Seasoned Mopane timber poles. Essential for constructing chicken coops, kraal enclosures, and shade canopies.
+              </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm bg-surface-container-lowest/40 p-space-sm rounded">
+<button class="w-full py-pixel-2 bg-primary-container hover:bg-primary text-on-primary-container font-label-sm text-label-sm rounded uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all" onclick="buyItem('Hardwood Timber (x10)', 45, 1)">
+                Buy Bundle (45 P)
+              </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Tab Content 2: SELL PRODUCE -->
+<div class="tab-panel mt-6 hidden" id="tab-sell">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-secondary rounded-none"></span>
+<h2 class="font-headline-md text-headline-md text-secondary tracking-wide uppercase">Farm Produce Exchange</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Click item to liquidate inventory</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<div class="bg-wood-medium p-space-md rounded flex items-center justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-space-md">
+<span class="text-3xl">🌾</span>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-cream-surface">Harvested Sorghum</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">In Stock: 18 Bushels</span>
+</div>
+</div>
+<button class="px-space-md py-space-sm bg-wood-dark hover:bg-primary-container hover:text-on-primary-container text-primary font-label-sm text-label-sm rounded uppercase font-bold transition-all" onclick="sellItem('Harvested Sorghum', 22, 5)">
+              Sell 5 (+110 P)
+            </button>
+</div>
+<div class="bg-wood-medium p-space-md rounded flex items-center justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-space-md">
+<span class="text-3xl">🌽</span>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-cream-surface">Sweet Green Maize</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">In Stock: 24 Ears</span>
+</div>
+</div>
+<button class="px-space-md py-space-sm bg-wood-dark hover:bg-primary-container hover:text-on-primary-container text-primary font-label-sm text-label-sm rounded uppercase font-bold transition-all" onclick="sellItem('Sweet Green Maize', 14, 10)">
+              Sell 10 (+140 P)
+            </button>
+</div>
+<div class="bg-wood-medium p-space-md rounded flex items-center justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-space-md">
+<span class="text-3xl">🥛</span>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-cream-surface">Fresh Cow Milk</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">In Stock: 6 Calabashes</span>
+</div>
+</div>
+<button class="px-space-md py-space-sm bg-wood-dark hover:bg-primary-container hover:text-on-primary-container text-primary font-label-sm text-label-sm rounded uppercase font-bold transition-all" onclick="sellItem('Fresh Cow Milk', 30, 2)">
+              Sell 2 (+60 P)
+            </button>
+</div>
+</div>
+</div>
+<!-- Tab Content 3: DELIVERY CONTRACTS -->
+<div class="tab-panel mt-6 hidden" id="tab-contracts">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-status-warning rounded-none"></span>
+<h2 class="font-headline-md text-headline-md text-status-warning tracking-wide uppercase">Kgotla Council &amp; Merchant Contracts</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fulfill bulk requests for bonus village standing</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="bg-wood-medium p-space-lg rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold">Contract #804 • Village Brewery</span>
+<span class="bg-status-warning/20 text-status-warning px-2 py-0.5 rounded text-[11px] font-bold font-label-sm">Expires in 2 Days</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-cream-surface mb-2">Maun Traditional Brewery Supply</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">
+                The local sorghum beer master requires a bulk shipment of 40 bags of high-grade sorghum for the upcoming harvest celebration.
+              </p>
+<div class="space-y-2 mb-4 bg-wood-dark p-3 rounded">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Progress: 18 / 40 Bags</span>
+<span class="text-gold-currency font-bold">45%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-none overflow-hidden">
+<div class="h-full bg-status-warning w-[45%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gold-currency">military_tech</span>
+<span class="font-label-md text-label-md text-gold-currency font-bold">Reward: 650 Pula + 120 XP</span>
+</div>
+<button class="px-space-md py-pixel-2 bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase font-bold rounded shadow-[2px_2px_0px_rgba(0,0,0,0.4)]">
+                Deliver Partial
+              </button>
+</div>
+</div>
+<div class="bg-wood-medium p-space-lg rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-secondary uppercase font-bold">Contract #809 • Delta Safari Camp</span>
+<span class="bg-status-info/20 text-status-info px-2 py-0.5 rounded text-[11px] font-bold font-label-sm">Expires in 4 Days</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-cream-surface mb-2">Fresh Camp Kitchen Morogo &amp; Vegetables</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">
+                The riverside tourist lodge has placed a weekly order for fresh leafy greens, sweet melons, and Botswana tomatoes.
+              </p>
+<div class="space-y-2 mb-4 bg-wood-dark p-3 rounded">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Progress: 25 / 25 Crates</span>
+<span class="text-status-success font-bold">Ready to Hand In!</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-none overflow-hidden">
+<div class="h-full bg-status-success w-full"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gold-currency">military_tech</span>
+<span class="font-label-md text-label-md text-gold-currency font-bold">Reward: 480 Pula + 90 XP</span>
+</div>
+<button class="px-space-md py-pixel-2 bg-status-success hover:bg-secondary text-wood-dark font-label-sm text-label-sm uppercase font-bold rounded shadow-[2px_2px_0px_rgba(0,0,0,0.4)] animate-bounce" onclick="claimContract(this)">
+                Claim Reward
+              </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Tab Content 4: MARKET PRICE TRENDS -->
+<div class="tab-panel mt-6 hidden" id="tab-trends">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-sky-blue rounded-none"></span>
+<h2 class="font-headline-md text-headline-md text-sky-blue tracking-wide uppercase">Seasonal Commodity Indices</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fluctuates daily at dawn (06:00)</span>
+</div>
+<div class="bg-wood-medium p-space-lg rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<div class="bg-wood-dark p-space-md rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="font-headline-sm text-headline-sm text-cream-surface">Sorghum</span>
+<span class="text-status-success font-label-md text-label-md font-bold">↑ +12%</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">22 Pula / bag</div>
+<div class="mt-2 text-xs text-secondary-fixed">Reason: Local brewery event</div>
+</div>
+<div class="bg-wood-dark p-space-md rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="font-headline-sm text-headline-sm text-cream-surface">Maize Grain</span>
+<span class="text-status-danger font-label-md text-label-md font-bold">↓ -5%</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">14 Pula / bag</div>
+<div class="mt-2 text-xs text-on-surface-variant">Reason: High harvest supply</div>
+</div>
+<div class="bg-wood-dark p-space-md rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="font-headline-sm text-headline-sm text-cream-surface">Cattle Feed</span>
+<span class="text-status-success font-label-md text-label-md font-bold">↑ +8%</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">38 Pula / bale</div>
+<div class="mt-2 text-xs text-secondary-fixed">Reason: Dry grazing patches</div>
+</div>
+<div class="bg-wood-dark p-space-md rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="font-headline-sm text-headline-sm text-cream-surface">Mopane Wood</span>
+<span class="text-status-warning font-label-md text-label-md font-bold">↔ Stable</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">45 Pula / 10x</div>
+<div class="mt-2 text-xs text-on-surface-variant">Steady artisan demand</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Live Daily Price Ticker Bar at Bottom -->
+<div class="mt-6 bg-surface-container-high/90 px-space-md py-3 rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] flex items-center justify-between overflow-hidden gap-4">
+<div class="flex items-center gap-space-sm shrink-0">
+<span class="material-symbols-outlined text-primary text-[20px]">show_chart</span>
+<span class="font-label-md text-label-md text-primary uppercase font-bold tracking-wider">Daily Trends:</span>
+</div>
+<div class="overflow-x-auto whitespace-nowrap scrollbar-none py-1 flex items-center gap-6 font-label-sm text-label-sm">
+<span class="text-cream-surface flex items-center gap-1">
+            🌾 Sorghum <strong class="text-status-success">↑ +12%</strong> <span class="text-on-surface-variant">(High demand at brewery)</span>
+</span>
+<span class="text-on-surface-variant">|</span>
+<span class="text-cream-surface flex items-center gap-1">
+            🌽 Maize <strong class="text-status-danger">↓ -5%</strong>
+</span>
+<span class="text-on-surface-variant">|</span>
+<span class="text-cream-surface flex items-center gap-1">
+            🐂 Cattle Feed <strong class="text-status-success">↑ +8%</strong>
+</span>
+<span class="text-on-surface-variant">|</span>
+<span class="text-cream-surface flex items-center gap-1">
+            🪵 Wood <strong class="text-status-warning">Stable</strong>
+</span>
+<span class="text-on-surface-variant">|</span>
+<span class="text-cream-surface flex items-center gap-1">
+            🫘 Cowpeas <strong class="text-status-success">↑ +4%</strong>
+</span>
+</div>
+<div class="hidden lg:flex items-center gap-1 text-on-surface-variant font-label-sm text-[10px] shrink-0">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+          Syncing Ngami Rates
+        </div>
+</div>
+</div>
+</div>
+<!-- Client-side Audio/Toast Interaction Simulator -->
+<div class="fixed bottom-20 right-6 bg-wood-dark text-cream-surface border-0 px-space-lg py-space-sm rounded shadow-[3px_3px_0px_rgba(0,0,0,0.8)] z-50 flex items-center gap-space-sm transform translate-y-32 opacity-0 transition-all duration-300 pointer-events-none" id="toast">
+<span class="material-symbols-outlined text-gold-currency" id="toast-icon">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-gold-currency uppercase" id="toast-title">Transaction Completed</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant" id="toast-msg">Item added to your inventory.</span>
+</div>
+</div>
+<!-- Interactive Logic -->
+<script>
+    let wallet = 1234;
+
+    function showToast(title, msg, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      const toastTitle = document.getElementById('toast-title');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastTitle.textContent = title;
+      toastMsg.textContent = msg;
+      toastIcon.textContent = isSuccess ? 'monetization_on' : 'warning';
+      toastIcon.className = `material-symbols-outlined ${isSuccess ? 'text-gold-currency' : 'text-status-danger'}`;
+
+      toast.classList.remove('translate-y-32', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-32', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2500);
+    }
+
+    function buyItem(name, pricePerUnit, quantity) {
+      const total = pricePerUnit * quantity;
+      if (wallet >= total) {
+        wallet -= total;
+        updateWallet();
+        showToast('Purchase Successful', `Bought ${quantity}x ${name} for -${total} Pula.`);
+      } else {
+        showToast('Insufficient Pula', `You need ${total} Pula to complete this trade.`, false);
+      }
+    }
+
+    function sellItem(name, pricePerUnit, quantity) {
+      const earnings = pricePerUnit * quantity;
+      wallet += earnings;
+      updateWallet();
+      showToast('Produce Sold', `Sold ${quantity}x ${name} to merchant for +${earnings} Pula.`);
+    }
+
+    function claimContract(btn) {
+      wallet += 480;
+      updateWallet();
+      showToast('Contract Fulfilled', 'Received +480 Pula and +90 XP from Delta Camp!');
+      btn.disabled = true;
+      btn.classList.remove('animate-bounce');
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+      btn.textContent = 'Claimed';
+    }
+
+    function updateWallet() {
+      const walletEl = document.getElementById('player-wallet');
+      if (walletEl) {
+        walletEl.textContent = `${wallet.toLocaleString()} Pula`;
+      }
+    }
+
+    // Tab switcher logic
+    document.querySelectorAll('.tab-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const targetTab = button.getAttribute('data-tab');
+        
+        // Reset buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.remove('active-tab', 'bg-primary-container', 'text-on-primary-container');
+          btn.classList.add('bg-wood-medium', 'text-cream-surface');
+        });
+
+        // Activate clicked button
+        button.classList.add('active-tab', 'bg-primary-container', 'text-on-primary-container');
+        button.classList.remove('bg-wood-medium', 'text-cream-surface');
+
+        // Toggle panel visibility
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+          panel.classList.add('hidden');
+        });
+        const activePanel = document.getElementById(`tab-${targetTab}`);
+        if (activePanel) {
+          activePanel.classList.remove('hidden');
+        }
+      });
+    });
+
+    // Quick Sell trigger
+    document.getElementById('quick-sell-btn').addEventListener('click', () => {
+      wallet += 420;
+      updateWallet();
+      showToast('Quick Sell Harvest', 'Traded harvested crops for +420 Pula.');
+      const btn = document.getElementById('quick-sell-btn');
+      btn.innerHTML = '<span class="material-symbols-outlined text-gold-currency text-[18px]">check</span> Harvest Sold (0 P)';
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+    });
+  </script>
+</div></main><footer class="fixed bottom-0 left-0 right-0 z-40 bg-wood-medium border-t-2 border-wood-border md:hidden"><nav class="h-14 grid grid-cols-6 items-center px-gutter-mobile" data-active-classes="bg-primary-container text-on-primary-container font-bold"><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="farm" href="#"><span class="material-symbols-outlined text-[18px]">agriculture</span><span class="font-label-sm text-label-sm">Farm</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="kgotla" href="#"><span class="material-symbols-outlined text-[18px]">account_balance</span><span class="font-label-sm text-label-sm">Kgotla</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="bushveld" href="#"><span class="material-symbols-outlined text-[18px]">forest</span><span class="font-label-sm text-label-sm">Wild</span></a><a aria-current="page" class="flex flex-col items-center justify-center py-pixel-2 bg-primary-container text-on-primary-container font-bold" data-path="market" href="#"><span class="material-symbols-outlined text-[18px]">storefront</span><span class="font-label-sm text-label-sm">Market</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="inventory" href="#"><span class="material-symbols-outlined text-[18px]">backpack</span><span class="font-label-sm text-label-sm">Bag</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="font-label-sm text-label-sm">Config</span></a></nav></footer></body></html>

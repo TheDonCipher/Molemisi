@@ -18,7 +18,16 @@ All game content is data-driven. New content can be added by updating configurat
 ```typescript
 interface ContentDefinition {
   id: string;
-  type: 'crop' | 'animal' | 'building' | 'item' | 'recipe' | 'contract' | 'npc' | 'event' | 'achievement';
+  type:
+    | 'crop'
+    | 'animal'
+    | 'building'
+    | 'item'
+    | 'recipe'
+    | 'contract'
+    | 'npc'
+    | 'event'
+    | 'achievement';
   name: string;
   description: string;
   unlockLevel: number;
@@ -169,9 +178,7 @@ interface ContentDefinition {
       { "type": "sorghum", "quantity": 5 },
       { "type": "maize", "quantity": 5 }
     ],
-    "outputItems": [
-      { "type": "flour", "quantity": 15 }
-    ],
+    "outputItems": [{ "type": "flour", "quantity": 15 }],
     "processingTimeMinutes": 30,
     "xpGained": 10
   }
@@ -283,7 +290,7 @@ class ContentService {
   }
 
   getUnlockedCrops(level: number): CropDefinition[] {
-    return Array.from(this.crops.values()).filter(c => c.unlockLevel <= level);
+    return Array.from(this.crops.values()).filter((c) => c.unlockLevel <= level);
   }
 }
 ```

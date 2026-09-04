@@ -87,13 +87,15 @@ export class FarmsService {
         id: plot.id as string,
         slotIndex: plot.slot_index as number,
         state: plot.state as string,
-        crop: Array.isArray(plot.crop_instances) && plot.crop_instances.length > 0
-          ? {
-              type: (plot.crop_instances[0] as Record<string, unknown>).crop_type as string,
-              growthStage: (plot.crop_instances[0] as Record<string, unknown>).growth_stage as number,
-              hydration: (plot.crop_instances[0] as Record<string, unknown>).hydration as number,
-            }
-          : undefined,
+        crop:
+          Array.isArray(plot.crop_instances) && plot.crop_instances.length > 0
+            ? {
+                type: (plot.crop_instances[0] as Record<string, unknown>).crop_type as string,
+                growthStage: (plot.crop_instances[0] as Record<string, unknown>)
+                  .growth_stage as number,
+                hydration: (plot.crop_instances[0] as Record<string, unknown>).hydration as number,
+              }
+            : undefined,
       })),
     };
   }

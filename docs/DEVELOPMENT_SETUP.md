@@ -132,12 +132,14 @@ supabase gen types typescript --local > packages/database-types.ts
 ### VS Code
 
 Recommended extensions:
+
 - ESLint
 - Prettier
 - Tailwind CSS IntelliSense
 - TypeScript Nightly
 
 Settings (`.vscode/settings.json`):
+
 ```json
 {
   "editor.formatOnSave": true,

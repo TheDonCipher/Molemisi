@@ -11,10 +11,7 @@ async function getToken(): Promise<string | null> {
   return localStorage.getItem('token');
 }
 
-export async function apiRequest<T>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<T> {
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const token = await getToken();
 
   const headers: Record<string, string> = {

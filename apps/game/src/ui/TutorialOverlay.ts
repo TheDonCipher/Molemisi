@@ -10,7 +10,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     title: 'Welcome to Molemisi! 🌾',
     message:
-      'This is your farm. You\'ll grow crops, raise animals, and build a thriving homestead.\n\nTap any empty plot to get started!',
+      "This is your farm. You'll grow crops, raise animals, and build a thriving homestead.\n\nTap any empty plot to get started!",
   },
   {
     title: 'Planting Crops 🌱',
@@ -20,7 +20,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     title: 'Watering 💧',
     message:
-      'Crops need water to grow. The blue bar shows hydration.\n\nIf it runs out, your crop will wither!\n\nRain provides free water, but don\'t rely on it.',
+      "Crops need water to grow. The blue bar shows hydration.\n\nIf it runs out, your crop will wither!\n\nRain provides free water, but don't rely on it.",
   },
   {
     title: 'Harvesting & Selling 🌾',
@@ -59,6 +59,10 @@ export class TutorialOverlay {
     }
 
     const step = TUTORIAL_STEPS[this.currentStep];
+    if (!step) {
+      this.onComplete();
+      return;
+    }
     const width = this.scene.cameras.main.width;
     const height = this.scene.cameras.main.height;
 
@@ -76,7 +80,7 @@ export class TutorialOverlay {
     const cardY = height / 2;
 
     const card = this.scene.add.rectangle(cardX, cardY, cardWidth, cardHeight, 0x2d1b0e, 0.98);
-    card.setStrokeStyle(2, 0xFF8F00);
+    card.setStrokeStyle(2, 0xff8f00);
     this.container.add(card);
 
     // Step indicator
@@ -112,7 +116,7 @@ export class TutorialOverlay {
 
     // Next / Finish button
     const isLast = this.currentStep === TUTORIAL_STEPS.length - 1;
-    const btnLabel = isLast ? 'Let\'s Go! 🚀' : 'Next →';
+    const btnLabel = isLast ? "Let's Go! 🚀" : 'Next →';
     const btn = this.scene.add.text(cardX, cardY + cardHeight / 2 - 30, btnLabel, {
       font: '14px monospace',
       color: '#4CAF50',
@@ -137,10 +141,15 @@ export class TutorialOverlay {
     this.container.add(btn);
 
     // Skip button
-    const skip = this.scene.add.text(cardX + cardWidth / 2 - 10, cardY - cardHeight / 2 + 16, 'Skip', {
-      font: '10px monospace',
-      color: '#BCAAA4',
-    });
+    const skip = this.scene.add.text(
+      cardX + cardWidth / 2 - 10,
+      cardY - cardHeight / 2 + 16,
+      'Skip',
+      {
+        font: '10px monospace',
+        color: '#BCAAA4',
+      },
+    );
     skip.setOrigin(1, 0.5);
     skip.setInteractive({ useHandCursor: true });
     skip.on('pointerdown', () => {

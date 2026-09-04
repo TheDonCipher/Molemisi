@@ -13,16 +13,16 @@
 
 ### Dashboard Features
 
-| Feature | Description |
-|---------|-------------|
-| Player Management | View, search, inspect players |
-| Farm Inspection | View any player's farm state |
+| Feature                | Description                          |
+| ---------------------- | ------------------------------------ |
+| Player Management      | View, search, inspect players        |
+| Farm Inspection        | View any player's farm state         |
 | Transaction Monitoring | View all market/payment transactions |
-| Economy Dashboard | Currency supply, inflation, prices |
-| Game Configuration | Edit game balance values |
-| Event Management | Create/manage market events |
-| Moderation | Ban/unban players |
-| Audit Logs | View all admin actions |
+| Economy Dashboard      | Currency supply, inflation, prices   |
+| Game Configuration     | Edit game balance values             |
+| Event Management       | Create/manage market events          |
+| Moderation             | Ban/unban players                    |
+| Audit Logs             | View all admin actions               |
 
 ### Authentication
 
@@ -73,21 +73,21 @@
 
 ### Economy Dashboard
 
-| Metric | Value | Trend |
-|--------|-------|-------|
-| Total Currency | 500,000 P | ↑ |
-| Avg Farm Wealth | 3,333 P | ↑ |
-| Daily Transactions | 150 | → |
-| Inflation Rate | 2.1% | → |
-| Top Crop | Sorghum | → |
+| Metric             | Value     | Trend |
+| ------------------ | --------- | ----- |
+| Total Currency     | 500,000 P | ↑     |
+| Avg Farm Wealth    | 3,333 P   | ↑     |
+| Daily Transactions | 150       | →     |
+| Inflation Rate     | 2.1%      | →     |
+| Top Crop           | Sorghum   | →     |
 
 ### Price Monitoring
 
-| Item | Base | Current | Change |
-|------|------|---------|--------|
-| Sorghum | 15 | 17 | +13% |
-| Maize | 20 | 18 | -10% |
-| Eggs | 5 | 6 | +20% |
+| Item    | Base | Current | Change |
+| ------- | ---- | ------- | ------ |
+| Sorghum | 15   | 17      | +13%   |
+| Maize   | 20   | 18      | -10%   |
+| Eggs    | 5    | 6       | +20%   |
 
 ---
 
@@ -99,13 +99,13 @@
 
 Admins can modify game configuration through the admin interface:
 
-| Config Type | Editable Fields |
-|------------|-----------------|
-| Crops | Growth time, yield, prices, costs |
-| Animals | Feed cost, production, prices |
-| Buildings | Costs, capacity, maintenance |
-| Market | Price bounds, update frequency |
-| Weather | Probabilities, season modifiers |
+| Config Type | Editable Fields                   |
+| ----------- | --------------------------------- |
+| Crops       | Growth time, yield, prices, costs |
+| Animals     | Feed cost, production, prices     |
+| Buildings   | Costs, capacity, maintenance      |
+| Market      | Price bounds, update frequency    |
+| Weather     | Probabilities, season modifiers   |
 
 ### Configuration Change Rules
 
@@ -122,13 +122,13 @@ Admins can modify game configuration through the admin interface:
 
 ### Moderation Actions
 
-| Action | Description | Reversible |
-|--------|-------------|------------|
-| Warn | Send warning notification | N/A |
-| Mute | Disable chat (future) | Yes |
-| Ban | Disable account | Yes |
-| Unban | Re-enable account | N/A |
-| Reset Farm | Reset farm to starting state | No |
+| Action     | Description                  | Reversible |
+| ---------- | ---------------------------- | ---------- |
+| Warn       | Send warning notification    | N/A        |
+| Mute       | Disable chat (future)        | Yes        |
+| Ban        | Disable account              | Yes        |
+| Unban      | Re-enable account            | N/A        |
+| Reset Farm | Reset farm to starting state | No         |
 
 ### Ban Process
 
@@ -155,14 +155,14 @@ LIMIT 100;
 
 ### Audit Log Fields
 
-| Field | Description |
-|-------|-------------|
-| id | Unique identifier |
-| user_id | Admin who performed action |
-| action | Action type |
-| resource_type | What was affected |
-| resource_id | Specific resource |
-| old_values | Previous state |
-| new_values | New state |
-| ip_address | Admin's IP |
-| created_at | When action occurred |
+| Field         | Description                |
+| ------------- | -------------------------- |
+| id            | Unique identifier          |
+| user_id       | Admin who performed action |
+| action        | Action type                |
+| resource_type | What was affected          |
+| resource_id   | Specific resource          |
+| old_values    | Previous state             |
+| new_values    | New state                  |
+| ip_address    | Admin's IP                 |
+| created_at    | When action occurred       |

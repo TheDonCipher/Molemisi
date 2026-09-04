@@ -159,42 +159,55 @@
 ## Verification Checklist
 
 ### Does the frontend bypass NestJS? ✅ NO
+
 - All game actions go through API
 
 ### Does Phaser contain business logic? ✅ NO
+
 - Phaser only handles rendering and input
 
 ### Can the client directly manipulate currency? ✅ NO
+
 - Currency changes happen server-side
 
 ### Can one player access another player's farm? ✅ NO
+
 - RLS policies enforce ownership
 
 ### Are Supabase service credentials exposed? ✅ NO
+
 - Service role key only in server environment
 
 ### Are database migrations reproducible? ✅ YES
+
 - Migrations in supabase/migrations/
 
 ### Can the game run without live payment credentials? ✅ YES
+
 - No payment integration yet
 
 ### Are game constants centralized? ✅ YES
+
 - In packages/game-config/
 
 ### Can new crops be added without rewriting logic? ✅ YES
+
 - Add to packages/game-config/src/crops.ts
 
 ### Can new buildings be added without rewriting logic? ✅ YES
+
 - Add to packages/game-config/src/buildings.ts
 
 ### Can Kgotla and Bushveld be added without restructuring? ✅ YES
+
 - Add new NestJS modules
 
 ### Can the simulation operate independently of Phaser? ✅ YES
+
 - Simulation runs server-side
 
 ### Can the application support mobile packaging? ✅ YES
+
 - PWA-ready, Capacitor possible later
 
 ---

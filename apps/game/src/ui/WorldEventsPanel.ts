@@ -29,12 +29,7 @@ export class WorldEventsPanel {
   private isOpen = false;
   private onRefresh: () => void;
 
-  constructor(
-    scene: Phaser.Scene,
-    apiClient: ApiClient,
-    farmId: string,
-    onRefresh: () => void,
-  ) {
+  constructor(scene: Phaser.Scene, apiClient: ApiClient, farmId: string, onRefresh: () => void) {
     this.scene = scene;
     this.apiClient = apiClient;
     this.farmId = farmId;
@@ -69,7 +64,7 @@ export class WorldEventsPanel {
     const panelWidth = Math.min(520, width - 40);
     const panelHeight = Math.min(480, height - 80);
     const panel = this.scene.add.rectangle(0, 0, panelWidth, panelHeight, 0x2d1b0e, 0.98);
-    panel.setStrokeStyle(2, 0xFFB74D);
+    panel.setStrokeStyle(2, 0xffb74d);
     this.container.add(panel);
 
     // Title
@@ -118,6 +113,7 @@ export class WorldEventsPanel {
     panelHeight: number,
   ): void {
     if (!this.container) return;
+    const container = this.container;
 
     let y = -panelHeight / 2 + 50;
 
@@ -127,59 +123,61 @@ export class WorldEventsPanel {
         font: '12px monospace',
         color: '#81C784',
       });
-      this.container.add(activeTitle);
+      container.add(activeTitle);
       y += 22;
 
       active.forEach((event) => {
         const typeEmoji: Record<string, string> = {
-          festival: '🎉', seasonal: '🌿', market: '🛒', weather: '🌦️',
+          festival: '🎉',
+          seasonal: '🌿',
+          market: '🛒',
+          weather: '🌦️',
         };
         const emoji = typeEmoji[event.type] || '🌍';
 
         // Event name
-        const text = this.scene.add.text(
-          -panelWidth / 2 + 30, y,
-          `${emoji} ${event.name}`,
-          { font: '11px monospace', color: '#F5E6D3' },
-        );
-        this.container.add(text);
+        const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${event.name}`, {
+          font: '11px monospace',
+          color: '#F5E6D3',
+        });
+        container.add(text);
 
         // Description
-        const desc = this.scene.add.text(
-          -panelWidth / 2 + 30, y + 14,
-          event.description,
-          { font: '9px monospace', color: '#BCAAA4' },
-        );
-        this.container.add(desc);
+        const desc = this.scene.add.text(-panelWidth / 2 + 30, y + 14, event.description, {
+          font: '9px monospace',
+          color: '#BCAAA4',
+        });
+        container.add(desc);
 
         // Time remaining
         const timeLeft = Math.max(0, new Date(event.endsAt).getTime() - Date.now());
         const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
         const timeColor = hoursLeft < 2 ? '#F44336' : hoursLeft < 6 ? '#FF9800' : '#4CAF50';
 
-        const timeText = this.scene.add.text(
-          panelWidth / 2 - 30, y + 7,
-          `${hoursLeft}h left`,
-          { font: '10px monospace', color: timeColor },
-        );
+        const timeText = this.scene.add.text(panelWidth / 2 - 30, y + 7, `${hoursLeft}h left`, {
+          font: '10px monospace',
+          color: timeColor,
+        });
         timeText.setOrigin(1, 0.5);
-        this.container.add(timeText);
+        container.add(timeText);
 
         // Effects
         const effectsText = Object.entries(event.effects)
           .map(([key, value]) => {
-            const mod = value > 1 ? `+${Math.round((value - 1) * 100)}%` : `-${Math.round((1 - value) * 100)}%`;
+            const mod =
+              value > 1
+                ? `+${Math.round((value - 1) * 100)}%`
+                : `-${Math.round((1 - value) * 100)}%`;
             return `${key.replace('Modifier', '')}: ${mod}`;
           })
           .join(' | ');
 
-        const effectsLabel = this.scene.add.text(
-          panelWidth / 2 - 30, y + 22,
-          effectsText,
-          { font: '9px monospace', color: '#FFB74D' },
-        );
+        const effectsLabel = this.scene.add.text(panelWidth / 2 - 30, y + 22, effectsText, {
+          font: '9px monospace',
+          color: '#FFB74D',
+        });
         effectsLabel.setOrigin(1, 0.5);
-        this.container.add(effectsLabel);
+        container.add(effectsLabel);
 
         y += 50;
       });
@@ -189,7 +187,7 @@ export class WorldEventsPanel {
         color: '#BCAAA4',
       });
       noActive.setOrigin(0.5, 0.5);
-      this.container.add(noActive);
+      container.add(noActive);
       y += 50;
     }
 
@@ -199,7 +197,7 @@ export class WorldEventsPanel {
       font: '12px monospace',
       color: '#FFB74D',
     });
-    this.container.add(availTitle);
+    container.add(availTitle);
     y += 22;
 
     if (available.length === 0) {
@@ -208,48 +206,54 @@ export class WorldEventsPanel {
         color: '#BCAAA4',
       });
       none.setOrigin(0.5, 0.5);
-      this.container.add(none);
+      container.add(none);
       return;
     }
 
     available.forEach((event) => {
       const typeEmoji: Record<string, string> = {
-        festival: '🎉', seasonal: '🌿', market: '🛒', weather: '🌦️',
+        festival: '🎉',
+        seasonal: '🌿',
+        market: '🛒',
+        weather: '🌦️',
       };
       const emoji = typeEmoji[event.type] || '🌍';
 
       // Name
       const text = this.scene.add.text(
-        -panelWidth / 2 + 30, y,
+        -panelWidth / 2 + 30,
+        y,
         `${emoji} ${event.name} (${event.duration}h)`,
         { font: '11px monospace', color: '#F5E6D3' },
       );
-      this.container.add(text);
+      container.add(text);
 
       // Effects preview
       const effectsText = Object.entries(event.effects)
         .map(([key, value]) => {
-          const mod = value > 1 ? `+${Math.round((value - 1) * 100)}%` : `-${Math.round((1 - value) * 100)}%`;
+          const mod =
+            value > 1 ? `+${Math.round((value - 1) * 100)}%` : `-${Math.round((1 - value) * 100)}%`;
           return `${key.replace('Modifier', '')}: ${mod}`;
         })
         .join(', ');
 
-      const effectsLabel = this.scene.add.text(
-        -panelWidth / 2 + 30, y + 14,
-        effectsText,
-        { font: '9px monospace', color: '#BCAAA4' },
-      );
-      this.container.add(effectsLabel);
+      const effectsLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, effectsText, {
+        font: '9px monospace',
+        color: '#BCAAA4',
+      });
+      container.add(effectsLabel);
 
       // Trigger button
-      const triggerBtn = this.scene.add.text(
-        panelWidth / 2 - 30, y + 7,
-        '🎪 Trigger', { font: '10px monospace', color: '#4CAF50', backgroundColor: '#1b5e20', padding: { x: 6, y: 3 } },
-      );
+      const triggerBtn = this.scene.add.text(panelWidth / 2 - 30, y + 7, '🎪 Trigger', {
+        font: '10px monospace',
+        color: '#4CAF50',
+        backgroundColor: '#1b5e20',
+        padding: { x: 6, y: 3 },
+      });
       triggerBtn.setOrigin(1, 0.5);
       triggerBtn.setInteractive({ useHandCursor: true });
       triggerBtn.on('pointerdown', () => this.handleTrigger(event.id));
-      this.container.add(triggerBtn);
+      container.add(triggerBtn);
 
       y += 38;
     });

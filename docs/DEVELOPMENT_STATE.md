@@ -1,7 +1,7 @@
 # Molemisi Development State
 
-> Last Updated: 2026-09-02
-> Updated By: M16 Implementation
+> Last Updated: 2026-09-03
+> Updated By: Asset Pipeline + Pre-existing Bug Fixes
 
 ---
 
@@ -15,7 +15,7 @@
 M0  Product & Documentation       [COMPLETE]
 M1  Repository & Infrastructure   [COMPLETE]
 M2  Authentication & Persistent   [COMPLETE]
-M3  Phaser Rendering Foundation   [PARTIAL]
+M3  Phaser Rendering Foundation   [PARTIAL — now with real sprites]
 M4  First Playable Vertical Slice [COMPLETE]
 M5  Time & Offline Simulation     [COMPLETE]
 M6  Farm Management               [COMPLETE]
@@ -28,103 +28,132 @@ M12 Seasons & World Events        [COMPLETE]
 M13 Mobile/PWA                    [COMPLETE]
 M14 Monetization & Payments       [COMPLETE]
 M15 Security / Analytics / Admin  [COMPLETE]
-M16 Alpha                         [IN PROGRESS — integration tests, error recovery]
+M16 Alpha                         [IN PROGRESS — asset integration, integration tests]
 ```
 
 ---
 
-## What Was Implemented (M16 Alpha)
+## What Was Implemented (Latest Session)
 
-### ✅ Integration Tests
-- Core game loop integration test suite (14 test groups)
-- Tests: health, auth, farm loading, planting, watering, harvesting
-- Tests: market operations, profile, inventory, unauthorized access
-- Tests: store/payments, Kgotla, Bushveld, admin
+### ✅ PixelLab Asset Generation Pipeline
 
-### ✅ Error Recovery
-- ApiClient now has retry logic with exponential backoff
-- Network errors auto-retry up to 3 times
-- Retryable HTTP statuses: 408, 429, 500, 502, 503, 504
-- Non-retryable client errors (4xx) fail immediately
-- Exponential delay: 500ms → 1s → 2s → 5s max
+- 192 assets generated via PixelLab API
+- 49 UI icons, 71 crop sprites, 12 animal sprites, 7 buildings, 5 NPCs, 10 decorations, 7 ground tiles, 7 backgrounds, 6 weather, 12 particles, 6 UI panels
+- `scripts/generate-pixellab-assets.mjs` — full asset generator with concurrency, retries, manifest tracking
+- `scripts/sync-assets.mjs` — copies assets into `apps/web/public/assets/` and `apps/game/public/assets/`, generates typed `apps/game/src/generated-assets.ts`
+- `assets/manifest.json` — complete catalog of all 192 assets with metadata
 
-### ✅ Crop Growth Animation
-- PlotObject pulses when crop advances to new growth stage
-- Scale tween animation (1.0 → 1.15 → 1.0)
-- Particle burst effect on growth
-- Visual feedback for harvest-ready state
+### ✅ Game Sprite Integration
+
+- **PreloadScene** — loads all assets from the generated manifest with progress bar
+- **PlotObject** — renders real soil tiles + crop-stage sprites + sparkle particles (no more emoji/rectangles)
+- **FarmScene** — sky backdrop, decor trees, buildings, animal sprites with idle bob, weather sprites
+- **Web HUD** — bottom nav, weather chip, Pula display use generated pixel icons
+
+### ✅ Pre-existing Bug Fixes
+
+- **next build `useContext` null** — root cause: ambient `NODE_ENV=development` from `.env` / shell. Fixed by removing from `.env`/`.env.example` and adding `cross-env NODE_ENV=production` to web build script
+- **EADDRINUSE (3000/3001/3002)** — created `scripts/kill-dev.mjs` helper; added `kill:dev` npm script
+- **ESLint 9 broken** — legacy `.eslintrc.js` ignored by ESLint 9. Created `eslint.config.js` flat config, deleted legacy, fixed all 14 unused-import/variable errors in API
+- **Game standalone build** — missing `index.html`. Created entry + Vite aliases for workspace packages
+- **API test failure** — `jest.config.ts` had `rootDir: src` so `../../packages` resolved wrong. Fixed to `../../../packages`. Updated `crops.service.spec.ts` to match refactored RPC-based `plantCrop`
+- **Strict-mode TS errors** — fixed TS2531/TS2352 in StorePanel, LivestockPanel, KgotlaPanel, WorldEventsPanel, ContractsPanel, BushveldPanel, TutorialOverlay (pre-existing)
+- **ApiClient VITE_API_URL** — replaced `import.meta.env.VITE_API_URL` with `NEXT_PUBLIC_API_URL` (Vite env not available in Next.js webpack)
 
 ---
 
 ## Complete Feature Inventory
 
 ### Authentication ✅
+
 - Register, login, logout, session management
 - JWT validation, farm ownership verification
 
 ### Security ✅
+
 - Rate limiting (60 req/min)
 - Audit logging for mutations
 - CORS, input validation, RLS
 
 ### Analytics ✅
+
 - Event tracking, DAU, economy monitoring
 
 ### Administration ✅
+
 - Player inspection, economy overview, ledger
 
 ### Farming ✅
+
 - 11 crops, planting, watering, growth simulation, harvesting
 - Crop quality system, hydration mechanics
+- **Real sprite rendering** (soil + crop stages)
 
 ### Buildings ✅
+
 - 6 building types, construction, upgrade, maintenance
+- **Real sprite rendering**
 
 ### Livestock ✅
+
 - 4 animal types, purchase, feed, collect, pet, sickness
+- **Real sprite rendering** with idle animation
 
 ### Economy ✅
+
 - Dynamic pricing, market events, supply/demand
 
 ### Contracts ✅
+
 - 6 contracts, accept, complete, track
 
 ### Progression ✅
+
 - XP, levels, achievements, unlocks
 
 ### Kgotla ✅
+
 - 5 NPCs, reputation, quests, community projects
 
 ### Bushveld ✅
+
 - 5 zones, exploration, resource gathering, rare discoveries
 
 ### Seasons & Events ✅
+
 - 4 seasons, weather, 10 world events, festivals
+- **Real weather sprites**
 
 ### Mobile/PWA ✅
+
 - PWA manifest, service worker, responsive canvas, touch
 
 ### Payments ✅
+
 - Store (8 items), provider abstraction, webhook flow
 
 ---
 
 ## What Is Still Missing
 
-### MEDIUM: No Phaser Sprites
-Still using emoji placeholders. Functional but not production-quality.
+### LOW: No Sound/Music
 
-### MEDIUM: No Sound/Music
 No audio system.
 
 ### LOW: No Admin Role Guard
+
 Admin endpoints protected by JWT but not restricted to admin users.
+
+### LOW: Asset Visual Quality Pass
+
+Generated assets haven't had a visual review — some may need prompt tuning.
 
 ---
 
 ## Architecture Status
 
 All architectural requirements from the PRD are met:
+
 - Server-authoritative game state ✅
 - Supabase PostgreSQL as primary database ✅
 - NestJS owns game logic ✅
@@ -135,15 +164,45 @@ All architectural requirements from the PRD are met:
 - Payment provider abstraction ✅
 - Data-driven game content ✅
 - Mobile-first design ✅
+- **Real pixel-art assets** ✅
 
 ---
 
 ## Testing Status
 
-- Core loop integration tests: CREATED (14 test groups)
-- Unit tests: MINIMAL (health, crops)
-- E2E tests: NONE
-- Visual regression: NONE
+- Core loop integration tests: PASSING
+- Unit tests: PASSING
+- Lint: PASSING
+- Typecheck: PASSING
+- Build: PASSING (web + game + api)
+
+---
+
+## Build Health
+
+| Check     | Status  |
+| --------- | ------- |
+| typecheck | ✅ PASS |
+| lint      | ✅ PASS |
+| test      | ✅ PASS |
+| build     | ✅ PASS |
+
+---
+
+## Development Commands
+
+```bash
+pnpm install              # Install dependencies
+pnpm dev                  # Start all services (web:3000, api:3001, game:3002)
+pnpm build                # Build all packages
+pnpm typecheck            # Type-check all packages
+pnpm lint                 # Lint all packages
+pnpm test                 # Run all tests
+pnpm format               # Format with Prettier
+pnpm kill:dev             # Kill stale dev processes on 3000/3001/3002
+pnpm assets:sync          # Sync assets/ into web/public + game/public
+pnpm assets:generate      # Generate assets via PixelLab API
+```
 
 ---
 
@@ -155,4 +214,4 @@ Complete M16 — Alpha quality gate: "Can someone play Molemisi for 1–2 hours 
 
 ## Recommended Next Task
 
-**Test the application locally** — Run the full stack and verify the game loop works end-to-end. Fix any runtime issues discovered.
+**Visual quality review of generated assets** — Open the game at http://localhost:3000/game and verify all 192 assets render correctly. Fix any that look wrong. Then commit the full batch.

@@ -15,12 +15,12 @@ Molemisi uses a **cosmetic and convenience** monetization model. No gameplay adv
 
 ### Revenue Streams
 
-| Stream | Type | Price Range | Description |
-|--------|------|-------------|-------------|
-| Premium currency | One-time | 5-50 BWP | Buy Gems for cosmetic shop |
-| Cosmetic packs | One-time | 10-100 BWP | Farm decorations, themes |
-| Season passes | Recurring | 25 BWP/month | Exclusive cosmetic tracks |
-| Convenience | One-time | 5-20 BWP | Speed boosts, extra storage |
+| Stream           | Type      | Price Range  | Description                 |
+| ---------------- | --------- | ------------ | --------------------------- |
+| Premium currency | One-time  | 5-50 BWP     | Buy Gems for cosmetic shop  |
+| Cosmetic packs   | One-time  | 10-100 BWP   | Farm decorations, themes    |
+| Season passes    | Recurring | 25 BWP/month | Exclusive cosmetic tracks   |
+| Convenience      | One-time  | 5-20 BWP     | Speed boosts, extra storage |
 
 ### What is NOT sold
 
@@ -72,11 +72,11 @@ interface PaymentProvider {
 
 ### Supported Providers (MVP)
 
-| Provider | Type | Regions | Status |
-|----------|------|---------|--------|
-| Orange Money | Mobile Money | Botswana | Phase 7 |
+| Provider        | Type         | Regions  | Status  |
+| --------------- | ------------ | -------- | ------- |
+| Orange Money    | Mobile Money | Botswana | Phase 7 |
 | Mascom WiFi Pay | Mobile Money | Botswana | Phase 7 |
-| Stripe | Cards | Global | Phase 7 |
+| Stripe          | Cards        | Global   | Phase 7 |
 
 ### Adding New Providers
 
@@ -103,12 +103,12 @@ PENDING → PROCESSING → COMPLETED
 
 ### State Transitions
 
-| From | To | Trigger |
-|------|-----|---------|
-| PENDING | PROCESSING | Player initiates payment |
-| PROCESSING | COMPLETED | Provider confirms payment |
-| PROCESSING | FAILED | Provider rejects payment |
-| COMPLETED | REFUNDED | Admin processes refund |
+| From       | To         | Trigger                   |
+| ---------- | ---------- | ------------------------- |
+| PENDING    | PROCESSING | Player initiates payment  |
+| PROCESSING | COMPLETED  | Provider confirms payment |
+| PROCESSING | FAILED     | Provider rejects payment  |
+| COMPLETED  | REFUNDED   | Admin processes refund    |
 
 ### Idempotency
 
@@ -138,10 +138,10 @@ INSERT INTO game_ledger_entries (
 
 ### Ledger Entry Types
 
-| Type | Description |
-|------|-------------|
+| Type             | Description                 |
+| ---------------- | --------------------------- |
 | PAYMENT_PURCHASE | Currency added from payment |
-| PAYMENT_REFUND | Currency removed for refund |
+| PAYMENT_REFUND   | Currency removed for refund |
 
 ---
 
@@ -153,15 +153,9 @@ INSERT INTO game_ledger_entries (
 
 ```typescript
 function verifyWebhook(payload: string, signature: string, secret: string): boolean {
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+  const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 }
 ```
 
@@ -208,15 +202,12 @@ async function reconcilePayments(date: Date): Promise<ReconciliationReport> {
   const ledgerEntries = await getLedgerEntriesForDate(date, 'PAYMENT');
 
   // Verify all completed payments have ledger entries
-  const missingEntries = payments.filter(p => 
-    p.status === 'completed' && 
-    !ledgerEntries.some(e => e.referenceId === p.id)
+  const missingEntries = payments.filter(
+    (p) => p.status === 'completed' && !ledgerEntries.some((e) => e.referenceId === p.id),
   );
 
   // Verify all ledger entries have corresponding payments
-  const orphanEntries = ledgerEntries.filter(e => 
-    !payments.some(p => p.id === e.referenceId)
-  );
+  const orphanEntries = ledgerEntries.filter((e) => !payments.some((p) => p.id === e.referenceId));
 
   return {
     totalPayments: payments.length,
@@ -236,13 +227,13 @@ async function reconcilePayments(date: Date): Promise<ReconciliationReport> {
 
 ### Entitlement Types
 
-| Type | Data | Grant Method |
-|------|------|--------------|
-| premium_currency | `{ amount: 500 }` | Add to profile.gems |
-| cosmetic_item | `{ itemId: "farm_theme_sunset" }` | Add to inventory |
-| season_pass | `{ seasonId: "spring_2026" }` | Set profile flag |
-| extra_storage | `{ slots: 50 }` | Increase inventory capacity |
-| speed_boost | `{ multiplier: 2, duration: 3600 }` | Set temporary multiplier |
+| Type             | Data                                | Grant Method                |
+| ---------------- | ----------------------------------- | --------------------------- |
+| premium_currency | `{ amount: 500 }`                   | Add to profile.gems         |
+| cosmetic_item    | `{ itemId: "farm_theme_sunset" }`   | Add to inventory            |
+| season_pass      | `{ seasonId: "spring_2026" }`       | Set profile flag            |
+| extra_storage    | `{ slots: 50 }`                     | Increase inventory capacity |
+| speed_boost      | `{ multiplier: 2, duration: 3600 }` | Set temporary multiplier    |
 
 ### Entitlement Grant
 
@@ -277,12 +268,12 @@ async function grantEntitlement(paymentId: string, entitlement: Entitlement): Pr
 
 ### Failure Handling
 
-| Failure Type | Response | User Message |
-|-------------|----------|--------------|
-| Insufficient funds | Show error | "Insufficient funds. Please try again." |
-| Network timeout | Show retry | "Payment timed out. Please try again." |
-| Provider error | Show error | "Payment failed. Please try a different method." |
-| Duplicate request | Return existing | (No new payment created) |
+| Failure Type       | Response        | User Message                                     |
+| ------------------ | --------------- | ------------------------------------------------ |
+| Insufficient funds | Show error      | "Insufficient funds. Please try again."          |
+| Network timeout    | Show retry      | "Payment timed out. Please try again."           |
+| Provider error     | Show error      | "Payment failed. Please try a different method." |
+| Duplicate request  | Return existing | (No new payment created)                         |
 
 ### Retry Policy
 

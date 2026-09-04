@@ -8,6 +8,7 @@
 ## Context
 
 Molemisi needs a web application shell for:
+
 - Authentication UI
 - Payment processing
 - Settings management

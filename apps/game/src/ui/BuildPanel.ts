@@ -29,12 +29,7 @@ export class BuildPanel {
   private isOpen = false;
   private onRefresh: () => void;
 
-  constructor(
-    scene: Phaser.Scene,
-    apiClient: ApiClient,
-    farmId: string,
-    onRefresh: () => void,
-  ) {
+  constructor(scene: Phaser.Scene, apiClient: ApiClient, farmId: string, onRefresh: () => void) {
     this.scene = scene;
     this.apiClient = apiClient;
     this.farmId = farmId;
@@ -118,6 +113,7 @@ export class BuildPanel {
     panelHeight: number,
   ): void {
     if (!this.container) return;
+    const container = this.container;
 
     const scrollY = -panelHeight / 2 + 50;
     let y = scrollY;
@@ -128,7 +124,7 @@ export class BuildPanel {
         font: '12px monospace',
         color: '#81C784',
       });
-      this.container.add(ownedTitle);
+      container.add(ownedTitle);
       y += 22;
 
       owned.forEach((building) => {
@@ -152,7 +148,7 @@ export class BuildPanel {
           `${stateEmoji} ${name} Lv.${building.level}`,
           { font: '11px monospace', color: '#F5E6D3' },
         );
-        this.container.add(text);
+        container.add(text);
 
         // State label
         const stateLabel = this.scene.add.text(
@@ -163,7 +159,7 @@ export class BuildPanel {
             : building.state,
           { font: '9px monospace', color: '#BCAAA4' },
         );
-        this.container.add(stateLabel);
+        container.add(stateLabel);
 
         // Action buttons on the right
         let btnX = panelWidth / 2 - 30;
@@ -179,7 +175,7 @@ export class BuildPanel {
           upgradeBtn.setOrigin(1, 0.5);
           upgradeBtn.setInteractive({ useHandCursor: true });
           upgradeBtn.on('pointerdown', () => this.handleUpgrade(building.id));
-          this.container.add(upgradeBtn);
+          container.add(upgradeBtn);
           btnX -= 90;
         }
 
@@ -194,7 +190,7 @@ export class BuildPanel {
           maintainBtn.setOrigin(1, 0.5);
           maintainBtn.setInteractive({ useHandCursor: true });
           maintainBtn.on('pointerdown', () => this.handleMaintain(building.id));
-          this.container.add(maintainBtn);
+          container.add(maintainBtn);
           btnX -= 80;
         }
 
@@ -202,14 +198,12 @@ export class BuildPanel {
         if (building.state === 'ACTIVE' && building.wear > 0) {
           const wearPercent = Math.round(building.wear * 100);
           const wearColor = wearPercent > 80 ? '#F44336' : wearPercent > 50 ? '#FF9800' : '#4CAF50';
-          const wearLabel = this.scene.add.text(
-            btnX,
-            y + 7,
-            `Wear: ${wearPercent}%`,
-            { font: '9px monospace', color: wearColor },
-          );
+          const wearLabel = this.scene.add.text(btnX, y + 7, `Wear: ${wearPercent}%`, {
+            font: '9px monospace',
+            color: wearColor,
+          });
           wearLabel.setOrigin(1, 0.5);
-          this.container.add(wearLabel);
+          container.add(wearLabel);
         }
 
         y += 40;
@@ -224,7 +218,7 @@ export class BuildPanel {
         font: '12px monospace',
         color: '#FFB74D',
       });
-      this.container.add(availableTitle);
+      container.add(availableTitle);
       y += 22;
 
       availableToBuild.forEach((building) => {
@@ -271,7 +265,7 @@ export class BuildPanel {
         color: '#BCAAA4',
       });
       empty.setOrigin(0.5, 0.5);
-      this.container.add(empty);
+      container.add(empty);
     }
   }
 

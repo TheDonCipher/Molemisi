@@ -3,7 +3,7 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ProgressionService } from './progression.service';
 
-@Controller('api/v1/progression')
+@Controller('progression')
 @UseGuards(AuthGuard)
 export class ProgressionController {
   constructor(private progressionService: ProgressionService) {}

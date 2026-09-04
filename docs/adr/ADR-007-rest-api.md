@@ -29,8 +29,8 @@ Use **REST API** for game commands, not WebSocket or GraphQL.
 
 ## Alternatives Rejected
 
-| Alternative | Reason Rejected |
-|------------|-----------------|
-| WebSocket | Complex, stateful, harder to scale |
-| GraphQL | Overkill for this use case |
-| gRPC | Not browser-friendly |
+| Alternative | Reason Rejected                    |
+| ----------- | ---------------------------------- |
+| WebSocket   | Complex, stateful, harder to scale |
+| GraphQL     | Overkill for this use case         |
+| gRPC        | Not browser-friendly               |

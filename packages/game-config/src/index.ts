@@ -3,6 +3,7 @@ export * from './buildings';
 export * from './livestock';
 export * from './weather';
 export * from './store';
+export * from './theme';
 
 // Game constants
 export const GAME_VERSION = '0.1.0';

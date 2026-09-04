@@ -56,9 +56,7 @@ describe('Core Game Loop (Integration)', () => {
 
   describe('1. Health Check', () => {
     it('should return health status', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/api/v1/health')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/api/v1/health').expect(200);
 
       expect(response.body).toHaveProperty('status', 'ok');
     });
@@ -266,9 +264,7 @@ describe('Core Game Loop (Integration)', () => {
 
   describe('10. Unauthorized Access', () => {
     it('should reject unauthenticated requests', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/farms/current')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/farms/current').expect(401);
     });
 
     it('should reject invalid tokens', async () => {

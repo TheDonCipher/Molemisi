@@ -36,12 +36,7 @@ export class LivestockPanel {
   private isOpen = false;
   private onRefresh: () => void;
 
-  constructor(
-    scene: Phaser.Scene,
-    apiClient: ApiClient,
-    farmId: string,
-    onRefresh: () => void,
-  ) {
+  constructor(scene: Phaser.Scene, apiClient: ApiClient, farmId: string, onRefresh: () => void) {
     this.scene = scene;
     this.apiClient = apiClient;
     this.farmId = farmId;
@@ -125,9 +120,13 @@ export class LivestockPanel {
     panelHeight: number,
   ): void {
     if (!this.container) return;
+    const container = this.container;
 
     const animalEmojis: Record<string, string> = {
-      chicken: '🐔', goat: '🐐', cow: '🐄', pig: '🐷',
+      chicken: '🐔',
+      goat: '🐐',
+      cow: '🐄',
+      pig: '🐷',
     };
 
     const scrollY = -panelHeight / 2 + 50;
@@ -139,7 +138,7 @@ export class LivestockPanel {
         font: '12px monospace',
         color: '#81C784',
       });
-      this.container.add(ownedTitle);
+      container.add(ownedTitle);
       y += 22;
 
       animals.forEach((animal) => {
@@ -159,7 +158,7 @@ export class LivestockPanel {
           `${emoji} ${displayName} ${statusEmoji}`,
           { font: '11px monospace', color: '#F5E6D3' },
         );
-        this.container.add(text);
+        container.add(text);
 
         // Hunger bar
         const barWidth = 40;
@@ -169,23 +168,24 @@ export class LivestockPanel {
 
         const hungerBg = this.scene.add.rectangle(barX, barY, barWidth, barHeight, 0x333333);
         hungerBg.setOrigin(0, 0.5);
-        this.container.add(hungerBg);
+        container.add(hungerBg);
 
         const hungerFill = this.scene.add.rectangle(
           barX,
           barY,
           barWidth * animal.hunger,
           barHeight,
-          animal.hunger > 0.5 ? 0x4CAF50 : animal.hunger > 0.2 ? 0xFF9800 : 0xF44336,
+          animal.hunger > 0.5 ? 0x4caf50 : animal.hunger > 0.2 ? 0xff9800 : 0xf44336,
         );
         hungerFill.setOrigin(0, 0.5);
-        this.container.add(hungerFill);
+        container.add(hungerFill);
 
         const hungerLabel = this.scene.add.text(barX + barWidth + 4, barY, 'Hunger', {
-          font: '8px monospace', color: '#BCAAA4',
+          font: '8px monospace',
+          color: '#BCAAA4',
         });
         hungerLabel.setOrigin(0, 0.5);
-        this.container.add(hungerLabel);
+        container.add(hungerLabel);
 
         // Action buttons
         let btnX = panelWidth / 2 - 30;
@@ -201,7 +201,7 @@ export class LivestockPanel {
           collectBtn.setOrigin(1, 0.5);
           collectBtn.setInteractive({ useHandCursor: true });
           collectBtn.on('pointerdown', () => this.handleCollect(animal.id));
-          this.container.add(collectBtn);
+          container.add(collectBtn);
           btnX -= 80;
         }
 
@@ -216,7 +216,7 @@ export class LivestockPanel {
           feedBtn.setOrigin(1, 0.5);
           feedBtn.setInteractive({ useHandCursor: true });
           feedBtn.on('pointerdown', () => this.handleFeed(animal.id));
-          this.container.add(feedBtn);
+          container.add(feedBtn);
           btnX -= 70;
         }
 
@@ -231,7 +231,7 @@ export class LivestockPanel {
           petBtn.setOrigin(1, 0.5);
           petBtn.setInteractive({ useHandCursor: true });
           petBtn.on('pointerdown', () => this.handlePet(animal.id));
-          this.container.add(petBtn);
+          container.add(petBtn);
         }
 
         y += 40;
@@ -242,7 +242,7 @@ export class LivestockPanel {
         color: '#BCAAA4',
       });
       noAnimals.setOrigin(0.5, 0.5);
-      this.container.add(noAnimals);
+      container.add(noAnimals);
       y += 50;
     }
 
@@ -252,7 +252,7 @@ export class LivestockPanel {
       font: '12px monospace',
       color: '#FFB74D',
     });
-    this.container.add(availableTitle);
+    container.add(availableTitle);
     y += 22;
 
     available.forEach((animal) => {

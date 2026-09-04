@@ -101,12 +101,14 @@ export const AcceptContractSchema = z.object({
 });
 
 export const DeliverContractSchema = z.object({
-  items: z.array(
-    z.object({
-      type: z.string().min(1),
-      quantity: z.number().int().positive(),
-    }),
-  ).min(1, 'At least one item required'),
+  items: z
+    .array(
+      z.object({
+        type: z.string().min(1),
+        quantity: z.number().int().positive(),
+      }),
+    )
+    .min(1, 'At least one item required'),
 });
 
 // ============================================

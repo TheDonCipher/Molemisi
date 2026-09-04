@@ -30,12 +30,7 @@ export class KgotlaPanel {
   private isOpen = false;
   private onRefresh: () => void;
 
-  constructor(
-    scene: Phaser.Scene,
-    apiClient: ApiClient,
-    farmId: string,
-    onRefresh: () => void,
-  ) {
+  constructor(scene: Phaser.Scene, apiClient: ApiClient, farmId: string, onRefresh: () => void) {
     this.scene = scene;
     this.apiClient = apiClient;
     this.farmId = farmId;
@@ -119,6 +114,7 @@ export class KgotlaPanel {
     panelHeight: number,
   ): void {
     if (!this.container) return;
+    const container = this.container;
 
     let y = -panelHeight / 2 + 50;
 
@@ -127,57 +123,68 @@ export class KgotlaPanel {
       font: '12px monospace',
       color: '#81C784',
     });
-    this.container.add(npcTitle);
+    container.add(npcTitle);
     y += 22;
 
     npcs.forEach((npc) => {
       // NPC name and role
       const tierEmoji: Record<string, string> = {
-        Stranger: '😐', Acquaintance: '🙂', Friend: '😊', Trusted: '🤝', Respected: '👑',
+        Stranger: '😐',
+        Acquaintance: '🙂',
+        Friend: '😊',
+        Trusted: '🤝',
+        Respected: '👑',
       };
       const emoji = tierEmoji[npc.tier] || '🙂';
 
       const text = this.scene.add.text(
-        -panelWidth / 2 + 30, y,
+        -panelWidth / 2 + 30,
+        y,
         `${emoji} ${npc.name} - ${npc.role}`,
         { font: '11px monospace', color: '#F5E6D3' },
       );
-      this.container.add(text);
+      container.add(text);
 
       // Reputation bar
       const repBarWidth = 60;
       const repBg = this.scene.add.rectangle(
-        -panelWidth / 2 + 30, y + 16,
-        repBarWidth, 4, 0x333333,
+        -panelWidth / 2 + 30,
+        y + 16,
+        repBarWidth,
+        4,
+        0x333333,
       );
       repBg.setOrigin(0, 0.5);
-      this.container.add(repBg);
+      container.add(repBg);
 
       const repFill = this.scene.add.rectangle(
-        -panelWidth / 2 + 30, y + 16,
-        repBarWidth * (npc.reputation / 100), 4,
-        npc.reputation >= 75 ? 0xFFD700 : npc.reputation >= 50 ? 0x4CAF50 : 0xFF9800,
+        -panelWidth / 2 + 30,
+        y + 16,
+        repBarWidth * (npc.reputation / 100),
+        4,
+        npc.reputation >= 75 ? 0xffd700 : npc.reputation >= 50 ? 0x4caf50 : 0xff9800,
       );
       repFill.setOrigin(0, 0.5);
-      this.container.add(repFill);
+      container.add(repFill);
 
       const repLabel = this.scene.add.text(
-        -panelWidth / 2 + 30 + repBarWidth + 4, y + 16,
+        -panelWidth / 2 + 30 + repBarWidth + 4,
+        y + 16,
         `${npc.tier} (${npc.reputation})`,
         { font: '9px monospace', color: '#BCAAA4' },
       );
       repLabel.setOrigin(0, 0.5);
-      this.container.add(repLabel);
+      container.add(repLabel);
 
       // Talk button
-      const talkBtn = this.scene.add.text(
-        panelWidth / 2 - 30, y + 8,
-        '💬 Talk', { font: '10px monospace', color: '#4CAF50' },
-      );
+      const talkBtn = this.scene.add.text(panelWidth / 2 - 30, y + 8, '💬 Talk', {
+        font: '10px monospace',
+        color: '#4CAF50',
+      });
       talkBtn.setOrigin(1, 0.5);
       talkBtn.setInteractive({ useHandCursor: true });
       talkBtn.on('pointerdown', () => this.handleTalk(npc.id));
-      this.container.add(talkBtn);
+      container.add(talkBtn);
 
       y += 38;
     });
@@ -188,56 +195,55 @@ export class KgotlaPanel {
       font: '12px monospace',
       color: '#FFB74D',
     });
-    this.container.add(projTitle);
+    container.add(projTitle);
     y += 22;
 
     projects.forEach((project) => {
       const statusEmoji = project.completed ? '✅' : '🏗️';
 
-      const text = this.scene.add.text(
-        -panelWidth / 2 + 30, y,
-        `${statusEmoji} ${project.name}`,
-        { font: '11px monospace', color: '#F5E6D3' },
-      );
-      this.container.add(text);
+      const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${statusEmoji} ${project.name}`, {
+        font: '11px monospace',
+        color: '#F5E6D3',
+      });
+      container.add(text);
 
       // Progress bar
       const progress = Math.min(1, project.currentContributions / project.requiredContributions);
       const barWidth = 100;
 
-      const barBg = this.scene.add.rectangle(
-        -panelWidth / 2 + 30, y + 16,
-        barWidth, 4, 0x333333,
-      );
+      const barBg = this.scene.add.rectangle(-panelWidth / 2 + 30, y + 16, barWidth, 4, 0x333333);
       barBg.setOrigin(0, 0.5);
-      this.container.add(barBg);
+      container.add(barBg);
 
       const barFill = this.scene.add.rectangle(
-        -panelWidth / 2 + 30, y + 16,
-        barWidth * progress, 4,
-        project.completed ? 0x4CAF50 : 0xFFB74D,
+        -panelWidth / 2 + 30,
+        y + 16,
+        barWidth * progress,
+        4,
+        project.completed ? 0x4caf50 : 0xffb74d,
       );
       barFill.setOrigin(0, 0.5);
-      this.container.add(barFill);
+      container.add(barFill);
 
       const progressLabel = this.scene.add.text(
-        -panelWidth / 2 + 30 + barWidth + 4, y + 16,
+        -panelWidth / 2 + 30 + barWidth + 4,
+        y + 16,
         `${project.currentContributions}/${project.requiredContributions}`,
         { font: '9px monospace', color: '#BCAAA4' },
       );
       progressLabel.setOrigin(0, 0.5);
-      this.container.add(progressLabel);
+      container.add(progressLabel);
 
       // Donate button (if not completed)
       if (!project.completed) {
-        const donateBtn = this.scene.add.text(
-          panelWidth / 2 - 30, y + 8,
-          '💰 Donate', { font: '10px monospace', color: '#FFB74D' },
-        );
+        const donateBtn = this.scene.add.text(panelWidth / 2 - 30, y + 8, '💰 Donate', {
+          font: '10px monospace',
+          color: '#FFB74D',
+        });
         donateBtn.setOrigin(1, 0.5);
         donateBtn.setInteractive({ useHandCursor: true });
         donateBtn.on('pointerdown', () => this.handleDonate(project.id));
-        this.container.add(donateBtn);
+        container.add(donateBtn);
       }
 
       y += 38;
@@ -259,22 +265,28 @@ export class KgotlaPanel {
     }
   }
 
-  private showDialog(npcName: string, message: string, questAvailable: boolean, npcId: string): void {
+  private showDialog(
+    npcName: string,
+    message: string,
+    questAvailable: boolean,
+    npcId: string,
+  ): void {
     if (!this.container) return;
+    const container = this.container;
 
     const width = this.scene.cameras.main.width;
     const height = this.scene.cameras.main.height;
 
     // Dialog overlay
     const dialogOverlay = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.3);
-    this.container.add(dialogOverlay);
+    container.add(dialogOverlay);
 
     // Dialog box
     const dialogWidth = Math.min(350, width - 60);
     const dialogHeight = 180;
     const dialog = this.scene.add.rectangle(0, 50, dialogWidth, dialogHeight, 0x1a0f0a, 0.98);
     dialog.setStrokeStyle(2, 0x8b5e3c);
-    this.container.add(dialog);
+    container.add(dialog);
 
     // NPC name
     const nameLabel = this.scene.add.text(0, 50 - dialogHeight / 2 + 20, npcName, {
@@ -282,7 +294,7 @@ export class KgotlaPanel {
       color: '#FF8F00',
     });
     nameLabel.setOrigin(0.5, 0.5);
-    this.container.add(nameLabel);
+    container.add(nameLabel);
 
     // Message
     const msgLabel = this.scene.add.text(0, 50, message, {
@@ -293,7 +305,7 @@ export class KgotlaPanel {
       lineSpacing: 4,
     });
     msgLabel.setOrigin(0.5, 0.5);
-    this.container.add(msgLabel);
+    container.add(msgLabel);
 
     // Quest button
     if (questAvailable) {
@@ -306,7 +318,7 @@ export class KgotlaPanel {
       questBtn.setOrigin(0.5, 0.5);
       questBtn.setInteractive({ useHandCursor: true });
       questBtn.on('pointerdown', () => this.handleQuest(npcId));
-      this.container.add(questBtn);
+      container.add(questBtn);
     }
 
     // Close dialog button
@@ -326,13 +338,16 @@ export class KgotlaPanel {
         // Find and destroy quest button
         const children = this.container!.getAll();
         children.forEach((child) => {
-          if (child.type === 'Text' && (child as Phaser.GameObjects.Text).text?.includes('Complete Quest')) {
+          if (
+            child.type === 'Text' &&
+            (child as Phaser.GameObjects.Text).text?.includes('Complete Quest')
+          ) {
             child.destroy();
           }
         });
       }
     });
-    this.container.add(closeDialog);
+    container.add(closeDialog);
   }
 
   private async handleQuest(npcId: string): Promise<void> {

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&amp;family=Space+Grotesk:wght@500;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "cream-surface": "#F5E6D3", "surface-dim": "#210e0b", "tertiary-fixed": "#ffdbd0", "on-surface-variant": "#dcc1ae", "surface-container-high": "#3b2420", "secondary-fixed-dim": "#9cd67a", "on-primary-fixed-variant": "#6d3a00", "surface-container-low": "#2b1613", "surface-variant": "#472f2b", "on-primary-fixed": "#2e1500", "secondary": "#9cd67a", "primary-fixed": "#ffdcc2", "wood-dark": "#2C1810", "on-primary": "#4c2700", "surface": "#210e0b", "inverse-on-surface": "#422a26", "surface-container-lowest": "#1b0906", "on-background": "#ffdad4", "surface-container-highest": "#472f2b", "status-warning": "#FFC107", "on-tertiary-fixed": "#3a0b00", "on-secondary-fixed-variant": "#205102", "outline": "#a48c7a", "on-error": "#690005", "error-container": "#93000a", "wood-medium": "#4E342E", "wood-border": "#5D4037", "inverse-primary": "#8f4e00", "secondary-container": "#225404", "sky-blue": "#87CEEB", "error": "#ffb4ab", "on-surface": "#ffdad4", "surface-bright": "#4c332f", "primary": "#ffb87b", "inverse-surface": "#ffdad4", "outline-variant": "#564334", "on-secondary-fixed": "#082100", "primary-fixed-dim": "#ffb77a", "surface-tint": "#ffb77a", "on-error-container": "#ffdad6", "background": "#210e0b", "tertiary-fixed-dim": "#ffb59e", "primary-container": "#ff8f00", "status-success": "#4CAF50", "tertiary-container": "#fe8c68", "on-primary-container": "#623400", "status-info": "#2196F3", "tertiary": "#ffb59f", "on-tertiary-fixed-variant": "#7e2b0f", "on-secondary-container": "#8fc86d", "gold-currency": "#FFD700", "on-tertiary-container": "#742408", "on-tertiary": "#5e1700", "sky-deep": "#4A7FB5", "surface-container": "#2f1a16", "on-secondary": "#133800", "status-danger": "#C62828", "secondary-fixed": "#b7f393" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-mobile": "0.75rem", "space-sm": "0.5rem", "space-md": "0.75rem", "pixel-1": "0.125rem", "pixel-2": "0.25rem", "space-2xl": "2rem", "space-lg": "1rem", "gutter-desktop": "1.5rem", "space-xl": "1.5rem" }, "fontFamily": { "headline-lg-mobile": [ "spaceGrotesk" ], "headline-lg": [ "spaceGrotesk" ], "headline-md": [ "spaceGrotesk" ], "body-lg": [ "rubik" ], "label-md": [ "spaceMono" ], "headline-sm": [ "spaceGrotesk" ], "label-lg": [ "spaceMono" ], "body-md": [ "rubik" ], "label-sm": [ "spaceMono" ], "body-sm": [ "rubik" ] }, "fontSize": { "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "700" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "label-md": [ "12px", { "lineHeight": "16px", "fontWeight": "700" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "700" } ], "label-lg": [ "14px", { "lineHeight": "18px", "fontWeight": "700" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "label-sm": [ "10px", { "lineHeight": "14px", "fontWeight": "700" } ], "body-sm": [ "12px", { "lineHeight": "16px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface select-none antialiased min-h-screen flex flex-col justify-between"><header class="fixed top-0 left-0 right-0 z-50 bg-wood-medium shadow-[2px_2px_0px_rgba(0,0,0,0.5)] border-b-2 border-wood-border"><div class="h-20 w-full px-gutter-desktop mx-auto flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="Molemisi Game Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMiq7yfXA9gT-3ahsTGXP4-y9c6JWMaLJQuupUvRjTM7X0sHBIuEAUFSRBgkto7oh5Vzzcjstc4tM4BlcHOyrV1J_x8jZJ9AAQItbVjoa6oLkvFbZBt9Kxun_zwb2vPL1tyYI0VERZsU2tqP9nngcDDcbD-najEr9oyp2K2w2UagFzH-NRf-6AaUP_Pbx69D3NiJ4lFXC2VayD67RzsZ53UA3mPjqyT8LYonkH3i-4YCSXIztNIfMRSQ"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-wider uppercase">Molemisi</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Botswana Farm Sim</span></div><div class="hidden xl:flex items-center gap-space-sm ml-space-md bg-wood-dark px-space-md py-pixel-2 border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><div class="flex flex-col gap-pixel-1"><div class="flex items-center justify-between gap-space-md"><span class="font-label-sm text-label-sm text-primary-container font-bold">★ Lv.5 Farm</span><span class="font-label-sm text-label-sm text-on-surface-variant">2,450 / 3,000 XP</span></div><div class="w-36 h-2 bg-surface-container-lowest border border-wood-border rounded-none overflow-hidden"><div class="h-full bg-gold-currency w-[81%]"></div></div></div></div></div><div class="hidden lg:flex items-center gap-space-md"><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-gold-currency text-[18px]">monetization_on</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Funds</span><span class="font-label-md text-label-md text-gold-currency tracking-wider">1,234 P</span></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-status-info text-[18px]">water_drop</span><div class="flex flex-col"><div class="flex justify-between items-center gap-space-sm"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Water</span><span class="font-label-sm text-label-sm text-status-info font-bold">85%</span></div><div class="w-20 h-2 bg-surface-container-lowest border border-wood-border rounded-none mt-pixel-1"><div class="h-full bg-status-info w-[85%]"></div></div></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-primary text-[18px]">wb_sunny</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Daylight</span><span class="font-label-md text-label-md text-cream-surface font-bold">Day - 14:30</span></div></div><div class="flex items-center gap-space-sm bg-wood-dark px-space-md py-space-sm border border-wood-border rounded shadow-[2px_2px_0px_rgba(0,0,0,0.45)]"><span class="material-symbols-outlined text-secondary text-[18px]">grass</span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Season</span><span class="font-label-md text-label-md text-secondary font-bold">Summer - Day 14</span></div></div></div><nav class="hidden md:flex items-center gap-space-sm bg-wood-dark px-space-sm py-pixel-2 border border-wood-border rounded" data-active-classes="bg-primary-container text-on-primary-container font-bold border-b-2 border-on-primary-container"><a aria-current="page" class="px-space-sm py-pixel-2 uppercase transition-colors bg-primary-container text-on-primary-container font-bold border-b-2 border-on-primary-container" data-path="farm" href="#">Farm</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="kgotla" href="#">Kgotla</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="bushveld" href="#">Bushveld</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="market" href="#">Market</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="inventory" href="#">Inventory</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-pixel-2 uppercase transition-colors" data-path="settings" href="#">Settings</a></nav><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 pb-16 bg-surface"><div class="flex flex-col w-full">
+<div class="relative w-full overflow-hidden min-h-[calc(100vh-5rem)] flex flex-col justify-between p-space-sm md:p-space-lg select-none">
+<div class="absolute inset-0 z-0">
+<img alt="Botswana Rural Farmstead Retro 16-bit Background" class="w-full h-full object-cover object-center filter saturate-[1.1]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqnYNXmE88_vwJr6UyYgJMA-y0IAFuJDURROBAiI8_Pe-zsund9QjhP54Lr7oJYK60Ny3HzvMnjsneoNPcEcfZD10_b_yakRnp66gkNZ0h_yb8OOa69EkuJeFYsoqtHA_8E3gmVSiAXod5OsCFfsEeKyzDgwMlfN-GBRdetWSYGslj6DF2PT_qLRF-JB76IdNvHYuXGl_IiqKIx3iruERDmNiKG12Q7WShuIR6t0NRpWG6nbTs2KRh7Q"/>
+<div class="absolute inset-0 bg-surface-container-lowest/30 pointer-events-none"></div>
+<div class="absolute inset-0 shadow-[inset_0_0_80px_rgba(27,9,6,0.65)] pointer-events-none"></div>
+</div>
+<div class="relative z-10 grid grid-cols-1 xl:grid-cols-12 gap-space-md w-full max-w-[1720px] mx-auto items-start">
+<div class="xl:col-span-3 flex flex-col gap-space-sm order-2 xl:order-1">
+<div class="bg-surface-container-high/95 p-space-md rounded-none shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
+<div class="bg-wood-dark px-space-sm py-pixel-2 flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-primary uppercase tracking-wider flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px]">water_drop</span> Stone Well
+            </span>
+<span class="font-label-sm text-label-sm text-status-info bg-surface-container-lowest px-space-sm py-pixel-1">Active</span>
+</div>
+<div class="mt-space-sm flex flex-col gap-pixel-2">
+<div class="flex justify-between items-center text-cream-surface">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Groundwater Level</span>
+<span class="font-label-md text-label-md text-sky-blue font-bold" id="well-count">85 / 100 L</span>
+</div>
+<div class="h-2 w-full bg-surface-container-lowest">
+<div class="h-full bg-status-info w-[85%] transition-all duration-300" id="well-bar"></div>
+</div>
+</div>
+<button class="mt-space-md w-full bg-wood-dark hover:bg-wood-medium text-cream-surface font-label-md text-label-md py-space-sm uppercase tracking-widest flex items-center justify-center gap-space-sm transition-transform active:translate-x-pixel-1 active:translate-y-pixel-1" id="refill-btn">
+<span class="material-symbols-outlined text-[16px] text-sky-blue">water_pump</span> Handpump Refill (+15L)
+          </button>
+</div>
+<div class="bg-surface-container-high/95 p-space-md rounded-none shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
+<div class="bg-wood-dark px-space-sm py-pixel-2 mb-space-sm">
+<span class="font-headline-sm text-headline-sm text-primary uppercase tracking-wider flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px]">handyman</span> Farm Field Orders
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<button class="bg-primary-container hover:bg-primary text-on-primary-container font-label-md text-label-md py-space-sm px-space-sm flex flex-col items-center justify-center text-center tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-x-pixel-1 active:translate-y-pixel-1" id="quick-plant">
+<span class="material-symbols-outlined text-[20px] mb-pixel-1">yard</span>
+<span>Plant Field</span>
+</button>
+<button class="bg-wood-dark hover:bg-wood-medium text-cream-surface font-label-md text-label-md py-space-sm px-space-sm flex flex-col items-center justify-center text-center tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-x-pixel-1 active:translate-y-pixel-1" id="quick-water">
+<span class="material-symbols-outlined text-[20px] text-status-info mb-pixel-1">rainy</span>
+<span>Water All</span>
+</button>
+<button class="bg-wood-dark hover:bg-wood-medium text-gold-currency font-label-md text-label-md py-space-sm px-space-sm flex flex-col items-center justify-center text-center tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-x-pixel-1 active:translate-y-pixel-1" id="quick-harvest">
+<span class="material-symbols-outlined text-[20px] mb-pixel-1">agriculture</span>
+<span>Harvest All</span>
+</button>
+<button class="bg-wood-dark hover:bg-wood-medium text-cream-surface font-label-md text-label-md py-space-sm px-space-sm flex flex-col items-center justify-center text-center tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-x-pixel-1 active:translate-y-pixel-1">
+<span class="material-symbols-outlined text-[20px] text-secondary mb-pixel-1">construction</span>
+<span>Build / Fence</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-high/95 p-space-md rounded-none shadow-[2px_2px_0px_rgba(0,0,0,0.6)] hidden xl:block">
+<div class="bg-wood-dark px-space-sm py-pixel-2 flex items-center justify-between mb-space-sm">
+<span class="font-headline-sm text-headline-sm text-primary uppercase tracking-wider flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px]">wb_twilight</span> Kalahari Weather
+            </span>
+<span class="font-label-sm text-label-sm text-primary font-bold">Rain Forecast: 2d</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Hot dry winds from the eastern salt pan. Water consumption for cowpeas +20%. Sorghum resistant.
+          </p>
+</div>
+</div>
+<div class="xl:col-span-6 flex flex-col items-center order-1 xl:order-2">
+<div class="w-full bg-surface-container-high/95 p-space-md rounded-none shadow-[2px_2px_0px_rgba(0,0,0,0.7)] backdrop-blur-sm">
+<div class="bg-wood-dark px-space-md py-space-sm flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">grid_view</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface uppercase tracking-wider">Arable Fields (Tshimo)</span>
+</div>
+<div class="flex items-center gap-space-md">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest bg-surface-container-lowest px-space-sm py-pixel-1">Plot Grid: 4 x 3</span>
+</div>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm p-space-xs bg-surface-container-lowest/80">
+<div class="relative group aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)] transition-all cursor-pointer ring-2 ring-gold-currency animate-pulse" id="plot-1">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-gold-currency bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 1</span>
+<span class="font-label-sm text-label-sm text-gold-currency font-bold tracking-wider">READY</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-3xl my-pixel-1">🌾</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Sorghum</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed font-mono">+4 Sheaves</span>
+</div>
+<button class="w-full bg-primary-container hover:bg-primary text-on-primary-container font-label-sm text-label-sm py-pixel-2 uppercase font-bold tracking-wider active:translate-y-pixel-1" id="plot-1-harvest-btn">
+                Harvest
+              </button>
+</div>
+<div class="group aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]" id="plot-2">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 2</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 3/4</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-2xl opacity-90 my-pixel-1">🌽</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Sweet Maize</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Growing</span>
+</div>
+<div class="flex flex-col gap-pixel-1 w-full bg-surface-container-lowest p-pixel-2">
+<div class="flex justify-between text-[10px] text-on-surface-variant font-label-sm">
+<span>Grow</span>
+<span class="text-secondary font-bold">75%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-success w-[75%]"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant font-label-sm mt-pixel-1">
+<span>H2O</span>
+<span class="text-sky-blue font-bold">65%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-info w-[65%]"></div>
+</div>
+</div>
+</div>
+<div class="group aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)] bg-error-container/20" id="plot-3">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-error bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 3</span>
+<span class="font-label-sm text-label-sm text-error font-bold flex items-center gap-pixel-1 animate-bounce">
+<span class="material-symbols-outlined text-[14px]">water_drop</span> DRY
+                </span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-2xl opacity-75 my-pixel-1">🌱</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Cowpeas</span>
+<span class="font-label-sm text-label-sm text-error font-bold">Thirsty!</span>
+</div>
+<div class="flex flex-col gap-pixel-1 w-full bg-surface-container-lowest p-pixel-2">
+<div class="flex justify-between text-[10px] text-error font-label-sm">
+<span>Moisture</span>
+<span>15%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-danger w-[15%]" id="plot-3-bar"></div>
+</div>
+<button class="mt-pixel-1 w-full bg-sky-deep hover:bg-sky-blue text-cream-surface font-label-sm text-label-sm py-pixel-1 uppercase" id="plot-3-water-btn">
+                  Water Plot
+                </button>
+</div>
+</div>
+<div class="relative group aspect-square bg-wood-dark/80 hover:bg-wood-dark p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)] cursor-pointer" id="plot-4">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 4</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">TILLED</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center animate-pulse text-primary mb-pixel-1">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-primary leading-tight">Empty Soil</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tap to Plant</span>
+</div>
+<button class="w-full bg-wood-medium hover:bg-primary-container text-cream-surface hover:text-on-primary-container font-label-sm text-label-sm py-pixel-2 uppercase font-bold tracking-wider" id="plot-4-plant-btn">
+                Select Seed
+              </button>
+</div>
+<div class="aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 5</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 1/4</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-xl opacity-80 my-pixel-1">🌿</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Groundnuts</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Sprout</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-pixel-2">
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-success w-[25%]"></div>
+</div>
+</div>
+</div>
+<div class="aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 6</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 2/4</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-xl opacity-80 my-pixel-1">🌾</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Millet</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Vegetative</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-pixel-2">
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-success w-[50%]"></div>
+</div>
+</div>
+</div>
+<div class="aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 7</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 3/4</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-xl opacity-80 my-pixel-1">🍉</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Melon (Lerotse)</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Flowering</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-pixel-2">
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-success w-[70%]"></div>
+</div>
+</div>
+</div>
+<div class="aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 8</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 2/4</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-xl opacity-80 my-pixel-1">🌽</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Sweet Maize</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Stalking</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-pixel-2">
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-success w-[45%]"></div>
+</div>
+</div>
+</div>
+<div class="aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 9</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 1/4</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-xl opacity-80 my-pixel-1">🌿</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Sunflower</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Seedling</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-pixel-2">
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-success w-[20%]"></div>
+</div>
+</div>
+</div>
+<div class="aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 10</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 3/4</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-xl opacity-80 my-pixel-1">🌾</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Sorghum</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Grain Fill</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-pixel-2">
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-success w-[80%]"></div>
+</div>
+</div>
+</div>
+<div class="aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 11</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 2/4</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-xl opacity-80 my-pixel-1">🫘</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Beans (Ditloo)</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Vining</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-pixel-2">
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-status-success w-[50%]"></div>
+</div>
+</div>
+</div>
+<div class="aspect-square bg-wood-dark/95 p-space-sm flex flex-col justify-between shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 12</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">RESTING</span>
+</div>
+<div class="flex flex-col items-center text-center my-auto">
+<span class="text-xl opacity-40 my-pixel-1">🪨</span>
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Fallow Soil</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Composting</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-pixel-2">
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-outline-variant w-[10%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="hidden mt-space-md bg-wood-dark p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.6)] animate-fade-in" id="seed-selector">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-headline-sm text-headline-sm text-primary uppercase">Select Seed for Plot 4</span>
+<button class="text-on-surface-variant hover:text-cream-surface font-label-md text-label-md" id="close-seed-btn">✕ CLOSE</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<div class="bg-surface-container-high p-space-sm flex items-center justify-between cursor-pointer hover:bg-wood-medium transition-colors seed-choice" data-cost="15" data-name="Sorghum">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl">🌾</span>
+<div>
+<div class="font-headline-sm text-headline-sm text-cream-surface">Sorghum</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Drought Resistant</div>
+</div>
+</div>
+<span class="font-label-md text-label-md text-gold-currency font-bold">15 P</span>
+</div>
+<div class="bg-surface-container-high p-space-sm flex items-center justify-between cursor-pointer hover:bg-wood-medium transition-colors seed-choice" data-cost="12" data-name="Sweet Maize">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl">🌽</span>
+<div>
+<div class="font-headline-sm text-headline-sm text-cream-surface">Maize</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">High Yield</div>
+</div>
+</div>
+<span class="font-label-md text-label-md text-gold-currency font-bold">12 P</span>
+</div>
+<div class="bg-surface-container-high p-space-sm flex items-center justify-between cursor-pointer hover:bg-wood-medium transition-colors seed-choice" data-cost="18" data-name="Cowpea">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl">🌱</span>
+<div>
+<div class="font-headline-sm text-headline-sm text-cream-surface">Cowpea</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Fast Maturing</div>
+</div>
+</div>
+<span class="font-label-md text-label-md text-gold-currency font-bold">18 P</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="xl:col-span-3 flex flex-col gap-space-sm order-3">
+<div class="bg-surface-container-high/95 p-space-md rounded-none shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
+<div class="bg-wood-dark px-space-sm py-pixel-2 flex items-center justify-between mb-space-sm">
+<span class="font-headline-sm text-headline-sm text-primary uppercase tracking-wider flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px]">pets</span> Livestock Yard
+            </span>
+<span class="font-label-sm text-label-sm text-secondary uppercase bg-surface-container-lowest px-space-sm py-pixel-1">Kraal</span>
+</div>
+<div class="space-y-space-sm">
+<div class="bg-wood-dark p-space-sm flex flex-col gap-pixel-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl">🐔</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-none">Chicken Coop</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">4 / 6 Hens Grazing</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-status-success uppercase font-bold">Healthy</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container-lowest p-space-xs mt-pixel-1">
+<span class="font-label-sm text-label-sm text-gold-currency flex items-center gap-pixel-1">
+<span class="material-symbols-outlined text-[14px]">egg</span> 2 Eggs Ready
+                </span>
+<button class="bg-primary-container hover:bg-primary text-on-primary-container font-label-sm text-label-sm px-space-sm py-pixel-1 uppercase font-bold tracking-wider" id="collect-eggs">
+                  Collect
+                </button>
+</div>
+</div>
+<div class="bg-wood-dark p-space-sm flex flex-col gap-pixel-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl">🐐</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-none">Tswana Goat Pen</span>
+<span class="font-label-sm text-label-sm text-secondary">State: Happy &amp; Fed</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-cream-surface bg-surface-container-lowest px-pixel-2 py-pixel-1">2/3</span>
+</div>
+<div class="flex flex-col gap-pixel-1 bg-surface-container-lowest p-space-xs mt-pixel-1">
+<div class="flex justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span>Milk Production</span>
+<span class="text-cream-surface font-mono">Ready in 2h 14m</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high">
+<div class="h-full bg-gold-currency w-[60%]"></div>
+</div>
+</div>
+</div>
+<div class="bg-wood-dark p-space-sm flex flex-col gap-pixel-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-2xl">🐂</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-cream-surface leading-none">Draft Cattle (Dipodi)</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">2 Oxen Resting</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-secondary-fixed bg-surface-container-lowest px-pixel-2 py-pixel-1">Plow Ready</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-high/95 p-space-md rounded-none shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
+<div class="bg-wood-dark px-space-sm py-pixel-2 flex items-center justify-between mb-space-sm">
+<span class="font-headline-sm text-headline-sm text-primary uppercase tracking-wider flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px]">inventory_2</span> Granary Storage
+            </span>
+<span class="font-label-sm text-label-sm text-cream-surface">148 / 300</span>
+</div>
+<div class="grid grid-cols-4 gap-space-xs">
+<div class="aspect-square bg-wood-dark flex flex-col items-center justify-center p-pixel-1 relative" title="Sorghum Grain">
+<span class="text-xl">🌾</span>
+<span class="font-label-sm text-label-sm text-cream-surface font-mono mt-pixel-1">32</span>
+</div>
+<div class="aspect-square bg-wood-dark flex flex-col items-center justify-center p-pixel-1 relative" title="Maize Cobs">
+<span class="text-xl">🌽</span>
+<span class="font-label-sm text-label-sm text-cream-surface font-mono mt-pixel-1">45</span>
+</div>
+<div class="aspect-square bg-wood-dark flex flex-col items-center justify-center p-pixel-1 relative" title="Cowpeas">
+<span class="text-xl">🌱</span>
+<span class="font-label-sm text-label-sm text-cream-surface font-mono mt-pixel-1">16</span>
+</div>
+<div class="aspect-square bg-wood-dark flex flex-col items-center justify-center p-pixel-1 relative" title="Eggs">
+<span class="text-xl">🥚</span>
+<span class="font-label-sm text-label-sm text-cream-surface font-mono mt-pixel-1" id="granary-eggs">12</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="relative z-20 flex flex-col md:flex-row items-start md:items-end justify-between gap-space-md mt-space-md w-full max-w-[1720px] mx-auto pointer-events-none">
+<div class="pointer-events-auto bg-wood-dark/95 text-cream-surface p-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.6)] flex items-center gap-space-md max-w-md transition-all duration-300 transform translate-y-0" id="farm-toast">
+<div class="w-10 h-10 bg-primary-container/20 flex items-center justify-center shrink-0">
+<span class="text-2xl animate-bounce">🌾</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-gold-currency">Crop Alert</span>
+<span class="font-body-sm text-body-sm text-cream-surface">Plot 1 Sorghum has matured and is ready for the sickle!</span>
+</div>
+<button class="ml-auto text-on-surface-variant hover:text-cream-surface p-pixel-1" id="close-toast">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<div class="pointer-events-auto bg-surface-container-high/90 p-space-sm px-space-md shadow-[2px_2px_0px_rgba(0,0,0,0.6)] flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">eco</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Kgatleng Soil Fertility:</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">92% Optimum</span>
+</div>
+<div class="h-4 w-px bg-wood-border"></div>
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-gold-currency text-[16px]">workspace_premium</span>
+<span class="font-label-sm text-label-sm text-gold-currency font-bold">Botswana Farmers Union #042</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    let wellLevel = 85;
+    let eggsCollected = 12;
+
+    const refillBtn = document.getElementById('refill-btn');
+    const wellBar = document.getElementById('well-bar');
+    const wellCount = document.getElementById('well-count');
+    const toast = document.getElementById('farm-toast');
+    const closeToast = document.getElementById('close-toast');
+    
+    const plot1 = document.getElementById('plot-1');
+    const plot1Btn = document.getElementById('plot-1-harvest-btn');
+    const plot3Btn = document.getElementById('plot-3-water-btn');
+    const plot3Bar = document.getElementById('plot-3-bar');
+    
+    const plot4 = document.getElementById('plot-4');
+    const plot4Btn = document.getElementById('plot-4-plant-btn');
+    const seedSelector = document.getElementById('seed-selector');
+    const closeSeedBtn = document.getElementById('close-seed-btn');
+    const seedChoices = document.querySelectorAll('.seed-choice');
+    
+    const collectEggsBtn = document.getElementById('collect-eggs');
+    const granaryEggs = document.getElementById('granary-eggs');
+
+    const quickHarvest = document.getElementById('quick-harvest');
+    const quickWater = document.getElementById('quick-water');
+
+    function showNotification(title, message, icon) {
+      if (!toast) return;
+      const tTitle = toast.querySelector('.font-headline-sm');
+      const tBody = toast.querySelector('.font-body-sm');
+      const tIcon = toast.querySelector('.animate-bounce');
+      if (tTitle) tTitle.textContent = title;
+      if (tBody) tBody.textContent = message;
+      if (tIcon) tIcon.textContent = icon || '🌾';
+      toast.classList.remove('translate-y-12', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+    }
+
+    if (closeToast && toast) {
+      closeToast.addEventListener('click', () => {
+        toast.classList.add('translate-y-12', 'opacity-0');
+      });
+    }
+
+    if (refillBtn && wellBar && wellCount) {
+      refillBtn.addEventListener('click', () => {
+        wellLevel = Math.min(100, wellLevel + 15);
+        wellBar.style.width = wellLevel + '%';
+        wellCount.textContent = wellLevel + ' / 100 L';
+        showNotification('Well Pumped', 'Extracted 15 Litres from Kalahari bedrock aquifer.', '💧');
+      });
+    }
+
+    function harvestPlot1() {
+      if (!plot1 || !plot1Btn) return;
+      plot1.classList.remove('ring-2', 'ring-gold-currency', 'animate-pulse');
+      plot1.innerHTML = `
+        <div class="flex justify-between items-start">
+          <span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 1</span>
+          <span class="font-label-sm text-label-sm text-primary font-bold">TILLED</span>
+        </div>
+        <div class="flex flex-col items-center text-center my-auto">
+          <span class="text-2xl opacity-50 my-pixel-1">🪓</span>
+          <span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">Fresh Stubble</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">+10 XP Earned</span>
+        </div>
+        <button class="w-full bg-wood-medium text-cream-surface font-label-sm text-label-sm py-pixel-2 uppercase font-bold tracking-wider opacity-60 cursor-not-allowed">
+          Resting Plot
+        </button>
+      `;
+      showNotification('Harvest Finished', 'Plot 1 Harvested: +10 Farm XP, +4 Sorghum sheaves.', '🌾');
+    }
+
+    if (plot1Btn) {
+      plot1Btn.addEventListener('click', harvestPlot1);
+    }
+    if (quickHarvest) {
+      quickHarvest.addEventListener('click', harvestPlot1);
+    }
+
+    function waterPlot3() {
+      if (!plot3Bar || !plot3Btn) return;
+      plot3Bar.style.width = '85%';
+      plot3Bar.classList.remove('bg-status-danger');
+      plot3Bar.classList.add('bg-status-info');
+      plot3Btn.textContent = 'Hydrated';
+      plot3Btn.classList.replace('bg-sky-deep', 'bg-wood-medium');
+      plot3Btn.classList.add('opacity-50', 'pointer-events-none');
+      showNotification('Irrigation Complete', 'Plot 3 Cowpeas refreshed with well water.', '💧');
+    }
+
+    if (plot3Btn) {
+      plot3Btn.addEventListener('click', waterPlot3);
+    }
+    if (quickWater) {
+      quickWater.addEventListener('click', () => {
+        waterPlot3();
+        showNotification('Field Irrigation', 'All active plots saturated with 12L of well water.', '💧');
+      });
+    }
+
+    if (plot4Btn && seedSelector) {
+      plot4Btn.addEventListener('click', () => {
+        seedSelector.classList.toggle('hidden');
+      });
+    }
+
+    if (closeSeedBtn && seedSelector) {
+      closeSeedBtn.addEventListener('click', () => {
+        seedSelector.classList.add('hidden');
+      });
+    }
+
+    seedChoices.forEach(choice => {
+      choice.addEventListener('click', () => {
+        const seed = choice.getAttribute('data-name');
+        const cost = choice.getAttribute('data-cost');
+        if (seedSelector) seedSelector.classList.add('hidden');
+        if (plot4) {
+          plot4.innerHTML = `
+            <div class="flex justify-between items-start">
+              <span class="font-label-sm text-label-sm text-secondary bg-surface-container-lowest px-pixel-2 py-pixel-1">PLOT 4</span>
+              <span class="font-label-sm text-label-sm text-secondary font-bold">STAGE 1/4</span>
+            </div>
+            <div class="flex flex-col items-center text-center my-auto">
+              <span class="text-2xl my-pixel-1">🌱</span>
+              <span class="font-headline-sm text-headline-sm text-cream-surface leading-tight">${seed}</span>
+              <span class="font-label-sm text-label-sm text-secondary">Germinating</span>
+            </div>
+            <div class="w-full bg-surface-container-lowest p-pixel-2">
+              <div class="h-1.5 w-full bg-surface-container-high">
+                <div class="h-full bg-status-success w-[15%]"></div>
+              </div>
+            </div>
+          `;
+        }
+        showNotification('Seeds Sown', `Planted ${seed} on Plot 4 (-${cost} Pula).`, '🌱');
+      });
+    });
+
+    if (collectEggsBtn && granaryEggs) {
+      collectEggsBtn.addEventListener('click', () => {
+        eggsCollected += 2;
+        granaryEggs.textContent = eggsCollected;
+        collectEggsBtn.textContent = 'Collected';
+        collectEggsBtn.classList.replace('bg-primary-container', 'bg-wood-medium');
+        collectEggsBtn.classList.add('opacity-50', 'pointer-events-none');
+        showNotification('Eggs Gathered', 'Gathered 2 fresh country eggs into Granary!', '🥚');
+      });
+    }
+  })();
+</script></main><footer class="fixed bottom-0 left-0 right-0 z-40 bg-wood-medium border-t-2 border-wood-border md:hidden"><nav class="h-14 grid grid-cols-6 items-center px-gutter-mobile" data-active-classes="bg-primary-container text-on-primary-container font-bold"><a aria-current="page" class="flex flex-col items-center justify-center py-pixel-2 bg-primary-container text-on-primary-container font-bold" data-path="farm" href="#"><span class="material-symbols-outlined text-[18px]">agriculture</span><span class="font-label-sm text-label-sm">Farm</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="kgotla" href="#"><span class="material-symbols-outlined text-[18px]">account_balance</span><span class="font-label-sm text-label-sm">Kgotla</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="bushveld" href="#"><span class="material-symbols-outlined text-[18px]">forest</span><span class="font-label-sm text-label-sm">Wild</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="market" href="#"><span class="material-symbols-outlined text-[18px]">storefront</span><span class="font-label-sm text-label-sm">Market</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="inventory" href="#"><span class="material-symbols-outlined text-[18px]">backpack</span><span class="font-label-sm text-label-sm">Bag</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface py-pixel-2" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="font-label-sm text-label-sm">Config</span></a></nav></footer></body></html>

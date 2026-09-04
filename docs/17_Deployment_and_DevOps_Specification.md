@@ -36,13 +36,13 @@ npm run dev
 
 ### Development Services
 
-| Service | URL | Port |
-|---------|-----|------|
-| Next.js Web | http://localhost:3000 | 3000 |
-| NestJS API | http://localhost:3001 | 3001 |
-| Phaser Game | http://localhost:3000/game | 3000 |
-| Supabase Studio | http://localhost:54323 | 54323 |
-| Redis | localhost:6379 | 6379 |
+| Service         | URL                        | Port  |
+| --------------- | -------------------------- | ----- |
+| Next.js Web     | http://localhost:3000      | 3000  |
+| NestJS API      | http://localhost:3001      | 3001  |
+| Phaser Game     | http://localhost:3000/game | 3000  |
+| Supabase Studio | http://localhost:54323     | 54323 |
+| Redis           | localhost:6379             | 6379  |
 
 ---
 
@@ -50,11 +50,11 @@ npm run dev
 
 ### Supabase Projects
 
-| Environment | Purpose | Plan |
-|------------|---------|------|
-| Local | Development | Supabase CLI |
-| Staging | Testing | Free tier |
-| Production | Live | Pro tier |
+| Environment | Purpose     | Plan         |
+| ----------- | ----------- | ------------ |
+| Local       | Development | Supabase CLI |
+| Staging     | Testing     | Free tier    |
+| Production  | Live        | Pro tier     |
 
 ### Database Migrations
 
@@ -80,12 +80,12 @@ npx supabase db push --linked --project-ref <prod-ref>
 
 ### Deployment
 
-| Component | Platform | Trigger |
-|-----------|----------|---------|
-| API | Railway | Push to `main` |
-| Web | Vercel | Push to `main` |
-| Game | Vercel | Push to `main` |
-| Database | Supabase | Manual migration |
+| Component | Platform | Trigger          |
+| --------- | -------- | ---------------- |
+| API       | Railway  | Push to `main`   |
+| Web       | Vercel   | Push to `main`   |
+| Game      | Vercel   | Push to `main`   |
+| Database  | Supabase | Manual migration |
 
 ### Staging URLs
 
@@ -100,12 +100,12 @@ npx supabase db push --linked --project-ref <prod-ref>
 
 ### Deployment
 
-| Component | Platform | Trigger |
-|-----------|----------|---------|
-| API | Railway | Tag release |
-| Web | Vercel | Tag release |
-| Game | Vercel | Tag release |
-| Database | Supabase | Manual migration |
+| Component | Platform | Trigger          |
+| --------- | -------- | ---------------- |
+| API       | Railway  | Tag release      |
+| Web       | Vercel   | Tag release      |
+| Game      | Vercel   | Tag release      |
+| Database  | Supabase | Manual migration |
 
 ### Production URLs
 
@@ -187,13 +187,13 @@ Cache-Control: public, max-age=31536000, immutable
 
 **NFR-DEP-006**
 
-| Secret | Location | Rotation |
-|--------|----------|----------|
-| Supabase keys | Railway/Vercel env | Quarterly |
-| JWT secret | Railway/Vercel env | Quarterly |
-| Stripe keys | Railway env | Quarterly |
-| Redis URL | Railway env | On compromise |
-| Sentry DSN | Railway/Vercel env | On compromise |
+| Secret        | Location           | Rotation      |
+| ------------- | ------------------ | ------------- |
+| Supabase keys | Railway/Vercel env | Quarterly     |
+| JWT secret    | Railway/Vercel env | Quarterly     |
+| Stripe keys   | Railway env        | Quarterly     |
+| Redis URL     | Railway env        | On compromise |
+| Sentry DSN    | Railway/Vercel env | On compromise |
 
 ---
 
@@ -201,12 +201,12 @@ Cache-Control: public, max-age=31536000, immutable
 
 **NFR-DEP-007**
 
-| Backup Type | Frequency | Retention |
-|------------|-----------|-----------|
-| Database (Supabase) | Daily | 30 days |
-| Database (manual) | Weekly | 90 days |
-| Git repository | Continuous | Forever |
-| Environment config | On change | Forever |
+| Backup Type         | Frequency  | Retention |
+| ------------------- | ---------- | --------- |
+| Database (Supabase) | Daily      | 30 days   |
+| Database (manual)   | Weekly     | 90 days   |
+| Git repository      | Continuous | Forever   |
+| Environment config  | On change  | Forever   |
 
 ---
 
@@ -217,18 +217,21 @@ Cache-Control: public, max-age=31536000, immutable
 ### Rollback Procedures
 
 **API rollback:**
+
 ```bash
 # Rollback to previous deployment
 railway rollback
 ```
 
 **Web/Game rollback:**
+
 ```bash
 # Rollback Vercel deployment
 vercel rollback
 ```
 
 **Database rollback:**
+
 ```bash
 # Create rollback migration
 npx supabase migration new rollback_<migration_name>
@@ -251,10 +254,10 @@ Response: { "status": "ok", "version": "1.0.0", "uptime": 12345 }
 
 ### Alerts
 
-| Alert | Condition | Action |
-|-------|-----------|--------|
-| API down | No response 5 min | Page on-call |
-| High error rate | > 5% errors | Page on-call |
-| Database connections | > 80% pool | Investigate |
-| Memory usage | > 80% | Investigate |
-| Disk usage | > 80% | Investigate |
+| Alert                | Condition         | Action       |
+| -------------------- | ----------------- | ------------ |
+| API down             | No response 5 min | Page on-call |
+| High error rate      | > 5% errors       | Page on-call |
+| Database connections | > 80% pool        | Investigate  |
+| Memory usage         | > 80%             | Investigate  |
+| Disk usage           | > 80%             | Investigate  |

@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { ASSET_MANIFEST, assetUrl, GeneratedAsset } from '../generated-assets';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -24,7 +25,7 @@ export class PreloadScene extends Phaser.Scene {
     // Update loading bar
     this.load.on('progress', (value: number) => {
       progressBar.clear();
-      progressBar.fillStyle(0xFF8F00, 1);
+      progressBar.fillStyle(0xff8f00, 1);
       progressBar.fillRect(width / 2 - 150, height / 2 - 15, 300 * value, 30);
     });
 
@@ -34,13 +35,46 @@ export class PreloadScene extends Phaser.Scene {
       loadingText.destroy();
     });
 
-    // Placeholder: no external assets to load yet
-    // In production, load sprite sheets and tilemaps here:
-    // this.load.spritesheet('crops', '/assets/sprites/crops.png', { frameWidth: 16, frameHeight: 16 });
-    // this.load.tilemapTiledJSON('farm_map', '/assets/maps/farm.json');
+    // Load Stitch-generated scene backgrounds
+    const stitchBg: Array<[string, string]> = [
+      ['farm_scene', '/assets/backgrounds/farm_scene.png'],
+      ['kgotla_scene', '/assets/backgrounds/kgotla_scene.png'],
+      ['bushveld_scene', '/assets/backgrounds/bushveld_scene.png'],
+      ['market_scene', '/assets/backgrounds/market_scene.png'],
+    ];
+    for (const [key, url] of stitchBg) {
+      this.load.image(key, url);
+    }
+
+    // Register every asset from the generated manifest.
+    // Images (pixen / pixflux / ui) -> Phaser image textures keyed by manifest id.
+    // Tilesets -> raw JSON (tile rendering is wired up separately).
+    for (const asset of ASSET_MANIFEST) {
+      const url = assetUrl(asset.id);
+      if (!url) continue;
+      if (asset.kind === 'tileset') {
+        this.load.json(asset.id, url);
+      } else {
+        this.load.image(asset.id, url);
+      }
+    }
   }
 
   create(): void {
+    const failed: GeneratedAsset[] = [];
+    for (const asset of ASSET_MANIFEST) {
+      if (asset.kind === 'tileset') {
+        if (!this.cache.json.exists(asset.id)) failed.push(asset);
+      } else if (!this.textures.exists(asset.id)) {
+        failed.push(asset);
+      }
+    }
+    if (failed.length > 0) {
+      console.warn(
+        `[PreloadScene] ${failed.length} assets failed to load:`,
+        failed.map((a) => a.id).join(', '),
+      );
+    }
     this.scene.start('FarmScene');
   }
 }

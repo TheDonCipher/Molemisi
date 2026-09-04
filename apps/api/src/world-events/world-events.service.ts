@@ -133,10 +133,7 @@ export class WorldEventsService {
     const adminClient = this.supabaseService.getAdminClient();
     const now = new Date().toISOString();
 
-    const { data: events } = await adminClient
-      .from('world_events')
-      .select('*')
-      .gt('ends_at', now);
+    const { data: events } = await adminClient.from('world_events').select('*').gt('ends_at', now);
 
     return (events ?? []).map((e: Record<string, unknown>) => ({
       id: e.id as string,
@@ -162,15 +159,10 @@ export class WorldEventsService {
     const currentSeason = (farm?.season as string) || 'spring';
 
     // Filter events by current season or no season
-    return this.EVENTS.filter(
-      (e) => e.season === null || e.season === currentSeason,
-    );
+    return this.EVENTS.filter((e) => e.season === null || e.season === currentSeason);
   }
 
-  async triggerEvent(
-    farmId: string,
-    eventId: string,
-  ): Promise<ActiveEvent> {
+  async triggerEvent(farmId: string, eventId: string): Promise<ActiveEvent> {
     const adminClient = this.supabaseService.getAdminClient();
 
     const event = this.EVENTS.find((e) => e.id === eventId);
@@ -225,7 +217,7 @@ export class WorldEventsService {
     };
   }
 
-  async getEventEffects(farmId: string): Promise<{
+  async getEventEffects(_farmId: string): Promise<{
     growthModifier: number;
     priceModifier: number;
     xpModifier: number;

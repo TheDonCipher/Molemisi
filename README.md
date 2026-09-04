@@ -48,11 +48,11 @@ pnpm dev
 
 ### Development Servers
 
-| Service | URL | Port |
-|---------|-----|------|
-| Next.js Web | http://localhost:3000 | 3000 |
-| NestJS API | http://localhost:3001 | 3001 |
-| Phaser Game | http://localhost:3002 | 3002 |
+| Service         | URL                    | Port  |
+| --------------- | ---------------------- | ----- |
+| Next.js Web     | http://localhost:3000  | 3000  |
+| NestJS API      | http://localhost:3001  | 3001  |
+| Phaser Game     | http://localhost:3002  | 3002  |
 | Supabase Studio | http://localhost:54323 | 54323 |
 
 ## Architecture

@@ -45,14 +45,7 @@ export class StorePanel {
     this.container.setDepth(1000);
 
     // Backdrop
-    const backdrop = this.scene.add.rectangle(
-      width / 2,
-      height / 2,
-      width,
-      height,
-      0x000000,
-      0.5,
-    );
+    const backdrop = this.scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.5);
     backdrop.setInteractive();
     this.container.add(backdrop);
 
@@ -82,16 +75,11 @@ export class StorePanel {
     this.container.add(title);
 
     // Close button
-    const closeBtn = this.scene.add.text(
-      panelX + panelW - 25,
-      panelY + 10,
-      '✕',
-      {
-        fontSize: '20px',
-        fontFamily: 'Arial',
-        color: '#ff6666',
-      },
-    );
+    const closeBtn = this.scene.add.text(panelX + panelW - 25, panelY + 10, '✕', {
+      fontSize: '20px',
+      fontFamily: 'Arial',
+      color: '#ff6666',
+    });
     closeBtn.setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => this.hide());
     this.container.add(closeBtn);
@@ -126,7 +114,7 @@ export class StorePanel {
           b.setColor(j === i ? '#ffd700' : '#aaa');
           b.setBackgroundColor(j === i ? '#4a3520' : 'transparent');
         });
-        this.refreshItems(activeCategory, panelX, panelY + 85, panelW, panelH - 120);
+        this.refreshItems(activeCategory, panelX, panelY + 85, panelW);
       });
 
       this.container.add(tab);
@@ -136,16 +124,10 @@ export class StorePanel {
     backdrop.on('pointerdown', () => this.hide());
 
     // Load initial items
-    this.loadAndShowItems(activeCategory, panelX, panelY + 85, panelW, panelH - 120);
+    this.loadAndShowItems(activeCategory, panelX, panelY + 85, panelW);
   }
 
-  private async loadAndShowItems(
-    category: string,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-  ): Promise<void> {
+  private async loadAndShowItems(category: string, x: number, y: number, w: number): Promise<void> {
     // Fetch items from API
     let items: StoreItem[] = [];
 
@@ -165,30 +147,80 @@ export class StorePanel {
     if (items.length === 0) {
       // Fallback: use hardcoded items
       items = [
-        { sku: 'conv_500_pula', name: '500 Pula', description: 'A little extra to help your farm grow.', category: 'convenience', price: 25, currency: 'BWP', consumable: true },
-        { sku: 'conv_1500_pula', name: '1,500 Pula', description: 'A generous boost for your farm.', category: 'convenience', price: 60, currency: 'BWP', consumable: true },
-        { sku: 'conv_speed_boost_1h', name: 'Growth Elixir (1h)', description: 'Doubles crop growth speed for 1 hour.', category: 'convenience', price: 80, currency: 'BWP', consumable: true },
-        { sku: 'cosm_sunflower_deco', name: 'Sunflower Decoration', description: 'A cheerful sunflower patch for your farm.', category: 'cosmetic', price: 50, currency: 'BWP', consumable: false },
-        { sku: 'cosm_wooden_fence', name: 'Wooden Fence Set', description: 'Rustic wooden fencing around your plots.', category: 'cosmetic', price: 75, currency: 'BWP', consumable: false },
-        { sku: 'prem_saffron_seed', name: 'Saffron Seed Pack', description: 'Rare saffron seeds — extremely valuable.', category: 'premium', price: 300, currency: 'BWP', consumable: true },
-        { sku: 'prem_greenhouse', name: 'Greenhouse Blueprint', description: 'Protect crops from weather.', category: 'premium', price: 500, currency: 'BWP', consumable: false },
+        {
+          sku: 'conv_500_pula',
+          name: '500 Pula',
+          description: 'A little extra to help your farm grow.',
+          category: 'convenience',
+          price: 25,
+          currency: 'BWP',
+          consumable: true,
+        },
+        {
+          sku: 'conv_1500_pula',
+          name: '1,500 Pula',
+          description: 'A generous boost for your farm.',
+          category: 'convenience',
+          price: 60,
+          currency: 'BWP',
+          consumable: true,
+        },
+        {
+          sku: 'conv_speed_boost_1h',
+          name: 'Growth Elixir (1h)',
+          description: 'Doubles crop growth speed for 1 hour.',
+          category: 'convenience',
+          price: 80,
+          currency: 'BWP',
+          consumable: true,
+        },
+        {
+          sku: 'cosm_sunflower_deco',
+          name: 'Sunflower Decoration',
+          description: 'A cheerful sunflower patch for your farm.',
+          category: 'cosmetic',
+          price: 50,
+          currency: 'BWP',
+          consumable: false,
+        },
+        {
+          sku: 'cosm_wooden_fence',
+          name: 'Wooden Fence Set',
+          description: 'Rustic wooden fencing around your plots.',
+          category: 'cosmetic',
+          price: 75,
+          currency: 'BWP',
+          consumable: false,
+        },
+        {
+          sku: 'prem_saffron_seed',
+          name: 'Saffron Seed Pack',
+          description: 'Rare saffron seeds — extremely valuable.',
+          category: 'premium',
+          price: 300,
+          currency: 'BWP',
+          consumable: true,
+        },
+        {
+          sku: 'prem_greenhouse',
+          name: 'Greenhouse Blueprint',
+          description: 'Protect crops from weather.',
+          category: 'premium',
+          price: 500,
+          currency: 'BWP',
+          consumable: false,
+        },
       ];
     }
 
     const filtered = items.filter((item) => item.category === category);
-    this.renderItems(filtered, x, y, w, h);
+    this.renderItems(filtered, x, y, w);
   }
 
-  private renderItems(
-    items: StoreItem[],
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-  ): void {
+  private renderItems(items: StoreItem[], x: number, y: number, w: number): void {
     // Remove old item containers
     this.container.list
-      .filter((child) => (child as Record<string, unknown>).__storeItem)
+      .filter((child) => (child as unknown as Record<string, unknown>).__storeItem)
       .forEach((child) => child.destroy());
 
     const itemH = 70;
@@ -203,7 +235,7 @@ export class StorePanel {
         itemH - padding,
         0x3d2b1f,
       );
-      (bg as Record<string, unknown>).__storeItem = true;
+      (bg as unknown as Record<string, unknown>).__storeItem = true;
       this.container.add(bg);
 
       const name = this.scene.add.text(x + 15, currentY + 8, item.name, {
@@ -212,7 +244,7 @@ export class StorePanel {
         color: '#ffffff',
         fontStyle: 'bold',
       });
-      (name as Record<string, unknown>).__storeItem = true;
+      (name as unknown as Record<string, unknown>).__storeItem = true;
       this.container.add(name);
 
       const desc = this.scene.add.text(x + 15, currentY + 28, item.description, {
@@ -221,25 +253,20 @@ export class StorePanel {
         color: '#aaa',
         wordWrap: { width: w - 140 },
       });
-      (desc as Record<string, unknown>).__storeItem = true;
+      (desc as unknown as Record<string, unknown>).__storeItem = true;
       this.container.add(desc);
 
       // Price tag
       const priceLabel = `${item.price} ${item.currency}`;
-      const buyBtn = this.scene.add.text(
-        x + w - 100,
-        currentY + 20,
-        `💰 ${priceLabel}`,
-        {
-          fontSize: '12px',
-          fontFamily: 'Arial',
-          color: '#ffd700',
-          backgroundColor: '#5a4020',
-          padding: { x: 8, y: 4 },
-        },
-      );
+      const buyBtn = this.scene.add.text(x + w - 100, currentY + 20, `💰 ${priceLabel}`, {
+        fontSize: '12px',
+        fontFamily: 'Arial',
+        color: '#ffd700',
+        backgroundColor: '#5a4020',
+        padding: { x: 8, y: 4 },
+      });
       buyBtn.setInteractive({ useHandCursor: true });
-      (buyBtn as Record<string, unknown>).__storeItem = true;
+      (buyBtn as unknown as Record<string, unknown>).__storeItem = true;
       this.container.add(buyBtn);
 
       buyBtn.on('pointerdown', async () => {
@@ -258,7 +285,7 @@ export class StorePanel {
           });
 
           if (response.ok) {
-            const result = await response.json();
+            await response.json();
             buyBtn.setText('✅ Done!');
 
             // Refresh game state
@@ -266,13 +293,12 @@ export class StorePanel {
             this.scene.events.emit('refresh-game-state');
 
             // Show floating text
-            if ('floatingText' in this.scene) {
-              (this.scene as Record<string, unknown>).floatingText(
-                `Purchased ${item.name}!`,
-              );
-            }
+            const sceneWithFeedback = this.scene as Phaser.Scene & {
+              floatingText?: (msg: string) => void;
+            };
+            sceneWithFeedback.floatingText?.(`Purchased ${item.name}!`);
           } else {
-            const err = await response.json();
+            const err = (await response.json()) as { message?: string };
             buyBtn.setText(`❌ ${err.message || 'Failed'}`);
           }
         } catch {
@@ -294,19 +320,13 @@ export class StorePanel {
     });
   }
 
-  private refreshItems(
-    category: string,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-  ): void {
+  private refreshItems(category: string, x: number, y: number, w: number): void {
     // Remove old items
     this.container.list
-      .filter((child) => (child as Record<string, unknown>).__storeItem)
+      .filter((child) => (child as unknown as Record<string, unknown>).__storeItem)
       .forEach((child) => child.destroy());
 
-    this.loadAndShowItems(category, x, y, w, h);
+    this.loadAndShowItems(category, x, y, w);
   }
 
   hide(): void {

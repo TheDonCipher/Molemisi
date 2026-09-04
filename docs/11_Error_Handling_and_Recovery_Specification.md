@@ -11,14 +11,14 @@
 
 **NFR-ERR-001**
 
-| Category | Examples | Severity | User Impact |
-|----------|---------|----------|-------------|
-| Network | Offline, timeout, DNS failure | Medium | Cannot sync |
-| Auth | Expired token, invalid credentials | High | Must re-login |
-| Game Logic | Invalid action, insufficient resources | Low | Action blocked |
-| Database | Connection failure, constraint violation | Critical | Service unavailable |
-| Payment | Provider failure, webhook error | High | Purchase blocked |
-| State | Corrupted state, stale data | High | Data refresh needed |
+| Category   | Examples                                 | Severity | User Impact         |
+| ---------- | ---------------------------------------- | -------- | ------------------- |
+| Network    | Offline, timeout, DNS failure            | Medium   | Cannot sync         |
+| Auth       | Expired token, invalid credentials       | High     | Must re-login       |
+| Game Logic | Invalid action, insufficient resources   | Low      | Action blocked      |
+| Database   | Connection failure, constraint violation | Critical | Service unavailable |
+| Payment    | Provider failure, webhook error          | High     | Purchase blocked    |
+| State      | Corrupted state, stale data              | High     | Data refresh needed |
 
 ---
 
@@ -47,13 +47,13 @@ class ApiClient {
 
 ### Retry Policies
 
-| Error Type | Max Retries | Delay | Backoff |
-|-----------|-------------|-------|---------|
-| Network timeout | 3 | 1s, 2s, 4s | Exponential |
-| 5xx server error | 2 | 2s, 4s | Exponential |
-| Rate limited | 1 | 60s | Fixed |
-| Auth error | 0 | - | Refresh token |
-| Validation error | 0 | - | Show message |
+| Error Type       | Max Retries | Delay      | Backoff       |
+| ---------------- | ----------- | ---------- | ------------- |
+| Network timeout  | 3           | 1s, 2s, 4s | Exponential   |
+| 5xx server error | 2           | 2s, 4s     | Exponential   |
+| Rate limited     | 1           | 60s        | Fixed         |
+| Auth error       | 0           | -          | Refresh token |
+| Validation error | 0           | -          | Show message  |
 
 ---
 
@@ -71,10 +71,12 @@ async function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
     return result;
   } catch (error) {
     await client.query('ROLLBACK');
-    if (error.code === '23505') { // Unique violation
+    if (error.code === '23505') {
+      // Unique violation
       throw new ConflictError('Resource already exists');
     }
-    if (error.code === '23503') { // Foreign key violation
+    if (error.code === '23503') {
+      // Foreign key violation
       throw new NotFoundError('Referenced resource not found');
     }
     throw new InternalError('Database error');
@@ -86,12 +88,12 @@ async function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
 
 ### Game State Errors
 
-| Error | Response | Recovery |
-|-------|----------|----------|
-| Stale state | 409 Conflict | Client refreshes state |
-| Invalid action | 400 Bad Request | Show error message |
-| Insufficient resources | 400 Bad Request | Show what's missing |
-| Cooldown active | 429 Too Many Requests | Show cooldown timer |
+| Error                  | Response              | Recovery               |
+| ---------------------- | --------------------- | ---------------------- |
+| Stale state            | 409 Conflict          | Client refreshes state |
+| Invalid action         | 400 Bad Request       | Show error message     |
+| Insufficient resources | 400 Bad Request       | Show what's missing    |
+| Cooldown active        | 429 Too Many Requests | Show cooldown timer    |
 
 ---
 
@@ -149,12 +151,12 @@ function validateGameState(farm: Farm): ValidationResult {
 
 ### Recovery Actions
 
-| Issue | Action |
-|-------|--------|
-| Negative currency | Set to 0, log incident |
-| Orphan crop (no plot) | Remove crop, log incident |
-| Negative inventory | Set to 0, log incident |
-| Stale simulation timestamp | Re-run simulation |
+| Issue                      | Action                    |
+| -------------------------- | ------------------------- |
+| Negative currency          | Set to 0, log incident    |
+| Orphan crop (no plot)      | Remove crop, log incident |
+| Negative inventory         | Set to 0, log incident    |
+| Stale simulation timestamp | Re-run simulation         |
 
 ---
 
@@ -162,15 +164,15 @@ function validateGameState(farm: Farm): ValidationResult {
 
 ### Error Messages
 
-| Code | Message | Action |
-|------|---------|--------|
-| OFFLINE | "You're offline. Changes will sync when reconnected." | Retry button |
-| SESSION_EXPIRED | "Your session expired. Please log in again." | Login button |
-| INSUFFICIENT_FUNDS | "Not enough Pula." | Show required amount |
-| PLOT_OCCUPIED | "This plot already has a crop." | Close |
-| CROP_NOT_READY | "This crop isn't ready yet." | Close |
-| ANIMAL_SICK | "Your animal needs medicine." | Go to market |
-| SERVER_ERROR | "Something went wrong. Please try again." | Retry button |
+| Code               | Message                                               | Action               |
+| ------------------ | ----------------------------------------------------- | -------------------- |
+| OFFLINE            | "You're offline. Changes will sync when reconnected." | Retry button         |
+| SESSION_EXPIRED    | "Your session expired. Please log in again."          | Login button         |
+| INSUFFICIENT_FUNDS | "Not enough Pula."                                    | Show required amount |
+| PLOT_OCCUPIED      | "This plot already has a crop."                       | Close                |
+| CROP_NOT_READY     | "This crop isn't ready yet."                          | Close                |
+| ANIMAL_SICK        | "Your animal needs medicine."                         | Go to market         |
+| SERVER_ERROR       | "Something went wrong. Please try again."             | Retry button         |
 
 ### Error Display Rules
 

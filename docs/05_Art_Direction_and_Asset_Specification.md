@@ -71,29 +71,29 @@ Molemisi's art style is **warm, cozy, detailed pixel art** inspired by the Botsw
 
 ### Base Resolution
 
-| Property | Value | Notes |
-|----------|-------|-------|
-| Tile size | 16x16 pixels | Base unit |
-| Pixel density | 1x (no sub-pixels) | Clean pixel art |
-| Art style | 16-bit era inspired | SNES/GBA quality |
-| Anti-aliasing | None | Pixel-perfect |
-| Color depth | 32-bit (RGBA) | Full alpha support |
+| Property      | Value               | Notes              |
+| ------------- | ------------------- | ------------------ |
+| Tile size     | 16x16 pixels        | Base unit          |
+| Pixel density | 1x (no sub-pixels)  | Clean pixel art    |
+| Art style     | 16-bit era inspired | SNES/GBA quality   |
+| Anti-aliasing | None                | Pixel-perfect      |
+| Color depth   | 32-bit (RGBA)       | Full alpha support |
 
 ### Sprite Size Guidelines
 
-| Category | Minimum | Typical | Maximum |
-|----------|---------|---------|---------|
-| Tile | 16x16 | 16x16 | 16x16 |
-| Small crop | 16x16 | 16x16 | 16x16 |
-| Medium crop | 16x16 | 16x24 | 16x32 |
-| Animal (small) | 16x16 | 16x16 | 16x16 |
-| Animal (large) | 24x24 | 32x24 | 48x32 |
-| Building (small) | 32x32 | 32x32 | 48x48 |
-| Building (large) | 48x48 | 64x48 | 96x64 |
-| NPC | 16x24 | 16x24 | 16x32 |
-| UI icon | 16x16 | 16x16 | 32x32 |
-| UI button | 32x16 | 48x16 | 64x16 |
-| Particle | 4x4 | 4x4 | 8x8 |
+| Category         | Minimum | Typical | Maximum |
+| ---------------- | ------- | ------- | ------- |
+| Tile             | 16x16   | 16x16   | 16x16   |
+| Small crop       | 16x16   | 16x16   | 16x16   |
+| Medium crop      | 16x16   | 16x24   | 16x32   |
+| Animal (small)   | 16x16   | 16x16   | 16x16   |
+| Animal (large)   | 24x24   | 32x24   | 48x32   |
+| Building (small) | 32x32   | 32x32   | 48x48   |
+| Building (large) | 48x48   | 64x48   | 96x64   |
+| NPC              | 16x24   | 16x24   | 16x32   |
+| UI icon          | 16x16   | 16x16   | 32x32   |
+| UI button        | 32x16   | 48x16   | 64x16   |
+| Particle         | 4x4     | 4x4     | 8x8     |
 
 ### Display Scaling
 
@@ -107,63 +107,63 @@ The game renders at 800x600 logical pixels and scales to fit the device screen. 
 
 ### Primary Palette (Botswana Landscape)
 
-| Name | Hex | RGB | Usage |
-|------|-----|-----|-------|
-| Earth Red | #C05C3C | 192, 92, 60 | Ground, paths, dry earth |
-| Earth Brown | #8B5E3C | 139, 94, 60 | Dirt, soil, wood |
-| Sand | #E8D5A3 | 232, 213, 163 | Sandy areas, dry grass |
-| Grass Green | #5A8F3C | 90, 143, 60 | Healthy grass, leaves |
-| Dark Green | #3D6B2E | 61, 107, 46 | Dense vegetation |
-| Sky Blue | #87CEEB | 135, 206, 235 | Sky, water |
-| Deep Blue | #4A7FB5 | 74, 127, 181 | Deep water, night sky |
-| Warm White | #F5E6D3 | 245, 230, 211 | Highlights, text |
-| Sunset Orange | #E8945A | 232, 148, 90 | Sunset, warm lighting |
-| Sunset Red | #D4654A | 212, 101, 74 | Sunset sky |
+| Name          | Hex     | RGB           | Usage                    |
+| ------------- | ------- | ------------- | ------------------------ |
+| Earth Red     | #C05C3C | 192, 92, 60   | Ground, paths, dry earth |
+| Earth Brown   | #8B5E3C | 139, 94, 60   | Dirt, soil, wood         |
+| Sand          | #E8D5A3 | 232, 213, 163 | Sandy areas, dry grass   |
+| Grass Green   | #5A8F3C | 90, 143, 60   | Healthy grass, leaves    |
+| Dark Green    | #3D6B2E | 61, 107, 46   | Dense vegetation         |
+| Sky Blue      | #87CEEB | 135, 206, 235 | Sky, water               |
+| Deep Blue     | #4A7FB5 | 74, 127, 181  | Deep water, night sky    |
+| Warm White    | #F5E6D3 | 245, 230, 211 | Highlights, text         |
+| Sunset Orange | #E8945A | 232, 148, 90  | Sunset, warm lighting    |
+| Sunset Red    | #D4654A | 212, 101, 74  | Sunset sky               |
 
 ### Secondary Palette (Crops and Plants)
 
-| Name | Hex | RGB | Usage |
-|------|-----|-----|-------|
-| Sorghum Gold | #D4A520 | 212, 165, 32 | Sorghum grain |
-| Maize Yellow | #F0C040 | 240, 192, 64 | Maize kernels |
-| Millet Tan | #C4A882 | 196, 168, 130 | Millet grain |
-| Leaf Green | #7CB342 | 124, 179, 66 | Plant leaves |
-| Stem Green | #558B2F | 85, 139, 47 | Plant stems |
-| Flower Purple | #9C27B0 | 156, 39, 176 | Flowers |
-| Fruit Red | #E53935 | 229, 57, 53 | Fruits, tomatoes |
-| Pepper Red | #C62828 | 198, 40, 40 | Peppers |
+| Name          | Hex     | RGB           | Usage            |
+| ------------- | ------- | ------------- | ---------------- |
+| Sorghum Gold  | #D4A520 | 212, 165, 32  | Sorghum grain    |
+| Maize Yellow  | #F0C040 | 240, 192, 64  | Maize kernels    |
+| Millet Tan    | #C4A882 | 196, 168, 130 | Millet grain     |
+| Leaf Green    | #7CB342 | 124, 179, 66  | Plant leaves     |
+| Stem Green    | #558B2F | 85, 139, 47   | Plant stems      |
+| Flower Purple | #9C27B0 | 156, 39, 176  | Flowers          |
+| Fruit Red     | #E53935 | 229, 57, 53   | Fruits, tomatoes |
+| Pepper Red    | #C62828 | 198, 40, 40   | Peppers          |
 
 ### Tertiary Palette (Animals and Buildings)
 
-| Name | Hex | RGB | Usage |
-|------|-----|-----|-------|
+| Name          | Hex     | RGB           | Usage            |
+| ------------- | ------- | ------------- | ---------------- |
 | Chicken White | #F5F5DC | 245, 245, 220 | Chicken feathers |
-| Chicken Brown | #A0522D | 160, 82, 45 | Brown chicken |
-| Goat Brown | #8B7355 | 139, 115, 85 | Goat fur |
-| Cow Black | #2C2C2C | 44, 44, 44 | Cow spots |
-| Cow White | #FAFAFA | 250, 250, 250 | Cow body |
-| Pig Pink | #FFB6C1 | 255, 182, 193 | Pig skin |
-| Wood Light | #DEB887 | 222, 184, 135 | Light wood |
-| Wood Dark | #8B6914 | 139, 105, 20 | Dark wood |
-| Stone Light | #B0B0B0 | 176, 176, 176 | Light stone |
-| Stone Dark | #696969 | 105, 105, 105 | Dark stone |
-| Thatch | #C4A265 | 196, 162, 101 | Roof thatch |
-| Iron | #708090 | 112, 128, 144 | Metal, iron |
+| Chicken Brown | #A0522D | 160, 82, 45   | Brown chicken    |
+| Goat Brown    | #8B7355 | 139, 115, 85  | Goat fur         |
+| Cow Black     | #2C2C2C | 44, 44, 44    | Cow spots        |
+| Cow White     | #FAFAFA | 250, 250, 250 | Cow body         |
+| Pig Pink      | #FFB6C1 | 255, 182, 193 | Pig skin         |
+| Wood Light    | #DEB887 | 222, 184, 135 | Light wood       |
+| Wood Dark     | #8B6914 | 139, 105, 20  | Dark wood        |
+| Stone Light   | #B0B0B0 | 176, 176, 176 | Light stone      |
+| Stone Dark    | #696969 | 105, 105, 105 | Dark stone       |
+| Thatch        | #C4A265 | 196, 162, 101 | Roof thatch      |
+| Iron          | #708090 | 112, 128, 144 | Metal, iron      |
 
 ### UI Palette
 
-| Name | Hex | RGB | Usage |
-|------|-----|-----|-------|
-| UI Background | #2C1810 | 44, 24, 16 | Dark panels |
-| UI Panel | #3E2723 | 62, 39, 35 | Panel backgrounds |
-| UI Border | #5D4037 | 93, 64, 55 | Panel borders |
-| UI Text Primary | #F5E6D3 | 245, 230, 211 | Main text |
-| UI Text Secondary | #BCAAA4 | 188, 170, 164 | Secondary text |
-| UI Accent | #FF8F00 | 255, 143, 0 | Buttons, highlights |
-| UI Success | #4CAF50 | 76, 175, 80 | Success states |
-| UI Warning | #FFC107 | 255, 193, 7 | Warning states |
-| UI Error | #F44336 | 244, 67, 54 | Error states |
-| UI Info | #2196F3 | 33, 150, 243 | Info states |
+| Name              | Hex     | RGB           | Usage               |
+| ----------------- | ------- | ------------- | ------------------- |
+| UI Background     | #2C1810 | 44, 24, 16    | Dark panels         |
+| UI Panel          | #3E2723 | 62, 39, 35    | Panel backgrounds   |
+| UI Border         | #5D4037 | 93, 64, 55    | Panel borders       |
+| UI Text Primary   | #F5E6D3 | 245, 230, 211 | Main text           |
+| UI Text Secondary | #BCAAA4 | 188, 170, 164 | Secondary text      |
+| UI Accent         | #FF8F00 | 255, 143, 0   | Buttons, highlights |
+| UI Success        | #4CAF50 | 76, 175, 80   | Success states      |
+| UI Warning        | #FFC107 | 255, 193, 7   | Warning states      |
+| UI Error          | #F44336 | 244, 67, 54   | Error states        |
+| UI Info           | #2196F3 | 33, 150, 243  | Info states         |
 
 ### Palette Rules
 
@@ -181,13 +181,13 @@ The game renders at 800x600 logical pixels and scales to fit the device screen. 
 
 ### Ground Tiles
 
-| Tile | Size | Description | Variants |
-|------|------|-------------|----------|
-| Grass | 16x16 | Green grass with texture | 4 variations |
-| Dirt | 16x16 | Brown soil | 4 variations |
-| Path | 16x16 | Stone/dirt path | 3 variations |
-| Water | 16x16 | Water surface | 2 variations + animation |
-| Sand | 16x16 | Sandy ground | 3 variations |
+| Tile  | Size  | Description              | Variants                 |
+| ----- | ----- | ------------------------ | ------------------------ |
+| Grass | 16x16 | Green grass with texture | 4 variations             |
+| Dirt  | 16x16 | Brown soil               | 4 variations             |
+| Path  | 16x16 | Stone/dirt path          | 3 variations             |
+| Water | 16x16 | Water surface            | 2 variations + animation |
+| Sand  | 16x16 | Sandy ground             | 3 variations             |
 
 ### Tile Design Rules
 
@@ -198,16 +198,16 @@ The game renders at 800x600 logical pixels and scales to fit the device screen. 
 
 ### Object Sprites
 
-| Object | Size | Description |
-|--------|------|-------------|
-| Empty plot | 16x16 | Tilled soil circle |
-| Planted plot | 16x16 | Soil with seed |
-| Growing crop | 16x16 to 16x24 | Varies by stage |
-| Ready crop | 16x24 to 16x32 | Full plant with product |
-| Well | 32x32 | Stone well with bucket |
-| Coop | 32x32 | Wooden chicken coop |
-| Barn | 48x48 | Large wooden barn |
-| Animal | 16x16 to 24x24 | Animated sprite |
+| Object       | Size           | Description             |
+| ------------ | -------------- | ----------------------- |
+| Empty plot   | 16x16          | Tilled soil circle      |
+| Planted plot | 16x16          | Soil with seed          |
+| Growing crop | 16x16 to 16x24 | Varies by stage         |
+| Ready crop   | 16x24 to 16x32 | Full plant with product |
+| Well         | 32x32          | Stone well with bucket  |
+| Coop         | 32x32          | Wooden chicken coop     |
+| Barn         | 48x48          | Large wooden barn       |
+| Animal       | 16x16 to 24x24 | Animated sprite         |
 
 ---
 
@@ -225,13 +225,13 @@ The game renders at 800x600 logical pixels and scales to fit the device screen. 
 
 ### Building Variants
 
-| Building | Level 1 | Level 2 | Level 3 |
-|----------|---------|---------|---------|
-| Well | Simple stone circle | Stone with roof | Stone with pulley system |
-| Coop | Small wooden box | Wooden coop with run | Large coop with fence |
-| Barn | Small shed | Medium barn | Large barn with silo |
-| Mill | Simple hand mill | Water mill | Wind mill |
-| Paddock | Wooden fence | Fence with shelter | Full paddock with barn |
+| Building | Level 1             | Level 2              | Level 3                  |
+| -------- | ------------------- | -------------------- | ------------------------ |
+| Well     | Simple stone circle | Stone with roof      | Stone with pulley system |
+| Coop     | Small wooden box    | Wooden coop with run | Large coop with fence    |
+| Barn     | Small shed          | Medium barn          | Large barn with silo     |
+| Mill     | Simple hand mill    | Water mill           | Wind mill                |
+| Paddock  | Wooden fence        | Fence with shelter   | Full paddock with barn   |
 
 ### Construction Visual States
 
@@ -293,14 +293,14 @@ S5 = Ready (optional variant)
 
 Each animal has these animation states:
 
-| State | Frames | Loop | Speed |
-|-------|--------|------|-------|
-| Idle | 4 frames | Yes | 2 fps |
-| Walking | 4 frames | Yes | 4 fps |
-| Eating | 3 frames | No | 3 fps |
-| Sleeping | 2 frames | Yes | 1 fps |
-| Producing | 3 frames | No | 3 fps |
-| Sick | 2 frames | Yes | 1 fps |
+| State     | Frames   | Loop | Speed |
+| --------- | -------- | ---- | ----- |
+| Idle      | 4 frames | Yes  | 2 fps |
+| Walking   | 4 frames | Yes  | 4 fps |
+| Eating    | 3 frames | No   | 3 fps |
+| Sleeping  | 2 frames | Yes  | 1 fps |
+| Producing | 3 frames | No   | 3 fps |
+| Sick      | 2 frames | Yes  | 1 fps |
 
 ### Animal Art Style
 
@@ -330,13 +330,13 @@ Animals face right by default. Left-facing variants are created by flipping (unl
 
 ### NPC Variants
 
-| NPC | Hair | Clothing | Distinguishing Feature |
-|-----|------|----------|----------------------|
-| Elder Neo | Grey | Brown robe | Walking stick |
-| Mama Naledi | Black wrap | Colorful dress | Market basket |
-| Oupa Kabelo | Bald | Work apron | Hammer |
-| Refilwe | Braids | Green dress | Herb pouch |
-| Thabo | Short hair | Farm clothes | Hat |
+| NPC         | Hair       | Clothing       | Distinguishing Feature |
+| ----------- | ---------- | -------------- | ---------------------- |
+| Elder Neo   | Grey       | Brown robe     | Walking stick          |
+| Mama Naledi | Black wrap | Colorful dress | Market basket          |
+| Oupa Kabelo | Bald       | Work apron     | Hammer                 |
+| Refilwe     | Braids     | Green dress    | Herb pouch             |
+| Thabo       | Short hair | Farm clothes   | Hat                    |
 
 ---
 
@@ -346,25 +346,25 @@ Animals face right by default. Left-facing variants are created by flipping (unl
 
 ### Environment Elements
 
-| Element | Size | Description |
-|---------|------|-------------|
-| Tree (acacia) | 32x48 | Flat-topped acacia tree |
-| Tree (baobab) | 48x64 | Thick trunk baobab |
-| Bush | 16x16 | Small bush |
-| Rock | 16x16 to 32x16 | Stone formations |
-| Fence | 16x16 | Wooden fence segment |
-| Water hole | 32x32 | Small water pool |
-| Flower patch | 16x16 | Colorful flowers |
+| Element       | Size           | Description             |
+| ------------- | -------------- | ----------------------- |
+| Tree (acacia) | 32x48          | Flat-topped acacia tree |
+| Tree (baobab) | 48x64          | Thick trunk baobab      |
+| Bush          | 16x16          | Small bush              |
+| Rock          | 16x16 to 32x16 | Stone formations        |
+| Fence         | 16x16          | Wooden fence segment    |
+| Water hole    | 32x32          | Small water pool        |
+| Flower patch  | 16x16          | Colorful flowers        |
 
 ### Weather Visuals
 
-| Weather | Visual Effect |
-|---------|--------------|
-| Clear | Normal lighting, no particles |
-| Cloudy | Darker overlay, moving clouds |
-| Rain | Rain particle overlay, splash effects |
-| Storm | Dark overlay, lightning flashes, rain |
-| Drought | Warm overlay, heat shimmer effect |
+| Weather | Visual Effect                         |
+| ------- | ------------------------------------- |
+| Clear   | Normal lighting, no particles         |
+| Cloudy  | Darker overlay, moving clouds         |
+| Rain    | Rain particle overlay, splash effects |
+| Storm   | Dark overlay, lightning flashes, rain |
+| Drought | Warm overlay, heat shimmer effect     |
 
 ---
 
@@ -382,34 +382,34 @@ Animals face right by default. Left-facing variants are created by flipping (unl
 
 ### UI Components
 
-| Component | Size | States |
-|-----------|------|--------|
-| Button (primary) | 48x16 | Normal, hover, pressed, disabled |
-| Button (secondary) | 48x16 | Normal, hover, pressed, disabled |
-| Panel | Variable | Normal, highlighted |
-| Icon | 16x16 | Normal, active |
-| Progress bar | 64x8 | Empty to full |
-| Slider | 64x8 | Min to max |
-| Toggle | 16x8 | On, off |
-| Tooltip | Variable | Visible |
-| Modal | 200x150 min | Open, closing |
+| Component          | Size        | States                           |
+| ------------------ | ----------- | -------------------------------- |
+| Button (primary)   | 48x16       | Normal, hover, pressed, disabled |
+| Button (secondary) | 48x16       | Normal, hover, pressed, disabled |
+| Panel              | Variable    | Normal, highlighted              |
+| Icon               | 16x16       | Normal, active                   |
+| Progress bar       | 64x8        | Empty to full                    |
+| Slider             | 64x8        | Min to max                       |
+| Toggle             | 16x8        | On, off                          |
+| Tooltip            | Variable    | Visible                          |
+| Modal              | 200x150 min | Open, closing                    |
 
 ### Icon Set
 
-| Icon | Usage |
-|------|-------|
-| 🌾 Crop | Crop-related actions |
-| 🐾 Animal | Animal-related actions |
-| 🏠 Building | Building-related actions |
-| 💰 Currency | Money-related |
-| 💧 Water | Watering actions |
-| 🌡️ Weather | Weather display |
-| ⏰ Time | Time-related |
-| ⭐ Star | Quality/rating |
-| 📦 Box | Inventory |
-| 🔧 Tool | Tool-related |
-| 📋 Contract | Contract-related |
-| 🏘️ Community | Kgotla-related |
+| Icon         | Usage                    |
+| ------------ | ------------------------ |
+| 🌾 Crop      | Crop-related actions     |
+| 🐾 Animal    | Animal-related actions   |
+| 🏠 Building  | Building-related actions |
+| 💰 Currency  | Money-related            |
+| 💧 Water     | Watering actions         |
+| 🌡️ Weather   | Weather display          |
+| ⏰ Time      | Time-related             |
+| ⭐ Star      | Quality/rating           |
+| 📦 Box       | Inventory                |
+| 🔧 Tool      | Tool-related             |
+| 📋 Contract  | Contract-related         |
+| 🏘️ Community | Kgotla-related           |
 
 ---
 
@@ -419,27 +419,27 @@ Animals face right by default. Left-facing variants are created by flipping (unl
 
 ### Particle Textures
 
-| Particle | Size | Color | Shape |
-|----------|------|-------|-------|
-| Water drop | 4x4 | Blue (#87CEEB) | Circle |
-| Sparkle | 4x4 | Gold (#FFD700) | Star |
-| Dust | 4x4 | Brown (#8B7355) | Circle |
-| Leaf | 6x6 | Green (#7CB342) | Leaf shape |
-| Rain | 2x6 | Blue (#87CEEB) | Line |
-| Snow | 4x4 | White (#FFFFFF) | Circle |
-| Smoke | 6x6 | Grey (#B0B0B0) | Circle (fading) |
-| Star | 4x4 | Gold (#FFD700) | Star (pulsing) |
+| Particle   | Size | Color           | Shape           |
+| ---------- | ---- | --------------- | --------------- |
+| Water drop | 4x4  | Blue (#87CEEB)  | Circle          |
+| Sparkle    | 4x4  | Gold (#FFD700)  | Star            |
+| Dust       | 4x4  | Brown (#8B7355) | Circle          |
+| Leaf       | 6x6  | Green (#7CB342) | Leaf shape      |
+| Rain       | 2x6  | Blue (#87CEEB)  | Line            |
+| Snow       | 4x4  | White (#FFFFFF) | Circle          |
+| Smoke      | 6x6  | Grey (#B0B0B0)  | Circle (fading) |
+| Star       | 4x4  | Gold (#FFD700)  | Star (pulsing)  |
 
 ### Effect Animations
 
-| Effect | Duration | Particles | Usage |
-|--------|----------|-----------|-------|
-| Water splash | 0.5s | 10 | Watering crops |
-| Harvest burst | 0.5s | 15 | Harvesting |
-| Sparkle | 1.0s loop | 5 | Crop ready |
-| Smoke | 2.0s loop | 3 | Chimney |
-| Construction dust | 1.0s | 8 | Building |
-| Level up | 1.5s | 20 | Level up |
+| Effect            | Duration  | Particles | Usage          |
+| ----------------- | --------- | --------- | -------------- |
+| Water splash      | 0.5s      | 10        | Watering crops |
+| Harvest burst     | 0.5s      | 15        | Harvesting     |
+| Sparkle           | 1.0s loop | 5         | Crop ready     |
+| Smoke             | 2.0s loop | 3         | Chimney        |
+| Construction dust | 1.0s      | 8         | Building       |
+| Level up          | 1.5s      | 20        | Level up       |
 
 ---
 
@@ -449,27 +449,27 @@ Animals face right by default. Left-facing variants are created by flipping (unl
 
 ### Frame Rates
 
-| Animation Type | Frame Rate | Loop |
-|---------------|------------|------|
-| Idle (animal) | 2 fps | Yes |
-| Walking | 4 fps | Yes |
-| Eating | 3 fps | No |
-| Growth transition | 1 fps | No |
-| Harvest action | 4 fps | No |
-| UI button | 6 fps | No |
-| Particle | N/A | N/A |
+| Animation Type    | Frame Rate | Loop |
+| ----------------- | ---------- | ---- |
+| Idle (animal)     | 2 fps      | Yes  |
+| Walking           | 4 fps      | Yes  |
+| Eating            | 3 fps      | No   |
+| Growth transition | 1 fps      | No   |
+| Harvest action    | 4 fps      | No   |
+| UI button         | 6 fps      | No   |
+| Particle          | N/A        | N/A  |
 
 ### Animation Duration Targets
 
-| Animation | Duration | Notes |
-|-----------|----------|-------|
+| Animation   | Duration    | Notes             |
+| ----------- | ----------- | ----------------- |
 | Crop growth | Stage-based | Server-controlled |
-| Animal idle | 2s loop | Continuous |
-| Harvest | 0.5s | One-shot |
-| Plant | 0.5s | One-shot |
-| Water | 0.5s | One-shot |
-| Build | 2.0s | One-shot |
-| Upgrade | 1.0s | One-shot |
+| Animal idle | 2s loop     | Continuous        |
+| Harvest     | 0.5s        | One-shot          |
+| Plant       | 0.5s        | One-shot          |
+| Water       | 0.5s        | One-shot          |
+| Build       | 2.0s        | One-shot          |
+| Upgrade     | 1.0s        | One-shot          |
 
 ### Sprite Sheet Frame Order
 
@@ -492,6 +492,7 @@ Frame 0 → Frame 1 → Frame 2 → Frame 3 (loop)
 ```
 
 **Categories:**
+
 - `tile` — Ground tiles
 - `crop` — Crop sprites
 - `animal` — Animal sprites
@@ -503,6 +504,7 @@ Frame 0 → Frame 1 → Frame 2 → Frame 3 (loop)
 - `icon` — Icons
 
 **Examples:**
+
 ```
 tile_grass_01.png
 crop_sorghum_stages.png
@@ -523,6 +525,7 @@ icon_water.png
 ```
 
 **Examples:**
+
 ```
 crop_crops_atlas.json
 crop_crops_atlas.png
@@ -673,12 +676,14 @@ Use JSON Hash format for texture atlases:
 ### AI Asset Policy
 
 AI-generated assets may be used for:
+
 - Initial concept exploration
 - Placeholder sprites during development
 - Texture generation for backgrounds
 - Pattern generation for tiles
 
 AI-generated assets must NOT be used for:
+
 - Final game sprites without human review
 - Character/NPC designs without cultural review
 - UI elements without accessibility review
@@ -707,18 +712,18 @@ AI-generated assets must NOT be used for:
 
 ### Quick Reference
 
-| Property | Value |
-|----------|-------|
-| Style | 16-bit pixel art |
-| Tile size | 16x16 |
-| Palette | 64 colors max |
-| Light source | Top-left |
-| Outline | 1px black (characters) |
-| Animation | 2-4 fps typical |
-| Atlas format | JSON Hash |
-| Max atlas size | 2048x2048 |
-| File format | PNG (sprites), JSON (atlases) |
-| Naming | {category}_{name}_{variant}.png |
+| Property       | Value                           |
+| -------------- | ------------------------------- |
+| Style          | 16-bit pixel art                |
+| Tile size      | 16x16                           |
+| Palette        | 64 colors max                   |
+| Light source   | Top-left                        |
+| Outline        | 1px black (characters)          |
+| Animation      | 2-4 fps typical                 |
+| Atlas format   | JSON Hash                       |
+| Max atlas size | 2048x2048                       |
+| File format    | PNG (sprites), JSON (atlases)   |
+| Naming         | {category}_{name}_{variant}.png |
 
 ### Color Mood
 

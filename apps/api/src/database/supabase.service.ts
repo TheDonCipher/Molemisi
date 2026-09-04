@@ -64,7 +64,7 @@ export class SupabaseService implements OnModuleInit {
   /**
    * Query using the user client (respects RLS)
    */
-  async userQuery(table: string, token: string) {
+  async userQuery(table: string, _token: string) {
     const client = this.getClient();
     return client.from(table).select('*');
   }

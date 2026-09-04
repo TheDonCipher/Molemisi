@@ -8,6 +8,7 @@
 ## Context
 
 Molemisi needs a 2D rendering engine for the game client. The game requires:
+
 - Pixel-art rendering
 - Sprite animation
 - Tilemap support
@@ -21,13 +22,13 @@ Use **Phaser 3** as the 2D game rendering engine.
 
 ## Alternatives Considered
 
-| Alternative | Pros | Cons |
-|------------|------|------|
-| PixiJS | Fast, lightweight | No game loop, no physics, less game-focused |
-| Three.js | Powerful | Overkill for 2D, larger bundle |
-| Custom Canvas | Full control | High development cost |
-| Unity WebGL | Feature-rich | Heavy, licensing issues |
-| Phaser 3 | Game-focused, TypeScript, large community | Moderate bundle size |
+| Alternative   | Pros                                      | Cons                                        |
+| ------------- | ----------------------------------------- | ------------------------------------------- |
+| PixiJS        | Fast, lightweight                         | No game loop, no physics, less game-focused |
+| Three.js      | Powerful                                  | Overkill for 2D, larger bundle              |
+| Custom Canvas | Full control                              | High development cost                       |
+| Unity WebGL   | Feature-rich                              | Heavy, licensing issues                     |
+| Phaser 3      | Game-focused, TypeScript, large community | Moderate bundle size                        |
 
 ## Rationale
 
@@ -41,17 +42,20 @@ Use **Phaser 3** as the 2D game rendering engine.
 ## Consequences
 
 ### Positive
+
 - Rapid prototyping of game scenes
 - Built-in scene management for farm, Kgotla, Bushveld
 - Object pooling for performance
 - Animation system for crops, animals, NPCs
 
 ### Negative
+
 - Bundle size (~1MB) increases initial load
 - Learning curve for developers unfamiliar with Phaser
 - Limited to 2D (acceptable for Molemisi)
 
 ### Mitigations
+
 - Lazy-load Phaser after initial app shell
 - Use code splitting for Phaser scenes
 - Provide Phaser learning resources in Agent Implementation Guide

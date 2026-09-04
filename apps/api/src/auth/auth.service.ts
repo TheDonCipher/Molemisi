@@ -42,7 +42,9 @@ export class AuthService {
         password: input.password,
       });
       if (signInError || !signInData.session) {
-        throw new BadRequestException('Registration succeeded but auto-login failed. Please confirm your email.');
+        throw new BadRequestException(
+          'Registration succeeded but auto-login failed. Please confirm your email.',
+        );
       }
       session = signInData.session;
     }
@@ -89,8 +91,20 @@ export class AuthService {
 
     // Create initial inventory with starter seeds
     const starterInventory = [
-      { farm_id: farm.id, item_type: 'sorghum_seed', item_category: 'seed', quantity: 10, quality: 'normal' },
-      { farm_id: farm.id, item_type: 'maize_seed', item_category: 'seed', quantity: 5, quality: 'normal' },
+      {
+        farm_id: farm.id,
+        item_type: 'sorghum_seed',
+        item_category: 'seed',
+        quantity: 10,
+        quality: 'normal',
+      },
+      {
+        farm_id: farm.id,
+        item_type: 'maize_seed',
+        item_category: 'seed',
+        quantity: 5,
+        quality: 'normal',
+      },
     ];
 
     const { error: inventoryError } = await adminClient.from('inventory').insert(starterInventory);

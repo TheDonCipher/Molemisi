@@ -13,14 +13,14 @@
 
 ### Assets to Protect
 
-| Asset | Value | Threats |
-|-------|-------|---------|
-| Player accounts | High | Unauthorized access |
-| Game currency | High | Duplication, theft |
-| Player data | Medium | Exposure, modification |
-| Payment data | Critical | Theft, fraud |
-| Game economy | High | Manipulation, inflation |
-| Server infrastructure | High | DDoS, intrusion |
+| Asset                 | Value    | Threats                 |
+| --------------------- | -------- | ----------------------- |
+| Player accounts       | High     | Unauthorized access     |
+| Game currency         | High     | Duplication, theft      |
+| Player data           | Medium   | Exposure, modification  |
+| Payment data          | Critical | Theft, fraud            |
+| Game economy          | High     | Manipulation, inflation |
+| Server infrastructure | High     | DDoS, intrusion         |
 
 ### Trust Boundaries
 
@@ -110,13 +110,13 @@ async function verifyFarmOwnership(farmId: string, userId: string): Promise<bool
 
 ### Validation Points
 
-| Action | Server Validation |
-|--------|------------------|
-| Plant crop | Plot empty, seed in inventory, crop type unlocked |
-| Harvest crop | Crop state is READY, plot ownership |
-| Sell item | Item in inventory, quantity available |
-| Buy item | Sufficient currency, item available |
-| Build | Resources available, building not duplicate |
+| Action       | Server Validation                                 |
+| ------------ | ------------------------------------------------- |
+| Plant crop   | Plot empty, seed in inventory, crop type unlocked |
+| Harvest crop | Crop state is READY, plot ownership               |
+| Sell item    | Item in inventory, quantity available             |
+| Buy item     | Sufficient currency, item available               |
+| Build        | Resources available, building not duplicate       |
 
 ### Cheat Detection
 
@@ -158,13 +158,13 @@ function verifyWebhookSignature(payload: string, signature: string): boolean {
 
 ### Rate Limiting
 
-| Endpoint Type | Limit | Window |
-|--------------|-------|--------|
-| Auth | 10/min | 1 min |
-| Game actions | 30/min | 1 min |
-| Market | 20/min | 1 min |
-| Payments | 5/min | 1 min |
-| Global | 100/min | 1 min |
+| Endpoint Type | Limit   | Window |
+| ------------- | ------- | ------ |
+| Auth          | 10/min  | 1 min  |
+| Game actions  | 30/min  | 1 min  |
+| Market        | 20/min  | 1 min  |
+| Payments      | 5/min   | 1 min  |
+| Global        | 100/min | 1 min  |
 
 ### Input Validation
 
@@ -198,13 +198,13 @@ app.enableCors({
 
 ### Sensitive Data
 
-| Data | Protection |
-|------|-----------|
-| Passwords | Hashed (Supabase Auth) |
-| JWT secrets | Environment variable |
-| API keys | Environment variable |
-| Webhook secrets | Environment variable |
-| Payment data | Never stored, provider handles |
+| Data            | Protection                     |
+| --------------- | ------------------------------ |
+| Passwords       | Hashed (Supabase Auth)         |
+| JWT secrets     | Environment variable           |
+| API keys        | Environment variable           |
+| Webhook secrets | Environment variable           |
+| Payment data    | Never stored, provider handles |
 
 ### Secrets Management
 
@@ -256,12 +256,12 @@ async function auditLog(userId: string, action: string, details: any) {
 
 ### Anti-Abuse Rules
 
-| Abuse Type | Detection | Response |
-|-----------|-----------|----------|
-| Bot behavior | Request pattern analysis | Rate limit, CAPTCHA |
-| Account sharing | Multiple IP analysis | Warning, lock |
-| Economy manipulation | Transaction pattern analysis | Flag, review |
-| Payment fraud | Provider alerts | Block, investigate |
+| Abuse Type           | Detection                    | Response            |
+| -------------------- | ---------------------------- | ------------------- |
+| Bot behavior         | Request pattern analysis     | Rate limit, CAPTCHA |
+| Account sharing      | Multiple IP analysis         | Warning, lock       |
+| Economy manipulation | Transaction pattern analysis | Flag, review        |
+| Payment fraud        | Provider alerts              | Block, investigate  |
 
 ### Account Lockout
 

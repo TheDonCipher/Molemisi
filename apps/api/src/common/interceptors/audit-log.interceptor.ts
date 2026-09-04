@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 
 /**
@@ -23,7 +17,7 @@ export class AuditLogInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
-    const { method, url, user, body } = request;
+    const { method, url, user } = request;
 
     // Only audit mutations
     if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
@@ -37,9 +31,7 @@ export class AuditLogInterceptor implements NestInterceptor {
       tap({
         next: () => {
           const duration = Date.now() - startTime;
-          this.logger.log(
-            `${method} ${url} user=${userId} duration=${duration}ms status=OK`,
-          );
+          this.logger.log(`${method} ${url} user=${userId} duration=${duration}ms status=OK`);
         },
         error: (error: Error) => {
           const duration = Date.now() - startTime;

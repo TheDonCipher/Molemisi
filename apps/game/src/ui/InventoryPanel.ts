@@ -89,25 +89,47 @@ export class InventoryPanel {
 
   private renderItems(items: InventoryItem[], panelWidth: number, panelHeight: number): void {
     if (!this.container) return;
+    const container = this.container;
 
     // Item emoji map
     const itemEmojis: Record<string, string> = {
-      sorghum_seed: '🌱', sorghum: '🌾',
-      maize_seed: '🌱', maize: '🌽',
-      millet_seed: '🌱', millet: '🌾',
-      cowpeas_seed: '🌱', cowpeas: '🫘',
-      groundnuts_seed: '🌱', groundnuts: '🥜',
-      sesame_seed: '🌱', sesame: '🌾',
-      watermelon_seed: '🌱', watermelon: '🍉',
-      tomatoes_seed: '🌱', tomatoes: '🍅',
-      pepper_seed: '🌱', pepper: '🌶️',
-      herbs_seed: '🌱', herbs: '🌿',
-      saffron_seed: '🌱', saffron: '🌸',
-      egg: '🥚', goat_milk: '🥛', cow_milk: '🥛',
-      truffle: '🍄', flour: '🌾', butter: '🧈',
-      cheese: '🧀', leather: '👟', bread: '🍞',
-      wood: '🪵', stone: '🪨', iron: '⛓️',
-      grain: '🌾', hay: '🌾', mixed_feed: '🌾',
+      sorghum_seed: '🌱',
+      sorghum: '🌾',
+      maize_seed: '🌱',
+      maize: '🌽',
+      millet_seed: '🌱',
+      millet: '🌾',
+      cowpeas_seed: '🌱',
+      cowpeas: '🫘',
+      groundnuts_seed: '🌱',
+      groundnuts: '🥜',
+      sesame_seed: '🌱',
+      sesame: '🌾',
+      watermelon_seed: '🌱',
+      watermelon: '🍉',
+      tomatoes_seed: '🌱',
+      tomatoes: '🍅',
+      pepper_seed: '🌱',
+      pepper: '🌶️',
+      herbs_seed: '🌱',
+      herbs: '🌿',
+      saffron_seed: '🌱',
+      saffron: '🌸',
+      egg: '🥚',
+      goat_milk: '🥛',
+      cow_milk: '🥛',
+      truffle: '🍄',
+      flour: '🌾',
+      butter: '🧈',
+      cheese: '🧀',
+      leather: '👟',
+      bread: '🍞',
+      wood: '🪵',
+      stone: '🪨',
+      iron: '⛓️',
+      grain: '🌾',
+      hay: '🌾',
+      mixed_feed: '🌾',
     };
 
     if (items.length === 0) {
@@ -116,7 +138,7 @@ export class InventoryPanel {
         color: '#BCAAA4',
       });
       empty.setOrigin(0.5, 0.5);
-      this.container.add(empty);
+      container.add(empty);
       return;
     }
 
@@ -145,20 +167,16 @@ export class InventoryPanel {
         const name = item.itemType.replace(/_/g, ' ');
         const qualityStr = item.quality !== 'normal' ? ` (${item.quality})` : '';
 
-        const text = this.scene.add.text(
-          -panelWidth / 2 + 30,
-          y,
-          `${emoji} ${name}${qualityStr}`,
-          { font: '12px monospace', color: '#F5E6D3' },
-        );
+        const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${name}${qualityStr}`, {
+          font: '12px monospace',
+          color: '#F5E6D3',
+        });
         this.container!.add(text);
 
-        const qty = this.scene.add.text(
-          panelWidth / 2 - 30,
-          y,
-          `x${item.quantity}`,
-          { font: '12px monospace', color: '#FFB74D' },
-        );
+        const qty = this.scene.add.text(panelWidth / 2 - 30, y, `x${item.quantity}`, {
+          font: '12px monospace',
+          color: '#FFB74D',
+        });
         qty.setOrigin(1, 0.5);
         this.container!.add(qty);
 

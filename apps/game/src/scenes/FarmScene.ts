@@ -2,17 +2,8 @@ import * as Phaser from 'phaser';
 import { PlotObject } from '../objects/PlotObject';
 import { ApiClient, ProfileData } from '../services/ApiClient';
 import { CROPS } from '@molemisi/game-config';
-import { MarketPanel } from '../ui/MarketPanel';
-import { BuildPanel } from '../ui/BuildPanel';
-import { InventoryPanel } from '../ui/InventoryPanel';
+import { hasAsset } from '../generated-assets';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
-import { LivestockPanel } from '../ui/LivestockPanel';
-import { ContractsPanel } from '../ui/ContractsPanel';
-import { ProgressPanel } from '../ui/ProgressPanel';
-import { KgotlaPanel } from '../ui/KgotlaPanel';
-import { BushveldPanel } from '../ui/BushveldPanel';
-import { WorldEventsPanel } from '../ui/WorldEventsPanel';
-import { StorePanel } from '../ui/StorePanel';
 
 interface FarmData {
   farm: {
@@ -45,16 +36,7 @@ export class FarmScene extends Phaser.Scene {
   private contextMenu: Phaser.GameObjects.Container | null = null;
   private farmId: string | null = null;
   private profile: ProfileData | null = null;
-  private marketPanel!: MarketPanel;
-  private buildPanel!: BuildPanel;
-  private inventoryPanel!: InventoryPanel;
-  private livestockPanel!: LivestockPanel;
-  private contractsPanel!: ContractsPanel;
-  private progressPanel!: ProgressPanel;
-  private kgotlaPanel!: KgotlaPanel;
-  private bushveldPanel!: BushveldPanel;
-  private worldEventsPanel!: WorldEventsPanel;
-  private storePanel!: StorePanel;
+
   private tutorial!: TutorialOverlay;
 
   constructor() {
@@ -65,7 +47,10 @@ export class FarmScene extends Phaser.Scene {
     this.apiClient = new ApiClient();
 
     // Set background color
-    this.cameras.main.setBackgroundColor('#5A8F3C');
+    this.cameras.main.setBackgroundColor('#87CEEB');
+
+    // Build the visual farm world (sky, ground decor, buildings, animals)
+    this.createBackdrop();
 
     // Listen for plot click events from PlotObject
     this.events.on('plot-clicked', (plot: PlotObject) => {
@@ -80,11 +65,9 @@ export class FarmScene extends Phaser.Scene {
 
     // Click on empty space closes context menu
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      // Only close if not clicking on a plot or the context menu
-      if (!pointer.downElement) return;
       const hitObjects = this.input.hitTestPointer(pointer);
-      const clickedPlot = hitObjects.some((obj: Phaser.GameObjects.GameObject) =>
-        obj instanceof PlotObject,
+      const clickedPlot = hitObjects.some(
+        (obj: Phaser.GameObjects.GameObject) => obj instanceof PlotObject,
       );
       if (!clickedPlot && this.contextMenu) {
         this.hideContextMenu();
@@ -94,6 +77,9 @@ export class FarmScene extends Phaser.Scene {
         this.selectedPlot = null;
       }
     });
+
+    // Scene switching is now handled by the React page via Phaser scene manager.
+    // Nav tabs start/stop scenes directly — no panel toggles needed here.
 
     // Create farm grid
     this.createFarmGrid();
@@ -111,20 +97,47 @@ export class FarmScene extends Phaser.Scene {
     }
   }
 
-  private createFarmGrid(): void {
-    const startX = 100;
-    const startY = 100;
-    const plotWidth = 64;
-    const plotHeight = 64;
-    const gap = 16;
-    const plotsPerRow = 6;
+  private createBackdrop(): void {
+    // Stitch-generated farm scene background (800×480 pixel art)
+    // The background contains all the trees, buildings, animals, fences etc.
+    // We just render it as a full-bleed backdrop.
+    if (this.textures.exists('farm_scene')) {
+      const bg = this.add.image(400, 240, 'farm_scene');
+      bg.setDisplaySize(800, 480);
+      bg.setDepth(-100);
+    } else if (hasAsset('farm_day')) {
+      const bg = this.add.image(400, 240, 'farm_day');
+      bg.setDisplaySize(800, 480);
+      bg.setDepth(-100);
+    }
+  }
 
-    // Create 12 plots (6x2 grid)
-    for (let i = 0; i < 12; i++) {
-      const row = Math.floor(i / plotsPerRow);
-      const col = i % plotsPerRow;
-      const x = startX + col * (plotWidth + gap);
-      const y = startY + row * (plotHeight + gap);
+  private createFarmGrid(plotCount: number = 4): void {
+    // Destroy existing plots
+    this.plots.forEach((p) => p.destroy());
+    this.plots = [];
+
+    // Calculate grid layout dynamically
+    const cols = 4;
+    const cellSize = 88;
+    const plotSize = 64;
+    const rows = Math.ceil(plotCount / cols);
+    const gridW = cols * cellSize;
+    const gridH = rows * cellSize;
+    const areaLeft = 140;
+    const areaRight = 570;
+    const areaTop = 50;
+    const areaBottom = 400;
+    const areaW = areaRight - areaLeft;
+    const areaH = areaBottom - areaTop;
+    const startX = areaLeft + (areaW - gridW) / 2 + plotSize / 2;
+    const startY = areaTop + (areaH - gridH) / 2 + plotSize / 2;
+
+    for (let i = 0; i < plotCount; i++) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const x = startX + col * cellSize;
+      const y = startY + row * cellSize;
 
       const plot = new PlotObject(this, x, y, `plot-${i}`, i);
       this.plots.push(plot);
@@ -152,62 +165,13 @@ export class FarmScene extends Phaser.Scene {
       }
 
       this.farmId = farmData.farm.id;
-      this.marketPanel = new MarketPanel(
-        this,
-        this.apiClient,
-        this.farmId,
-        () => this.loadFarmData(),
-      );
-      this.buildPanel = new BuildPanel(
-        this,
-        this.apiClient,
-        this.farmId,
-        () => this.loadFarmData(),
-      );
-      this.inventoryPanel = new InventoryPanel(this, this.apiClient, this.farmId);
-      this.livestockPanel = new LivestockPanel(
-        this,
-        this.apiClient,
-        this.farmId,
-        () => this.loadFarmData(),
-      );
-      this.contractsPanel = new ContractsPanel(
-        this,
-        this.apiClient,
-        this.farmId,
-        () => this.loadFarmData(),
-      );
-      this.progressPanel = new ProgressPanel(this, this.apiClient);
-      this.kgotlaPanel = new KgotlaPanel(
-        this,
-        this.apiClient,
-        this.farmId,
-        () => this.loadFarmData(),
-      );
-      this.bushveldPanel = new BushveldPanel(
-        this,
-        this.apiClient,
-        this.farmId,
-        () => this.loadFarmData(),
-      );
-      this.worldEventsPanel = new WorldEventsPanel(
-        this,
-        this.apiClient,
-        this.farmId,
-        () => this.loadFarmData(),
-      );
-      this.storePanel = new StorePanel(this);
+
+      // Recreate grid with correct number of plots from server
+      this.createFarmGrid(farmData.plots.length);
       this.updatePlotsFromServer(farmData.plots);
 
       // Show welcome-back notification if simulation ran
       this.showWelcomeBackIfNeeded();
-
-      // Update weather display
-      this.updateWeatherDisplay(
-        farmData.farm.weather,
-        farmData.farm.weatherTemperature,
-        farmData.farm.season,
-      );
 
       // Emit weather update for React HUD
       this.game.events.emit('weather-updated', {
@@ -217,11 +181,16 @@ export class FarmScene extends Phaser.Scene {
       });
     } catch {
       this.showDemoMode();
+      // Initialize panels with a dummy farmId so nav buttons work in demo mode
+      const demoFarmId = 'demo';
+      this.farmId = demoFarmId;
     }
   }
 
   private showDemoMode(): void {
-    // Set up demo plots with sample data
+    // Recreate grid with 4 demo plots
+    this.createFarmGrid(4);
+
     const demoPlots = [
       { state: 'EMPTY' },
       { state: 'PLANTED', crop: { type: 'sorghum', growthStage: 0, hydration: 0.5 } },
@@ -237,11 +206,17 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private updatePlotsFromServer(
-    plots: Array<{ id: string; slotIndex: number; state: string; crop?: { type: string; growthStage: number; hydration: number } }>,
+    plots: Array<{
+      id: string;
+      slotIndex: number;
+      state: string;
+      crop?: { type: string; growthStage: number; hydration: number };
+    }>,
   ): void {
     plots.forEach((plotData) => {
       const plot = this.plots.find((p) => p.slotIndex === plotData.slotIndex);
       if (plot) {
+        plot.plotId = plotData.id;
         plot.updateState(plotData.state, plotData.crop);
       }
     });
@@ -294,171 +269,9 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private createHUD(): void {
-    const width = this.cameras.main.width;
-
-    // Events button
-    const eventsBtn = this.add.text(width - 80, 16, '🌍 Events', {
-      font: '14px monospace',
-      color: '#FFB74D',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    eventsBtn.setInteractive({ useHandCursor: true });
-    eventsBtn.on('pointerdown', () => {
-      if (this.farmId) {
-        this.worldEventsPanel.toggle();
-      }
-    });
-    eventsBtn.setDepth(50);
-
-    // Bushveld button
-    const bushveldBtn = this.add.text(width - 80, 48, '🌿 Bush', {
-      font: '14px monospace',
-      color: '#66BB6A',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    bushveldBtn.setInteractive({ useHandCursor: true });
-    bushveldBtn.on('pointerdown', () => {
-      if (this.farmId) {
-        this.bushveldPanel.toggle();
-      }
-    });
-    bushveldBtn.setDepth(50);
-
-    // Kgotla button
-    const kgotlaBtn = this.add.text(width - 80, 80, '🏛️ Kgotla', {
-      font: '14px monospace',
-      color: '#CE93D8',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    kgotlaBtn.setInteractive({ useHandCursor: true });
-    kgotlaBtn.on('pointerdown', () => {
-      if (this.farmId) {
-        this.kgotlaPanel.toggle();
-      }
-    });
-    kgotlaBtn.setDepth(50);
-
-    // Contracts button
-    const contractsBtn = this.add.text(width - 80, 112, '📋 Jobs', {
-      font: '14px monospace',
-      color: '#FFB74D',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    contractsBtn.setInteractive({ useHandCursor: true });
-    contractsBtn.on('pointerdown', () => {
-      if (this.farmId) {
-        this.contractsPanel.toggle();
-      }
-    });
-    contractsBtn.setDepth(50);
-
-    // Livestock button
-    const livestockBtn = this.add.text(width - 80, 144, '🐄 Farm', {
-      font: '14px monospace',
-      color: '#E91E63',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    livestockBtn.setInteractive({ useHandCursor: true });
-    livestockBtn.on('pointerdown', () => {
-      if (this.farmId) {
-        this.livestockPanel.toggle();
-      }
-    });
-    livestockBtn.setDepth(50);
-
-    // Inventory button
-    const invBtn = this.add.text(width - 80, 176, '📦 Bag', {
-      font: '14px monospace',
-      color: '#BCAAA4',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    invBtn.setInteractive({ useHandCursor: true });
-    invBtn.on('pointerdown', () => {
-      if (this.farmId) {
-        this.inventoryPanel.toggle();
-      }
-    });
-    invBtn.setDepth(50);
-
-    // Build button
-    const buildBtn = this.add.text(width - 80, 208, '🏗️ Build', {
-      font: '14px monospace',
-      color: '#81C784',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    buildBtn.setInteractive({ useHandCursor: true });
-    buildBtn.on('pointerdown', () => {
-      if (this.farmId) {
-        this.buildPanel.toggle();
-      }
-    });
-    buildBtn.setDepth(50);
-
-    // Market button in top-right
-    const marketBtn = this.add.text(width - 80, 240, '🏪 Market', {
-      font: '14px monospace',
-      color: '#FF8F00',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    marketBtn.setInteractive({ useHandCursor: true });
-    marketBtn.on('pointerdown', () => {
-      if (this.farmId) {
-        this.marketPanel.toggle();
-      }
-    });
-    marketBtn.setDepth(50);
-
-    // Store button
-    const storeBtn = this.add.text(width - 80, 272, '🛒 Store', {
-      font: '14px monospace',
-      color: '#FFD700',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    storeBtn.setInteractive({ useHandCursor: true });
-    storeBtn.on('pointerdown', () => {
-      this.storePanel.toggle();
-    });
-    storeBtn.setDepth(50);
-  }
-
-  private updateWeatherDisplay(weather: string, temperature: number, season: string): void {
-    // Remove old weather text if exists
-    const existing = this.children.getByName('weatherText');
-    if (existing) existing.destroy();
-
-    const weatherEmoji: Record<string, string> = {
-      clear: '☀️',
-      cloudy: '☁️',
-      rain: '🌧️',
-      storm: '⛈️',
-      drought: '🏜️',
-    };
-    const emoji = weatherEmoji[weather] || '☀️';
-    const seasonEmoji: Record<string, string> = {
-      spring: '🌱',
-      summer: '☀️',
-      autumn: '🍂',
-      winter: '❄️',
-    };
-    const seasonIcon = seasonEmoji[season] || '🌱';
-
-    const weatherText = this.add.text(16, 16, `${emoji} ${weather} ${temperature}°C  ${seasonIcon} ${season}`, {
-      font: '12px monospace',
-      color: '#F5E6D3',
-      backgroundColor: '#3e2723',
-      padding: { x: 8, y: 4 },
-    });
-    weatherText.setName('weatherText');
-    weatherText.setDepth(50);
+    // Navigation is now handled by the React header/footer.
+    // FarmScene only renders the interactive plot grid and in-scene overlays.
+    // Weather, currency, and level info are displayed in the React header.
   }
 
   private showContextMenu(plot: PlotObject): void {
@@ -549,7 +362,7 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private async executePlantAction(plot: PlotObject, cropType: string): Promise<void> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('molemisi_token') || localStorage.getItem('token');
     if (!token || !this.farmId) {
       this.simulateAction(plot, 'plant');
       return;
@@ -557,13 +370,12 @@ export class FarmScene extends Phaser.Scene {
 
     try {
       // Find a seed of this type in inventory
-      const inventory = await this.apiClient.get<
-        Array<{ id: string; itemType: string; quantity: number }>
-      >(`/farms/${this.farmId}/inventory`);
+      const invResult = await this.apiClient.get<{
+        inventory: Array<{ id: string; itemType: string; quantity: number }>;
+      }>(`/farms/${this.farmId}/inventory`);
+      const items = invResult?.inventory || [];
 
-      const seed = inventory.find(
-        (item) => item.itemType === `${cropType}_seed` && item.quantity > 0,
-      );
+      const seed = items.find((item) => item.itemType === `${cropType}_seed` && item.quantity > 0);
 
       if (!seed) {
         this.showFloatingText(plot.x, plot.y - 20, `No ${cropType} seeds!`, '#F44336');
@@ -577,13 +389,14 @@ export class FarmScene extends Phaser.Scene {
 
       await this.loadFarmData();
     } catch (error) {
-      console.error('Plant failed:', error);
-      this.showFloatingText(plot.x, plot.y - 20, 'Plant failed!', '#F44336');
+      const msg = error instanceof Error ? error.message : 'Plant failed!';
+      console.error('Plant failed:', msg);
+      this.showFloatingText(plot.x, plot.y - 20, msg, '#F44336');
     }
   }
 
   private async executeAction(plot: PlotObject, actionType: string): Promise<void> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('molemisi_token') || localStorage.getItem('token');
     if (!token || !this.farmId) {
       this.simulateAction(plot, actionType);
       return;
@@ -607,8 +420,9 @@ export class FarmScene extends Phaser.Scene {
       // Refresh plot state from server
       await this.loadFarmData();
     } catch (error) {
-      console.error('Action failed:', error);
-      this.showFloatingText(plot.x, plot.y - 20, 'Action failed!', '#F44336');
+      const msg = error instanceof Error ? error.message : 'Action failed!';
+      console.error('Action failed:', msg);
+      this.showFloatingText(plot.x, plot.y - 20, msg, '#F44336');
     }
   }
 

@@ -1,4 +1,27 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+const getBaseUrl = (): string => {
+  // Next.js (client-side) — webpack replaces process.env.NEXT_PUBLIC_* at build time
+  const proc = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  if (proc?.env?.NEXT_PUBLIC_API_URL) {
+    return proc.env.NEXT_PUBLIC_API_URL;
+  }
+  // Vite standalone — import.meta.env is a Vite-only construct
+  try {
+    const viteEnv = (
+      import.meta as unknown as {
+        env?: Record<string, string | undefined>;
+      }
+    ).env;
+    if (viteEnv?.VITE_API_URL) {
+      return viteEnv.VITE_API_URL;
+    }
+  } catch {
+    // Not a module / unsupported environment — fall through to default
+  }
+  // Default
+  return 'http://localhost:3001/api/v1';
+};
+
+const API_BASE_URL = getBaseUrl();
 
 export interface ProfileData {
   id: string;
@@ -42,11 +65,7 @@ export class ApiClient {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  private async fetchWithRetry<T>(
-    method: string,
-    path: string,
-    body?: unknown,
-  ): Promise<T> {
+  private async fetchWithRetry<T>(method: string, path: string, body?: unknown): Promise<T> {
     const token = this.getToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

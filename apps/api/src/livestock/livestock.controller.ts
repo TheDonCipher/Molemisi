@@ -13,7 +13,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { LivestockService } from './livestock.service';
 import { FarmsService } from '../farms/farms.service';
 
-@Controller('api/v1/farms/:farmId/livestock')
+@Controller('farms/:farmId/livestock')
 @UseGuards(AuthGuard)
 export class LivestockController {
   constructor(
@@ -22,10 +22,7 @@ export class LivestockController {
   ) {}
 
   @Get()
-  async listLivestock(
-    @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
-  ) {
+  async listLivestock(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.livestockService.listLivestock(farmId);
   }

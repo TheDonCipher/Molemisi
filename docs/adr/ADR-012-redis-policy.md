@@ -12,11 +12,13 @@ Redis is available but should be used sparingly. The question is: what should Re
 ## Decision
 
 Redis is used **only** for:
+
 1. BullMQ job queue
 2. Rate limiting cache
 3. Market price cache (frequently updated)
 
 Redis is **NOT** used for:
+
 - Primary game state (PostgreSQL is authoritative)
 - Session storage (Supabase Auth handles this)
 - Persistent data

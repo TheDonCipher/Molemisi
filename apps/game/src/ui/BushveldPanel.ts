@@ -28,12 +28,7 @@ export class BushveldPanel {
   private isOpen = false;
   private onRefresh: () => void;
 
-  constructor(
-    scene: Phaser.Scene,
-    apiClient: ApiClient,
-    farmId: string,
-    onRefresh: () => void,
-  ) {
+  constructor(scene: Phaser.Scene, apiClient: ApiClient, farmId: string, onRefresh: () => void) {
     this.scene = scene;
     this.apiClient = apiClient;
     this.farmId = farmId;
@@ -98,7 +93,9 @@ export class BushveldPanel {
     this.container.add(loading);
 
     try {
-      const zones = await this.apiClient.get<BushveldZone[]>(`/farms/${this.farmId}/bushveld/zones`);
+      const zones = await this.apiClient.get<BushveldZone[]>(
+        `/farms/${this.farmId}/bushveld/zones`,
+      );
       loading.destroy();
       this.renderZones(zones, panelWidth, panelHeight);
     } catch {
@@ -106,67 +103,69 @@ export class BushveldPanel {
     }
   }
 
-  private renderZones(
-    zones: BushveldZone[],
-    panelWidth: number,
-    panelHeight: number,
-  ): void {
+  private renderZones(zones: BushveldZone[], panelWidth: number, panelHeight: number): void {
     if (!this.container) return;
+    const container = this.container;
 
     let y = -panelHeight / 2 + 50;
 
     const difficultyEmoji: Record<string, string> = {
-      easy: '🟢', medium: '🟡', hard: '🔴', very_hard: '💀',
+      easy: '🟢',
+      medium: '🟡',
+      hard: '🔴',
+      very_hard: '💀',
     };
 
     zones.forEach((zone) => {
       const emoji = difficultyEmoji[zone.difficulty] || '🟢';
 
       // Zone name
-      const text = this.scene.add.text(
-        -panelWidth / 2 + 30, y,
-        `${emoji} ${zone.name}`,
-        { font: '12px monospace', color: '#F5E6D3' },
-      );
-      this.container.add(text);
+      const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${zone.name}`, {
+        font: '12px monospace',
+        color: '#F5E6D3',
+      });
+      container.add(text);
 
       // Description
-      const desc = this.scene.add.text(
-        -panelWidth / 2 + 30, y + 16,
-        zone.description,
-        { font: '9px monospace', color: '#BCAAA4' },
-      );
-      this.container.add(desc);
+      const desc = this.scene.add.text(-panelWidth / 2 + 30, y + 16, zone.description, {
+        font: '9px monospace',
+        color: '#BCAAA4',
+      });
+      container.add(desc);
 
       // Energy cost and explored count
       const info = this.scene.add.text(
-        panelWidth / 2 - 30, y + 7,
+        panelWidth / 2 - 30,
+        y + 7,
         `⚡${zone.energyCost} | Explored: ${zone.explored}`,
         { font: '10px monospace', color: '#81C784' },
       );
       info.setOrigin(1, 0.5);
-      this.container.add(info);
+      container.add(info);
 
       // Resources preview
       const resourceText = zone.resources
         .map((r) => `${r.type} ${Math.round(r.chance * 100)}%`)
         .join(', ');
       const resources = this.scene.add.text(
-        -panelWidth / 2 + 30, y + 30,
+        -panelWidth / 2 + 30,
+        y + 30,
         `Resources: ${resourceText}`,
         { font: '9px monospace', color: '#66BB6A' },
       );
-      this.container.add(resources);
+      container.add(resources);
 
       // Gather button
-      const gatherBtn = this.scene.add.text(
-        panelWidth / 2 - 30, y + 22,
-        '🔍 Gather', { font: '11px monospace', color: '#4CAF50', backgroundColor: '#1b5e20', padding: { x: 8, y: 4 } },
-      );
+      const gatherBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '🔍 Gather', {
+        font: '11px monospace',
+        color: '#4CAF50',
+        backgroundColor: '#1b5e20',
+        padding: { x: 8, y: 4 },
+      });
       gatherBtn.setOrigin(1, 0.5);
       gatherBtn.setInteractive({ useHandCursor: true });
       gatherBtn.on('pointerdown', () => this.handleGather(zone.id));
-      this.container.add(gatherBtn);
+      container.add(gatherBtn);
 
       y += 55;
     });
@@ -174,17 +173,18 @@ export class BushveldPanel {
 
   private async handleGather(zoneId: string): Promise<void> {
     try {
-      const result = await this.apiClient.post<GatherResult>(`/farms/${this.farmId}/bushveld/gather`, {
-        zoneId,
-      });
+      const result = await this.apiClient.post<GatherResult>(
+        `/farms/${this.farmId}/bushveld/gather`,
+        {
+          zoneId,
+        },
+      );
 
       this.close();
       this.onRefresh();
 
       // Show result feedback
-      const resourceList = result.resources
-        .map((r) => `${r.type} x${r.quantity}`)
-        .join(', ');
+      const resourceList = result.resources.map((r) => `${r.type} x${r.quantity}`).join(', ');
       let message = `🌿 Gathered: ${resourceList || 'nothing'}`;
       if (result.rareDiscovery) {
         message += `\n✨ Rare: ${result.rareDiscovery.type}!`;

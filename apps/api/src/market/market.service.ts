@@ -280,9 +280,7 @@ export class MarketService {
   async getPrices(): Promise<MarketPrice[]> {
     const adminClient = this.supabaseService.getAdminClient();
 
-    const { data: prices } = await adminClient
-      .from('market_prices')
-      .select('*');
+    const { data: prices } = await adminClient.from('market_prices').select('*');
 
     if (!prices) return [];
 
@@ -293,7 +291,8 @@ export class MarketService {
         const currentPrice = await this.getDynamicPrice(itemType);
         const supply = (p.supply as number) || 0;
         const demand = (p.demand as number) || 0;
-        const trend = currentPrice > basePrice ? 'up' : currentPrice < basePrice ? 'down' : 'stable';
+        const trend =
+          currentPrice > basePrice ? 'up' : currentPrice < basePrice ? 'down' : 'stable';
 
         return {
           itemType,
@@ -312,10 +311,7 @@ export class MarketService {
 
     const now = new Date().toISOString();
 
-    const { data: events } = await adminClient
-      .from('market_events')
-      .select('*')
-      .gt('ends_at', now);
+    const { data: events } = await adminClient.from('market_events').select('*').gt('ends_at', now);
 
     return (events ?? []).map((e: Record<string, unknown>) => ({
       id: e.id as string,
@@ -355,8 +351,7 @@ export class MarketService {
     // Calculate final price
     const priceMultiplier = 1 + supplyDemandModifier + eventModifier;
     const finalPrice = Math.round(
-      basePrice *
-        Math.max(this.MIN_PRICE_MULT, Math.min(this.MAX_PRICE_MULT, priceMultiplier)),
+      basePrice * Math.max(this.MIN_PRICE_MULT, Math.min(this.MAX_PRICE_MULT, priceMultiplier)),
     );
 
     return finalPrice;
@@ -387,7 +382,7 @@ export class MarketService {
         (effect === 'grain' && ['sorghum', 'maize', 'millet'].includes(itemType)) ||
         (effect === 'food' && !itemType.includes('_seed')) ||
         (effect === 'materials' && ['wood', 'stone', 'iron'].includes(itemType)) ||
-        (effect === itemType)
+        effect === itemType
       ) {
         modifier += multiplier - 1;
       }
@@ -433,10 +428,14 @@ export class MarketService {
 
   private getQualityMultiplier(quality: string): number {
     switch (quality) {
-      case 'excellent': return 2.0;
-      case 'good': return 1.5;
-      case 'poor': return 0.5;
-      default: return 1.0;
+      case 'excellent':
+        return 2.0;
+      case 'good':
+        return 1.5;
+      case 'poor':
+        return 0.5;
+      default:
+        return 1.0;
     }
   }
 }

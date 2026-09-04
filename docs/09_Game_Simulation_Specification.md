@@ -30,6 +30,7 @@ The simulation is **deterministic** — given the same inputs, it produces the s
 The simulation does NOT update every entity every second. Instead, it uses **elapsed-time calculations**.
 
 **When simulation runs (on player connect or background job):**
+
 1. Calculate elapsed time since last simulation
 2. Apply all time-dependent state changes in one pass
 3. Update `last_simulated_at`
@@ -91,7 +92,7 @@ function simulateCrop(crop: CropInstance, elapsedHours: number, weather: Weather
 
     // 2. Calculate growth multiplier
     const growthMultiplier = currentHydration >= 0.2 ? currentHydration : 0;
-    const fertilizerMultiplier = crop.fertilizerActive ? (1 + crop.fertilizerBonus) : 1;
+    const fertilizerMultiplier = crop.fertilizerActive ? 1 + crop.fertilizerBonus : 1;
     const seasonMultiplier = getSeasonGrowthModifier(weather.season);
     const effectiveMultiplier = growthMultiplier * fertilizerMultiplier * seasonMultiplier;
 
@@ -100,7 +101,7 @@ function simulateCrop(crop: CropInstance, elapsedHours: number, weather: Weather
       const stageTimeRequired = getCropConfig(crop.cropType).timePerStage;
       // Track cumulative effective time
       crop.cumulativeEffectiveTime = (crop.cumulativeEffectiveTime || 0) + effectiveMultiplier;
-      
+
       if (crop.cumulativeEffectiveTime >= stageTimeRequired) {
         currentStage++;
         crop.cumulativeEffectiveTime = 0;
@@ -144,27 +145,26 @@ function simulateCrop(crop: CropInstance, elapsedHours: number, weather: Weather
 function getDiseaseChance(crop: CropInstance, weather: WeatherState): number {
   const config = getCropConfig(crop.cropType);
   const baseChance = config.diseaseChancePerStage;
-  
+
   // Increase in humid weather
-  const humidityModifier = weather.type === 'rain' ? 1.3 : 
-                           weather.type === 'storm' ? 1.5 : 1.0;
-  
+  const humidityModifier = weather.type === 'rain' ? 1.3 : weather.type === 'storm' ? 1.5 : 1.0;
+
   // Increase when hydrated poorly
   const hydrationModifier = crop.hydration < 0.3 ? 1.2 : 1.0;
-  
+
   return Math.min(baseChance * humidityModifier * hydrationModifier, 0.5);
 }
 
 function getPestChance(crop: CropInstance, weather: WeatherState): number {
   const config = getCropConfig(crop.cropType);
   const baseChance = config.pestChancePerStage;
-  
+
   // Increase in warm weather
   const warmthModifier = weather.temperature > 30 ? 1.4 : 1.0;
-  
+
   // Decrease in rain
-  const rainModifier = (weather.type === 'rain' || weather.type === 'storm') ? 0.5 : 1.0;
-  
+  const rainModifier = weather.type === 'rain' || weather.type === 'storm' ? 0.5 : 1.0;
+
   return Math.min(baseChance * warmthModifier * rainModifier, 0.4);
 }
 ```
@@ -184,7 +184,7 @@ function simulateWaterDecay(crop: CropInstance, elapsedHours: number): number {
 
   for (let hour = 0; hour < elapsedHours; hour++) {
     hydration = Math.max(0, hydration - config.waterDecayRate);
-    
+
     // Rain adds hydration
     if (currentWeather === 'rain') {
       hydration = Math.min(1.0, hydration + 0.2);
@@ -230,8 +230,9 @@ function simulateLivestock(animal: Livestock, elapsedHours: number): LivestockUp
 
     // 3. Happiness decay if overcrowded or not petted
     if (!selfSustaining && hour % 24 === 0) {
-      const timeSincePet = elapsedHours - (animal.lastPetAt ? 
-        (Date.now() - animal.lastPetAt.getTime()) / (1000 * 60) : 0);
+      const timeSincePet =
+        elapsedHours -
+        (animal.lastPetAt ? (Date.now() - animal.lastPetAt.getTime()) / (1000 * 60) : 0);
       if (timeSincePet > 24) {
         happiness = Math.max(0, happiness - 0.05);
       }
@@ -315,7 +316,7 @@ function simulateWeather(farm: Farm, elapsedHours: number): WeatherState[] {
 function generateWeather(season: Season): WeatherState {
   const probabilities = getSeasonWeatherProbabilities(season);
   const roll = Math.random();
-  
+
   let cumulative = 0;
   for (const [weather, prob] of Object.entries(probabilities)) {
     cumulative += prob;
@@ -334,10 +335,14 @@ function generateWeather(season: Season): WeatherState {
 
 function getSeasonWeatherProbabilities(season: Season): Record<WeatherType, number> {
   switch (season) {
-    case 'spring': return { clear: 0.35, cloudy: 0.25, rain: 0.25, storm: 0.10, drought: 0.05 };
-    case 'summer': return { clear: 0.45, cloudy: 0.20, rain: 0.15, storm: 0.10, drought: 0.10 };
-    case 'autumn': return { clear: 0.40, cloudy: 0.25, rain: 0.20, storm: 0.10, drought: 0.05 };
-    case 'winter': return { clear: 0.50, cloudy: 0.25, rain: 0.10, storm: 0.05, drought: 0.10 };
+    case 'spring':
+      return { clear: 0.35, cloudy: 0.25, rain: 0.25, storm: 0.1, drought: 0.05 };
+    case 'summer':
+      return { clear: 0.45, cloudy: 0.2, rain: 0.15, storm: 0.1, drought: 0.1 };
+    case 'autumn':
+      return { clear: 0.4, cloudy: 0.25, rain: 0.2, storm: 0.1, drought: 0.05 };
+    case 'winter':
+      return { clear: 0.5, cloudy: 0.25, rain: 0.1, storm: 0.05, drought: 0.1 };
   }
 }
 ```
@@ -354,8 +359,10 @@ function getSeasonWeatherProbabilities(season: Season): Record<WeatherType, numb
 function simulateBuilding(building: Building, elapsedHours: number): BuildingUpdate {
   if (building.state === 'CONSTRUCTION') {
     const elapsedMinutes = elapsedHours * 60;
-    const constructionMinutes = (building.constructionEndsAt.getTime() - building.constructionStartedAt.getTime()) / (1000 * 60);
-    
+    const constructionMinutes =
+      (building.constructionEndsAt.getTime() - building.constructionStartedAt.getTime()) /
+      (1000 * 60);
+
     if (elapsedMinutes >= constructionMinutes) {
       return { ...building, state: 'ACTIVE', wear: 0 };
     }
@@ -364,7 +371,7 @@ function simulateBuilding(building: Building, elapsedHours: number): BuildingUpd
   if (building.state === 'ACTIVE') {
     // Accumulate wear
     const wearPerHour = getBuildingConfig(building.buildingType).wearPerHour;
-    const newWear = Math.min(1.0, building.wear + (wearPerHour * elapsedHours));
+    const newWear = Math.min(1.0, building.wear + wearPerHour * elapsedHours);
 
     if (newWear >= 1.0) {
       return { ...building, state: 'MAINTENANCE_NEEDED', wear: newWear };
@@ -391,16 +398,17 @@ function simulateBuilding(building: Building, elapsedHours: number): BuildingUpd
 
 ### Offline Caps
 
-| System | Max Offline Time | Behavior After Cap |
-|--------|-----------------|-------------------|
-| Crops | 24 hours | Paused |
-| Livestock | 3 days (self-sustaining after) | Minimal decay |
-| Buildings | 24 hours | Paused |
-| Energy | 24 hours | Capped at max |
+| System    | Max Offline Time               | Behavior After Cap |
+| --------- | ------------------------------ | ------------------ |
+| Crops     | 24 hours                       | Paused             |
+| Livestock | 3 days (self-sustaining after) | Minimal decay      |
+| Buildings | 24 hours                       | Paused             |
+| Energy    | 24 hours                       | Capped at max      |
 
 ### Self-Sustaining Mode
 
 After 3 days offline, animals enter self-sustaining mode:
+
 - Hunger decays at 25% rate
 - No production
 - No health decay
@@ -409,6 +417,7 @@ After 3 days offline, animals enter self-sustaining mode:
 ### Catch-Up Display
 
 When a player returns after absence:
+
 1. Calculate elapsed time
 2. Run simulation
 3. Display "Welcome back!" summary:
@@ -437,12 +446,12 @@ function simulateWithSeed(farm: Farm, elapsedHours: number, seed: number): Simul
 
 ### Test Vectors
 
-| Test Case | Input | Expected Output |
-|-----------|-------|-----------------|
-| Crop growth, fully watered | 4 hours, hydration 1.0 | Stage +1 |
-| Crop growth, dry | 4 hours, hydration 0.0 | No growth |
-| Crop withering | 8 hours, hydration 0.0 | WITHERED |
-| Animal hunger decay | 12 hours, hunger 0.8 | hunger ≈ 0.02 |
-| Animal starvation | 24 hours, hunger 0.1 | health decreased |
-| Production completion | 30 minutes | progress = 1.0 |
-| Weather change | 6 hours | New weather generated |
+| Test Case                  | Input                  | Expected Output       |
+| -------------------------- | ---------------------- | --------------------- |
+| Crop growth, fully watered | 4 hours, hydration 1.0 | Stage +1              |
+| Crop growth, dry           | 4 hours, hydration 0.0 | No growth             |
+| Crop withering             | 8 hours, hydration 0.0 | WITHERED              |
+| Animal hunger decay        | 12 hours, hunger 0.8   | hunger ≈ 0.02         |
+| Animal starvation          | 24 hours, hunger 0.1   | health decreased      |
+| Production completion      | 30 minutes             | progress = 1.0        |
+| Weather change             | 6 hours                | New weather generated |

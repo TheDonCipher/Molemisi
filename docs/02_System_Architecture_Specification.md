@@ -102,6 +102,7 @@ Molemisi uses a layered architecture with clear separation of concerns:
 
 **Scope:** Browser on player's device
 **Responsibilities:**
+
 - Render game visuals (Phaser)
 - Handle user input (Phaser + Next.js)
 - Manage local UI state (React)
@@ -114,6 +115,7 @@ Molemisi uses a layered architecture with clear separation of concerns:
 
 **Scope:** NestJS application running on server
 **Responsibilities:**
+
 - Validate all game actions
 - Execute authoritative game logic
 - Manage game state transitions
@@ -127,6 +129,7 @@ Molemisi uses a layered architecture with clear separation of concerns:
 
 **Scope:** Supabase PostgreSQL + Redis
 **Responsibilities:**
+
 - Persist all game state
 - Enforce database constraints
 - Handle transactions
@@ -139,6 +142,7 @@ Molemisi uses a layered architecture with clear separation of concerns:
 
 **Scope:** Third-party services
 **Services:**
+
 - Payment providers (mobile money, cards)
 - Analytics (PostHog or similar)
 - Error tracking (Sentry)
@@ -157,6 +161,7 @@ Molemisi uses a layered architecture with clear separation of concerns:
 The Next.js application serves as the web application shell.
 
 **Responsibilities:**
+
 - Authentication UI (login, register, forgot password)
 - Payment processing UI
 - Settings management
@@ -166,6 +171,7 @@ The Next.js application serves as the web application shell.
 - Administrative dashboard (future)
 
 **Structure:**
+
 ```
 apps/
   web/                    # Next.js application
@@ -181,6 +187,7 @@ apps/
 ```
 
 **Key decisions:**
+
 - Uses App Router (not Pages Router)
 - Server components for initial load performance
 - Client components for interactive elements
@@ -193,6 +200,7 @@ apps/
 The Phaser game client handles all game rendering and interaction.
 
 **Responsibilities:**
+
 - 2D pixel-art rendering
 - Scene management
 - Sprite animation
@@ -202,6 +210,7 @@ The Phaser game client handles all game rendering and interaction.
 - Game state display
 
 **Structure:**
+
 ```
 apps/
   game/                   # Phaser game client
@@ -217,6 +226,7 @@ apps/
 ```
 
 **Key decisions:**
+
 - Uses Phaser 3 with TypeScript
 - Separate from Next.js build (bundled independently)
 - Communicates with NestJS API via HTTP REST
@@ -247,6 +257,7 @@ apps/
 ```
 
 **Auth token sharing:**
+
 - Next.js handles login/registration
 - Auth JWT token is stored in httpOnly cookie
 - Phaser client reads token for API calls
@@ -263,6 +274,7 @@ apps/
 The backend is a NestJS modular monolith. All modules run in a single process but are organized as independent modules with clear boundaries.
 
 **Module structure:**
+
 ```
 apps/
   api/                     # NestJS API
@@ -293,6 +305,7 @@ apps/
 ```
 
 **Module communication rules:**
+
 - Modules communicate through injected services (NestJS DI)
 - No direct database access across module boundaries
 - Each module owns its database tables
@@ -308,6 +321,7 @@ apps/
 **Port:** 3001 (configurable)
 
 **Request lifecycle:**
+
 ```
 HTTP Request
   → Rate Limiter
@@ -326,23 +340,26 @@ HTTP Request
 The NestJS application includes a lightweight job processing system using BullMQ + Redis.
 
 **Job types:**
-| Job | Frequency | Purpose |
-|-----|-----------|---------|
-| `simulation-tick` | Every 5 minutes | Advance game simulation |
-| `market-update` | Every 6 game hours | Update market prices |
-| `weather-update` | Every 6 game hours | Generate weather |
-| `maintenance-check` | Every 24 hours | Check building maintenance |
-| `notification-cleanup` | Daily | Remove old notifications |
-| `economy-audit` | Daily | Verify economy integrity |
-| `analytics-flush` | Every 5 minutes | Batch analytics events |
+
+| Job                    | Frequency          | Purpose                    |
+| ---------------------- | ------------------ | -------------------------- |
+| `simulation-tick`      | Every 5 minutes    | Advance game simulation    |
+| `market-update`        | Every 6 game hours | Update market prices       |
+| `weather-update`       | Every 6 game hours | Generate weather           |
+| `maintenance-check`    | Every 24 hours     | Check building maintenance |
+| `notification-cleanup` | Daily              | Remove old notifications   |
+| `economy-audit`        | Daily              | Verify economy integrity   |
+| `analytics-flush`      | Every 5 minutes    | Batch analytics events     |
 
 **Redis usage justification (NFR-INFRA-001):**
 Redis is used ONLY for:
+
 1. BullMQ job queue
 2. Session cache (rate limiting, temporary state)
 3. Market price cache (frequently updated)
 
 Redis is NOT used for:
+
 - Primary game state (PostgreSQL is authoritative)
 - Persistent data
 - Game simulation state
@@ -359,6 +376,7 @@ Redis is NOT used for:
 **Purpose:** All persistent game data
 
 **Key features used:**
+
 - Tables with foreign keys
 - Row Level Security (RLS)
 - Database functions (for complex queries)
@@ -367,6 +385,7 @@ Redis is NOT used for:
 - Realtime (for live updates where needed)
 
 **Connection management:**
+
 - Connection pool via Supabase client library
 - Maximum 100 connections (Supabase default)
 - Connection timeout: 30 seconds
@@ -380,6 +399,7 @@ Redis is NOT used for:
 **Purpose:** Job queue and cache only
 
 **Data stored in Redis:**
+
 ```
 rate_limit:{ip}:{endpoint}     → request count (TTL: 60s)
 market:prices                  → current prices (TTL: 300s)
@@ -407,41 +427,42 @@ Client Request
 
 ### 6.1 Development Environment
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| API Server | NestJS (local) | Development server |
-| Web App | Next.js (local) | Development server |
-| Game Client | Phaser (bundled) | Development build |
-| Database | Supabase (local or cloud) | Data persistence |
-| Redis | Local Docker | Job queue |
-| Asset Pipeline | Webpack/Vite | Asset bundling |
+| Component      | Technology                | Purpose            |
+| -------------- | ------------------------- | ------------------ |
+| API Server     | NestJS (local)            | Development server |
+| Web App        | Next.js (local)           | Development server |
+| Game Client    | Phaser (bundled)          | Development build  |
+| Database       | Supabase (local or cloud) | Data persistence   |
+| Redis          | Local Docker              | Job queue          |
+| Asset Pipeline | Webpack/Vite              | Asset bundling     |
 
 ### 6.2 Staging Environment
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| API Server | Railway / Render | Staging API |
-| Web App | Vercel | Staging web |
-| Game Client | Vercel (static) | Staging game |
-| Database | Supabase (staging project) | Staging data |
-| Redis | Upstash (staging) | Staging queue |
+| Component   | Technology                 | Purpose       |
+| ----------- | -------------------------- | ------------- |
+| API Server  | Railway / Render           | Staging API   |
+| Web App     | Vercel                     | Staging web   |
+| Game Client | Vercel (static)            | Staging game  |
+| Database    | Supabase (staging project) | Staging data  |
+| Redis       | Upstash (staging)          | Staging queue |
 
 ### 6.3 Production Environment
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| API Server | Railway / Render | Production API |
-| Web App | Vercel | Production web |
-| Game Client | Vercel + CDN | Production game assets |
-| Database | Supabase (production project) | Production data |
-| Redis | Upstash | Production queue |
-| CDN | Cloudflare | Static asset delivery |
-| Error Tracking | Sentry | Error monitoring |
-| Analytics | PostHog | Product analytics |
+| Component      | Technology                    | Purpose                |
+| -------------- | ----------------------------- | ---------------------- |
+| API Server     | Railway / Render              | Production API         |
+| Web App        | Vercel                        | Production web         |
+| Game Client    | Vercel + CDN                  | Production game assets |
+| Database       | Supabase (production project) | Production data        |
+| Redis          | Upstash                       | Production queue       |
+| CDN            | Cloudflare                    | Static asset delivery  |
+| Error Tracking | Sentry                        | Error monitoring       |
+| Analytics      | PostHog                       | Product analytics      |
 
 ### 6.4 Docker Configuration
 
 **Dockerfile (API):**
+
 ```dockerfile
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -471,6 +492,7 @@ CMD ["node", "dist/main.js"]
 **Timeout:** 30 seconds (client-side)
 
 **Request format:**
+
 ```
 POST /api/v1/farms/{farmId}/plots/{plotId}/plant
 Authorization: Bearer {jwt_token}
@@ -483,6 +505,7 @@ Content-Type: application/json
 ```
 
 **Response format:**
+
 ```json
 {
   "success": true,
@@ -525,11 +548,11 @@ Content-Type: application/json
 
 ### 7.5 API → External Services
 
-| Service | Protocol | Purpose |
-|---------|----------|---------|
-| Sentry | HTTPS | Error reporting |
-| PostHog | HTTPS | Analytics events |
-| Email (future) | SMTP/HTTPS | Notifications |
+| Service        | Protocol   | Purpose          |
+| -------------- | ---------- | ---------------- |
+| Sentry         | HTTPS      | Error reporting  |
+| PostHog        | HTTPS      | Analytics events |
+| Email (future) | SMTP/HTTPS | Notifications    |
 
 ---
 
@@ -541,17 +564,20 @@ Content-Type: application/json
 
 **Trust direction:** API does NOT trust client
 **Enforcement:**
+
 - All game actions validated server-side
 - All economic calculations server-side
 - All state transitions server-side
 - Client receives display state only
 
 **What the client CAN do:**
+
 - Send action requests (plant, water, harvest, buy, sell)
 - Read current state
 - Receive notifications
 
 **What the client CANNOT do:**
+
 - Modify database directly
 - Bypass game rules
 - Create currency
@@ -562,6 +588,7 @@ Content-Type: application/json
 
 **Trust direction:** Database trusts API (service role)
 **Enforcement:**
+
 - RLS policies for player data isolation
 - API uses service role for game operations
 - Database constraints enforce data integrity
@@ -570,6 +597,7 @@ Content-Type: application/json
 
 **Trust direction:** API does NOT trust external services
 **Enforcement:**
+
 - All webhook payloads verified with HMAC signatures
 - All payment confirmations verified with provider API
 - All external data validated before use
@@ -578,6 +606,7 @@ Content-Type: application/json
 
 **Trust direction:** Public network does NOT access private network
 **Enforcement:**
+
 - Only API port exposed publicly
 - Database only accessible from API
 - Redis only accessible from API
@@ -589,36 +618,40 @@ Content-Type: application/json
 
 ### 9.1 Data Categories
 
-| Category | Owner | Access | Examples |
-|----------|-------|--------|----------|
-| Player Identity | Supabase Auth | Player, Admin | Email, auth tokens |
-| Profile | Profile Module | Player, Admin | Display name, avatar |
-| Farm State | Farm Module | Player (own), Admin | Plots, crops, buildings |
-| Inventory | Inventory Module | Player (own), Admin | Items, quantities |
-| Economy | Economy Module | Server only | Market prices, ledger |
-| Payments | Payment Module | Player (own), Admin | Transactions, receipts |
-| Analytics | Analytics Module | Server only | Events, metrics |
-| Configuration | Config Module | Admin only | Game balance values |
-| Audit | Admin Module | Admin only | Action logs |
+| Category        | Owner            | Access              | Examples                |
+| --------------- | ---------------- | ------------------- | ----------------------- |
+| Player Identity | Supabase Auth    | Player, Admin       | Email, auth tokens      |
+| Profile         | Profile Module   | Player, Admin       | Display name, avatar    |
+| Farm State      | Farm Module      | Player (own), Admin | Plots, crops, buildings |
+| Inventory       | Inventory Module | Player (own), Admin | Items, quantities       |
+| Economy         | Economy Module   | Server only         | Market prices, ledger   |
+| Payments        | Payment Module   | Player (own), Admin | Transactions, receipts  |
+| Analytics       | Analytics Module | Server only         | Events, metrics         |
+| Configuration   | Config Module    | Admin only          | Game balance values     |
+| Audit           | Admin Module     | Admin only          | Action logs             |
 
 ### 9.2 Data Access Patterns
 
 **Player reads own data:**
+
 ```
 Player → API (JWT) → RLS policy (user_id match) → PostgreSQL
 ```
 
 **Player writes own data:**
+
 ```
 Player → API (JWT) → Validation → Game logic → Service role → PostgreSQL
 ```
 
 **Server modifies economy:**
+
 ```
 Background job → Service role → Economy tables → Audit log
 ```
 
 **Admin accesses data:**
+
 ```
 Admin → Admin API (admin JWT) → Service role → Any table → Audit log
 ```
@@ -629,33 +662,34 @@ Admin → Admin API (admin JWT) → Service role → Any table → Audit log
 
 ### 10.1 Client Failures
 
-| Failure | Impact | Recovery |
-|---------|--------|----------|
-| Network disconnected | Cannot sync with server | Offline mode (read-only) |
-| JavaScript error | UI broken | Page reload |
-| Asset loading failure | Partial rendering | Retry loading |
-| Auth token expired | API calls fail | Token refresh |
+| Failure               | Impact                  | Recovery                 |
+| --------------------- | ----------------------- | ------------------------ |
+| Network disconnected  | Cannot sync with server | Offline mode (read-only) |
+| JavaScript error      | UI broken               | Page reload              |
+| Asset loading failure | Partial rendering       | Retry loading            |
+| Auth token expired    | API calls fail          | Token refresh            |
 
 ### 10.2 API Failures
 
-| Failure | Impact | Recovery |
-|---------|--------|----------|
-| Database down | All operations fail | Supabase auto-recovery |
-| Redis down | Jobs delayed | Fallback to sync processing |
-| Payment provider down | Purchases fail | Retry queue |
-| External service down | Analytics lost | Buffered retry |
+| Failure               | Impact              | Recovery                    |
+| --------------------- | ------------------- | --------------------------- |
+| Database down         | All operations fail | Supabase auto-recovery      |
+| Redis down            | Jobs delayed        | Fallback to sync processing |
+| Payment provider down | Purchases fail      | Retry queue                 |
+| External service down | Analytics lost      | Buffered retry              |
 
 ### 10.3 Database Failures
 
-| Failure | Impact | Recovery |
-|---------|--------|----------|
-| Connection pool exhausted | API timeouts | Reduce concurrent connections |
-| Disk full | Write failures | Supabase monitoring |
-| Corruption | Data integrity risk | Point-in-time recovery |
+| Failure                   | Impact              | Recovery                      |
+| ------------------------- | ------------------- | ----------------------------- |
+| Connection pool exhausted | API timeouts        | Reduce concurrent connections |
+| Disk full                 | Write failures      | Supabase monitoring           |
+| Corruption                | Data integrity risk | Point-in-time recovery        |
 
 ### 10.4 Failure Isolation
 
 Each system failure is isolated:
+
 - Client failure → Server continues, player reconnects
 - API failure → Client shows error, retries
 - Database failure → API returns 503, client retries

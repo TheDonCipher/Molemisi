@@ -12,18 +12,8 @@ export class AdminService {
    */
   async getPlayerOverview(playerId: string) {
     const [profile, farm, payments, recentLedger] = await Promise.all([
-      this.supabase
-        .getClient()
-        .from('profiles')
-        .select('*')
-        .eq('id', playerId)
-        .single(),
-      this.supabase
-        .getClient()
-        .from('farms')
-        .select('*')
-        .eq('player_id', playerId)
-        .single(),
+      this.supabase.getClient().from('profiles').select('*').eq('id', playerId).single(),
+      this.supabase.getClient().from('farms').select('*').eq('player_id', playerId).single(),
       this.supabase
         .getClient()
         .from('payments')
@@ -52,34 +42,25 @@ export class AdminService {
    * Get economy overview — total currency, items, transactions.
    */
   async getEconomyOverview() {
-    const [totalPlayers, totalCurrency, recentPayments, totalCrops] =
-      await Promise.all([
-        this.supabase
-          .getClient()
-          .from('profiles')
-          .select('id', { count: 'exact', head: true }),
-        this.supabase
-          .getClient()
-          .from('profiles')
-          .select('currency'),
-        this.supabase
-          .getClient()
-          .from('payments')
-          .select('status, amount, created_at')
-          .eq('status', 'COMPLETED')
-          .order('created_at', { ascending: false })
-          .limit(50),
-        this.supabase
-          .getClient()
-          .from('crop_instances')
-          .select('state', { count: 'exact', head: true }),
-      ]);
+    const [totalPlayers, totalCurrency, recentPayments, totalCrops] = await Promise.all([
+      this.supabase.getClient().from('profiles').select('id', { count: 'exact', head: true }),
+      this.supabase.getClient().from('profiles').select('currency'),
+      this.supabase
+        .getClient()
+        .from('payments')
+        .select('status, amount, created_at')
+        .eq('status', 'COMPLETED')
+        .order('created_at', { ascending: false })
+        .limit(50),
+      this.supabase
+        .getClient()
+        .from('crop_instances')
+        .select('state', { count: 'exact', head: true }),
+    ]);
 
     const currencies = (totalCurrency.data || []).map((p) => p.currency);
     const avgCurrency =
-      currencies.length > 0
-        ? currencies.reduce((a, b) => a + b, 0) / currencies.length
-        : 0;
+      currencies.length > 0 ? currencies.reduce((a, b) => a + b, 0) / currencies.length : 0;
     const totalWealth = currencies.reduce((a, b) => a + b, 0);
 
     return {
@@ -87,9 +68,7 @@ export class AdminService {
       totalCurrencyInCirculation: totalWealth,
       averagePlayerWealth: Math.round(avgCurrency),
       totalCompletedPayments: (recentPayments.data || []).length,
-      totalRevenue:
-        (recentPayments.data || []).reduce((sum, p) => sum + (p.amount || 0), 0) /
-        100,
+      totalRevenue: (recentPayments.data || []).reduce((sum, p) => sum + (p.amount || 0), 0) / 100,
       activeCrops: totalCrops.count || 0,
     };
   }

@@ -109,20 +109,20 @@ Visual Update (Phaser)
 
 ## Module Responsibilities
 
-| Module | Responsibility |
-|--------|---------------|
-| Auth | Registration, login, JWT validation |
-| Farms | Farm CRUD, plot management |
-| Crops | Planting, watering, harvesting |
-| Inventory | Item management |
-| Buildings | Construction, upgrades |
-| Livestock | Animal management |
-| Market | Trading, pricing |
-| Contracts | Quest system |
-| Kgotla | Community hub |
-| Bushveld | Exploration |
-| Progression | Levels, skills |
-| Simulation | Time-based calculations |
-| Payments | Payment processing |
-| Notifications | Player alerts |
-| Admin | Administration tools |
+| Module        | Responsibility                      |
+| ------------- | ----------------------------------- |
+| Auth          | Registration, login, JWT validation |
+| Farms         | Farm CRUD, plot management          |
+| Crops         | Planting, watering, harvesting      |
+| Inventory     | Item management                     |
+| Buildings     | Construction, upgrades              |
+| Livestock     | Animal management                   |
+| Market        | Trading, pricing                    |
+| Contracts     | Quest system                        |
+| Kgotla        | Community hub                       |
+| Bushveld      | Exploration                         |
+| Progression   | Levels, skills                      |
+| Simulation    | Time-based calculations             |
+| Payments      | Payment processing                  |
+| Notifications | Player alerts                       |
+| Admin         | Administration tools                |

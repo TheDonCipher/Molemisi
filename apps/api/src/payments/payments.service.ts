@@ -1,16 +1,8 @@
-import {
-  Injectable,
-  Logger,
-  Inject,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import {
   PaymentProvider,
   PaymentStatus,
-  CreatePaymentRequest,
-  PaymentWebhookEvent,
   RefundPaymentRequest,
 } from './providers/payment-provider.interface';
 import { getVirtualGood } from '@molemisi/game-config';
@@ -75,23 +67,17 @@ export class PaymentsService {
    * 4. Call the payment provider
    * 5. Return the provider's redirect URL or client secret
    */
-  async createPayment(
-    playerId: string,
-    dto: CreatePaymentDto,
-  ): Promise<PaymentRecord> {
+  async createPayment(playerId: string, dto: CreatePaymentDto): Promise<PaymentRecord> {
     const virtualGood = getVirtualGood(dto.sku);
     if (!virtualGood) {
       throw new NotFoundException(`Store item "${dto.sku}" not found.`);
     }
 
     if (!virtualGood.available) {
-      throw new BadRequestException(
-        `Store item "${dto.sku}" is not currently available.`,
-      );
+      throw new BadRequestException(`Store item "${dto.sku}" is not currently available.`);
     }
 
-    const idempotencyKey =
-      dto.idempotencyKey || `pay_${playerId}_${dto.sku}_${Date.now()}`;
+    const idempotencyKey = dto.idempotencyKey || `pay_${playerId}_${dto.sku}_${Date.now()}`;
 
     // Check for duplicate
     const existing = await this.supabase
@@ -102,9 +88,7 @@ export class PaymentsService {
       .single();
 
     if (existing.data) {
-      this.logger.log(
-        `Duplicate payment request with key ${idempotencyKey}, returning existing.`,
-      );
+      this.logger.log(`Duplicate payment request with key ${idempotencyKey}, returning existing.`);
       return this.mapPaymentRecord(existing.data);
     }
 
@@ -127,9 +111,7 @@ export class PaymentsService {
       .single();
 
     if (insertError) {
-      this.logger.error(
-        `Failed to create payment record: ${insertError.message}`,
-      );
+      this.logger.error(`Failed to create payment record: ${insertError.message}`);
       throw new BadRequestException('Failed to create payment request.');
     }
 
@@ -152,10 +134,7 @@ export class PaymentsService {
         .update({
           provider_payment_id: providerResponse.providerPaymentId,
           status: providerResponse.status,
-          completed_at:
-            providerResponse.status === 'COMPLETED'
-              ? new Date().toISOString()
-              : null,
+          completed_at: providerResponse.status === 'COMPLETED' ? new Date().toISOString() : null,
         })
         .eq('id', paymentRecord.id);
 
@@ -168,10 +147,7 @@ export class PaymentsService {
         ...paymentRecord,
         provider_payment_id: providerResponse.providerPaymentId,
         status: providerResponse.status,
-        completed_at:
-          providerResponse.status === 'COMPLETED'
-            ? new Date().toISOString()
-            : null,
+        completed_at: providerResponse.status === 'COMPLETED' ? new Date().toISOString() : null,
       });
     } catch (error) {
       // Mark payment as failed
@@ -194,9 +170,7 @@ export class PaymentsService {
    * This is the authoritative verification path.
    * The client never determines payment success — only webhooks do.
    */
-  async handleWebhook(
-    webhookPayload: WebhookDto,
-  ): Promise<{ processed: boolean }> {
+  async handleWebhook(webhookPayload: WebhookDto): Promise<{ processed: boolean }> {
     // Verify the webhook signature
     const verified = await this.provider.verifyWebhookEvent({
       eventType: webhookPayload.eventType,
@@ -224,9 +198,7 @@ export class PaymentsService {
       .single();
 
     if (error || !payment) {
-      this.logger.warn(
-        `Payment not found for webhook: ${webhookPayload.providerPaymentId}`,
-      );
+      this.logger.warn(`Payment not found for webhook: ${webhookPayload.providerPaymentId}`);
       return { processed: false };
     }
 
@@ -290,11 +262,7 @@ export class PaymentsService {
   /**
    * Refund a payment.
    */
-  async refundPayment(
-    playerId: string,
-    paymentId: string,
-    reason: string,
-  ): Promise<PaymentRecord> {
+  async refundPayment(playerId: string, paymentId: string, reason: string): Promise<PaymentRecord> {
     const { data: payment, error } = await this.supabase
       .getClient()
       .from('payments')
@@ -308,9 +276,7 @@ export class PaymentsService {
     }
 
     if (payment.status !== 'COMPLETED') {
-      throw new BadRequestException(
-        `Cannot refund payment with status ${payment.status}.`,
-      );
+      throw new BadRequestException(`Cannot refund payment with status ${payment.status}.`);
     }
 
     const request: RefundPaymentRequest = {
@@ -366,14 +332,17 @@ export class PaymentsService {
         }
 
         // Record ledger entry
-        await this.supabase.getClient().from('game_ledger_entries').insert({
-          player_id: playerId,
-          entry_type: 'CURRENCY',
-          reference_type: 'PAYMENT',
-          reference_id: playerId,
-          amount_change: amount,
-          description: `Purchased ${amount} Pula via store`,
-        });
+        await this.supabase
+          .getClient()
+          .from('game_ledger_entries')
+          .insert({
+            player_id: playerId,
+            entry_type: 'CURRENCY',
+            reference_type: 'PAYMENT',
+            reference_id: playerId,
+            amount_change: amount,
+            description: `Purchased ${amount} Pula via store`,
+          });
         break;
       }
 
@@ -394,9 +363,7 @@ export class PaymentsService {
       }
     }
 
-    this.logger.log(
-      `Awarded entitlement ${ent.type} to player ${playerId}`,
-    );
+    this.logger.log(`Awarded entitlement ${ent.type} to player ${playerId}`);
   }
 
   /**
@@ -426,20 +393,21 @@ export class PaymentsService {
           .update({ currency: newCurrency })
           .eq('id', playerId);
 
-        await this.supabase.getClient().from('game_ledger_entries').insert({
-          player_id: playerId,
-          entry_type: 'CURRENCY',
-          reference_type: 'REFUND',
-          reference_id: playerId,
-          amount_change: -amount,
-          description: `Refund: reversed ${amount} Pula`,
-        });
+        await this.supabase
+          .getClient()
+          .from('game_ledger_entries')
+          .insert({
+            player_id: playerId,
+            entry_type: 'CURRENCY',
+            reference_type: 'REFUND',
+            reference_id: playerId,
+            amount_change: -amount,
+            description: `Refund: reversed ${amount} Pula`,
+          });
       }
     }
 
-    this.logger.log(
-      `Reversed entitlement ${payment.entitlement_type} from player ${playerId}`,
-    );
+    this.logger.log(`Reversed entitlement ${payment.entitlement_type} from player ${playerId}`);
   }
 
   private mapPaymentRecord(row: Record<string, unknown>): PaymentRecord {
