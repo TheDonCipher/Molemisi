@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
 
@@ -123,6 +124,18 @@ export function SettingsScreen() {
             <span className="text-gold-currency font-bold">{pula.toLocaleString()} P</span>
           </div>
         </div>
+      </section>
+
+      {/* Admin */}
+      <section className="mb-6">
+        <Link
+          href="/admin"
+          className="block bg-wood-dark p-3 border border-wood-border hover:border-primary/50 transition-colors text-center"
+        >
+          <span className="font-headline text-xs text-primary uppercase font-bold">
+            🔧 Admin Panel
+          </span>
+        </Link>
       </section>
 
       {/* About */}
