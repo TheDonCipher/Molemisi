@@ -22,10 +22,7 @@ export class ContractsController {
   ) {}
 
   @Get('available')
-  async getAvailableContracts(
-    @Param('farmId') farmId: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  async getAvailableContracts(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.contractsService.getAvailableContracts(farmId);
   }

@@ -28,10 +28,7 @@ export class BuildingsController {
   }
 
   @Get('available')
-  async getAvailableBuildings(
-    @Param('farmId') farmId: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  async getAvailableBuildings(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.buildingsService.getAvailableBuildings(farmId);
   }

@@ -19,6 +19,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { GameConfigModule } from './config/config.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -46,6 +47,7 @@ import { DatabaseModule } from './database/database.module';
     AdminModule,
     AnalyticsModule,
     GameConfigModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

@@ -1,11 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /**
    * Get player overview — profile, farm stats, recent activity.
@@ -184,6 +188,9 @@ export class AdminService {
         reference_type: 'admin_action',
       });
 
+    // Send notification to player
+    await this.notifications.notifyBan(playerId, reason);
+
     this.logger.warn(`Admin banned player ${profile.display_name}: ${reason}`);
     return { success: true, player: profile.display_name, action: 'banned' };
   }
@@ -256,6 +263,9 @@ export class AdminService {
         description: `Warning #${newCount}: ${message}`,
         reference_type: 'admin_action',
       });
+
+    // Send notification to player
+    await this.notifications.notifyWarning(playerId, message, newCount);
 
     this.logger.warn(`Admin warned player ${profile.display_name} (#${newCount}): ${message}`);
     return {
@@ -348,6 +358,9 @@ export class AdminService {
         description: `Farm reset by admin${reason ? `: ${reason}` : ''}`,
         reference_type: 'admin_action',
       });
+
+    // Send notification to player
+    await this.notifications.notifyFarmReset(playerId, reason);
 
     this.logger.warn(`Admin reset farm for ${farm.name} (player ${playerId})`);
     return {

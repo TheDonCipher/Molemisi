@@ -28,10 +28,7 @@ export class LivestockController {
   }
 
   @Get('available')
-  async getAvailableAnimals(
-    @Param('farmId') farmId: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  async getAvailableAnimals(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.livestockService.getAvailableAnimals(farmId);
   }
