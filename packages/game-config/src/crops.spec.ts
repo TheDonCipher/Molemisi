@@ -110,9 +110,7 @@ describe('Game Config', () => {
 
     it('XP requirement increases with level', () => {
       for (let l = 1; l < 10; l++) {
-        expect(calculateLevelXpRequired(l + 1)).toBeGreaterThan(
-          calculateLevelXpRequired(l),
-        );
+        expect(calculateLevelXpRequired(l + 1)).toBeGreaterThan(calculateLevelXpRequired(l));
       }
     });
 

@@ -51,9 +51,7 @@ describe('Weather System', () => {
     });
 
     it('summer has highest pest modifier', () => {
-      expect(SEASONS.summer.pestModifier).toBeGreaterThanOrEqual(
-        SEASONS.spring.pestModifier,
-      );
+      expect(SEASONS.summer.pestModifier).toBeGreaterThanOrEqual(SEASONS.spring.pestModifier);
     });
   });
 

@@ -54,7 +54,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className={`${spaceGrotesk.variable} ${rubik.variable} ${spaceMono.variable} font-body bg-[#210e0b] text-[#ffdad4] antialiased select-none min-h-screen`}>
+      <body
+        className={`${spaceGrotesk.variable} ${rubik.variable} ${spaceMono.variable} font-body bg-[#210e0b] text-[#ffdad4] antialiased select-none min-h-screen`}
+      >
         <main className="min-h-screen bg-[#210e0b] text-[#ffdad4]">{children}</main>
         <script
           dangerouslySetInnerHTML={{
@@ -71,4 +73,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

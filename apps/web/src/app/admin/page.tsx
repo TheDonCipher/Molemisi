@@ -10,10 +10,7 @@ function getToken() {
   return localStorage.getItem('molemisi_admin_token');
 }
 
-async function apiFetch<T = unknown>(
-  method: string,
-  path: string,
-): Promise<T> {
+async function apiFetch<T = unknown>(method: string, path: string): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -56,9 +53,7 @@ export default function AdminDashboard() {
     ]).then(([ecoRes, playerRes]) => {
       if (ecoRes.status === 'fulfilled') setEconomy(ecoRes.value);
       if (playerRes.status === 'fulfilled')
-        setPlayers(
-          Array.isArray(playerRes.value) ? playerRes.value : [],
-        );
+        setPlayers(Array.isArray(playerRes.value) ? playerRes.value : []);
       setLoading(false);
     });
   }, []);
@@ -132,10 +127,7 @@ export default function AdminDashboard() {
               icon: '🌾',
             },
           ].map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-wood-dark p-3 border border-wood-border"
-            >
+            <div key={stat.label} className="bg-wood-dark p-3 border border-wood-border">
               <span className="text-lg">{stat.icon}</span>
               <div className="font-mono text-lg text-gold-currency font-bold mt-1">
                 {stat.value}
@@ -200,24 +192,18 @@ export default function AdminDashboard() {
                   {p.id}
                 </span>
               </div>
-              <span className="font-mono text-xs text-primary font-bold">
-                Lv.{p.farm_level}
-              </span>
+              <span className="font-mono text-xs text-primary font-bold">Lv.{p.farm_level}</span>
               <span className="font-mono text-xs text-gold-currency font-bold">
                 P{p.currency?.toLocaleString() || 0}
               </span>
               <span className="font-mono text-[10px] text-on-surface-variant">
-                {p.created_at
-                  ? new Date(p.created_at).toLocaleDateString()
-                  : '—'}
+                {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}
               </span>
             </Link>
           ))}
           {players.length === 0 && (
             <div className="px-4 py-8 text-center">
-              <span className="font-body text-xs text-on-surface-variant">
-                No players found.
-              </span>
+              <span className="font-body text-xs text-on-surface-variant">No players found.</span>
             </div>
           )}
         </div>

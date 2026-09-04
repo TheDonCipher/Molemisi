@@ -33,10 +33,7 @@ describe('MarketService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        MarketService,
-        { provide: SupabaseService, useValue: mockSupabaseService },
-      ],
+      providers: [MarketService, { provide: SupabaseService, useValue: mockSupabaseService }],
     }).compile();
 
     service = module.get<MarketService>(MarketService);
@@ -48,9 +45,9 @@ describe('MarketService', () => {
       builder.single.mockResolvedValue({ data: null, error: null });
       mockSupabaseService.getAdminClient.mockReturnValue(chain);
 
-      await expect(
-        service.sellItem('farm-1', 'user-1', 'sorghum', 5),
-      ).rejects.toThrow('Farm not found');
+      await expect(service.sellItem('farm-1', 'user-1', 'sorghum', 5)).rejects.toThrow(
+        'Farm not found',
+      );
     });
 
     it('should reject sell if user does not own farm', async () => {
@@ -60,9 +57,9 @@ describe('MarketService', () => {
         .mockResolvedValueOnce({ data: null, error: null });
       mockSupabaseService.getAdminClient.mockReturnValue(chain);
 
-      await expect(
-        service.sellItem('farm-1', 'user-1', 'sorghum', 5),
-      ).rejects.toThrow('Farm not found');
+      await expect(service.sellItem('farm-1', 'user-1', 'sorghum', 5)).rejects.toThrow(
+        'Farm not found',
+      );
     });
 
     it('should reject sell if inventory insufficient', async () => {
@@ -74,9 +71,9 @@ describe('MarketService', () => {
         .mockResolvedValueOnce({ data: null, error: null }); // events
       mockSupabaseService.getAdminClient.mockReturnValue(chain);
 
-      await expect(
-        service.sellItem('farm-1', 'user-1', 'sorghum', 5),
-      ).rejects.toThrow('Insufficient items');
+      await expect(service.sellItem('farm-1', 'user-1', 'sorghum', 5)).rejects.toThrow(
+        'Insufficient items',
+      );
     });
   });
 
@@ -86,9 +83,9 @@ describe('MarketService', () => {
       builder.single.mockResolvedValue({ data: null, error: null });
       mockSupabaseService.getAdminClient.mockReturnValue(chain);
 
-      await expect(
-        service.buyItem('farm-1', 'user-1', 'sorghum_seed', 5),
-      ).rejects.toThrow('Farm not found');
+      await expect(service.buyItem('farm-1', 'user-1', 'sorghum_seed', 5)).rejects.toThrow(
+        'Farm not found',
+      );
     });
 
     it('should reject buy if insufficient funds', async () => {
@@ -101,9 +98,9 @@ describe('MarketService', () => {
         .mockResolvedValueOnce({ data: { currency: 10 }, error: null }); // profile with low currency
       mockSupabaseService.getAdminClient.mockReturnValue(chain);
 
-      await expect(
-        service.buyItem('farm-1', 'user-1', 'sorghum_seed', 10),
-      ).rejects.toThrow('Insufficient funds');
+      await expect(service.buyItem('farm-1', 'user-1', 'sorghum_seed', 10)).rejects.toThrow(
+        'Insufficient funds',
+      );
     });
   });
 

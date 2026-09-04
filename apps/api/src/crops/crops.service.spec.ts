@@ -14,10 +14,7 @@ describe('CropsService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CropsService,
-        { provide: SupabaseService, useValue: mockSupabaseService },
-      ],
+      providers: [CropsService, { provide: SupabaseService, useValue: mockSupabaseService }],
     }).compile();
 
     service = module.get<CropsService>(CropsService);
@@ -78,9 +75,7 @@ describe('CropsService', () => {
         }),
       });
 
-      const result = await service.plantCrop(
-        'farm-1', 'plot-1', 'user-1', 'sorghum', 'seed-1',
-      );
+      const result = await service.plantCrop('farm-1', 'plot-1', 'user-1', 'sorghum', 'seed-1');
 
       expect(result.plot.state).toBe('PLANTED');
       expect(result.crop.type).toBe('sorghum');
@@ -116,9 +111,7 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(
-        service.waterCrop('farm-1', 'plot-1'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.waterCrop('farm-1', 'plot-1')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException if plot not found', async () => {
@@ -137,9 +130,7 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(
-        service.waterCrop('farm-1', 'plot-1'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.waterCrop('farm-1', 'plot-1')).rejects.toThrow(NotFoundException);
     });
 
     it('should successfully water a crop', async () => {
@@ -218,9 +209,7 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(
-        service.harvestCrop('farm-1', 'plot-1'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.harvestCrop('farm-1', 'plot-1')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if crop is not READY', async () => {
@@ -242,9 +231,9 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(
-        service.harvestCrop('farm-1', 'plot-1'),
-      ).rejects.toThrow('Crop is not ready for harvest');
+      await expect(service.harvestCrop('farm-1', 'plot-1')).rejects.toThrow(
+        'Crop is not ready for harvest',
+      );
     });
 
     it('should reject harvest on EMPTY plot (no crop_instances)', async () => {
@@ -266,9 +255,7 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(
-        service.harvestCrop('farm-1', 'plot-1'),
-      ).rejects.toThrow();
+      await expect(service.harvestCrop('farm-1', 'plot-1')).rejects.toThrow();
     });
 
     it('should successfully harvest a READY crop', async () => {
@@ -311,7 +298,9 @@ describe('CropsService', () => {
                   }),
                 }),
               }),
-              update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+              update: jest
+                .fn()
+                .mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
               insert: mockInsert,
             };
           }
@@ -362,11 +351,22 @@ describe('CropsService', () => {
               update: jest.fn().mockReturnValue({ eq: mockUpdate }),
             };
           }
-          if (table === 'crop_instances') return { delete: jest.fn().mockReturnValue({ eq: mockDelete }) };
+          if (table === 'crop_instances')
+            return { delete: jest.fn().mockReturnValue({ eq: mockDelete }) };
           if (table === 'inventory') {
             return {
-              select: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: null, error: null }) }) }) }) }),
-              update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  eq: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockReturnValue({
+                      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+                    }),
+                  }),
+                }),
+              }),
+              update: jest
+                .fn()
+                .mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
               insert: mockInsert,
             };
           }
@@ -404,11 +404,22 @@ describe('CropsService', () => {
               update: jest.fn().mockReturnValue({ eq: mockUpdate }),
             };
           }
-          if (table === 'crop_instances') return { delete: jest.fn().mockReturnValue({ eq: mockDelete }) };
+          if (table === 'crop_instances')
+            return { delete: jest.fn().mockReturnValue({ eq: mockDelete }) };
           if (table === 'inventory') {
             return {
-              select: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: null, error: null }) }) }) }) }),
-              update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  eq: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockReturnValue({
+                      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+                    }),
+                  }),
+                }),
+              }),
+              update: jest
+                .fn()
+                .mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
               insert: mockInsert,
             };
           }

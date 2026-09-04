@@ -14,10 +14,7 @@ describe('AuthService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AuthService,
-        { provide: SupabaseService, useValue: mockSupabaseService },
-      ],
+      providers: [AuthService, { provide: SupabaseService, useValue: mockSupabaseService }],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
@@ -61,10 +58,7 @@ describe('AuthService', () => {
         },
       });
 
-      await expect(
-        service.login({ email: 'test@test.com', password: 'wrong' }),
-      ).rejects.toThrow();
+      await expect(service.login({ email: 'test@test.com', password: 'wrong' })).rejects.toThrow();
     });
   });
-
 });
