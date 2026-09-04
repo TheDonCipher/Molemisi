@@ -18,6 +18,7 @@ import { WorldEventsModule } from './world-events/world-events.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { GameConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -44,6 +45,7 @@ import { DatabaseModule } from './database/database.module';
     PaymentsModule,
     AdminModule,
     AnalyticsModule,
+    GameConfigModule,
   ],
 })
 export class AppModule {}

@@ -1,10 +1,40 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
-// Game config values from the game-config package
-// In production these would come from a database, but we display
-// the current compiled values and allow admins to note changes.
+const API_BASE = 'http://localhost:3001/api/v1';
+
+function getToken() {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('molemisi_admin_token');
+}
+
+async function apiFetch<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const json = await res.json();
+  return (json?.data ?? json) as T;
+}
+
+interface ConfigEntry {
+  id: string;
+  config_key: string;
+  config_value: unknown;
+  category: string;
+  description: string | null;
+  min_value: number | null;
+  max_value: number | null;
+  updated_at: string;
+}
 
 interface CropConfig {
   name: string;
@@ -16,328 +46,226 @@ interface CropConfig {
   xpReward: number;
 }
 
-interface ConfigSection {
-  title: string;
-  icon: string;
-  items: ConfigItem[];
-}
+const CATEGORY_META: Record<string, { title: string; icon: string }> = {
+  farm: { title: 'Farm Settings', icon: '🏡' },
+  economy: { title: 'Economy Settings', icon: '💰' },
+  progression: { title: 'Progression', icon: '📈' },
+  weather: { title: 'Weather', icon: '🌤️' },
+  simulation: { title: 'Simulation', icon: '⚙️' },
+};
 
-interface ConfigItem {
-  key: string;
-  label: string;
-  value: string | number;
-  type: 'number' | 'text' | 'toggle';
-  min?: number;
-  max?: number;
-  step?: number;
-  description?: string;
-}
-
-const DEFAULT_CROPS: CropConfig[] = [
-  {
-    name: 'Sorghum',
-    growthStages: 4,
-    baseYield: 3,
-    seedCost: 15,
-    sellPrice: 10,
-    waterNeeds: 40,
-    xpReward: 15,
-  },
-  {
-    name: 'Maize',
-    growthStages: 5,
-    baseYield: 4,
-    seedCost: 12,
-    sellPrice: 12,
-    waterNeeds: 60,
-    xpReward: 18,
-  },
-  {
-    name: 'Millet',
-    growthStages: 4,
-    baseYield: 3,
-    seedCost: 10,
-    sellPrice: 8,
-    waterNeeds: 30,
-    xpReward: 12,
-  },
-  {
-    name: 'Cowpeas',
-    growthStages: 4,
-    baseYield: 3,
-    seedCost: 18,
-    sellPrice: 14,
-    waterNeeds: 45,
-    xpReward: 20,
-  },
-  {
-    name: 'Groundnuts',
-    growthStages: 5,
-    baseYield: 2,
-    seedCost: 20,
-    sellPrice: 18,
-    waterNeeds: 50,
-    xpReward: 22,
-  },
-  {
-    name: 'Sesame',
-    growthStages: 4,
-    baseYield: 2,
-    seedCost: 16,
-    sellPrice: 15,
-    waterNeeds: 35,
-    xpReward: 16,
-  },
-  {
-    name: 'Watermelon',
-    growthStages: 6,
-    baseYield: 4,
-    seedCost: 22,
-    sellPrice: 20,
-    waterNeeds: 80,
-    xpReward: 25,
-  },
-  {
-    name: 'Tomatoes',
-    growthStages: 5,
-    baseYield: 3,
-    seedCost: 25,
-    sellPrice: 22,
-    waterNeeds: 70,
-    xpReward: 28,
-  },
-  {
-    name: 'Pepper',
-    growthStages: 4,
-    baseYield: 2,
-    seedCost: 18,
-    sellPrice: 16,
-    waterNeeds: 55,
-    xpReward: 18,
-  },
-  {
-    name: 'Herbs',
-    growthStages: 3,
-    baseYield: 4,
-    seedCost: 14,
-    sellPrice: 12,
-    waterNeeds: 35,
-    xpReward: 14,
-  },
-  {
-    name: 'Saffron',
-    growthStages: 5,
-    baseYield: 1,
-    seedCost: 30,
-    sellPrice: 35,
-    waterNeeds: 40,
-    xpReward: 40,
-  },
-];
-
-const SYSTEM_CONFIG: ConfigSection[] = [
-  {
-    title: 'Farm Settings',
-    icon: '🏡',
-    items: [
-      { key: 'STARTING_PLOTS', label: 'Starting Plots', value: 4, type: 'number', min: 1, max: 20 },
-      { key: 'MAX_PLOTS', label: 'Max Plots', value: 20, type: 'number', min: 4, max: 50 },
-      {
-        key: 'STARTING_CURRENCY',
-        label: 'Starting Pula',
-        value: 100,
-        type: 'number',
-        min: 0,
-        max: 10000,
-      },
-      {
-        key: 'STARTING_WATER',
-        label: 'Starting Water (L)',
-        value: 85,
-        type: 'number',
-        min: 0,
-        max: 500,
-      },
-      { key: 'MAX_WATER', label: 'Max Water (L)', value: 100, type: 'number', min: 50, max: 1000 },
-    ],
-  },
-  {
-    title: 'Economy Settings',
-    icon: '💰',
-    items: [
-      {
-        key: 'PRICE_FLUCTUATION',
-        label: 'Price Fluctuation %',
-        value: 15,
-        type: 'number',
-        min: 0,
-        max: 50,
-        description: 'Max random price change per tick',
-      },
-      {
-        key: 'MARKET_UPDATE_HOURS',
-        label: 'Market Update (hours)',
-        value: 6,
-        type: 'number',
-        min: 1,
-        max: 24,
-      },
-      {
-        key: 'SELL_TAX_RATE',
-        label: 'Sell Tax Rate %',
-        value: 5,
-        type: 'number',
-        min: 0,
-        max: 30,
-        description: 'Percentage taken from sales',
-      },
-      {
-        key: 'CONTRACT_BONUS',
-        label: 'Contract Bonus %',
-        value: 20,
-        type: 'number',
-        min: 0,
-        max: 100,
-        description: 'Extra reward for contract completion',
-      },
-    ],
-  },
-  {
-    title: 'Progression',
-    icon: '📈',
-    items: [
-      {
-        key: 'XP_PER_LEVEL',
-        label: 'XP Per Level',
-        value: 3000,
-        type: 'number',
-        min: 100,
-        max: 50000,
-      },
-      { key: 'XP_PLANT', label: 'XP: Plant', value: 5, type: 'number', min: 0, max: 100 },
-      { key: 'XP_WATER', label: 'XP: Water', value: 2, type: 'number', min: 0, max: 50 },
-      { key: 'XP_HARVEST', label: 'XP: Harvest', value: 10, type: 'number', min: 0, max: 100 },
-      { key: 'XP_FORAGE', label: 'XP: Forage', value: 5, type: 'number', min: 0, max: 50 },
-    ],
-  },
-  {
-    title: 'Weather',
-    icon: '🌤️',
-    items: [
-      { key: 'CLEAR_PROB', label: 'Clear Weather %', value: 35, type: 'number', min: 0, max: 100 },
-      { key: 'CLOUDY_PROB', label: 'Cloudy %', value: 25, type: 'number', min: 0, max: 100 },
-      { key: 'RAIN_PROB', label: 'Rain %', value: 25, type: 'number', min: 0, max: 100 },
-      { key: 'STORM_PROB', label: 'Storm %', value: 15, type: 'number', min: 0, max: 100 },
-      {
-        key: 'DROUGHT_CHANCE',
-        label: 'Drought Chance %',
-        value: 5,
-        type: 'number',
-        min: 0,
-        max: 30,
-        description: 'Chance of multi-day drought',
-      },
-    ],
-  },
-  {
-    title: 'Simulation',
-    icon: '⚙️',
-    items: [
-      {
-        key: 'SIMULATION_INTERVAL',
-        label: 'Sim Interval (sec)',
-        value: 300,
-        type: 'number',
-        min: 30,
-        max: 3600,
-      },
-      {
-        key: 'GROWTH_PER_TICK',
-        label: 'Growth Per Tick',
-        value: 0.1,
-        type: 'number',
-        min: 0.01,
-        max: 1.0,
-        step: 0.01,
-      },
-      {
-        key: 'HYDRATION_DECAY',
-        label: 'Hydration Decay/Tick',
-        value: 0.05,
-        type: 'number',
-        min: 0,
-        max: 0.5,
-        step: 0.01,
-      },
-      {
-        key: 'ENERGY_REGEN',
-        label: 'Energy Regen/Hour',
-        value: 10,
-        type: 'number',
-        min: 0,
-        max: 100,
-      },
-    ],
-  },
-];
+const LABEL_MAP: Record<string, string> = {
+  STARTING_PLOTS: 'Starting Plots',
+  MAX_PLOTS: 'Max Plots',
+  STARTING_CURRENCY: 'Starting Pula',
+  STARTING_WATER: 'Starting Water (L)',
+  MAX_WATER: 'Max Water (L)',
+  PRICE_FLUCTUATION: 'Price Fluctuation %',
+  MARKET_UPDATE_HOURS: 'Market Update (hours)',
+  SELL_TAX_RATE: 'Sell Tax Rate %',
+  CONTRACT_BONUS: 'Contract Bonus %',
+  XP_PER_LEVEL: 'XP Per Level',
+  XP_PLANT: 'XP: Plant',
+  XP_WATER: 'XP: Water',
+  XP_HARVEST: 'XP: Harvest',
+  XP_FORAGE: 'XP: Forage',
+  CLEAR_PROB: 'Clear Weather %',
+  CLOUDY_PROB: 'Cloudy %',
+  RAIN_PROB: 'Rain %',
+  STORM_PROB: 'Storm %',
+  DROUGHT_CHANCE: 'Drought Chance %',
+  SIMULATION_INTERVAL: 'Sim Interval (sec)',
+  GROWTH_PER_TICK: 'Growth Per Tick',
+  HYDRATION_DECAY: 'Hydration Decay/Tick',
+  ENERGY_REGEN: 'Energy Regen/Hour',
+};
 
 export default function ConfigPage() {
-  const [crops, setCrops] = useState<CropConfig[]>(DEFAULT_CROPS);
-  const [system, setSystem] = useState(SYSTEM_CONFIG);
+  const [config, setConfig] = useState<ConfigEntry[]>([]);
+  const [crops, setCrops] = useState<CropConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<string>('crops');
+  const [activeSection, setActiveSection] = useState('crops');
+  const [hasChanges, setHasChanges] = useState(false);
+  const [auditLog, setAuditLog] = useState<
+    Array<{
+      config_key: string;
+      old_value: unknown;
+      new_value: unknown;
+      reason: string | null;
+      created_at: string;
+    }>
+  >([]);
 
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 2500);
+    setTimeout(() => setToast(null), 3000);
   };
 
+  // Load config from API
+  const loadConfig = useCallback(async () => {
+    try {
+      const data = await apiFetch<ConfigEntry[]>('GET', '/config');
+      setConfig(Array.isArray(data) ? data : []);
+
+      // Parse crop configs
+      const cropEntries = (Array.isArray(data) ? data : []).filter(
+        (e) => e.category === 'crops' && e.config_key.startsWith('CROP_'),
+      );
+      const parsedCrops: CropConfig[] = cropEntries.map((e) => {
+        const val = (
+          typeof e.config_value === 'string' ? JSON.parse(e.config_value) : e.config_value
+        ) as Partial<CropConfig>;
+        return {
+          name:
+            e.config_key.replace('CROP_', '').charAt(0).toUpperCase() +
+            e.config_key.replace('CROP_', '').slice(1).toLowerCase(),
+          growthStages: val.growthStages || 4,
+          baseYield: val.baseYield || 2,
+          seedCost: val.seedCost || 10,
+          sellPrice: val.sellPrice || 10,
+          waterNeeds: val.waterNeeds || 50,
+          xpReward: val.xpReward || 10,
+        };
+      });
+      setCrops(parsedCrops);
+
+      // Load audit log
+      const log = await apiFetch<
+        Array<{
+          config_key: string;
+          old_value: unknown;
+          new_value: unknown;
+          reason: string | null;
+          created_at: string;
+        }>
+      >('GET', '/config/audit/log?limit=20');
+      setAuditLog(Array.isArray(log) ? log : []);
+    } catch {
+      showToast('Failed to load config from API');
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
+
+  // Update a system config value locally
+  const updateSystemConfig = (key: string, value: number) => {
+    setConfig((prev) =>
+      prev.map((c) => (c.config_key === key ? { ...c, config_value: value } : c)),
+    );
+    setHasChanges(true);
+  };
+
+  // Update a crop value locally
   const updateCrop = (index: number, field: keyof CropConfig, value: number) => {
     setCrops((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
+    setHasChanges(true);
   };
 
-  const updateSystemConfig = (sectionIndex: number, itemIndex: number, value: number) => {
-    setSystem((prev) =>
-      prev.map((sec, si) =>
-        si === sectionIndex
-          ? {
-              ...sec,
-              items: sec.items.map((item, ii) => (ii === itemIndex ? { ...item, value } : item)),
-            }
-          : sec,
-      ),
+  // Save all changes to API
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Save system config changes
+      const systemUpdates = config
+        .filter((c) => c.category !== 'crops')
+        .map((c) => ({
+          key: c.config_key,
+          value: c.config_value,
+        }));
+
+      // Save crop config changes
+      const cropUpdates = crops.map((crop) => ({
+        key: `CROP_${crop.name.toUpperCase()}`,
+        value: {
+          growthStages: crop.growthStages,
+          baseYield: crop.baseYield,
+          seedCost: crop.seedCost,
+          sellPrice: crop.sellPrice,
+          waterNeeds: crop.waterNeeds,
+          xpReward: crop.xpReward,
+        },
+      }));
+
+      await apiFetch('PUT', '/config', {
+        updates: [...systemUpdates, ...cropUpdates],
+        reason: 'Admin config update',
+      });
+
+      setHasChanges(false);
+      showToast('Configuration saved! Changes take effect immediately.');
+      await loadConfig(); // Refresh from API
+    } catch {
+      showToast('Failed to save configuration.');
+    }
+    setSaving(false);
+  };
+
+  // Reset to API defaults
+  const handleReset = async () => {
+    if (!window.confirm('Reset all configuration to database defaults?')) return;
+    setSaving(true);
+    try {
+      await loadConfig();
+      setHasChanges(false);
+      showToast('Configuration reloaded from database.');
+    } catch {
+      showToast('Failed to reload config.');
+    }
+    setSaving(false);
+  };
+
+  // Group system config by category
+  const categories = Array.from(
+    new Set(config.filter((c) => c.category !== 'crops').map((c) => c.category)),
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-3xl mb-3 animate-pulse">⚙️</div>
+          <p className="font-headline text-xs text-primary uppercase font-bold">
+            Loading configuration...
+          </p>
+        </div>
+      </div>
     );
-  };
-
-  const handleSave = () => {
-    // In production this would POST to a config API endpoint
-    showToast('Configuration saved! Changes take effect in ~5 minutes.');
-  };
-
-  const handleReset = () => {
-    setCrops(DEFAULT_CROPS);
-    setSystem(SYSTEM_CONFIG);
-    showToast('Configuration reset to defaults.');
-  };
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-headline text-xl text-primary uppercase font-bold">
-          Game Configuration
-        </h1>
+        <div>
+          <h1 className="font-headline text-xl text-primary uppercase font-bold">
+            Game Configuration
+          </h1>
+          <p className="font-mono text-[10px] text-on-surface-variant mt-1">
+            {config.length} config entries • Changes persist to database
+          </p>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={handleReset}
-            className="px-4 py-2 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase font-bold border border-wood-border hover:border-primary/50 transition-colors"
+            disabled={saving}
+            className="px-4 py-2 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase font-bold border border-wood-border hover:border-primary/50 transition-colors disabled:opacity-50"
           >
-            Reset Defaults
+            Reload
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-primary text-wood-dark font-headline text-xs uppercase font-bold hover:bg-primary/80 transition-colors"
+            disabled={saving || !hasChanges}
+            className={`px-4 py-2 font-headline text-xs uppercase font-bold transition-colors disabled:opacity-50 ${
+              hasChanges
+                ? 'bg-primary text-wood-dark hover:bg-primary/80'
+                : 'bg-surface-container-high text-on-surface-variant border border-wood-border'
+            }`}
           >
-            Save Changes
+            {saving ? 'Saving...' : hasChanges ? 'Save Changes' : 'No Changes'}
           </button>
         </div>
       </div>
@@ -352,21 +280,35 @@ export default function ConfigPage() {
               : 'bg-surface-container-high text-on-surface-variant border-wood-border'
           }`}
         >
-          🌾 Crops
+          🌾 Crops ({crops.length})
         </button>
-        {system.map((sec, i) => (
-          <button
-            key={sec.title}
-            onClick={() => setActiveSection(`system-${i}`)}
-            className={`px-3 py-2 font-mono text-xs uppercase whitespace-nowrap border transition-all ${
-              activeSection === `system-${i}`
-                ? 'bg-primary-container text-on-primary-container border-primary font-bold'
-                : 'bg-surface-container-high text-on-surface-variant border-wood-border'
-            }`}
-          >
-            {sec.icon} {sec.title}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const meta = CATEGORY_META[cat] || { title: cat, icon: '📋' };
+          const count = config.filter((c) => c.category === cat).length;
+          return (
+            <button
+              key={cat}
+              onClick={() => setActiveSection(cat)}
+              className={`px-3 py-2 font-mono text-xs uppercase whitespace-nowrap border transition-all ${
+                activeSection === cat
+                  ? 'bg-primary-container text-on-primary-container border-primary font-bold'
+                  : 'bg-surface-container-high text-on-surface-variant border-wood-border'
+              }`}
+            >
+              {meta.icon} {meta.title} ({count})
+            </button>
+          );
+        })}
+        <button
+          onClick={() => setActiveSection('audit')}
+          className={`px-3 py-2 font-mono text-xs uppercase whitespace-nowrap border transition-all ${
+            activeSection === 'audit'
+              ? 'bg-primary-container text-on-primary-container border-primary font-bold'
+              : 'bg-surface-container-high text-on-surface-variant border-wood-border'
+          }`}
+        >
+          📜 Audit Log ({auditLog.length})
+        </button>
       </div>
 
       {/* Crops Editor */}
@@ -442,46 +384,93 @@ export default function ConfigPage() {
       )}
 
       {/* System Config Editor */}
-      {activeSection.startsWith('system-') && (
+      {categories.includes(activeSection) && (
         <div className="bg-wood-dark border border-wood-border p-4">
-          {system
-            .filter((_, i) => activeSection === `system-${i}`)
-            .map((sec) => (
-              <div key={sec.title}>
-                <h3 className="font-headline text-sm text-cream-surface font-bold mb-4">
-                  {sec.icon} {sec.title}
-                </h3>
-                <div className="space-y-4">
-                  {sec.items.map((item) => (
-                    <div key={item.key} className="flex items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <label className="font-mono text-xs text-cream-surface font-bold block">
-                          {item.label}
-                        </label>
-                        {item.description && (
-                          <span className="font-mono text-[9px] text-on-surface-variant">
-                            {item.description}
-                          </span>
-                        )}
-                      </div>
-                      <input
-                        type="number"
-                        value={item.value}
-                        min={item.min}
-                        max={item.max}
-                        step={item.step || 1}
-                        onChange={(e) => {
-                          const si = system.indexOf(sec);
-                          const ii = sec.items.indexOf(item);
-                          updateSystemConfig(si, ii, Number(e.target.value));
-                        }}
-                        className="w-24 px-3 py-1.5 bg-surface-container-high border border-wood-border font-mono text-sm text-gold-currency text-center focus:outline-none focus:border-primary"
-                      />
+          <h3 className="font-headline text-sm text-cream-surface font-bold mb-4">
+            {CATEGORY_META[activeSection]?.icon}{' '}
+            {CATEGORY_META[activeSection]?.title || activeSection}
+          </h3>
+          <div className="space-y-4">
+            {config
+              .filter((c) => c.category === activeSection)
+              .map((entry) => {
+                const label = LABEL_MAP[entry.config_key] || entry.config_key;
+                return (
+                  <div key={entry.config_key} className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <label className="font-mono text-xs text-cream-surface font-bold block">
+                        {label}
+                      </label>
+                      {entry.description && (
+                        <span className="font-mono text-[9px] text-on-surface-variant">
+                          {entry.description}
+                        </span>
+                      )}
+                      {(entry.min_value !== null || entry.max_value !== null) && (
+                        <span className="font-mono text-[9px] text-on-surface-variant block">
+                          Range: {entry.min_value ?? '—'} – {entry.max_value ?? '—'}
+                        </span>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+                    <input
+                      type="number"
+                      value={Number(entry.config_value)}
+                      min={entry.min_value ?? undefined}
+                      max={entry.max_value ?? undefined}
+                      step={
+                        entry.config_key.includes('DECAY') || entry.config_key.includes('GROWTH')
+                          ? 0.01
+                          : 1
+                      }
+                      onChange={(e) => updateSystemConfig(entry.config_key, Number(e.target.value))}
+                      className="w-24 px-3 py-1.5 bg-surface-container-high border border-wood-border font-mono text-sm text-gold-currency text-center focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* Audit Log */}
+      {activeSection === 'audit' && (
+        <div className="bg-wood-dark border border-wood-border">
+          <div className="grid grid-cols-5 gap-2 px-4 py-2 bg-wood-medium border-b border-wood-border font-mono text-[10px] text-on-surface-variant uppercase">
+            <span>Time</span>
+            <span>Key</span>
+            <span>Old Value</span>
+            <span>New Value</span>
+            <span>Reason</span>
+          </div>
+          {auditLog.map((entry, i) => (
+            <div
+              key={i}
+              className="grid grid-cols-5 gap-2 px-4 py-2 border-b border-wood-border/50 items-center"
+            >
+              <span className="font-mono text-[10px] text-on-surface-variant whitespace-nowrap">
+                {new Date(entry.created_at).toLocaleString()}
+              </span>
+              <span className="font-mono text-[10px] text-primary font-bold">
+                {entry.config_key}
+              </span>
+              <span className="font-mono text-[10px] text-status-danger truncate">
+                {JSON.stringify(entry.old_value)}
+              </span>
+              <span className="font-mono text-[10px] text-status-success truncate">
+                {JSON.stringify(entry.new_value)}
+              </span>
+              <span className="font-mono text-[10px] text-on-surface-variant truncate">
+                {entry.reason || '—'}
+              </span>
+            </div>
+          ))}
+          {auditLog.length === 0 && (
+            <div className="px-4 py-8 text-center">
+              <span className="font-body text-xs text-on-surface-variant">
+                No configuration changes recorded yet.
+              </span>
+            </div>
+          )}
         </div>
       )}
 
