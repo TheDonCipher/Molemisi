@@ -7,6 +7,8 @@ import { ConfigService } from './config.service';
  *
  * Allows admins to read and write game configuration values.
  * All changes are logged to config_audit_log.
+ *
+ * Route order matters: specific routes before parameterized routes.
  */
 @Controller('config')
 @UseGuards(AuthGuard)
@@ -14,6 +16,16 @@ export class ConfigController {
   private readonly logger = new Logger(ConfigController.name);
 
   constructor(private readonly configService: ConfigService) {}
+
+  /**
+   * GET /api/v1/config/audit/log — Get config change audit log
+   * (MUST be before /:key to avoid catching "audit" as a key)
+   */
+  @Get('audit/log')
+  async getAuditLog(@Query('limit') limit?: string) {
+    this.logger.log('Config: get audit log');
+    return this.configService.getAuditLog(limit ? parseInt(limit) : 50);
+  }
 
   /**
    * GET /api/v1/config — Get all config entries
@@ -73,14 +85,5 @@ export class ConfigController {
     );
 
     return { success: true, ...results };
-  }
-
-  /**
-   * GET /api/v1/config/audit/log — Get config change audit log
-   */
-  @Get('audit/log')
-  async getAuditLog(@Query('limit') limit?: string) {
-    this.logger.log('Config: get audit log');
-    return this.configService.getAuditLog(limit ? parseInt(limit) : 50);
   }
 }

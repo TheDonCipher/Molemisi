@@ -31,7 +31,7 @@ export class ConfigService {
    */
   async getAll(category?: string): Promise<ConfigEntry[]> {
     let query = this.supabase
-      .getClient()
+      .getAdminClient()
       .from('game_config')
       .select('*')
       .order('category')
@@ -56,7 +56,7 @@ export class ConfigService {
    */
   async getByKey(key: string): Promise<ConfigEntry | null> {
     const { data, error } = await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('game_config')
       .select('*')
       .eq('config_key', key)
@@ -126,7 +126,7 @@ export class ConfigService {
     // Log the change to audit log
     if (existing) {
       await this.supabase
-        .getClient()
+        .getAdminClient()
         .from('config_audit_log')
         .insert({
           config_key: key,
@@ -139,7 +139,7 @@ export class ConfigService {
 
     // Update the config
     const { error } = await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('game_config')
       .update({
         config_value: value,
@@ -194,7 +194,7 @@ export class ConfigService {
     }>
   > {
     const { data, error } = await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('config_audit_log')
       .select('*')
       .order('created_at', { ascending: false })
@@ -220,7 +220,7 @@ export class ConfigService {
 
     // Log the reset
     await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('config_audit_log')
       .insert({
         config_key: key,
