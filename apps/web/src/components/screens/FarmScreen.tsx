@@ -114,7 +114,7 @@ export function FarmScreen() {
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
       {/* Background */}
-      <div className="absolute inset-0 z-0">
+      <div className="fixed inset-0 z-0">
         <img
           alt="Botswana Rural Farmstead"
           className="w-full h-full object-cover object-center filter saturate-[1.1]"
@@ -124,7 +124,7 @@ export function FarmScreen() {
               'https://lh3.googleusercontent.com/aida-public/AB6AXuBqnYNXmE88_vwJr6UyYgJMA-y0IAFuJDURROBAiI8_Pe-zsund9QjhP54Lr7oJYK60Ny3HzvMnjsneoNPcEcfZD10_b_yakRnp66gkNZ0h_yb8OOa69EkuJeFYsoqtHA_8E3gmVSiAXod5OsCFfsEeKyzDgwMlfN-GBRdetWSYGslj6DF2PT_qLRF-JB76IdNvHYuXGl_IiqKIx3iruERDmNiKG12Q7WShuIR6t0NRpWG6nbTs2KRh7Q';
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface/60 via-transparent to-wood-dark/30 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
       {/* Top HUD — minimal: Day, Pula, Water */}
@@ -144,7 +144,7 @@ export function FarmScreen() {
       </div>
 
       {/* Main farm world — the plot grid is the interface */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-6">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-6 bg-black/25">
         <div className="w-full max-w-2xl">
           {/* Plot Grid — tap to interact */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

@@ -116,7 +116,7 @@ export function KgotlaScreen() {
               'https://lh3.googleusercontent.com/aida-public/AB6AXuDxlXleSeLx2BTGu5q9-PEpnRzGkNsJeH9kp9O6b9tVrlJcebsMwzdVHBeEJbJciX0xhjAjyKoPfjQCR-mrXw0_itapWXC0_XEugtmZgfkpfUFgl8DeidZ9teZyMqunllvdRqywCl-rxOau-vDY_Jm7bsYQ3778pFZuL_PXXl4M4ZXijqIaGMXfUKeGaMZG1MaXDi7ffxQxr04ZjWSrXE4lWBXa0iIMDcreRIDP7cKTx7yW6VojhpCu0Q';
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface/70 via-transparent to-wood-dark/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
       {/* Top HUD */}
@@ -139,7 +139,7 @@ export function KgotlaScreen() {
       </div>
 
       {/* NPCs — spatial layout with centered avatars */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8 bg-black/25">
         <div className="w-full max-w-lg">
           {/* NPC Grid — 2 columns with larger avatar tiles */}
           <div className="grid grid-cols-2 gap-4">

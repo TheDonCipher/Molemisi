@@ -201,11 +201,11 @@ export function MarketScreen() {
             (e.target as HTMLImageElement).style.display = 'none';
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface/70 via-transparent to-wood-dark/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
       {/* Content overlay */}
-      <div className="relative z-10 px-4 pt-4 pb-8 max-w-lg mx-auto">
+      <div className="relative z-10 px-4 pt-4 pb-8 max-w-lg mx-auto bg-black/25">
         {/* Header */}
         <div
           style={{

@@ -80,7 +80,7 @@ export function BushveldScreen() {
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
       {/* Background */}
-      <div className="absolute inset-0 z-0">
+      <div className="fixed inset-0 z-0">
         <img
           alt="Botswana Savanna"
           className="w-full h-full object-cover object-center filter saturate-[1.1]"
@@ -90,7 +90,7 @@ export function BushveldScreen() {
               'https://lh3.googleusercontent.com/aida-public/AB6AXuATAeRwEE_FMm52FkrWo_6vXz-MMHe3AGwc607kyjIFrEYgBEW054rYKsJxVjInit3vI3AlI_q0aLN0BvlJjOU3LnUjNJs9DXrHTOUTTYvltrO30_KhYjO2lakHBbKU_JIMgYk2fJtInIVUCLh5-LI5ROSxkjCd3TwPDci4bl7KWWsiB51gCe7mgTSlOzTCRHa8Vrs-MWlzPTNswmmFWW1QuajHX1hbd6Kfd-rv2PoenxTNzpTrTnv04Q';
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface/60 via-transparent to-wood-dark/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
       {/* Top HUD — Energy + Biome */}
@@ -125,7 +125,7 @@ export function BushveldScreen() {
       </div>
 
       {/* Resources as spatial points — tap to forage */}
-      <div className="relative z-10 flex-1" style={{ minHeight: '60vh' }}>
+      <div className="relative z-10 flex-1 bg-black/25" style={{ minHeight: '60vh' }}>
         {RESOURCES.map((r) => (
           <button
             key={r.id}
