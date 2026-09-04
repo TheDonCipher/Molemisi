@@ -80,7 +80,7 @@ export function BushveldScreen() {
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
       {/* Background */}
-      <div className="fixed inset-0 z-0">
+      <div className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-0">
         <img
           alt="Botswana Savanna"
           className="w-full h-full object-cover object-center filter saturate-[1.1]"
