@@ -22,7 +22,7 @@ export class BuildingsController {
   ) {}
 
   @Get()
-  async listBuildings(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async listBuildings(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.buildingsService.listBuildings(farmId);
   }
@@ -30,7 +30,7 @@ export class BuildingsController {
   @Get('available')
   async getAvailableBuildings(
     @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.buildingsService.getAvailableBuildings(farmId);
@@ -40,7 +40,7 @@ export class BuildingsController {
   @HttpCode(HttpStatus.CREATED)
   async constructBuilding(
     @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
     @Body('buildingType') buildingType: string,
   ) {
     return this.buildingsService.constructBuilding(farmId, userId, buildingType);
@@ -50,7 +50,7 @@ export class BuildingsController {
   async upgradeBuilding(
     @Param('farmId') farmId: string,
     @Param('buildingId') buildingId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.buildingsService.upgradeBuilding(farmId, userId, buildingId);
   }
@@ -59,7 +59,7 @@ export class BuildingsController {
   async maintainBuilding(
     @Param('farmId') farmId: string,
     @Param('buildingId') buildingId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.buildingsService.maintainBuilding(farmId, userId, buildingId);
   }

@@ -22,7 +22,7 @@ export class LivestockController {
   ) {}
 
   @Get()
-  async listLivestock(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async listLivestock(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.livestockService.listLivestock(farmId);
   }
@@ -30,7 +30,7 @@ export class LivestockController {
   @Get('available')
   async getAvailableAnimals(
     @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.livestockService.getAvailableAnimals(farmId);
@@ -40,7 +40,7 @@ export class LivestockController {
   @HttpCode(HttpStatus.CREATED)
   async purchaseAnimal(
     @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
     @Body('animalType') animalType: string,
     @Body('name') name?: string,
   ) {
@@ -51,7 +51,7 @@ export class LivestockController {
   async feedAnimal(
     @Param('farmId') farmId: string,
     @Param('animalId') animalId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.livestockService.feedAnimal(farmId, userId, animalId);
   }
@@ -60,7 +60,7 @@ export class LivestockController {
   async collectProduct(
     @Param('farmId') farmId: string,
     @Param('animalId') animalId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.livestockService.collectProduct(farmId, userId, animalId);
   }
@@ -69,7 +69,7 @@ export class LivestockController {
   async petAnimal(
     @Param('farmId') farmId: string,
     @Param('animalId') animalId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.livestockService.petAnimal(farmId, userId, animalId);
   }

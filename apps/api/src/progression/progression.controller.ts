@@ -9,7 +9,7 @@ export class ProgressionController {
   constructor(private progressionService: ProgressionService) {}
 
   @Get()
-  async getProgression(@CurrentUser('userId') userId: string) {
+  async getProgression(@CurrentUser('id') userId: string) {
     return this.progressionService.getProgression(userId);
   }
 }

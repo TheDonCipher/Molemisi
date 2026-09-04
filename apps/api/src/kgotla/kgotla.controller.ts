@@ -13,7 +13,7 @@ export class KgotlaController {
   ) {}
 
   @Get('npcs')
-  async getNPCs(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async getNPCs(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.kgotlaService.getNPCs(farmId);
   }
@@ -22,7 +22,7 @@ export class KgotlaController {
   async talkToNPC(
     @Param('farmId') farmId: string,
     @Param('npcId') npcId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.kgotlaService.talkToNPC(farmId, userId, npcId);
   }
@@ -31,14 +31,14 @@ export class KgotlaController {
   async completeQuest(
     @Param('farmId') farmId: string,
     @Param('npcId') npcId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
     @Body('questType') questType: string,
   ) {
     return this.kgotlaService.completeQuest(farmId, userId, npcId, questType);
   }
 
   @Get('projects')
-  async getProjects(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async getProjects(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.kgotlaService.getProjects(farmId);
   }
@@ -47,7 +47,7 @@ export class KgotlaController {
   async donateToProject(
     @Param('farmId') farmId: string,
     @Param('projectId') projectId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
     @Body('amount') amount: number,
   ) {
     return this.kgotlaService.donateToProject(farmId, userId, projectId, amount);

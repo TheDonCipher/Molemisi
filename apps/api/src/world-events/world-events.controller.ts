@@ -13,13 +13,13 @@ export class WorldEventsController {
   ) {}
 
   @Get('active')
-  async getActiveEvents(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async getActiveEvents(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.worldEventsService.getActiveEvents();
   }
 
   @Get('available')
-  async getAvailableEvents(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async getAvailableEvents(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.worldEventsService.getAvailableEvents(farmId);
   }
@@ -29,14 +29,14 @@ export class WorldEventsController {
   async triggerEvent(
     @Param('farmId') farmId: string,
     @Param('eventId') eventId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.worldEventsService.triggerEvent(farmId, eventId);
   }
 
   @Get('effects')
-  async getEventEffects(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async getEventEffects(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.worldEventsService.getEventEffects(farmId);
   }

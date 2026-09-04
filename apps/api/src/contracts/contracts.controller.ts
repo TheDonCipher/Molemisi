@@ -24,14 +24,14 @@ export class ContractsController {
   @Get('available')
   async getAvailableContracts(
     @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.contractsService.getAvailableContracts(farmId);
   }
 
   @Get('active')
-  async getActiveContracts(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async getActiveContracts(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.contractsService.getActiveContracts(farmId);
   }
@@ -40,7 +40,7 @@ export class ContractsController {
   @HttpCode(HttpStatus.CREATED)
   async acceptContract(
     @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
     @Body('contractId') contractId: string,
   ) {
     return this.contractsService.acceptContract(farmId, userId, contractId);
@@ -50,7 +50,7 @@ export class ContractsController {
   async completeContract(
     @Param('farmId') farmId: string,
     @Param('activeContractId') activeContractId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.contractsService.completeContract(farmId, userId, activeContractId);
   }

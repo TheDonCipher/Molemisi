@@ -22,7 +22,7 @@ export class BushveldController {
   ) {}
 
   @Get('zones')
-  async getZones(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async getZones(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.bushveldService.getZones(farmId);
   }
@@ -31,14 +31,14 @@ export class BushveldController {
   @HttpCode(HttpStatus.OK)
   async gatherResources(
     @Param('farmId') farmId: string,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('id') userId: string,
     @Body('zoneId') zoneId: string,
   ) {
     return this.bushveldService.gatherResources(farmId, userId, zoneId);
   }
 
   @Get('history')
-  async getHistory(@Param('farmId') farmId: string, @CurrentUser('userId') userId: string) {
+  async getHistory(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.bushveldService.getGatheringHistory(farmId);
   }
