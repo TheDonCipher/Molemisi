@@ -11,10 +11,7 @@ function getAdminToken() {
   return localStorage.getItem('molemisi_admin_token');
 }
 
-async function apiFetch<T = unknown>(
-  method: string,
-  path: string,
-): Promise<T> {
+async function apiFetch<T = unknown>(method: string, path: string): Promise<T> {
   const token = getAdminToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -35,11 +32,7 @@ const NAV_ITEMS = [
   { href: '/game', label: '← Back to Game', icon: '🎮' },
 ];
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
@@ -80,8 +73,8 @@ export default function AdminLayout({
             Access Denied
           </h1>
           <p className="font-body text-sm text-on-surface-variant mb-4">
-            You don&apos;t have admin privileges. This area is restricted
-            to authorized administrators only.
+            You don&apos;t have admin privileges. This area is restricted to authorized
+            administrators only.
           </p>
           <Link
             href="/game"
@@ -106,8 +99,7 @@ export default function AdminLayout({
         <nav className="flex-1 py-2">
           {NAV_ITEMS.map((item) => {
             const isActive =
-              pathname === item.href ||
-              (item.href !== '/admin' && pathname.startsWith(item.href));
+              pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}
@@ -124,8 +116,18 @@ export default function AdminLayout({
             );
           })}
         </nav>
-        <div className="px-4 py-3 border-t-2 border-wood-border">
-          <span className="font-mono text-[9px] text-on-surface-variant">
+        <div className="px-4 py-3 border-t-2 border-wood-border space-y-2">
+          <button
+            onClick={() => {
+              localStorage.removeItem('molemisi_admin_token');
+              localStorage.removeItem('molemisi_admin_email');
+              window.location.href = '/admin/login';
+            }}
+            className="w-full px-3 py-2 bg-status-danger/20 text-status-danger font-mono text-[10px] uppercase font-bold border border-status-danger/30 hover:bg-status-danger/30 transition-colors text-center"
+          >
+            🚪 Logout
+          </button>
+          <span className="font-mono text-[9px] text-on-surface-variant block text-center">
             Molemisi Admin v0.1.0
           </span>
         </div>
@@ -133,11 +135,10 @@ export default function AdminLayout({
 
       {/* Mobile nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-wood-medium border-t-2 border-wood-border">
-        <nav className="grid grid-cols-5 h-14">
+        <nav className="grid grid-cols-6 h-14">
           {NAV_ITEMS.map((item) => {
             const isActive =
-              pathname === item.href ||
-              (item.href !== '/admin' && pathname.startsWith(item.href));
+              pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}
@@ -149,19 +150,26 @@ export default function AdminLayout({
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>
-                <span className="font-mono text-[9px] uppercase mt-0.5">
-                  {item.label}
-                </span>
+                <span className="font-mono text-[9px] uppercase mt-0.5">{item.label}</span>
               </Link>
             );
           })}
+          <button
+            onClick={() => {
+              localStorage.removeItem('molemisi_admin_token');
+              localStorage.removeItem('molemisi_admin_email');
+              window.location.href = '/admin/login';
+            }}
+            className="flex flex-col items-center justify-center text-center text-status-danger"
+          >
+            <span className="text-lg">🚪</span>
+            <span className="font-mono text-[9px] uppercase mt-0.5">Exit</span>
+          </button>
         </nav>
       </div>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto pb-20 md:pb-0">
-        {children}
-      </main>
+      <main className="flex-1 overflow-auto pb-20 md:pb-0">{children}</main>
     </div>
   );
 }
