@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { GameProvider, useGame } from '../../lib/gameState';
 import { HeaderNav } from '../../components/HeaderNav';
 import { MobileFooterNav } from '../../components/MobileFooterNav';
@@ -13,7 +13,7 @@ import { MarketScreen } from '../../components/screens/MarketScreen';
 import { SettingsScreen } from '../../components/screens/SettingsScreen';
 
 function GameContent() {
-  const { activeNav } = useGame();
+  const { activeNav, loading } = useGame();
 
   const renderScreen = () => {
     const current = activeNav.toLowerCase();
@@ -38,6 +38,18 @@ function GameContent() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#210e0b]">
+        <div className="text-4xl mb-4 animate-bounce">🌾</div>
+        <p className="font-headline text-sm text-primary uppercase font-bold">Loading Farm...</p>
+        <p className="font-body text-xs text-on-surface-variant mt-1">
+          Preparing today&apos;s work...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-surface text-on-surface font-body select-none">
       {/* Top Header */}
@@ -57,10 +69,38 @@ function GameContent() {
   );
 }
 
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('molemisi_token') || localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/auth/login';
+      return;
+    }
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#210e0b]">
+        <div className="text-4xl mb-4 animate-pulse">🌾</div>
+        <p className="font-headline text-sm text-primary uppercase font-bold">
+          Checking credentials...
+        </p>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 export default function GamePage() {
   return (
-    <GameProvider>
-      <GameContent />
-    </GameProvider>
+    <AuthGuard>
+      <GameProvider>
+        <GameContent />
+      </GameProvider>
+    </AuthGuard>
   );
 }

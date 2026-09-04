@@ -30,6 +30,7 @@ export default function RegisterPage() {
       }
 
       // Store token and redirect to game
+      localStorage.setItem('molemisi_token', data.data.token);
       localStorage.setItem('token', data.data.token);
       window.location.href = '/game';
     } catch {
