@@ -191,8 +191,8 @@ export function MarketScreen() {
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
-      {/* Background */}
-      <div className="absolute inset-0 z-0">
+      {/* Background — fixed so it never stretches with content */}
+      <div className="fixed inset-0 z-0">
         <img
           alt="Village Market"
           className="w-full h-full object-cover object-center filter saturate-[1.1]"
