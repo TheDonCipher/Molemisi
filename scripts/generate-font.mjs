@@ -31,17 +31,18 @@ const GLYPH_PX = parseInt(getArg('--px', '16'), 10);
 const SEED = getArg('--seed') ? parseInt(getArg('--seed'), 10) : Math.floor(Math.random() * 1e9);
 
 /**
- * Style description distilled from docs/Font_Guide.png:
- * cultural/tribal pixel display font — spurred & bracketed terminals,
- * geometric diamond accents, grid-constrained uniformity, high contrast.
+ * Style description per the Molemisi font spec: 16-bit RPG pixel font,
+ * bold geometric glyphs, sharp carved spur serifs, tribal bracketed
+ * terminals, uniform line weight, crisp off-white, no anti-aliasing.
  */
 const DESCRIPTION = [
-  'cultural tribal pixel display font inspired by Southern African beadwork and carved wooden type,',
-  'sharp triangular spurs and bracketed serifs on letterforms,',
-  'small geometric diamond accent notches embedded in strokes,',
-  'strict pixel grid with uniform line weight,',
-  'high-contrast heavy display silhouette with distinctive cutout counters,',
-  'rustic western woodtype feel, warm cream ink color, legible at small sizes',
+  '16-bit RPG pixel font for game UI, bold geometric glyphs,',
+  'sharp carved spur serifs and tribal bracketed terminals,',
+  'uniform line weight on a strict pixel grid,',
+  'crisp off-white letters, clean pixel lines, no anti-aliasing,',
+  'high-contrast display silhouette with distinctive cutout counters,',
+  'complete uppercase A-Z, lowercase a-z, numbers 0-9 and basic punctuation,',
+  'retro game UI aesthetic, legible at small sizes',
 ].join(' ');
 
 const FONT_NAME = 'Molemisi Pixel';

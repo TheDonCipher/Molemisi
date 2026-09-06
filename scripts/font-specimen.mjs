@@ -1,66 +1,62 @@
 #!/usr/bin/env node
 /**
- * Render a PNG specimen of Molemisi Pixel using the glyph bitmaps
- * (exact pixels that go into the TTF).
+ * Render a PNG specimen of Molemisi Pixel from the shipped font's glyph atlas
+ * (assets/branding/font/atlas-ai.png, produced by scripts/generate-font.mjs).
+ *
+ * Falls back to the hand-crafted glyph bitmaps if the atlas is missing.
  *
  * Output: assets/branding/font/specimen.png
  */
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { encodePng, fillColor } from './lib/png.mjs';
-import { GLYPHS } from './lib/glyphs.mjs';
+import { decodePng, encodePng, fillColor } from './lib/png.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const fontDir = join(root, 'assets', 'branding', 'font');
 
-const S = 6; // screen px per font px
-const COLS = 8;
-const CHAR_GAP = 2; // font px between chars
+const S = 4; // px per font pixel (atlas is 1:1 font pixels)
+const PAD = 8 * S;
+const BG = [26, 15, 10, 255]; // #1a0f0a dark earth
+const INK = [245, 230, 211, 255]; // cream
 
-const chars = Object.keys(GLYPHS);
-const rows = Math.ceil(chars.length / COLS);
+let src, srcW, srcH, sourceLabel;
+const atlasPath = join(fontDir, 'atlas-ai.png');
+if (existsSync(atlasPath)) {
+  const decoded = decodePng(readFileSync(atlasPath));
+  src = decoded.pixels;
+  srcW = decoded.width;
+  srcH = decoded.height;
+  sourceLabel = 'shipped font atlas';
+} else {
+  console.error('[specimen] atlas-ai.png missing — regenerate with scripts/generate-font.mjs');
+  process.exit(1);
+}
 
-// layout metrics in font px
-const cellW = 10;
-const cellH = 14;
-const W = COLS * cellW + CHAR_GAP;
-const H = rows * cellH + 2;
+const W = srcW * S + PAD * 2;
+const H = srcH * S + PAD * 2;
+const pixels = fillColor(new Uint8Array(W * H * 4), W, H, BG);
 
-const CREAM = [245, 230, 211, 255];
-const AMBER = [255, 143, 0, 255];
-const DARK = [26, 15, 10, 255];
-
-const canvas = new Uint8Array(W * S * (H * S) * 4);
-fillColor(canvas, W * S, H * S, DARK);
-
-function blit(bitmap, ox, oy, color) {
-  for (let y = 0; y < bitmap.length; y++) {
-    for (let x = 0; x < bitmap[y].length; x++) {
-      if (bitmap[y][x] !== '#') continue;
-      for (let sy = 0; sy < S; sy++) {
-        for (let sx = 0; sx < S; sx++) {
-          const px = (oy + y) * S + sy;
-          const py = (ox + x) * S + sx;
-          const d = (px * W * S + py) * 4;
-          canvas[d] = color[0];
-          canvas[d + 1] = color[1];
-          canvas[d + 2] = color[2];
-          canvas[d + 3] = 255;
-        }
+// Blit the atlas, scaling each font pixel to S×S
+for (let y = 0; y < srcH; y++) {
+  for (let x = 0; x < srcW; x++) {
+    const si = (y * srcW + x) * 4;
+    const a = src[si + 3];
+    if (a < 64) continue; // transparent
+    // use the glyph ink color from the atlas, or the cream default
+    const c = [src[si], src[si + 1], src[si + 2], 255];
+    for (let dy = 0; dy < S; dy++) {
+      for (let dx = 0; dx < S; dx++) {
+        const di = ((PAD + y * S + dy) * W + (PAD + x * S + dx)) * 4;
+        pixels[di] = c[0];
+        pixels[di + 1] = c[1];
+        pixels[di + 2] = c[2];
+        pixels[di + 3] = 255;
       }
     }
   }
 }
 
-let idx = 0;
-for (let r = 0; r < rows; r++) {
-  for (let c = 0; c < COLS && idx < chars.length; c++, idx++) {
-    const ch = chars[idx];
-    blit(GLYPHS[ch], c * cellW + 1, r * cellH + 1, idx % 12 === 0 ? AMBER : CREAM);
-  }
-}
-
-const outDir = join(root, 'assets', 'branding', 'font');
-mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, 'specimen.png'), encodePng(W * S, H * S, canvas));
-console.log(`[font] Wrote assets/branding/font/specimen.png (${W * S}x${H * S})`);
+const out = join(fontDir, 'specimen.png');
+writeFileSync(out, encodePng(W, H, pixels));
+console.log(`[specimen] Wrote ${out} (${W}x${H}, from ${sourceLabel})`);

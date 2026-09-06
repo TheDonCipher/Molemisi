@@ -33,10 +33,10 @@ The emblem is a **golden sorghum sprig** (three seed heads) rising from a **red-
 
 ## Typography — Molemisi Pixel
 
-The game's display typeface is **Molemisi Pixel Bold**, a custom cultural/tribal pixel font (see `docs/Font_Guide.png`): spurred & bracketed terminals, geometric diamond counters, uniform 2px stroke weight on a strict grid, high-contrast silhouette. Use it for titles, menus, dialogue headers, and HUD — never for long paragraphs (body text uses Rubik).
+The game's display typeface is **Molemisi Pixel Bold**, a custom 16-bit RPG pixel font (see `docs/Font_Guide.png`): bold geometric glyphs, sharp carved spur serifs, tribal bracketed terminals, uniform line weight on a strict pixel grid, crisp off-white with no anti-aliasing. Use it for titles, menus, dialogue headers, and HUD — never for long paragraphs (body text uses Rubik).
 
 - Font file: `assets/branding/font/MolemisiPixel-Bold.ttf` (also `apps/web/public/fonts/`)
-- Specimen: `assets/branding/font/specimen.png`
+- Specimen: `assets/branding/font/specimen.png` (hand-crafted reference) · `assets/branding/font/atlas-ai.png` (shipped font glyph atlas)
 - Don't simulate the font by pixelating other typefaces.
 
 The wordmark is **MOLEMISI** set in the same pixel style, amber on dark / dark brown on cream. Always use the provided files — do not typeset the name yourself.
