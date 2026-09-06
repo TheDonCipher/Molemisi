@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Molemisi font probe</title>
+<style>
+  @font-face {
+    font-family: 'Molemisi Pixel';
+    src: url('/fonts/MolemisiPixel-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: block;
+  }
+  body { background: #1a0f0a; color: #f5e6d3; font-family: monospace; margin: 12px; }
+  .spec { margin: 6px 0; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="status">probing…</div>
+<div id="report"></div>
+<div id="specs"></div>
+<script>
+  (async () => {
+    const report = document.getElementById('report');
+    const specs = document.getElementById('specs');
+    const status = document.getElementById('status');
+    const rows = [];
+
+    let faceStatus = 'not-registered';
+    try {
+      const face = new FontFace('Molemisi Pixel', "url('/fonts/MolemisiPixel-Bold.ttf')", { weight: '700' });
+      document.fonts.add(face);
+      await face.load();
+      faceStatus = face.status;
+    } catch (e) {
+      faceStatus = 'load-failed: ' + e.message;
+    }
+    const activated = document.fonts.check("12px 'Molemisi Pixel'");
+    rows.push('face.status=' + faceStatus, 'fonts.check(12px)=' + activated);
+
+    // Canvas crispness per panel size: render glyph to offscreen canvas at
+    // native size and count how many pixels are "solid ink" vs partial.
+    const c = document.createElement('canvas');
+    c.width = 240;
+    c.height = 48;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    const out = [];
+    for (const px of [8, 10, 11, 12, 14, 16, 24, 32]) {
+      // measure Molemisi Pixel AND a control font (monospace) at the same size
+      const measure = (fontSpec) => {
+        ctx.clearRect(0, 0, c.width, c.height);
+        ctx.font = fontSpec;
+        ctx.fillStyle = '#fff';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Build', 4, 4);
+        const data = ctx.getImageData(0, 0, c.width, c.height).data;
+        let solid = 0, partial = 0, minX = 1e9, maxX = -1, minY = 1e9, maxY = -1;
+        for (let i = 0; i < data.length; i += 4) {
+          const a = data[i + 3];
+          if (a > 245) solid++;
+          else if (a > 8) partial++;
+          if (a > 8) {
+            const p = i / 4;
+            const x = p % c.width;
+            const y = (p / c.width) | 0;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+        return {
+          width: ctx.measureText('Build').width,
+          solid, partial,
+          crisp: solid + partial ? Math.round((100 * solid) / (solid + partial)) : -1,
+          inkW: maxX - minX + 1, inkH: maxY - minY + 1,
+        };
+      };
+      const mol = measure("700 " + px + "px 'Molemisi Pixel'");
+      const ctl = measure("700 " + px + "px monospace");
+      out.push(
+        px + 'px MOL: width=' + mol.width.toFixed(1) + ' crisp=' + mol.crisp + '% ink=' + mol.inkW + 'x' + mol.inkH +
+        ' | MONO: width=' + ctl.width.toFixed(1) + ' crisp=' + ctl.crisp + '%' +
+        ' | distinct=' + (Math.abs(mol.width - ctl.width) > 0.5)
+      );
+    }
+    rows.push(...out);
+
+    // DOM specimens at each size (screenshot artifact)
+    for (const px of [10, 12, 16, 24, 32]) {
+      const d = document.createElement('div');
+      d.className = 'spec';
+      d.style.font = "700 " + px + "px 'Molemisi Pixel'";
+      d.textContent = px + 'px: BUILDINGS 1,240P Water 68% Kgotla — Ready';
+      specs.appendChild(d);
+    }
+
+    status.textContent = 'done';
+    report.innerHTML = rows.map((r) => '<div>' + r + '</div>').join('');
+    document.title = 'PROBE-DONE';
+  })();
+</script>
+</body>
+</html>
