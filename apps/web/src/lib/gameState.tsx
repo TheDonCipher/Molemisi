@@ -8,6 +8,7 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react';
+import { resolveItemIcon, pixelItemIcon } from './pixelIcons';
 
 // ============================================================
 // API helper
@@ -73,6 +74,8 @@ export interface InventoryItem {
   name: string;
   category: 'crops' | 'animal' | 'materials' | 'tools' | 'seed';
   icon: string;
+  /** Pixel-art icon URL (PixelLab) — falls back to emoji `icon` when null. */
+  image?: string | null;
   quantity: number;
   unitValue: number;
   grade: string;
@@ -124,6 +127,10 @@ export interface MarketItem {
   name: string;
   category: string;
   icon: string;
+  /** Pixel-art icon URL (PixelLab) — falls back to emoji `icon` when null. */
+  image?: string | null;
+  /** itemType for pixel icon lookup (e.g. "sorghum_seed"). */
+  itemType?: string;
   price: number;
   description: string;
   badge?: string;
@@ -273,6 +280,7 @@ const DEMO_INVENTORY: InventoryItem[] = [
     name: 'Sorghum Seeds',
     category: 'seed',
     icon: '🌾',
+    image: resolveItemIcon('sorghum_seed'),
     quantity: 10,
     unitValue: 10,
     grade: 'Normal',
@@ -284,6 +292,7 @@ const DEMO_INVENTORY: InventoryItem[] = [
     name: 'Maize Seeds',
     category: 'seed',
     icon: '🌽',
+    image: resolveItemIcon('maize_seed'),
     quantity: 5,
     unitValue: 8,
     grade: 'Normal',
@@ -295,20 +304,24 @@ const DEMO_INVENTORY: InventoryItem[] = [
     name: 'Sorghum',
     category: 'crops',
     icon: '🌾',
+    image: resolveItemIcon('sorghum'),
     quantity: 8,
     unitValue: 10,
     grade: 'Normal',
     description: 'Harvested sorghum grain.',
+    itemType: 'sorghum',
   },
   {
     id: 'inv-4',
     name: 'Acacia Wood',
     category: 'materials',
     icon: '🪵',
+    image: resolveItemIcon('acacia_wood'),
     quantity: 20,
     unitValue: 4,
     grade: 'Seasoned',
     description: 'Hardwood timber.',
+    itemType: 'acacia_wood',
   },
 ];
 
@@ -318,6 +331,8 @@ const DEMO_MARKET_ITEMS: MarketItem[] = [
     name: 'Sorghum Seeds',
     category: 'Cereal Crop',
     icon: '🌾',
+    image: pixelItemIcon('sorghum_seed'),
+    itemType: 'sorghum_seed',
     price: 15,
     description: 'Staple drought-resistant grain.',
     badge: 'Popular',
@@ -327,6 +342,8 @@ const DEMO_MARKET_ITEMS: MarketItem[] = [
     name: 'White Maize Seeds',
     category: 'Staple Grain',
     icon: '🌽',
+    image: pixelItemIcon('maize_seed'),
+    itemType: 'maize_seed',
     price: 12,
     description: 'High yield sweet corn.',
   },
@@ -335,6 +352,8 @@ const DEMO_MARKET_ITEMS: MarketItem[] = [
     name: 'Cowpea Seeds',
     category: 'Legume',
     icon: '🫘',
+    image: pixelItemIcon('cowpeas_seed'),
+    itemType: 'cowpeas_seed',
     price: 18,
     description: 'Nitrogen-fixing pulse.',
   },
@@ -343,6 +362,8 @@ const DEMO_MARKET_ITEMS: MarketItem[] = [
     name: 'Groundnut Seeds',
     category: 'Cash Crop',
     icon: '🥜',
+    image: pixelItemIcon('groundnuts_seed'),
+    itemType: 'groundnuts_seed',
     price: 20,
     description: 'Valuable root crop.',
   },
@@ -351,6 +372,8 @@ const DEMO_MARKET_ITEMS: MarketItem[] = [
     name: 'Heritage Tomato',
     category: 'Specialty',
     icon: '🍅',
+    image: pixelItemIcon('tomatoes_seed'),
+    itemType: 'tomatoes_seed',
     price: 25,
     description: 'Heirloom variety.',
   },
@@ -735,6 +758,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               name: isSeed ? `${getCropName(cropType)} Seeds` : getCropName(item.itemType),
               category: CATEGORY_MAP[item.itemCategory] || 'crops',
               icon: isSeed ? '🌱' : getCropIcon(item.itemType),
+              image: resolveItemIcon(item.itemType),
               quantity: item.quantity,
               unitValue: 10,
               grade: item.quality || 'Normal',
@@ -775,6 +799,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           name: `${getCropName(p.itemType)} Seeds`,
           category: p.category || 'Crop',
           icon: getCropIcon(p.itemType),
+          image: pixelItemIcon(`${p.itemType}_seed`) || pixelItemIcon(p.itemType),
+          itemType: `${p.itemType}_seed`,
           price: p.basePrice || 15,
           description: `Buy ${getCropName(p.itemType)} seeds to plant.`,
           badge: undefined,

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useGame, InventoryItem } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
+import { PixelIcon } from '@/components/PixelIcon';
 
 export function InventoryScreen() {
   const { inventory, selectedItem, setSelectedItem, sellInventoryItem, setActiveNav } = useGame();
@@ -88,7 +89,7 @@ export function InventoryScreen() {
                 : 'border-wood-border hover:border-primary/30'
             }`}
           >
-            <span className="text-2xl mb-0.5">{item.icon}</span>
+            <PixelIcon itemType={item.itemType} emoji={item.icon} size={30} className="mb-0.5" />
             <span className="font-mono text-[9px] text-cream-surface font-bold">
               {item.quantity}
             </span>
@@ -111,7 +112,12 @@ export function InventoryScreen() {
       {selectedItem && (
         <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
           <div className="flex items-start gap-3 mb-3">
-            <span className="text-3xl">{selectedItem.icon}</span>
+            <div
+              className="w-14 h-14 bg-surface-container-low border-2 border-wood-border flex items-center justify-center shrink-0"
+              style={{ imageRendering: 'pixelated' }}
+            >
+              <PixelIcon itemType={selectedItem.itemType} emoji={selectedItem.icon} size={44} />
+            </div>
             <div className="flex-1">
               <h3 className="font-headline text-sm text-cream-surface font-bold">
                 {selectedItem.name}

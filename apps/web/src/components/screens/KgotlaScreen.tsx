@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useGame, DeliveryContract } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
-
 const NPCS = [
   {
     name: 'Elder Neo',
@@ -61,15 +60,24 @@ export function KgotlaScreen() {
 
   const [selectedNpc, setSelectedNpc] = useState<number | null>(null);
   const [showContracts, setShowContracts] = useState(false);
+  const [detailContract, setDetailContract] = useState<DeliveryContract | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const npc = selectedNpc !== null ? NPCS[selectedNpc] : null;
   const npcContracts = npc ? contracts.filter((c) => npc.contractFilter(c)) : [];
 
+  /** The NPC associated with the contract open in the detail modal (defaults to Elder Neo). */
+  const detailNpc = detailContract
+    ? (NPCS.find((n) => n.contractFilter(detailContract)) ?? NPCS[0])
+    : null;
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
   };
+
+  /** Opens a contract's detail view anchored under the NPC's portrait. */
+  const openContractDetail = (contract: DeliveryContract) => setDetailContract(contract);
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
@@ -192,22 +200,28 @@ export function KgotlaScreen() {
                 const isComplete = contract.current >= contract.target;
                 return (
                   <div key={contract.id} className="bg-wood-dark/95 p-3 border border-wood-border">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <span className="font-headline text-xs text-cream-surface font-bold block">
-                          {contract.title}
-                        </span>
-                        <span className="font-mono text-[9px] text-on-surface-variant">
-                          {contract.source} • {contract.expiresIn}
+                    <button
+                      onClick={() => openContractDetail(contract)}
+                      className="w-full text-left"
+                      aria-label={`${tl('viewDetails') || 'View details'}: ${contract.title}`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <span className="font-headline text-xs text-cream-surface font-bold block">
+                            {contract.title}
+                          </span>
+                          <span className="font-mono text-[9px] text-on-surface-variant">
+                            {contract.source} • {contract.expiresIn}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[9px] text-gold-currency font-bold">
+                          P{contract.pulaReward}
                         </span>
                       </div>
-                      <span className="font-mono text-[9px] text-gold-currency font-bold">
-                        P{contract.pulaReward}
-                      </span>
-                    </div>
-                    <p className="font-body text-[10px] text-on-surface-variant mb-2">
-                      {contract.description}
-                    </p>
+                      <p className="font-body text-[10px] text-on-surface-variant mb-2">
+                        {contract.description}
+                      </p>
+                    </button>
                     <div className="mb-2">
                       <div className="flex justify-between font-mono text-[9px] text-on-surface-variant mb-0.5">
                         <span>
@@ -260,49 +274,51 @@ export function KgotlaScreen() {
         </div>
       </div>
 
-      {/* NPC Dialogue Card */}
+      {/* NPC Dialogue Card — portrait sits on top, centered */}
       {npc && !showContracts && (
         <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
-          <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
-            <div className="flex items-center gap-3 mb-3">
-              <div
-                className="w-12 h-12 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center shrink-0 rounded-sm"
+          {/* Portrait above the dialog, face centered and visible */}
+          <div className="flex justify-center relative z-10 -mb-px">
+            <div
+              className="w-24 h-24 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center shadow-[2px_2px_0px_rgba(0,0,0,0.6)]"
+              style={{ imageRendering: 'pixelated' }}
+            >
+              <img
+                src={npc.avatar}
+                alt={npc.name}
+                className="w-full h-full object-cover object-top"
                 style={{ imageRendering: 'pixelated' }}
-              >
-                <img
-                  src={npc.avatar}
-                  alt={npc.name}
-                  className="w-10 h-10 object-contain"
-                  style={{ imageRendering: 'pixelated' }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-                <span className="text-2xl hidden">{npc.fallback}</span>
-              </div>
-              <div>
-                <span className="font-headline text-sm text-cream-surface font-bold">
-                  {npc.name}
-                </span>
-                <span className="font-mono text-[10px] text-on-surface-variant block">
-                  {npc.role}
-                </span>
-              </div>
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = 'none';
+                  const fallback = img.nextElementSibling as HTMLElement | null;
+                  if (fallback) fallback.classList.remove('hidden');
+                }}
+              />
+              <span className="text-5xl hidden">{npc.fallback}</span>
             </div>
-            <p className="font-body text-xs text-cream-surface mb-3 leading-relaxed">
+          </div>
+          <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
+            <div className="text-center mb-3">
+              <span className="font-headline text-sm text-cream-surface font-bold">{npc.name}</span>
+              <span className="font-mono text-[10px] text-primary uppercase block">{npc.role}</span>
+            </div>
+            <p className="font-body text-xs text-cream-surface mb-3 leading-relaxed text-center bg-surface-container-lowest/60 p-2.5 border border-wood-border/50">
               &ldquo;{npc.dialogue}&rdquo;
             </p>
 
             {npcContracts.length > 0 && (
               <div className="mb-3">
+                <span className="font-mono text-[9px] text-on-surface-variant uppercase block mb-1.5">
+                  {tl('activeContracts')}
+                </span>
                 {npcContracts.map((c) => {
-                  const progressPct = Math.round((c.current / c.target) * 100);
                   const isComplete = c.current >= c.target;
                   return (
-                    <div
+                    <button
                       key={c.id}
-                      className="bg-surface-container-lowest p-2.5 border border-wood-border mb-1.5"
+                      onClick={() => openContractDetail(c)}
+                      className="w-full text-left bg-surface-container-lowest p-2.5 border border-wood-border mb-1.5 hover:border-primary/50 transition-all active:translate-y-0.5"
                     >
                       <div className="flex justify-between items-center mb-1">
                         <span className="font-headline text-[11px] text-primary font-bold">
@@ -312,42 +328,25 @@ export function KgotlaScreen() {
                           P{c.pulaReward}
                         </span>
                       </div>
-                      <span className="font-mono text-[9px] text-on-surface-variant block mb-1.5">
-                        {c.description}
-                      </span>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          <div className="w-16 h-1 bg-surface-container-high overflow-hidden">
-                            <div
-                              className="h-full bg-status-warning"
-                              style={{ width: `${progressPct}%` }}
-                            />
-                          </div>
-                          <span className="font-mono text-[9px] text-on-surface-variant">
-                            {c.current}/{c.target}
-                          </span>
-                        </div>
+                        <span className="font-mono text-[9px] text-on-surface-variant">
+                          {c.current}/{c.target} {c.unit}
+                        </span>
                         {c.claimed ? (
-                          <span className="font-mono text-[9px] text-status-success font-bold">
+                          <span className="font-mono text-[9px] text-status-success font-bold uppercase">
                             {tl('claimed')}
                           </span>
                         ) : isComplete ? (
-                          <button
-                            onClick={() => {
-                              claimContract(c.id);
-                              showToast(tl('claimReward'));
-                            }}
-                            className="px-2 py-0.5 bg-status-success text-wood-dark font-mono text-[9px] uppercase font-bold active:translate-y-0.5"
-                          >
-                            {tl('claimReward')}
-                          </button>
+                          <span className="font-mono text-[9px] text-status-success font-bold uppercase">
+                            {tl('claimReward')} →
+                          </span>
                         ) : (
-                          <span className="font-mono text-[9px] text-on-surface-variant">
-                            {tl('inProgress')}
+                          <span className="font-mono text-[9px] text-primary uppercase font-bold">
+                            {tl('viewDetails')} →
                           </span>
                         )}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -370,6 +369,109 @@ export function KgotlaScreen() {
                 className="py-2 px-4 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
               >
                 {tl('leave')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contract Detail Modal — full flow with accept/claim */}
+      {detailContract && (
+        <div
+          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setDetailContract(null)}
+        >
+          <div
+            className="w-full max-w-sm bg-wood-dark border-2 border-wood-border shadow-[4px_4px_0px_rgba(0,0,0,0.6)] animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* NPC portrait above the contract card */}
+            <div className="flex justify-center relative z-10 -mb-px pt-4">
+              <div
+                className="w-20 h-20 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center"
+                style={{ imageRendering: 'pixelated' }}
+              >
+                <img
+                  src={detailNpc?.avatar ?? NPCS[0]?.avatar}
+                  alt={detailNpc?.name ?? 'NPC'}
+                  className="w-full h-full object-cover object-top"
+                  style={{ imageRendering: 'pixelated' }}
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.style.display = 'none';
+                    const fallback = img.nextElementSibling as HTMLElement | null;
+                    if (fallback) fallback.classList.remove('hidden');
+                  }}
+                />
+                <span className="text-4xl hidden">{detailNpc?.fallback ?? '👤'}</span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="text-center mb-3">
+                <span className="font-headline text-xs text-primary uppercase font-bold block">
+                  {detailNpc?.name ?? ''}
+                </span>
+                <span className="font-headline text-sm text-cream-surface font-bold block mt-1">
+                  {detailContract.title}
+                </span>
+              </div>
+              <p className="font-body text-xs text-cream-surface/90 mb-3 leading-relaxed text-center">
+                {detailContract.description}
+              </p>
+              <div className="bg-surface-container-lowest border border-wood-border p-3 mb-3">
+                <div className="flex justify-between font-mono text-[10px] mb-1">
+                  <span className="text-on-surface-variant">
+                    {detailContract.current}/{detailContract.target} {detailContract.unit}
+                  </span>
+                  <span className="text-on-surface-variant">
+                    {Math.round((detailContract.current / detailContract.target) * 100)}%
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-surface-container-high overflow-hidden mb-2">
+                  <div
+                    className={`h-full transition-all ${
+                      detailContract.current >= detailContract.target
+                        ? 'bg-status-success'
+                        : 'bg-status-warning'
+                    }`}
+                    style={{
+                      width: `${(detailContract.current / detailContract.target) * 100}%`,
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between font-mono text-[10px]">
+                  <span className="text-gold-currency font-bold">P{detailContract.pulaReward}</span>
+                  <span className="text-primary font-bold">+{detailContract.xpReward} XP</span>
+                  <span className="text-on-surface-variant">{detailContract.expiresIn}</span>
+                </div>
+              </div>
+              {detailContract.claimed ? (
+                <div className="text-center py-2 bg-surface-container-high font-mono text-xs text-on-surface-variant uppercase font-bold">
+                  {tl('claimed')}
+                </div>
+              ) : detailContract.current >= detailContract.target ? (
+                <button
+                  onClick={() => {
+                    claimContract(detailContract.id);
+                    showToast(tl('claimReward'));
+                    setDetailContract(null);
+                  }}
+                  className="w-full py-3 bg-status-success text-wood-dark font-headline text-sm uppercase font-bold active:translate-y-0.5"
+                >
+                  ✓ {tl('claimReward')}
+                </button>
+              ) : (
+                <div className="text-center py-2 bg-surface-container-high border border-wood-border">
+                  <span className="font-mono text-xs text-on-surface-variant uppercase">
+                    {tl('inProgress')} — {tl('deliverItemsHint') || 'deliver goods to claim'}
+                  </span>
+                </div>
+              )}
+              <button
+                onClick={() => setDetailContract(null)}
+                className="w-full mt-2 py-2 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
+              >
+                {tl('back') || 'Back'}
               </button>
             </div>
           </div>

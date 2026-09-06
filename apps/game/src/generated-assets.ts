@@ -852,6 +852,14 @@ export const ASSET_MANIFEST: GeneratedAsset[] = [
     "group": "icons"
   },
   {
+    "id": "market_portrait",
+    "file": "tiles/sky/market_portrait.png",
+    "width": 400,
+    "height": 400,
+    "kind": "pixflux",
+    "group": "backgrounds"
+  },
+  {
     "id": "market_price",
     "file": "ui/icons/market_price.png",
     "width": 32,
@@ -890,6 +898,54 @@ export const ASSET_MANIFEST: GeneratedAsset[] = [
     "height": 64,
     "kind": "pixen",
     "group": "decor"
+  },
+  {
+    "id": "material_herb_wild",
+    "file": "ui/items/material_herb_wild.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "material_marula",
+    "file": "ui/items/material_marula.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "material_reeds",
+    "file": "ui/items/material_reeds.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "material_salt",
+    "file": "ui/items/material_salt.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "material_stone",
+    "file": "ui/items/material_stone.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "material_wood",
+    "file": "ui/items/material_wood.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
   },
   {
     "id": "mill_lvl1",
@@ -1132,6 +1188,118 @@ export const ASSET_MANIFEST: GeneratedAsset[] = [
     "group": "scene-props"
   },
   {
+    "id": "product_cowpeas",
+    "file": "ui/items/product_cowpeas.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_egg",
+    "file": "ui/items/product_egg.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_groundnuts",
+    "file": "ui/items/product_groundnuts.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_herbs",
+    "file": "ui/items/product_herbs.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_maize",
+    "file": "ui/items/product_maize.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_milk",
+    "file": "ui/items/product_milk.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_millet",
+    "file": "ui/items/product_millet.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_pepper",
+    "file": "ui/items/product_pepper.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_saffron",
+    "file": "ui/items/product_saffron.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_sesame",
+    "file": "ui/items/product_sesame.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_sorghum",
+    "file": "ui/items/product_sorghum.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_tomatoes",
+    "file": "ui/items/product_tomatoes.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_watermelon",
+    "file": "ui/items/product_watermelon.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "product_wool",
+    "file": "ui/items/product_wool.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
     "id": "quest_board",
     "file": "sprites/scene-props/quest_board.png",
     "width": 48,
@@ -1250,6 +1418,94 @@ export const ASSET_MANIFEST: GeneratedAsset[] = [
     "height": 64,
     "kind": "pixen",
     "group": "decor"
+  },
+  {
+    "id": "seed_cowpeas",
+    "file": "ui/items/seed_cowpeas.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_groundnuts",
+    "file": "ui/items/seed_groundnuts.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_herbs",
+    "file": "ui/items/seed_herbs.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_maize",
+    "file": "ui/items/seed_maize.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_millet",
+    "file": "ui/items/seed_millet.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_pepper",
+    "file": "ui/items/seed_pepper.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_saffron",
+    "file": "ui/items/seed_saffron.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_sesame",
+    "file": "ui/items/seed_sesame.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_sorghum",
+    "file": "ui/items/seed_sorghum.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_tomatoes",
+    "file": "ui/items/seed_tomatoes.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "seed_watermelon",
+    "file": "ui/items/seed_watermelon.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
   },
   {
     "id": "sesame_product",
@@ -1788,7 +2044,8 @@ export const ASSET_GROUPS: Record<string, string[]> = {
     "farm_night",
     "farm_sunset",
     "kgotla",
-    "market"
+    "market",
+    "market_portrait"
   ],
   "npcs": [
     "bushveld_scout",
@@ -1922,6 +2179,39 @@ export const ASSET_GROUPS: Record<string, string[]> = {
     "grass_water",
     "plot_empty",
     "plot_soil"
+  ],
+  "item-icons": [
+    "material_herb_wild",
+    "material_marula",
+    "material_reeds",
+    "material_salt",
+    "material_stone",
+    "material_wood",
+    "product_cowpeas",
+    "product_egg",
+    "product_groundnuts",
+    "product_herbs",
+    "product_maize",
+    "product_milk",
+    "product_millet",
+    "product_pepper",
+    "product_saffron",
+    "product_sesame",
+    "product_sorghum",
+    "product_tomatoes",
+    "product_watermelon",
+    "product_wool",
+    "seed_cowpeas",
+    "seed_groundnuts",
+    "seed_herbs",
+    "seed_maize",
+    "seed_millet",
+    "seed_pepper",
+    "seed_saffron",
+    "seed_sesame",
+    "seed_sorghum",
+    "seed_tomatoes",
+    "seed_watermelon"
   ]
 };
 

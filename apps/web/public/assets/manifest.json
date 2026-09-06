@@ -2088,5 +2088,325 @@
     },
     "kind": "pixen",
     "prompt": "smooth grey river stone with water sheen, single game prop centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "seed_sorghum": {
+    "group": "item-icons",
+    "file": "ui/items/seed_sorghum.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small pile of golden-brown sorghum grains on a tiny cloth square, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_maize": {
+    "group": "item-icons",
+    "file": "ui/items/seed_maize.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "three yellow maize kernels beside a tiny dried corn cob, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_millet": {
+    "group": "item-icons",
+    "file": "ui/items/seed_millet.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small pile of tiny round millet grains on a tiny cloth square, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_cowpeas": {
+    "group": "item-icons",
+    "file": "ui/items/seed_cowpeas.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "five cream-and-brown cowpea beans arranged in a small pile, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_sesame": {
+    "group": "item-icons",
+    "file": "ui/items/seed_sesame.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "tiny scatter of flat ivory sesame seeds on a small cloth square, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_groundnuts": {
+    "group": "item-icons",
+    "file": "ui/items/seed_groundnuts.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "three peanuts in their shells, one cracked open, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_watermelon": {
+    "group": "item-icons",
+    "file": "ui/items/seed_watermelon.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "five black watermelon seeds beside a tiny watermelon slice, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_tomatoes": {
+    "group": "item-icons",
+    "file": "ui/items/seed_tomatoes.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "tiny packet of tomato seeds with a small red tomato beside it, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_pepper": {
+    "group": "item-icons",
+    "file": "ui/items/seed_pepper.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "tiny open paper seed packet with red chilli pepper beside it, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_herbs": {
+    "group": "item-icons",
+    "file": "ui/items/seed_herbs.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small paper seed packet with green herb sprigs beside it, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "seed_saffron": {
+    "group": "item-icons",
+    "file": "ui/items/seed_saffron.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "tiny pouch with purple crocus flowers and red stigmas beside it, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_maize": {
+    "group": "item-icons",
+    "file": "ui/items/product_maize.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "two fresh yellow maize cobs with husks partially peeled, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_sorghum": {
+    "group": "item-icons",
+    "file": "ui/items/product_sorghum.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "bundle of golden sorghum grain heads tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_millet": {
+    "group": "item-icons",
+    "file": "ui/items/product_millet.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "bundle of millet grain clusters tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_cowpeas": {
+    "group": "item-icons",
+    "file": "ui/items/product_cowpeas.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small hessian sack of cowpea beans, open at the top, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_groundnuts": {
+    "group": "item-icons",
+    "file": "ui/items/product_groundnuts.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "pile of peanuts in shells with one open showing kernels, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_sesame": {
+    "group": "item-icons",
+    "file": "ui/items/product_sesame.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small wooden bowl filled with sesame seeds, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_tomatoes": {
+    "group": "item-icons",
+    "file": "ui/items/product_tomatoes.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "cluster of three round ripe red tomatoes on the vine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_watermelon": {
+    "group": "item-icons",
+    "file": "ui/items/product_watermelon.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "whole striped watermelon beside a cut wedge slice, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_pepper": {
+    "group": "item-icons",
+    "file": "ui/items/product_pepper.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small pile of red and green chilli peppers, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_herbs": {
+    "group": "item-icons",
+    "file": "ui/items/product_herbs.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "bundle of fresh green herb sprigs tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_saffron": {
+    "group": "item-icons",
+    "file": "ui/items/product_saffron.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small glass jar of red saffron threads with purple flower, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_egg": {
+    "group": "item-icons",
+    "file": "ui/items/product_egg.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "two brown eggs in a small straw nest, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_wool": {
+    "group": "item-icons",
+    "file": "ui/items/product_wool.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "fluffy white wool fleece bundle tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_milk": {
+    "group": "item-icons",
+    "file": "ui/items/product_milk.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small clay milk jug with wooden cap, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_wood": {
+    "group": "item-icons",
+    "file": "ui/items/material_wood.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "stack of three acacia logs with visible bark texture, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_stone": {
+    "group": "item-icons",
+    "file": "ui/items/material_stone.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small pile of grey building stones with one cut block, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_reeds": {
+    "group": "item-icons",
+    "file": "ui/items/material_reeds.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "bundle of dried river reeds tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_marula": {
+    "group": "item-icons",
+    "file": "ui/items/material_marula.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "three round marula fruits with one cut open showing flesh, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_salt": {
+    "group": "item-icons",
+    "file": "ui/items/material_salt.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small pile of coarse white mineral salt crystals, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_herb_wild": {
+    "group": "item-icons",
+    "file": "ui/items/material_herb_wild.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "bundle of dried wild bushveld herbs tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "market_portrait": {
+    "group": "backgrounds",
+    "file": "tiles/sky/market_portrait.png",
+    "size": {
+      "w": 400,
+      "h": 400
+    },
+    "kind": "pixflux",
+    "prompt": "traditional Botswana village open-air market seen from a player standing in the square, woven baskets filled with grain and produce on wooden display tables, thatched shade structures, colorful cloth canopies strung overhead, red earth ground, acacia trees at the edges, warm late-afternoon light, bustling but cozy, empty center area for UI overlay"
   }
 }

@@ -16,6 +16,9 @@ export const translations = {
   close: { en: '✕', tn: '✕' },
   sold: { en: 'Sold!', tn: 'O rekisitse' },
   bought: { en: 'Bought!', tn: 'O rekile' },
+  viewDetails: { en: 'Details', tn: 'Tsebotso' },
+  deliverItemsHint: { en: 'deliver goods to claim', tn: 'isia dithoto go bolela' },
+  back: { en: 'Back', tn: 'Morago' },
 
   // ---- Header ----
   farm: { en: 'Farm', tn: 'Tshimo' },

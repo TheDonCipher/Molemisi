@@ -3,20 +3,7 @@
 import React from 'react';
 import { useGame, type MarketItem, type InventoryItem } from '@/lib/gameState';
 import { useTranslation } from '@/lib/useTranslation';
-
-const SEED_ICONS: Record<string, string> = {
-  sorghum_seed: '🌾',
-  maize_seed: '🌽',
-  millet_seed: '🌾',
-  cowpeas_seed: '🫘',
-  groundnuts_seed: '🥜',
-  sesame_seed: '🌿',
-  watermelon_seed: '🍉',
-  tomatoes_seed: '🍅',
-  pepper_seed: '🌶️',
-  herbs_seed: '🌿',
-  saffron_seed: '🌸',
-};
+import { PixelIcon } from '@/components/PixelIcon';
 
 function ConfirmModal({
   open,
@@ -38,82 +25,27 @@ function ConfirmModal({
   if (!open) return null;
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000,
-      }}
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
       onClick={onCancel}
     >
       <div
-        style={{
-          background: 'var(--surface-container-high, #2a1f14)',
-          border: '3px solid var(--outline, #6b5744)',
-          borderRadius: '16px',
-          padding: '24px',
-          maxWidth: '340px',
-          width: '90%',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-        }}
+        className="w-full max-w-sm border-2 border-wood-border bg-wood-dark p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.6)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          style={{
-            fontFamily: 'var(--font-headline)',
-            fontSize: '18px',
-            color: 'var(--cream, #f5e6d3)',
-            marginBottom: 8,
-          }}
-        >
-          {title}
-        </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '14px',
-            color: 'var(--cream, #f5e6d3)',
-            marginBottom: 20,
-            lineHeight: 1.5,
-            opacity: 0.9,
-          }}
-        >
+        <div className="font-headline text-base font-bold text-cream-surface mb-2">{title}</div>
+        <div className="font-body text-sm text-cream-surface/90 mb-5 leading-relaxed">
           {message}
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div className="flex gap-3">
           <button
             onClick={onCancel}
-            style={{
-              flex: 1,
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: '2px solid var(--outline, #6b5744)',
-              background: 'transparent',
-              color: 'var(--cream, #f5e6d3)',
-              fontFamily: 'var(--font-body)',
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
+            className="flex-1 border-2 border-wood-border bg-surface-container-high px-4 py-2.5 font-mono text-xs uppercase font-bold text-cream-surface active:translate-y-0.5"
           >
             {cancelLabel || 'Cancel'}
           </button>
           <button
             onClick={onConfirm}
-            style={{
-              flex: 1,
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: 'var(--primary, #d4a853)',
-              color: '#1a1a1a',
-              fontFamily: 'var(--font-headline)',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            className="flex-1 bg-primary px-4 py-2.5 font-headline text-xs uppercase font-bold text-wood-dark active:translate-y-0.5"
           >
             {confirmLabel || 'Confirm'}
           </button>
@@ -195,65 +127,42 @@ export function MarketScreen() {
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
-      {/* Background */}
-      <div className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-0">
+      {/* Background — starts below the top bar */}
+      <div className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-0 bg-[#210e0b]">
         <img
           alt="Village Market"
-          className="w-full h-full object-cover object-center filter saturate-[1.1]"
-          src="/assets/backgrounds/market_scene.png"
+          className="w-full h-full object-cover object-center"
+          style={{ imageRendering: 'pixelated' }}
+          src="/assets/tiles/sky/market_portrait.png"
           onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
+            const img = e.target as HTMLImageElement;
+            if (!img.dataset.fallback) {
+              img.dataset.fallback = '1';
+              img.src = '/assets/backgrounds/market_scene.png';
+            } else {
+              img.style.display = 'none';
+            }
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60 pointer-events-none" />
       </div>
 
       {/* Content overlay */}
-      <div className="relative z-10 px-4 pt-4 pb-8 max-w-lg mx-auto bg-black/25">
+      <div className="relative z-10 px-4 pt-4 pb-8 max-w-lg mx-auto bg-black/35">
         {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 16,
-          }}
-        >
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h2
-              style={{
-                fontFamily: 'var(--font-headline)',
-                color: 'var(--cream, #f5e6d3)',
-                margin: 0,
-                fontSize: 22,
-              }}
-            >
+            <h2 className="font-headline text-[22px] font-bold text-cream-surface m-0 drop-shadow-[0_2px_0_rgba(0,0,0,0.8)]">
               🏪 {tl('villageMarket')}
             </h2>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--accent-green, #66bb6a)',
-                fontSize: 13,
-              }}
-            >
+            <div className="font-mono text-[13px] font-bold text-gold-currency drop-shadow-[0_1px_0_rgba(0,0,0,0.8)]">
               P {pula.toLocaleString()}
             </div>
           </div>
           {mode === 'sell' && sellables.length > 0 && (
             <button
               onClick={handleSellAll}
-              style={{
-                padding: '10px 18px',
-                borderRadius: 8,
-                border: 'none',
-                background: 'var(--accent-green, #66bb6a)',
-                color: '#1a1a1a',
-                fontFamily: 'var(--font-headline)',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              className="px-4 py-2.5 bg-status-success text-wood-dark font-headline text-[13px] font-bold uppercase active:translate-y-0.5"
             >
               {tl('quickSellAll')}
             </button>
@@ -261,24 +170,16 @@ export function MarketScreen() {
         </div>
 
         {/* Buy / Sell Toggle */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <div className="flex gap-2 mb-5">
           {(['buy', 'sell'] as const).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
-              style={{
-                flex: 1,
-                padding: '12px',
-                borderRadius: '8px',
-                border: '2px solid',
-                borderColor: mode === m ? 'var(--primary, #d4a853)' : 'var(--outline, #6b5744)',
-                background: mode === m ? 'var(--primary, #d4a853)' : 'transparent',
-                color: mode === m ? '#1a1a1a' : 'var(--cream, #f5e6d3)',
-                fontFamily: 'var(--font-headline)',
-                fontSize: 15,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              className={`flex-1 py-3 border-2 font-headline text-[15px] font-bold uppercase transition-all active:translate-y-0.5 ${
+                mode === m
+                  ? 'border-primary bg-primary text-wood-dark'
+                  : 'border-wood-border bg-wood-dark/70 text-cream-surface'
+              }`}
             >
               {m === 'buy' ? tl('buySeeds') : tl('sellProduce')}
             </button>
@@ -287,90 +188,48 @@ export function MarketScreen() {
 
         {/* Buy Mode */}
         {mode === 'buy' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {buyables.length === 0 && (
-              <div
-                style={{
-                  color: 'var(--cream, #f5e6d3)',
-                  opacity: 0.6,
-                  textAlign: 'center',
-                  padding: 32,
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
+              <div className="py-8 text-center font-body text-sm text-cream-surface/60">
                 {tl('noSeedsAvailable')}
               </div>
             )}
             {buyables.map((item: MarketItem) => {
               const canAfford = pula >= item.price;
-              const icon = SEED_ICONS[item.id] || item.icon;
               return (
                 <div
                   key={item.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    background: 'var(--surface-container, #1a1209)',
-                    border: '2px solid var(--outline, #6b5744)',
-                    borderRadius: 10,
-                    padding: '12px 14px',
-                  }}
+                  className="flex items-center gap-3 border-2 border-wood-border bg-wood-dark/90 px-3.5 py-3"
                 >
-                  <span style={{ fontSize: 28 }}>{icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-headline)',
-                        color: 'var(--cream, #f5e6d3)',
-                        fontSize: 15,
-                        fontWeight: 600,
-                      }}
-                    >
+                  <PixelIcon itemType={item.itemType} emoji={item.icon} size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
                       {item.name}
                     </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        color: 'var(--accent-green, #66bb6a)',
-                        fontSize: 13,
-                      }}
-                    >
+                    <div className="font-mono text-[13px] font-bold text-gold-currency">
                       P{item.price}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div className="flex gap-1.5">
                     <button
                       disabled={!canAfford}
                       onClick={() => handleBuy(item, 1)}
-                      style={{
-                        padding: '8px 14px',
-                        borderRadius: 6,
-                        border: 'none',
-                        background: canAfford ? 'var(--primary, #d4a853)' : '#333',
-                        color: canAfford ? '#1a1a1a' : '#666',
-                        fontFamily: 'var(--font-headline)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: canAfford ? 'pointer' : 'not-allowed',
-                      }}
+                      className={`px-3.5 py-2 font-headline text-[13px] font-bold active:translate-y-0.5 ${
+                        canAfford
+                          ? 'bg-primary text-wood-dark'
+                          : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
+                      }`}
                     >
                       x1
                     </button>
                     <button
                       disabled={!canAfford}
                       onClick={() => handleBuy(item, 5)}
-                      style={{
-                        padding: '8px 14px',
-                        borderRadius: 6,
-                        border: 'none',
-                        background: canAfford ? 'var(--primary, #d4a853)' : '#333',
-                        color: canAfford ? '#1a1a1a' : '#666',
-                        fontFamily: 'var(--font-headline)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: canAfford ? 'pointer' : 'not-allowed',
-                      }}
+                      className={`px-3.5 py-2 font-headline text-[13px] font-bold active:translate-y-0.5 ${
+                        canAfford
+                          ? 'bg-primary text-wood-dark'
+                          : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
+                      }`}
                     >
                       x5
                     </button>
@@ -383,17 +242,9 @@ export function MarketScreen() {
 
         {/* Sell Mode */}
         {mode === 'sell' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {sellables.length === 0 && (
-              <div
-                style={{
-                  color: 'var(--cream, #f5e6d3)',
-                  opacity: 0.6,
-                  textAlign: 'center',
-                  padding: 32,
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
+              <div className="py-8 text-center font-body text-sm text-cream-surface/60">
                 {tl('nothingToSell')}
               </div>
             )}
@@ -403,71 +254,38 @@ export function MarketScreen() {
               return (
                 <div
                   key={item.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    background: 'var(--surface-container, #1a1209)',
-                    border: '2px solid var(--outline, #6b5744)',
-                    borderRadius: 10,
-                    padding: '12px 14px',
-                  }}
+                  className="flex items-center gap-3 border-2 border-wood-border bg-wood-dark/90 px-3.5 py-3"
                 >
-                  <span style={{ fontSize: 28 }}>{item.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-headline)',
-                        color: 'var(--cream, #f5e6d3)',
-                        fontSize: 15,
-                        fontWeight: 600,
-                      }}
-                    >
+                  <PixelIcon itemType={item.itemType} emoji={item.icon} size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
                       {item.name}
                     </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 12,
-                        color: 'var(--cream, #f5e6d3)',
-                        opacity: 0.7,
-                      }}
-                    >
-                      ×{qty} · P{item.unitValue} {tl('each')} · P{total}
+                    <div className="font-mono text-xs text-cream-surface/75">
+                      ×{qty} · P{item.unitValue} {tl('each')} ·{' '}
+                      <span className="text-gold-currency font-bold">P{total}</span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div className="flex gap-1.5">
                     <button
                       disabled={qty < 1}
                       onClick={() => handleSell(item, 1)}
-                      style={{
-                        padding: '8px 14px',
-                        borderRadius: 6,
-                        border: 'none',
-                        background: qty >= 1 ? 'var(--accent-green, #66bb6a)' : '#333',
-                        color: qty >= 1 ? '#1a1a1a' : '#666',
-                        fontFamily: 'var(--font-headline)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: qty >= 1 ? 'pointer' : 'not-allowed',
-                      }}
+                      className={`px-3.5 py-2 font-headline text-[13px] font-bold active:translate-y-0.5 ${
+                        qty >= 1
+                          ? 'bg-status-success text-wood-dark'
+                          : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
+                      }`}
                     >
                       +1
                     </button>
                     <button
                       disabled={qty < 1}
                       onClick={() => handleSell(item, qty)}
-                      style={{
-                        padding: '8px 14px',
-                        borderRadius: 6,
-                        border: 'none',
-                        background: qty >= 1 ? 'var(--accent-green, #66bb6a)' : '#333',
-                        color: qty >= 1 ? '#1a1a1a' : '#666',
-                        fontFamily: 'var(--font-headline)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: qty >= 1 ? 'pointer' : 'not-allowed',
-                      }}
+                      className={`px-3.5 py-2 font-headline text-[13px] font-bold uppercase active:translate-y-0.5 ${
+                        qty >= 1
+                          ? 'bg-status-success text-wood-dark'
+                          : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
+                      }`}
                     >
                       {tl('sellAll')}
                     </button>
@@ -479,20 +297,10 @@ export function MarketScreen() {
         )}
 
         {/* Back to Farm */}
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
+        <div className="text-center mt-5">
           <button
             onClick={() => setActiveNav('Farm')}
-            style={{
-              padding: '10px 24px',
-              borderRadius: 8,
-              border: '2px solid var(--outline, #6b5744)',
-              background: 'var(--wood-dark, #1a1209)',
-              color: 'var(--cream, #f5e6d3)',
-              fontFamily: 'var(--font-headline)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            className="px-6 py-2.5 border-2 border-wood-border bg-wood-dark/90 font-headline text-sm font-bold uppercase text-cream-surface active:translate-y-0.5"
           >
             {tl('backToFarm')}
           </button>

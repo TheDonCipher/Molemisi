@@ -355,6 +355,14 @@ const ICON_DEFS = {
   },
 };
 
+// Portrait-format backgrounds (mobile-first screens) rendered at higher resolution.
+const BIG_BACKGROUNDS = [
+  [
+    'market_portrait',
+    'traditional Botswana village open-air market seen from a player standing in the square, woven baskets filled with grain and produce on wooden display tables, thatched shade structures, colorful cloth canopies strung overhead, red earth ground, acacia trees at the edges, warm late-afternoon light, bustling but cozy, empty center area for UI overlay',
+  ],
+];
+
 const BACKGROUNDS = [
   [
     'farm_day',
@@ -417,6 +425,58 @@ for (const [cat, icons] of Object.entries(ICON_DEFS)) {
       { noBg: true, detail: 'low detail' },
     );
   }
+}
+
+// Item icons: pixel-art inventory icons for every game item type (seeds, crops,
+// animal products, materials) — matches CROP_ICONS / item types in the web app.
+const ITEM_ICONS = [
+  // seeds
+  ['seed_sorghum', 'small pile of golden-brown sorghum grains on a tiny cloth square'],
+  ['seed_maize', 'three yellow maize kernels beside a tiny dried corn cob'],
+  ['seed_millet', 'small pile of tiny round millet grains on a tiny cloth square'],
+  ['seed_cowpeas', 'five cream-and-brown cowpea beans arranged in a small pile'],
+  ['seed_groundnuts', 'three peanuts in their shells, one cracked open'],
+  ['seed_sesame', 'tiny scatter of flat ivory sesame seeds on a small cloth square'],
+  ['seed_watermelon', 'five black watermelon seeds beside a tiny watermelon slice'],
+  ['seed_tomatoes', 'tiny packet of tomato seeds with a small red tomato beside it'],
+  ['seed_pepper', 'tiny open paper seed packet with red chilli pepper beside it'],
+  ['seed_herbs', 'small paper seed packet with green herb sprigs beside it'],
+  ['seed_saffron', 'tiny pouch with purple crocus flowers and red stigmas beside it'],
+  // crop products
+  ['product_sorghum', 'bundle of golden sorghum grain heads tied with twine'],
+  ['product_maize', 'two fresh yellow maize cobs with husks partially peeled'],
+  ['product_millet', 'bundle of millet grain clusters tied with twine'],
+  ['product_cowpeas', 'small hessian sack of cowpea beans, open at the top'],
+  ['product_groundnuts', 'pile of peanuts in shells with one open showing kernels'],
+  ['product_sesame', 'small wooden bowl filled with sesame seeds'],
+  ['product_watermelon', 'whole striped watermelon beside a cut wedge slice'],
+  ['product_tomatoes', 'cluster of three round ripe red tomatoes on the vine'],
+  ['product_pepper', 'small pile of red and green chilli peppers'],
+  ['product_herbs', 'bundle of fresh green herb sprigs tied with twine'],
+  ['product_saffron', 'small glass jar of red saffron threads with purple flower'],
+  // animal products
+  ['product_egg', 'two brown eggs in a small straw nest'],
+  ['product_milk', 'small clay milk jug with wooden cap'],
+  ['product_wool', 'fluffy white wool fleece bundle tied with twine'],
+  // materials
+  ['material_wood', 'stack of three acacia logs with visible bark texture'],
+  ['material_stone', 'small pile of grey building stones with one cut block'],
+  ['material_reeds', 'bundle of dried river reeds tied with twine'],
+  ['material_marula', 'three round marula fruits with one cut open showing flesh'],
+  ['material_salt', 'small pile of coarse white mineral salt crystals'],
+  ['material_herb_wild', 'bundle of dried wild bushveld herbs tied with twine'],
+];
+
+for (const [id, desc] of ITEM_ICONS) {
+  add(
+    'item-icons',
+    id,
+    `ui/items/${id}.png`,
+    { w: 32, h: 32 },
+    'pixen',
+    `${desc}, centered, ${ICON_STYLE}`,
+    { noBg: true, detail: 'medium detail' },
+  );
 }
 
 // Crops: one frame per growth stage on a shared 32x64 canvas (bottom-anchored)
@@ -535,28 +595,67 @@ for (const [item, desc] of DECOR) {
 // Scene-specific props for Kgotla, Bushveld, Market
 const SCENE_PROPS = [
   // Kgotla
-  ['fire_pit', 'stone_circle_with_fire', 'stone circle with a small crackling campfire, warm orange flames, 64x64'],
-  ['stone_bench', 'carved_stone_seat', 'carved stone seating block, rounded top, rough texture, 48x32'],
-  ['quest_board', 'wooden_notice_board', 'wooden notice board with pinned parchment papers and red string, 48x64'],
-  ['herb_garden', 'small_herb_plot', 'small garden plot with colorful herbs and medicinal plants, 64x32'],
-  ['elder_chair', 'carved_wooden_chair', 'raised carved wooden chair with animal skin draped over it, 48x48'],
-  ['community_circle', 'stone_circle_ground', 'circular arrangement of flat stones on red earth ground, 64x64'],
+  [
+    'fire_pit',
+    'stone_circle_with_fire',
+    'stone circle with a small crackling campfire, warm orange flames, 64x64',
+  ],
+  [
+    'stone_bench',
+    'carved_stone_seat',
+    'carved stone seating block, rounded top, rough texture, 48x32',
+  ],
+  [
+    'quest_board',
+    'wooden_notice_board',
+    'wooden notice board with pinned parchment papers and red string, 48x64',
+  ],
+  [
+    'herb_garden',
+    'small_herb_plot',
+    'small garden plot with colorful herbs and medicinal plants, 64x32',
+  ],
+  [
+    'elder_chair',
+    'carved_wooden_chair',
+    'raised carved wooden chair with animal skin draped over it, 48x48',
+  ],
+  [
+    'community_circle',
+    'stone_circle_ground',
+    'circular arrangement of flat stones on red earth ground, 64x64',
+  ],
   // Bushveld
-  ['resource_node', 'mineral_deposit', 'shiny mineral deposit embedded in a grey rock face, sparkling, 48x48'],
+  [
+    'resource_node',
+    'mineral_deposit',
+    'shiny mineral deposit embedded in a grey rock face, sparkling, 48x48',
+  ],
   ['cave_entrance', 'dark_cave_opening', 'dark cave opening in a rocky hillside with vines, 64x64'],
   ['river_rock', 'smooth_river_stone', 'smooth grey river stone with water sheen, 32x32'],
   ['wild_berry', 'berry_bush', 'small bush with bright red wild berries, 48x48'],
   ['animal_track', 'paw_prints', 'animal paw prints pressed into dusty ground, 32x32'],
   ['bush_camp', 'campfire_sticks', 'small campfire with crossed sticks and stones, 48x48'],
   // Market
-  ['stall_canopy', 'striped_fabric_awning', 'colorful striped fabric awning canopy over wooden poles, 96x48'],
+  [
+    'stall_canopy',
+    'striped_fabric_awning',
+    'colorful striped fabric awning canopy over wooden poles, 96x48',
+  ],
   ['price_board', 'wooden_price_sign', 'wooden sign board with painted numbers and text, 48x48'],
   ['market_cart', 'wooden_pushcart', 'wooden pushcart with two wheels and goods inside, 64x48'],
   ['food_stall', 'cooking_pot_fire', 'cooking pot over a small fire with steam rising, 48x48'],
-  ['goods_display', 'wooden_shelf_items', 'wooden shelf displaying various trade goods and crafts, 64x48'],
+  [
+    'goods_display',
+    'wooden_shelf_items',
+    'wooden shelf displaying various trade goods and crafts, 64x48',
+  ],
 ];
 for (const [id, _file, desc] of SCENE_PROPS) {
-  const [w, h] = desc.match(/(\d+)x(\d+)/)?.slice(1).map(Number) || [64, 64];
+  const [w, h] = desc
+    .match(/(\d+)x(\d+)/)
+    ?.slice(1)
+    .map(Number) || [64, 64];
   const cleanDesc = desc.replace(/, \d+x\d+$/, '');
   add(
     'scene-props',
@@ -624,6 +723,11 @@ add(
 // Backgrounds (pixflux scene art)
 for (const [id, scene] of BACKGROUNDS) {
   add('backgrounds', id, `tiles/sky/${id}.png`, { w: 400, h: 300 }, 'pixflux', scene);
+}
+
+// Portrait backgrounds (mobile screens, pixflux at max API resolution 400x400)
+for (const [id, scene] of BIG_BACKGROUNDS) {
+  add('backgrounds', id, `tiles/sky/${id}.png`, { w: 400, h: 400 }, 'pixflux', scene);
 }
 
 // Weather
