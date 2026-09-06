@@ -181,7 +181,7 @@ export class LivestockPanel {
         container.add(hungerFill);
 
         const hungerLabel = this.scene.add.text(barX + barWidth + 4, barY, 'Hunger', {
-          font: '8px Molemisi Pixel',
+          font: '10px Molemisi Pixel',
           color: '#BCAAA4',
         });
         hungerLabel.setOrigin(0, 0.5);
@@ -269,7 +269,7 @@ export class LivestockPanel {
         -panelWidth / 2 + 30,
         y + 14,
         `${animal.purchaseCost}P | ${animal.productType} x${animal.productQuantity} / ${animal.productionCycleHours}h`,
-        { font: '9px Molemisi Pixel', color: '#BCAAA4' },
+        { font: '10px Molemisi Pixel', color: '#BCAAA4' },
       );
       this.container!.add(detail);
 
@@ -279,7 +279,7 @@ export class LivestockPanel {
           -panelWidth / 2 + 30,
           y + 26,
           `Owned: ${animal.count}`,
-          { font: '9px Molemisi Pixel', color: '#81C784' },
+          { font: '10px Molemisi Pixel', color: '#81C784' },
         );
         this.container!.add(countText);
       }

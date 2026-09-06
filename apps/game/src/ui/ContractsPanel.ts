@@ -153,7 +153,7 @@ export class ContractsPanel {
           .map((r) => `${r.itemType}: ${Math.min(r.current, r.quantity)}/${r.quantity}`)
           .join(' | ');
         const reqLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, reqText, {
-          font: '9px Molemisi Pixel',
+          font: '10px Molemisi Pixel',
           color: '#BCAAA4',
         });
         container.add(reqLabel);
@@ -232,7 +232,7 @@ export class ContractsPanel {
       // Requirements
       const reqText = contract.requirements.map((r) => `${r.itemType} x${r.quantity}`).join(', ');
       const reqLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, `Needs: ${reqText}`, {
-        font: '9px Molemisi Pixel',
+        font: '10px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(reqLabel);

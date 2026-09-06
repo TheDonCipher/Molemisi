@@ -144,7 +144,7 @@ export class WorldEventsPanel {
 
         // Description
         const desc = this.scene.add.text(-panelWidth / 2 + 30, y + 14, event.description, {
-          font: '9px Molemisi Pixel',
+          font: '10px Molemisi Pixel',
           color: '#BCAAA4',
         });
         container.add(desc);
@@ -173,7 +173,7 @@ export class WorldEventsPanel {
           .join(' | ');
 
         const effectsLabel = this.scene.add.text(panelWidth / 2 - 30, y + 22, effectsText, {
-          font: '9px Molemisi Pixel',
+          font: '10px Molemisi Pixel',
           color: '#FFB74D',
         });
         effectsLabel.setOrigin(1, 0.5);
@@ -238,7 +238,7 @@ export class WorldEventsPanel {
         .join(', ');
 
       const effectsLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, effectsText, {
-        font: '9px Molemisi Pixel',
+        font: '10px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(effectsLabel);

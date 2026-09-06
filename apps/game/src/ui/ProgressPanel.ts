@@ -210,7 +210,7 @@ export class ProgressPanel {
       this.container!.add(achText);
 
       const descText = this.scene.add.text(-panelWidth / 2 + 50, y + 12, ach.description, {
-        font: '9px Molemisi Pixel',
+        font: '10px Molemisi Pixel',
         color: '#BCAAA4',
       });
       this.container!.add(descText);

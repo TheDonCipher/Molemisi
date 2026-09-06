@@ -68,7 +68,7 @@ export class BushveldScene extends Phaser.Scene {
       // Label
       const label = this.add.text(0, 24, name, {
         fontFamily: FONT_DISPLAY,
-        fontSize: '9px',
+        fontSize: '10px',
         fontStyle: 'bold',
         color: '#F5E6D3',
         backgroundColor: '#2C1810',

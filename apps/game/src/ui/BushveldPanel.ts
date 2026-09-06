@@ -128,7 +128,7 @@ export class BushveldPanel {
 
       // Description
       const desc = this.scene.add.text(-panelWidth / 2 + 30, y + 16, zone.description, {
-        font: '9px Molemisi Pixel',
+        font: '10px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(desc);
@@ -151,7 +151,7 @@ export class BushveldPanel {
         -panelWidth / 2 + 30,
         y + 30,
         `Resources: ${resourceText}`,
-        { font: '9px Molemisi Pixel', color: '#66BB6A' },
+        { font: '10px Molemisi Pixel', color: '#66BB6A' },
       );
       container.add(resources);
 

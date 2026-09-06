@@ -171,7 +171,7 @@ export class KgotlaPanel {
         -panelWidth / 2 + 30 + repBarWidth + 4,
         y + 16,
         `${npc.tier} (${npc.reputation})`,
-        { font: '9px Molemisi Pixel', color: '#BCAAA4' },
+        { font: '10px Molemisi Pixel', color: '#BCAAA4' },
       );
       repLabel.setOrigin(0, 0.5);
       container.add(repLabel);
@@ -229,7 +229,7 @@ export class KgotlaPanel {
         -panelWidth / 2 + 30 + barWidth + 4,
         y + 16,
         `${project.currentContributions}/${project.requiredContributions}`,
-        { font: '9px Molemisi Pixel', color: '#BCAAA4' },
+        { font: '10px Molemisi Pixel', color: '#BCAAA4' },
       );
       progressLabel.setOrigin(0, 0.5);
       container.add(progressLabel);

@@ -157,7 +157,7 @@ export class BuildPanel {
           building.state === 'CONSTRUCTION'
             ? `Building... (${building.constructionEndsAt ? new Date(building.constructionEndsAt).toLocaleTimeString() : '...'})`
             : building.state,
-          { font: '9px Molemisi Pixel', color: '#BCAAA4' },
+          { font: '10px Molemisi Pixel', color: '#BCAAA4' },
         );
         container.add(stateLabel);
 
@@ -199,7 +199,7 @@ export class BuildPanel {
           const wearPercent = Math.round(building.wear * 100);
           const wearColor = wearPercent > 80 ? '#F44336' : wearPercent > 50 ? '#FF9800' : '#4CAF50';
           const wearLabel = this.scene.add.text(btnX, y + 7, `Wear: ${wearPercent}%`, {
-            font: '9px Molemisi Pixel',
+            font: '10px Molemisi Pixel',
             color: wearColor,
           });
           wearLabel.setOrigin(1, 0.5);
@@ -236,7 +236,7 @@ export class BuildPanel {
           -panelWidth / 2 + 30,
           y + 14,
           `Cost: ${costStr} | Time: ${timeStr} | Cap: ${building.capacity}`,
-          { font: '9px Molemisi Pixel', color: '#BCAAA4' },
+          { font: '10px Molemisi Pixel', color: '#BCAAA4' },
         );
         this.container!.add(detailText);
 
