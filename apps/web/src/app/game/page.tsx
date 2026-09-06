@@ -41,7 +41,21 @@ function GameContent() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#210e0b]">
-        <div className="text-4xl mb-4 animate-bounce">🌾</div>
+        <img
+          src="/assets/branding/logo.png"
+          alt="Molemisi"
+          width={96}
+          height={96}
+          className="w-24 h-24 mb-4 animate-bounce"
+          style={{ imageRendering: 'pixelated' }}
+          onError={(e) => {
+            const img = e.target as HTMLImageElement;
+            img.style.display = 'none';
+            const fallback = img.nextElementSibling as HTMLElement | null;
+            if (fallback) fallback.classList.remove('hidden');
+          }}
+        />
+        <div className="hidden text-4xl mb-4 animate-bounce">🌾</div>
         <p className="font-headline text-sm text-primary uppercase font-bold">Loading Farm...</p>
         <p className="font-body text-xs text-on-surface-variant mt-1">
           Preparing today&apos;s work...
@@ -84,7 +98,21 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   if (!mounted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#210e0b]">
-        <div className="text-4xl mb-4 animate-pulse">🌾</div>
+        <img
+          src="/assets/branding/logo.png"
+          alt="Molemisi"
+          width={96}
+          height={96}
+          className="w-24 h-24 mb-4 animate-pulse"
+          style={{ imageRendering: 'pixelated' }}
+          onError={(e) => {
+            const img = e.target as HTMLImageElement;
+            img.style.display = 'none';
+            const fallback = img.nextElementSibling as HTMLElement | null;
+            if (fallback) fallback.classList.remove('hidden');
+          }}
+        />
+        <div className="hidden text-4xl mb-4 animate-pulse">🌾</div>
         <p className="font-headline text-sm text-primary uppercase font-bold">
           Checking credentials...
         </p>

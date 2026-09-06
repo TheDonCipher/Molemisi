@@ -828,6 +828,14 @@ export const ASSET_MANIFEST: GeneratedAsset[] = [
     "group": "weather"
   },
   {
+    "id": "logo",
+    "file": "branding/logo.png",
+    "width": 64,
+    "height": 64,
+    "kind": "pixen",
+    "group": "branding"
+  },
+  {
     "id": "maize_product",
     "file": "sprites/crops/maize/product_maize.png",
     "width": 32,
@@ -2356,6 +2364,9 @@ export const ASSET_GROUPS: Record<string, string[]> = {
     "grass_water",
     "plot_empty",
     "plot_soil"
+  ],
+  "branding": [
+    "logo"
   ]
 };
 

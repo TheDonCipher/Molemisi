@@ -80,6 +80,7 @@ const GROUP_NAMES = [
   'fx',
   'ui-assets',
   'scene-props',
+  'branding',
 ];
 
 for (let i = 0; i < argv.length; i++) {
@@ -747,6 +748,17 @@ for (const [id, scene] of BACKGROUNDS) {
 for (const [id, scene] of BIG_BACKGROUNDS) {
   add('backgrounds', id, `tiles/sky/${id}.png`, { w: 400, h: 400 }, 'pixflux', scene);
 }
+
+// Branding — game logo emblem (used in header + loading screens)
+add(
+  'branding',
+  'logo',
+  'branding/logo.png',
+  { w: 64, h: 64 },
+  'pixen',
+  'game logo emblem, a golden sorghum grain sprig with three seed heads rising from a small red-earth mound, enclosed in a round terracotta badge with a cream border ring, bold and readable at small sizes, centered, no text, no letters',
+  { noBg: true, detail: 'medium detail' },
+);
 
 // Weather
 for (const [id, desc] of WEATHER_FX) {

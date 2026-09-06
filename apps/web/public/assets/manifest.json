@@ -2568,5 +2568,15 @@
     },
     "kind": "pixen",
     "prompt": "small glass greenhouse with plants inside, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "logo": {
+    "group": "branding",
+    "file": "branding/logo.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "game logo emblem, a golden sorghum grain sprig with three seed heads rising from a small red-earth mound, enclosed in a round terracotta badge with a cream border ring, bold and readable at small sizes, centered, no text, no letters"
   }
 }

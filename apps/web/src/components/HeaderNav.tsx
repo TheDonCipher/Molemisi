@@ -113,7 +113,21 @@ export function HeaderNav() {
       <div className="h-12 md:h-14 w-full px-2 md:px-4 flex items-center justify-between gap-1">
         {/* Brand */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-lg md:text-xl">🌾</span>
+          <img
+            src="/assets/branding/logo.png"
+            alt="Molemisi"
+            width={28}
+            height={28}
+            className="w-7 h-7 md:w-8 md:h-8"
+            style={{ imageRendering: 'pixelated' }}
+            onError={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.style.display = 'none';
+              const fallback = img.nextElementSibling as HTMLElement | null;
+              if (fallback) fallback.classList.remove('hidden');
+            }}
+          />
+          <span className="hidden text-lg md:text-xl">🌾</span>
           <span className="font-headline text-xs md:text-sm text-primary font-bold uppercase hidden sm:block">
             Molemisi
           </span>
