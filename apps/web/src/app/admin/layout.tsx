@@ -36,7 +36,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
+  const isLoginPage = pathname === '/admin/login';
+
   useEffect(() => {
+    // The login page must render without any auth check, otherwise the layout
+    // redirects to /admin/login infinitely.
+    if (isLoginPage) return;
+
     const adminToken = getAdminToken();
     if (!adminToken) {
       window.location.href = '/admin/login';
@@ -47,9 +53,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then(() => setAuthorized(true))
       .catch(() => {
         localStorage.removeItem('molemisi_admin_token');
+        localStorage.removeItem('molemisi_admin_email');
         window.location.href = '/admin/login';
       });
-  }, []);
+  }, [isLoginPage]);
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   if (authorized === null) {
     return (

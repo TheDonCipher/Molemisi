@@ -1,17 +1,15 @@
 import { Controller, Get, Post, Query, Param, Body, UseGuards, Logger } from '@nestjs/common';
 import { AuthGuard } from '../common/guards/auth.guard';
+import { AdminGuard } from '../common/guards/admin.guard';
 import { AdminService } from './admin.service';
 
 /**
  * Admin Controller
  *
- * All admin endpoints require authentication and should be restricted
- * to admin users in production. Currently protected by JWT only.
- *
- * TODO: Add admin role check via a dedicated AdminGuard.
+ * All admin endpoints require a valid JWT AND the profiles.is_admin flag.
  */
 @Controller('admin')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, AdminGuard)
 export class AdminController {
   private readonly logger = new Logger(AdminController.name);
 
