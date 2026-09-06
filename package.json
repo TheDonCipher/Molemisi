@@ -21,10 +21,11 @@
     "assets:generate": "node scripts/generate-pixellab-assets.mjs && pnpm assets:sync && node scripts/generate-icons.mjs && node scripts/generate-media-assets.mjs",
     "assets:dry-run": "node scripts/generate-pixellab-assets.mjs --dry-run",
     "assets:sync": "node scripts/sync-assets.mjs",
+    "font:build": "node scripts/build-font.mjs",
     "icons:generate": "node scripts/generate-icons.mjs",
     "media:generate": "node scripts/generate-media-assets.mjs",
-    "predev": "pnpm assets:sync && node scripts/generate-icons.mjs",
-    "prebuild": "pnpm assets:sync && node scripts/generate-icons.mjs"
+    "predev": "node scripts/build-font.mjs && pnpm assets:sync && node scripts/generate-icons.mjs",
+    "prebuild": "node scripts/build-font.mjs && pnpm assets:sync && node scripts/generate-icons.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.0.0",

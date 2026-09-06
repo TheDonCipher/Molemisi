@@ -205,7 +205,9 @@ Scene stitch backgrounds: farm, kgotla, bushveld, market (`docs/23_Scene_Render_
 
 **Branding** (`assets/branding/` + `assets/branding/media/`): logo emblem + `logo_alt` (light-bg shield) + `logo_mono` (watermark) + `logo_wide` (banner art); composited wordmark lockups, 512 social square, 1200×630 OG card (wired into site metadata), emblem cards, single-color watermark. Media compositor: `scripts/generate-media-assets.mjs` (zero-dependency PNG codec in `scripts/lib/png.mjs`, hand-drawn 5×7 pixel font). Usage rules: `docs/PRESS-KIT.md`.
 
-**Web item icons** (`apps/web/src/lib/pixelIcons.ts` + `components/PixelIcon.tsx`): inventory, market, blueprints and the farm seed picker render PixelLab pixel icons with emoji fallback.
+**Web item icons** (`apps/web/src/lib/pixelIcons.tsx` + `components/PixelIcon.tsx`): inventory, market, blueprints and the farm seed picker render PixelLab pixel icons with emoji fallback.
+
+**Typography — Molemisi Pixel font** (per `docs/Font_Guide.png`): hand-drawn tribal pixel display font (spurred terminals, diamond counters, uniform 2px stroke, 8×12 grid) defined as bitmaps in `scripts/lib/glyphs.mjs` and compiled to a real TTF by the zero-dependency TrueType compiler in `scripts/lib/ttf.mjs` (`node scripts/build-font.mjs` → `assets/branding/font/MolemisiPixel-Bold.ttf`, 76 glyphs). A PixelLab `generate-font-pro` attempt produced unusable letterforms; the font is now fully deterministic/offline (the experimental `scripts/generate-font.mjs` is kept for future re-rolls). Wired into the web app via `next/font/local` (`--font-molemisi-pixel`): `font-headline`/`font-headline-*` slots use it for titles, menus, dialogue and HUD; body text stays Rubik, data stays Space Mono. Specimen: `assets/branding/font/specimen.png` (render with `node scripts/font-specimen.mjs`). Copy for the web app lives at `apps/web/public/fonts/` (copied automatically by `build-font.mjs`, which runs in `predev`/`prebuild`).
 
 ---
 

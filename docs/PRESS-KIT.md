@@ -31,9 +31,15 @@ The emblem is a **golden sorghum sprig** (three seed heads) rising from a **red-
 
 ---
 
-## Wordmark & Lockups
+## Typography — Molemisi Pixel
 
-The wordmark is **MOLEMISI** set in a chunky 5×7 pixel font, amber on dark / dark brown on cream. Always use the provided files — do not typeset the name yourself.
+The game's display typeface is **Molemisi Pixel Bold**, a custom cultural/tribal pixel font (see `docs/Font_Guide.png`): spurred & bracketed terminals, geometric diamond counters, uniform 2px stroke weight on a strict grid, high-contrast silhouette. Use it for titles, menus, dialogue headers, and HUD — never for long paragraphs (body text uses Rubik).
+
+- Font file: `assets/branding/font/MolemisiPixel-Bold.ttf` (also `apps/web/public/fonts/`)
+- Specimen: `assets/branding/font/specimen.png`
+- Don't simulate the font by pixelating other typefaces.
+
+The wordmark is **MOLEMISI** set in the same pixel style, amber on dark / dark brown on cream. Always use the provided files — do not typeset the name yourself.
 
 | File                                                     | Size     | Use                                        |
 | -------------------------------------------------------- | -------- | ------------------------------------------ |

@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, Rubik, Space_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
+import { Rubik, Space_Mono } from 'next/font/google';
 import './globals.css';
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk',
-  weight: ['500', '700'],
+/** Molemisi Pixel — hand-drawn tribal pixel display font (docs/Font_Guide.png). */
+const molemisiPixel = localFont({
+  src: '../../public/fonts/MolemisiPixel-Bold.ttf',
+  variable: '--font-molemisi-pixel',
+  weight: '700',
+  display: 'swap',
 });
 
 const rubik = Rubik({
@@ -140,7 +143,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body
-        className={`${spaceGrotesk.variable} ${rubik.variable} ${spaceMono.variable} font-body bg-[#210e0b] text-[#ffdad4] antialiased select-none min-h-screen`}
+        className={`${molemisiPixel.variable} ${rubik.variable} ${spaceMono.variable} font-body bg-[#210e0b] text-[#ffdad4] antialiased select-none min-h-screen`}
       >
         <main className="min-h-screen bg-[#210e0b] text-[#ffdad4]">{children}</main>
         <script
