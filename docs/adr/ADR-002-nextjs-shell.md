@@ -1,6 +1,6 @@
 # ADR-002: Next.js for Web Application Shell
 
-**Status:** Accepted
+**Status:** Accepted (shell exists; Phaser not embedded)
 **Date:** 2026-09-02
 
 ---

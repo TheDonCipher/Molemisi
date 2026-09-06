@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-02
+**As-built (2026-09-06):** Game mutations go through NestJS. React demo/Bushveld UI may show local fallbacks when the API is down.
 
 ---
 

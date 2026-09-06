@@ -1,22 +1,37 @@
-# 🌾 Molemisi
+# Molemisi
 
 A pixel-art farm management simulator inspired by Botswana.
 
 ## Overview
 
-Molemisi is a cozy agricultural management game where you build and manage a living farm. Plant crops, raise livestock, construct buildings, trade at the market, and help your community thrive.
+Molemisi is a cozy agricultural management game. Plant crops, raise livestock, construct buildings, trade at the market, visit the Kgotla, and explore the Bushveld.
 
-**Platforms:** Desktop web, Mobile web, PWA
+**Version:** 0.1.0 (M16 Alpha in progress)
 
-**Tech Stack:** Next.js, Phaser, NestJS, Supabase PostgreSQL
+**Platforms:** Desktop web, mobile web, PWA
 
-## Quick Start
+**Tech stack:** Next.js 14, Phaser 3, NestJS 10, Supabase PostgreSQL, pnpm + Turborepo
+
+## Current player path
+
+The playable client is the **Next.js React shell** at `/game`. It talks to the NestJS API over REST. Phaser (`apps/game`) is a standalone Vite client on port 3002 (Farm scene + demo mode). It is not mounted inside Next.js.
+
+```
+Browser
+  -> Next.js :3000  (auth, React game UI, admin, PWA)
+  -> NestJS  :3001  (/api/v1, authoritative game logic)
+  -> Vite    :3002  (optional standalone Phaser client)
+
+Supabase PostgreSQL :54322  |  Studio :54323
+```
+
+## Quick start
 
 ### Prerequisites
 
 - Node.js 20+
 - pnpm 9+
-- Docker (for Supabase local development)
+- Docker (Supabase local)
 - Supabase CLI
 
 ### Installation
@@ -31,86 +46,95 @@ pnpm install
 
 # Set up environment
 cp .env.example .env.local
-# Edit .env.local with your Supabase credentials
 
 # Start Supabase local
 pnpm supabase:start
 
-# Apply database migrations
+# Apply database migrations (also runs supabase/seed/seed.sql)
 pnpm supabase:reset
-
-# Seed development data
-pnpm db:seed
 
 # Start development servers
 pnpm dev
 ```
 
-### Development Servers
+Do not set `NODE_ENV` in `.env` or `.env.local`. Next.js and NestJS set it themselves. A stray `NODE_ENV=development` breaks `next build`.
+
+Register at http://localhost:3000/auth/register. Registration creates the auth user, profile, farm, plots, and starter seeds. `pnpm db:seed` is not available (the Nest seed script is missing).
+
+### Development servers
 
 | Service         | URL                    | Port  |
 | --------------- | ---------------------- | ----- |
-| Next.js Web     | http://localhost:3000  | 3000  |
+| Next.js web     | http://localhost:3000  | 3000  |
 | NestJS API      | http://localhost:3001  | 3001  |
-| Phaser Game     | http://localhost:3002  | 3002  |
+| Phaser game     | http://localhost:3002  | 3002  |
 | Supabase Studio | http://localhost:54323 | 54323 |
 
-## Architecture
+API base path: `http://localhost:3001/api/v1`
 
-```
-Phaser (Game Client)
-    ↓
-Next.js (Web Shell)
-    ↓
-NestJS (API)
-    ↓
-Supabase PostgreSQL (Database)
-```
+There is no Next.js rewrite/proxy to the API. The browser calls `:3001` directly (CORS via `CORS_ORIGIN`).
 
-### Monorepo Structure
+## Monorepo
 
 ```
 molemisi/
 ├── apps/
-│   ├── web/          # Next.js application
-│   ├── game/         # Phaser game client
-│   └── api/          # NestJS API
+│   ├── web/          # Next.js 14 — player UI, auth, admin, PWA
+│   ├── game/         # Phaser 3 + Vite — standalone farm renderer
+│   └── api/          # NestJS — authoritative game API
 ├── packages/
-│   ├── shared/       # Shared utilities
-│   ├── game-types/   # Game type definitions
-│   ├── game-config/  # Game configuration data
-│   └── validation/   # Zod validation schemas
-├── supabase/         # Database migrations & config
-├── assets/           # Game assets (sprites, tiles)
-└── docs/             # Documentation
+│   ├── shared/       # API helpers and constants
+│   ├── game-types/   # Shared TypeScript types
+│   ├── game-config/  # Crops, buildings, livestock, weather, store, theme
+│   └── validation/   # Zod schemas
+├── supabase/         # Migrations, seed, local config
+├── assets/           # Pixel-art source (synced into web/game public/)
+├── scripts/          # Asset pipeline, admin bootstrap, live API tests
+└── docs/             # Specifications and as-built notes
 ```
 
-## Development Commands
+## Commands
 
 ```bash
-pnpm dev              # Start all development servers
+pnpm dev              # Start web, api, and game (runs assets:sync first)
 pnpm build            # Build all packages
-pnpm test             # Run all tests
+pnpm test             # Run package tests
 pnpm lint             # Lint all packages
 pnpm typecheck        # Type-check all packages
-pnpm format           # Format code with Prettier
+pnpm format           # Format with Prettier
 
-pnpm supabase:start   # Start Supabase local
-pnpm supabase:stop    # Stop Supabase local
-pnpm supabase:reset   # Reset database
-pnpm db:seed          # Seed development data
+pnpm supabase:start   # Start local Supabase
+pnpm supabase:stop    # Stop local Supabase
+pnpm supabase:reset   # Reset DB and apply migrations + seed.sql
+pnpm dev:kill         # Free ports 3000/3001/3002
+
+pnpm assets:sync      # Copy assets/ into web and game public folders
+pnpm assets:generate  # Generate assets via PixelLab (needs PIXELLAB_API_KEY)
 ```
+
+## What works today
+
+- Auth: register, login, logout, `/auth/me` (Supabase JWT in localStorage)
+- Farming: 11 crops, plant / water / harvest, elapsed-time simulation
+- Buildings (7), livestock (4), inventory, dynamic market, contracts, progression
+- Kgotla (NPCs, quests, projects), Bushveld gather, seasons and world events
+- Notifications, PWA (manifest + service worker), admin dashboard + `AdminGuard`
+- Payments: store catalog (13 SKUs) and stub provider (no Stripe / Orange Money yet)
+
+Details: `docs/DEVELOPMENT_STATE.md`. Gaps: `docs/KNOWN_LIMITATIONS.md`.
 
 ## Documentation
 
-- [Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md)
-- [Development Setup](docs/DEVELOPMENT_SETUP.md)
-- [Known Limitations](docs/KNOWN_LIMITATIONS.md)
-- [Game Design Specification](docs/01_Game_Design_Specification.md)
-- [System Architecture](docs/02_System_Architecture_Specification.md)
-- [API Specification](docs/08_API_Specification.md)
-- [Database Design](docs/07_Database_Design_Specification.md)
+- `docs/DEVELOPMENT_STATE.md` — as-built status (start here)
+- `docs/DEVELOPMENT_SETUP.md` — local setup
+- `docs/ARCHITECTURE_OVERVIEW.md` — as-built architecture
+- `docs/KNOWN_LIMITATIONS.md` — gaps and debt
+- `docs/01_Game_Design_Specification.md` — design specs (01–23)
+- `docs/08_API_Specification.md` — API design (see DEVELOPMENT_STATE for as-built routes)
+- `docs/07_Database_Design_Specification.md` — schema design
+
+Numbered specs are design intent. Where they conflict with the repo, the code and `DEVELOPMENT_STATE.md` win.
 
 ## License
 
-Private - All rights reserved.
+Private — all rights reserved.

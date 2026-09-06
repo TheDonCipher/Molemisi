@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — Copy `.env.example` to `.env.local`. Do not set `NODE_ENV`. Game values are TypeScript in `packages/game-config` plus table `game_config`, not `config/game.json`. Redis/Sentry/PostHog env vars are unused.
 
 ---
 
@@ -54,10 +55,10 @@ ECONOMY_CONFIG_PATH=./config/economy.json
 
 ```
 .env.example          # Template (committed)
-.env.development      # Local development (gitignored)
-.env.staging          # Staging (gitignored)
-.env.production       # Production (gitignored)
+.env.local            # Local development (gitignored) — copy from .env.example
 ```
+
+As-built: do not set `NODE_ENV` in env files. Redis, Sentry, PostHog, Stripe, and `GAME_CONFIG_PATH` JSON files are not used. Game config is `packages/game-config` plus the `game_config` table.
 
 ---
 

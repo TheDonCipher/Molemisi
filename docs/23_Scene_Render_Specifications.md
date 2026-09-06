@@ -2,6 +2,7 @@
 
 > Visual descriptions for generating pixel-art background scenes.
 > Each scene is rendered at **800×480 pixels**, 16-bit pixel art style, warm Botswana-inspired palette.
+> Implementation: 2026-09-06 — stitch backgrounds live under `assets/` / `public/assets/backgrounds/` as `farm_scene`, `kgotla_scene`, `bushveld_scene`, `market_scene`.
 
 ---
 

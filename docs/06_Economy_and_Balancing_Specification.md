@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — Crop/animal/building prices live in `packages/game-config`. Dynamic market tables from migration `20260902000003`. Live overrides via `game_config`.
 
 ---
 

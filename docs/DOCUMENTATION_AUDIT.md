@@ -1,237 +1,104 @@
 # Documentation Audit
 
 > **Molemisi Farm Management Simulator**
-> Version: 1.0.0
-> Status: Complete
-> Last Updated: 2026-09-02
+> Version: 0.1.0 (code) / 1.0.0 (design specs)
+> Status: Specs are design intent; living docs match the repo
+> Last updated: 2026-09-06
 
 ---
 
-## Audit Summary
+## How to read this suite
 
-This document audits the complete Molemisi documentation suite for consistency, completeness, and implementation readiness.
+| Kind | Files | Authority |
+| --- | --- | --- |
+| As-built | README, DEVELOPMENT_STATE, DEVELOPMENT_SETUP, ARCHITECTURE_OVERVIEW, KNOWN_LIMITATIONS, this audit, SCAFFOLD_AUDIT | **Code + these files** |
+| Design specs | `01`–`23`, Molemisi-PRD, ROADMAP | Intent / target |
+| ADRs | `docs/adr/ADR-001`–`012` | Decisions; some not fully realized |
 
-### Documents Audited
-
-| Document                                       | Status      | Issues Found |
-| ---------------------------------------------- | ----------- | ------------ |
-| 01 Game Design Specification                   | ✅ Complete | 0            |
-| 02 System Architecture Specification           | ✅ Complete | 0            |
-| 03 UI/UX Specification                         | ✅ Complete | 0            |
-| 04 Game Rendering and Phaser Specification     | ✅ Complete | 0            |
-| 05 Art Direction and Asset Specification       | ✅ Complete | 0            |
-| 06 Economy and Balancing Specification         | ✅ Complete | 0            |
-| 07 Database Design Specification               | ✅ Complete | 0            |
-| 08 API Specification                           | ✅ Complete | 0            |
-| 09 Game Simulation Specification               | ✅ Complete | 0            |
-| 10 Payment and Monetization Specification      | ✅ Complete | 0            |
-| 11 Error Handling and Recovery Specification   | ✅ Complete | 0            |
-| 12 Observability Specification                 | ✅ Complete | 0            |
-| 13 Security Specification                      | ✅ Complete | 0            |
-| 14 Configuration Specification                 | ✅ Complete | 0            |
-| 15 Content Data Specification                  | ✅ Complete | 0            |
-| 16 Testing and QA Specification                | ✅ Complete | 0            |
-| 17 Deployment and DevOps Specification         | ✅ Complete | 0            |
-| 18 Admin and Operations Specification          | ✅ Complete | 0            |
-| 19 Analytics and Product Metrics Specification | ✅ Complete | 0            |
-| 20 MVP Implementation Plan                     | ✅ Complete | 0            |
-| 21 Agent Implementation Guide                  | ✅ Complete | 0            |
-| ADR-001 through ADR-012                        | ✅ Complete | 0            |
+If a numbered spec disagrees with the repo, the repo wins until the spec is revised.
 
 ---
 
-## Cross-Document Consistency Check
+## Living documents
 
-### 1. Database ↔ API
-
-**Check:** Can every API endpoint be backed by the database schema?
-
-| API Endpoint                        | Database Tables                                     | Consistent |
-| ----------------------------------- | --------------------------------------------------- | ---------- |
-| POST /farms/:id/plots/:id/plant     | farm_plots, crop_instances, inventory               | ✅         |
-| POST /farms/:id/plots/:id/water     | crop_instances                                      | ✅         |
-| POST /farms/:id/plots/:id/harvest   | crop_instances, inventory, game_ledger_entries      | ✅         |
-| POST /farms/:id/livestock/buy       | livestock, profiles (currency)                      | ✅         |
-| POST /farms/:id/livestock/:id/feed  | livestock, inventory                                | ✅         |
-| POST /farms/:id/buildings/construct | buildings, inventory                                | ✅         |
-| POST /market/sell                   | inventory, market_transactions, profiles (currency) | ✅         |
-| POST /market/buy                    | inventory, profiles (currency)                      | ✅         |
-| POST /contracts/:id/accept          | contracts                                           | ✅         |
-| POST /payments/create               | payments                                            | ✅         |
-
-### 2. Simulation ↔ Database
-
-**Check:** Can every simulation state change be persisted?
-
-| Simulation Change | Database Table              | Consistent |
-| ----------------- | --------------------------- | ---------- |
-| Crop growth       | crop_instances.growth_stage | ✅         |
-| Crop hydration    | crop_instances.hydration    | ✅         |
-| Crop withering    | crop_instances.state        | ✅         |
-| Animal hunger     | livestock.hunger            | ✅         |
-| Animal health     | livestock.health            | ✅         |
-| Animal production | livestock.product_ready     | ✅         |
-| Building wear     | buildings.wear              | ✅         |
-| Weather change    | farms.weather_state         | ✅         |
-| Season change     | farms.season                | ✅         |
-
-### 3. API ↔ Simulation
-
-**Check:** Does the simulation produce state that the API can serve?
-
-| Simulation Output           | API Response                           | Consistent |
-| --------------------------- | -------------------------------------- | ---------- |
-| Crop ready                  | crop_instances.state = 'READY'         | ✅         |
-| Animal product ready        | livestock.product_ready = true         | ✅         |
-| Building maintenance needed | buildings.state = 'MAINTENANCE_NEEDED' | ✅         |
-| Weather changed             | farms.weather_state updated            | ✅         |
-
-### 4. Phaser ↔ API
-
-**Check:** Can every visual state be derived from API data?
-
-| Visual State      | API Data                            | Consistent |
-| ----------------- | ----------------------------------- | ---------- |
-| Crop growth stage | crop_instances.growth_stage         | ✅         |
-| Crop hydration    | crop_instances.hydration            | ✅         |
-| Animal state      | livestock.hunger, health, happiness | ✅         |
-| Building state    | buildings.state, level              | ✅         |
-| Weather           | farms.weather_state                 | ✅         |
-| Time              | farms.season, season_day            | ✅         |
-
-### 5. UI/UX ↔ API
-
-**Check:** Can every UI element be populated from API data?
-
-| UI Element    | API Endpoint             | Consistent |
-| ------------- | ------------------------ | ---------- |
-| Farm view     | GET /farms/current       | ✅         |
-| Inventory     | GET /farms/:id/inventory | ✅         |
-| Market prices | GET /market/prices       | ✅         |
-| Contracts     | GET /contracts           | ✅         |
-| Notifications | GET /notifications       | ✅         |
-| Profile       | GET /profile             | ✅         |
-| Kgotla        | GET /kgotla/npcs         | ✅         |
-| Bushveld      | GET /bushveld/zones      | ✅         |
-
-### 6. Economy ↔ Content
-
-**Check:** Does the economy spec match the content data?
-
-| Content                           | Economy Values                    | Consistent |
-| --------------------------------- | --------------------------------- | ---------- |
-| Sorghum: seedCost 5, basePrice 15 | Economy: seedCost 5, basePrice 15 | ✅         |
-| Maize: seedCost 8, basePrice 20   | Economy: seedCost 8, basePrice 20 | ✅         |
-| Chicken: purchaseCost 50          | Economy: purchaseCost 50          | ✅         |
-| Well: baseCost 200                | Economy: baseCost 200             | ✅         |
-
-### 7. Security ↔ API
-
-**Check:** Are all security requirements enforced in the API?
-
-| Security Requirement | API Implementation         | Consistent |
-| -------------------- | -------------------------- | ---------- |
-| Authentication       | JWT guard on all endpoints | ✅         |
-| Authorization        | Ownership verification     | ✅         |
-| RLS                  | Supabase RLS policies      | ✅         |
-| Rate limiting        | Rate limit middleware      | ✅         |
-| Input validation     | DTO validation             | ✅         |
-| Audit logging        | Ledger entries             | ✅         |
+| Document | Status |
+| --- | --- |
+| README.md | Updated 2026-09-06 |
+| DEVELOPMENT_STATE.md | Updated 2026-09-06 |
+| DEVELOPMENT_SETUP.md | Updated 2026-09-06 |
+| ARCHITECTURE_OVERVIEW.md | Updated 2026-09-06 |
+| KNOWN_LIMITATIONS.md | Updated 2026-09-06 |
+| SCAFFOLD_AUDIT.md | Historical + pointer |
+| DOCUMENTATION_AUDIT.md | This file |
 
 ---
 
-## Inconsistencies Found
+## Design specifications
 
-**None.** The documentation suite is internally consistent.
+| Document | Role | Implementation notes |
+| --- | --- | --- |
+| 01 Game Design | Product rules | Mostly reflected in API + config |
+| 02 System Architecture | Target topology | Phaser-in-Next and Redis not as drawn |
+| 03 UI/UX | UX | React screens; Stitch designs in `docs/Screens/` |
+| 04 Phaser rendering | Target renderer | Standalone Farm only; see DEVELOPMENT_STATE |
+| 05 Art direction | Art bible | PixelLab assets + stitch backgrounds exist |
+| 06 Economy | Balance | Config + market tables |
+| 07 Database | Schema | 16 migrations; extra tables beyond first draft |
+| 08 API | Endpoint design | Prefix `/api/v1` matches; many paths/rate limits differ |
+| 09 Simulation | Offline sim | Implemented in `SimulationService` |
+| 10 Payments | Monetization | Stub provider only |
+| 11 Errors | Error model | Filter not registered |
+| 12 Observability | Logs/metrics | Nest logger + ledger; no Sentry/PostHog |
+| 13 Security | Controls | JWT localStorage, in-memory throttle, admin flag |
+| 14 Configuration | Env + game.json | Env is `.env.example`; game config is TS + `game_config` table, not JSON files |
+| 15 Content data | Data-driven content | Crops/buildings/animals/store yes; NPC/contract/event no |
+| 16 Testing | QA | Thin unit tests; live scripts |
+| 17 Deployment | DevOps | Local pnpm/supabase only; spec still says npm/Redis |
+| 18 Admin | Ops UI | `/admin` implemented; JWT role claim not used |
+| 19 Analytics | Metrics | Table exists; no product dashboards |
+| 20 MVP plan | Phases 0–7 | Features largely built; checkboxes in 20 still mixed |
+| 21 Agent guide | Conventions | Package layout in the guide is outdated |
+| 22 UI GX | Motion/feel | Partial |
+| 23 Scene renders | Stitch prompts | Backgrounds generated |
 
----
-
-## Missing Requirements
-
-**None identified.** All major requirements from the PRD are covered.
-
----
-
-## Unresolved Decisions
-
-**None.** All architectural decisions are documented in ADRs.
-
----
-
-## Recommended Corrections
-
-**None.** The documentation suite is complete and consistent.
-
----
-
-## MVP Risks
-
-| Risk                                    | Impact | Mitigation                               |
-| --------------------------------------- | ------ | ---------------------------------------- |
-| Phaser + Next.js integration complexity | Medium | Clear separation, independent builds     |
-| Economy balancing requires iteration    | High   | Simulation testing, config-driven values |
-| Payment provider reliability            | Medium | Provider abstraction, retry logic        |
-| Mobile performance on low-end devices   | Medium | Performance budget, optimization         |
-| Offline simulation accuracy             | Low    | Deterministic algorithms, test vectors   |
+ADR-001–012: decisions stand. Unrealized: Phaser host (001/002), Redis (012), Capacitor (011), live payment providers (008), fully data-driven content (009).
 
 ---
 
-## Final Validation
+## Material inconsistencies (spec vs code)
 
-### Can every required game state be persisted? ✅
+1. **Client split** — Specs: Phaser renders the farm inside Next. Code: React `/game`.
+2. **Package manager** — Specs often `npm`. Repo is **pnpm 9** + turbo.
+3. **Redis** — Specs list Redis. Not in the stack.
+4. **Rate limits** — Spec 08: 100/min global, per-route limits. Code: 60/min flat.
+5. **Store size** — Older state docs said 8 SKUs / 6 buildings. Code: **13 SKUs, 7 buildings, 11 crops, 4 animals, 209 assets**.
+6. **Admin auth** — Spec: admin JWT role. Code: `profiles.is_admin`.
+7. **Env files** — Spec: `.env.development`. Repo: `.env.example` -> `.env.local`.
+8. **API modules path** — Agent guide shows `apps/api/src/modules/`. Code: feature folders directly under `src/`.
+9. **Phaser port** — Spec 17 put the game at `:3000/game`. That URL is React. Phaser is `:3002`.
+10. **db:seed** — README historically documented it. Script target file missing.
 
-All game state maps to database tables.
+---
 
-### Can every player action be represented? ✅
+## Cross-checks that still hold
 
-All actions have corresponding API endpoints.
+- Mutations go through Nest (player currency not trusted from the client)
+- Simulation state is persisted on farm/crop/livestock/building rows
+- Crop economy numbers in `game-config` match the 06 examples (sorghum 5/15, maize 8/20, chicken 50, well 200)
+- Auth on player game routes
+- RLS present on core player tables
 
-### Can the complete farm be advanced offline? ✅
+---
 
-Elapsed-time simulation covers all time-dependent systems.
+## Counts
 
-### Can every important state be visually represented? ✅
-
-All states map to Phaser sprites and animations.
-
-### Can every API capability be exposed through UX? ✅
-
-All endpoints have corresponding UI elements.
-
-### Can every resource be created and destroyed? ✅
-
-Economy has clear sources and sinks for all resources.
-
-### Can purchases safely enter the economy? ✅
-
-Payment abstraction isolates economy from providers.
-
-### Can the client cheat? ✅
-
-Server-authoritative design prevents client manipulation.
-
-### Can every critical system be tested? ✅
-
-Testing specification covers all critical paths.
-
-### Can a solo developer actually deploy and operate the system? ✅
-
-Deployment spec uses managed services suitable for solo dev.
-
-### Can an AI coding agent understand the architecture? ✅
-
-Agent Implementation Guide provides clear rules and conventions.
+- Design specs: 23
+- ADRs: 12
+- Screen DESIGN.md: 5 (Home, Village/Market, Kgotla, Bushveld, Inventory)
+- Living operational docs: 7 (including README)
 
 ---
 
 ## Conclusion
 
-The Molemisi documentation suite is **complete, consistent, and implementation-ready**.
-
-The documentation provides sufficient detail for a competent developer or AI coding agent to begin implementation without having to invent missing architectural decisions.
-
-**Total documents:** 21 specifications + 12 ADRs + 1 audit = 34 documents
-**Total estimated pages:** 500+
-**Implementation timeline:** 18 weeks (4.5 months)
-
-The documentation suite is ready for implementation.
+The design suite is still useful as a product bible. It is **not** an implementation log. Agents and humans should start at `DEVELOPMENT_STATE.md` and `KNOWN_LIMITATIONS.md`, then open a numbered spec for intended behavior.

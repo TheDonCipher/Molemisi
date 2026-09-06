@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-02
+**As-built (2026-09-06):** Global prefix `/api/v1`. Route inventory: `DEVELOPMENT_STATE.md`.
 
 ---
 

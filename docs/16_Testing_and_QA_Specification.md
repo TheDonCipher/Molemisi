@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — Jest unit tests in api/game-config/validation. Live scripts `scripts/test-game-loop.mjs` and `test-full-suite.mjs`. No Playwright. CI has no Supabase.
 
 ---
 

@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-02
+**As-built (2026-09-06):** `SimulationService` on `GET /farms/current`. Cap 24h.
 
 ---
 

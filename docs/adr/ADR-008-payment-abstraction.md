@@ -1,7 +1,8 @@
 # ADR-008: Payment Provider Abstraction
 
-**Status:** Accepted
+**Status:** Accepted (stub only)
 **Date:** 2026-09-02
+**As-built (2026-09-06):** `PAYMENT_PROVIDER` -> `StubPaymentProvider`. No live Stripe/Orange Money.
 
 ---
 

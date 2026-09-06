@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-02
+**As-built (2026-09-06):** 16 migrations under `supabase/migrations/`. API uses service-role client; RLS is defense in depth.
 
 ---
 

@@ -1,111 +1,146 @@
 # Known Limitations
 
-This document tracks known limitations and technical debt from the initial scaffolding.
+As-built gaps and debt as of 2026-09-06. Older scaffold notes in this file are obsolete.
 
-## Scaffold Limitations
+---
 
-### 1. Phaser Integration
+## Product / UX
 
-**Status:** Basic integration complete
+### Phaser is not the player client
 
-- Phaser game runs in a separate Vite dev server
-- No hot module replacement between Next.js and Phaser
-- Game assets are placeholders (colored rectangles)
-- No actual sprite sheets or tilemaps loaded
+The ADR and rendering spec assume Next.js hosts Phaser. `/game` is a React screen switcher. Phaser runs only as a standalone Vite app on port 3002 with Boot / Preload / FarmScene. Kgotla, Bushveld, and Market Phaser scenes and most `apps/game/src/ui` panels are unused.
 
-### 2. Authentication Flow
+### No player logout
 
-**Status:** Foundation complete
+`POST /api/v1/auth/logout` exists but is a server no-op. Settings has no logout. Tokens stay in `localStorage` (`token` and `molemisi_token`).
 
-- Registration creates auth user + profile + farm
-- Login returns JWT token
-- Token stored in localStorage (not httpOnly cookie)
-- No token refresh mechanism implemented
-- No logout endpoint
+### Token key split
 
-### 3. Database
+Login writes both `molemisi_token` and `token`. `apps/web/src/lib/api.ts` reads only `token`. Phaser `ApiClient` accepts either. Admin uses `molemisi_admin_token`. Easy to desync.
 
-**Status:** Schema complete
+### No token refresh
 
-- Core tables created with RLS policies
-- No database functions or triggers
-- Seed data is commented out (requires auth user)
-- No automated type generation from Supabase
+Login/register return a Supabase `refreshToken`. There is no `POST /auth/refresh`. Sessions die with JWT expiry (`jwt_expiry = 3600` in `supabase/config.toml`).
 
-### 4. API
+### No audio
 
-**Status:** Foundation complete
+No Phaser sound, Howler, or audio assets. Settings BGM/SFX sliders only write React state.
 
-- Health endpoint works
-- Auth endpoints (register, login) work
-- Farm retrieval works
-- Crop planting, watering, harvesting work
-- No rate limiting implemented
-- No request validation beyond Zod schemas
-- No idempotency support
+### Store UI missing on the web client
 
-### 5. Game Logic
+API store + stub payments exist. Phaser `StorePanel` is unregistered. React has no IAP shop. Admin can view payment history.
 
-**Status:** Vertical slice only
+### Bushveld React forage is partly client-side
 
-- Crop planting works
-- Crop watering works
-- Crop harvesting works
-- No crop growth simulation
-- No weather system
-- No season system
-- No livestock system
-- No building system
-- No market system
-- No contracts
-- No Kgotla
-- No Bushveld
+`BushveldScreen` can show forage nodes without going through every API path. Server `POST .../bushveld/gather` is authoritative when used.
 
-### 6. Testing
+### No i18n beyond en/tn strings
 
-**Status:** Minimal
+`translations.ts` covers UI copy. Content (crop names, NPC dialogue) is English in config/services.
 
-- Health controller test exists
-- Crops service test exists (minimal)
-- No integration tests
-- No E2E tests
-- No database tests
+---
 
-### 7. CI/CD
+## API / backend
 
-**Status:** Basic
+### `pnpm db:seed` is broken
 
-- GitHub Actions workflow for lint, typecheck, test, build
-- No deployment pipeline
-- No staging/production environments
+`apps/api` script `db:seed` runs `ts-node src/database/seed.ts`, which does not exist. Use registration + `supabase/seed/seed.sql` (via `pnpm supabase:reset`).
 
-### 8. Documentation
+### Config mutation is not admin-only
 
-**Status:** Scaffold complete
+`PUT /config` and `PUT /config/:key` use `AuthGuard` only. Any logged-in player can change live `game_config`.
 
-- README with setup instructions
-- Architecture overview
-- Known limitations (this file)
-- Full specification suite in docs/
+### Payment webhook requires JWT
 
-## Technical Debt
+Comments say webhook is unauthenticated. Class-level `AuthGuard` still applies. Stub `verifyWebhookEvent` always returns true. No Stripe/Orange HMAC.
 
-1. **Token Storage** - Using localStorage instead of httpOnly cookies
-2. **Error Handling** - Basic error filter, no structured logging
-3. **Validation** - Zod schemas not integrated with NestJS pipes
-4. **Database Queries** - Using Supabase client directly, no repository pattern
-5. **Game State** - No client-side state management
-6. **Asset Pipeline** - No asset loading or caching strategy
-7. **PWA** - No service worker or manifest configured
-8. **Mobile** - No touch optimization or responsive testing
+### Stub payments only
 
-## Next Implementation Priorities
+`StubPaymentProvider` completes immediately. Stripe / Orange Money env vars are commented in `.env.example`. Entitlements for extra plots/storage/cosmetics are largely logged, not fully applied.
 
-1. **Crop Growth Simulation** - Implement server-side time-based growth
-2. **Weather System** - Add weather effects and modifiers
-3. **Season System** - Implement seasonal changes
-4. **Livestock** - Add animal management
-5. **Buildings** - Add construction and upgrades
-6. **Market** - Implement trading system
-7. **PWA** - Add service worker and offline support
-8. **Testing** - Add integration and E2E tests
+### Exception filter unused
+
+`AllExceptionsFilter` is not registered in `main.ts`.
+
+### Rate limit is in-process
+
+60 requests / 60 seconds, memory map, not Redis. Resets per API process. Comment in code: use `@nestjs/throttler` + Redis in production.
+
+### Analytics has no HTTP API
+
+`analytics_events` table + service exist. No player or admin query endpoints. Events may not be emitted from every action.
+
+### Validation schemas underused
+
+Zod schemas exist for fertilize, heal, etc. Controllers mostly use loose body types. Nest `ValidationPipe` + class-validator run on DTOs that exist; many routes have none.
+
+### Contracts / NPCs / zones / events not data-driven
+
+Hardcoded in Nest services. `packages/game-config` does not export them. Conflicts with ADR-009.
+
+### No idempotency on most mutations
+
+Payments table has an idempotency column. Plant/water/harvest/market are not idempotent-keyed.
+
+---
+
+## Frontend / infra
+
+### No reverse proxy
+
+Next.js has no `rewrites` for `/api`. Vite has no `server.proxy`. Online single-port preview cannot reach the API unless `NEXT_PUBLIC_API_URL` is publicly reachable and CORS allows the preview origin.
+
+### Vite `allowedHosts` not set
+
+`apps/game/vite.config.ts` does not allow `*.monkeycode-ai.live`.
+
+### Dual Next config
+
+`next.config.js` is the active file. `next.config.mjs` is a stale duplicate.
+
+### PWA is minimal
+
+Custom `sw.js`, no `next-pwa`, no offline game simulation on the client, no push.
+
+### Capacitor / native
+
+Not started (ADR-011).
+
+### Redis
+
+Not used (ADR-012: optional later). No cache, no distributed rate limit, no job queue.
+
+---
+
+## Testing / ops
+
+### Thin automated tests
+
+A handful of unit tests. Integration file under `apps/api/test/` is outside Jest `rootDir`. No Playwright/E2E. Live coverage is `scripts/test-*.mjs` against a running API.
+
+### CI has no database
+
+GitHub Actions runs lint, typecheck, test, build. No Supabase service, no migration check, no deploy.
+
+### No staging/production pipeline
+
+Deployment spec is design-only.
+
+---
+
+## Security notes (known, not a scan)
+
+- JWT in localStorage (XSS-sensitive), not httpOnly cookies
+- Service role key is server-only if env is set correctly
+- Admin is a boolean on `profiles`, not a JWT role claim
+- Banned users can still hit `/admin/` URLs at the guard layer (intended for admin tooling)
+
+---
+
+## Won't-fix for Alpha unless blocking
+
+- Full Phaser embedding in Next.js
+- Real payment providers
+- Sound design
+- Push notifications
+- Friend/social features (post-MVP roadmap)

@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-02
+**As-built (2026-09-06):** Feature modules live directly under `apps/api/src/` (not `src/modules/`).
 
 ---
 

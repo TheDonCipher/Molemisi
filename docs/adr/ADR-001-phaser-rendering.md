@@ -1,7 +1,8 @@
 # ADR-001: Phaser for 2D Game Rendering
 
-**Status:** Accepted
+**Status:** Accepted (partially realized)
 **Date:** 2026-09-02
+**As-built (2026-09-06):** Phaser 3 is used in `apps/game` (Vite :3002). The playable product path is React `/game`, not Phaser-in-Next.
 
 ---
 

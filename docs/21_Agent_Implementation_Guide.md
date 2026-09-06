@@ -2,8 +2,18 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
-> Last Updated: 2026-09-02
+> Status: Active conventions + as-built layout
+> Last Updated: 2026-09-06
+> Start here for agents after `DEVELOPMENT_STATE.md`. Numbered specs are design intent.
+
+### Doc map
+
+| Read first | Then |
+| --- | --- |
+| `DEVELOPMENT_STATE.md` | `KNOWN_LIMITATIONS.md` |
+| `DEVELOPMENT_SETUP.md` | `ARCHITECTURE_OVERVIEW.md` |
+| `08_API_Specification.md` (intent) | Live routes in DEVELOPMENT_STATE |
+| `01`–`23` design specs | Only for intended behavior, not file layout |
 
 ---
 
@@ -14,33 +24,38 @@
 ```
 molemisi/
 ├── apps/
-│   ├── web/                    # Next.js application
-│   │   ├── app/                # App Router
-│   │   ├── components/         # React components
-│   │   ├── hooks/              # React hooks
-│   │   └── lib/                # Utilities
-│   ├── game/                   # Phaser game client
-│   │   ├── src/
-│   │   │   ├── scenes/         # Phaser scenes
-│   │   │   ├── objects/        # Game objects
-│   │   │   ├── systems/        # Game systems
-│   │   │   ├── services/       # API communication
-│   │   │   └── config/         # Game configuration
-│   │   └── public/assets/      # Game assets
-│   └── api/                    # NestJS API
-│       ├── src/
-│       │   ├── modules/        # Feature modules
-│       │   ├── common/         # Shared utilities
-│       │   └── config/         # Configuration
-│       └── migrations/         # Database migrations
+│   ├── web/                    # Next.js 14 — player UI, admin, PWA
+│   │   └── src/
+│   │       ├── app/            # App Router (page.tsx routes)
+│   │       ├── components/     # Header, footer, screens/
+│   │       └── lib/            # api.ts, gameState.tsx
+│   ├── game/                   # Phaser 3 + Vite :3002 (standalone)
+│   │   └── src/
+│   │       ├── scenes/         # Boot, Preload, Farm registered
+│   │       ├── objects/        # PlotObject
+│   │       ├── services/       # ApiClient
+│   │       └── ui/             # Panels (mostly unregistered)
+│   └── api/                    # NestJS — feature folders under src/
+│       └── src/
+│           ├── auth/, farms/, crops/, ...
+│           ├── common/         # guards, interceptors, filters
+│           └── main.ts         # prefix api/v1
 ├── packages/
-│   ├── shared/                 # Shared types and utils
-│   └── config/                 # Shared configuration
-├── docs/                       # Documentation (this suite)
-├── supabase/
-│   └── migrations/             # Database migrations
-└── turbo.json                  # Turborepo configuration
+│   ├── shared/
+│   ├── game-types/
+│   ├── game-config/            # crops, buildings, livestock, weather, store, theme
+│   └── validation/
+├── supabase/migrations/
+├── assets/                     # source art + manifest.json
+├── scripts/
+├── docs/
+├── package.json                # pnpm scripts (not npm)
+└── turbo.json
 ```
+
+**Player path:** Next.js `/game` (React). Do not assume Phaser is mounted in the web app.
+
+**Package manager:** pnpm 9. Commands are `pnpm dev`, `pnpm test`, not `npm run`.
 
 ---
 
@@ -66,7 +81,7 @@ molemisi/
 | Variables       | camelCase       | `cropType`        |
 | Constants       | SCREAMING_SNAKE | `MAX_PLOTS`       |
 | Database tables | snake_case      | `crop_instances`  |
-| API paths       | kebab-case      | `/crop-instances` |
+| API paths       | nested REST     | `/farms/:id/plots/:id/plant` |
 
 ### File Organization
 
@@ -88,7 +103,7 @@ molemisi/
 3. **No direct database access from client** — All data flows through API
 4. **All economic transactions audited** — Every currency/item change recorded in ledger
 5. **All database changes via migrations** — Never modify schema directly
-6. **All game content data-driven** — Content in config files, not hardcoded
+6. **All game content data-driven** — Prefer `packages/game-config`. Today contracts/NPCs/zones/events are still in API services; new content of those types should move to game-config, not more hardcoded arrays.
 
 ### Must Not
 

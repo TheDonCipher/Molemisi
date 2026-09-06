@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
-> Last Updated: 2026-09-02
+> Status: Design plan; features largely implemented
+> Last Updated: 2026-09-06
+> Implementation: Alpha (M16). Player client is React `/game`. Phaser is standalone. Payments are stub. See `DEVELOPMENT_STATE.md`.
 
 ---
 
@@ -59,7 +60,7 @@
 
 ### Acceptance Criteria
 
-- `npm run dev` starts all services
+- `pnpm dev` starts all services
 - Player can register and login
 - API returns authenticated responses
 - Database migrations apply cleanly
@@ -82,17 +83,17 @@
 
 ### Features
 
-- [ ] Farm tilemap (16x16 tiles)
-- [ ] Farm plot rendering (empty, planted, growing, ready)
-- [ ] Tap/click to select plot
-- [ ] Context menu (plant, water, harvest)
-- [ ] Basic crop sprites (sorghum, maize)
-- [ ] Planting animation
+- [x] Farm tilemap (16x16 tiles) — React plot grid + Phaser soil tiles (standalone)
+- [x] Farm plot rendering (empty, planted, growing, ready)
+- [x] Tap/click to select plot
+- [x] Context menu (plant, water, harvest)
+- [x] Basic crop sprites (sorghum, maize) — plus remaining crops in manifest
+- [ ] Planting animation — feedback exists; full tween spec not complete
 - [ ] Watering animation
 - [ ] Harvesting animation
-- [ ] HUD (currency, day counter)
-- [ ] Bottom navigation bar
-- [ ] Scene transitions
+- [x] HUD (currency, day counter)
+- [x] Bottom navigation bar — `MobileFooterNav`
+- [x] Scene transitions — React nav; Phaser scene switch not wired
 
 ### Deliverables
 
@@ -126,16 +127,16 @@
 
 ### Features
 
-- [ ] Crop growth simulation
-- [ ] Water management
-- [ ] Crop quality system
-- [ ] Disease and pest system
-- [ ] Inventory system
-- [ ] Seed purchase from market
-- [ ] Crop sale at market
-- [ ] Dynamic market prices
-- [ ] Basic notifications
-- [ ] Offline progression (crops)
+- [x] Crop growth simulation
+- [x] Water management
+- [x] Crop quality system
+- [x] Disease and pest system — simulation-side
+- [x] Inventory system
+- [x] Seed purchase from market
+- [x] Crop sale at market
+- [x] Dynamic market prices
+- [x] Basic notifications
+- [x] Offline progression (crops)
 
 ### Deliverables
 
@@ -170,14 +171,14 @@
 
 ### Features
 
-- [ ] All 11 crop types
-- [ ] Crop quality system (4 tiers)
-- [ ] Fertilizer system
-- [ ] Contract system (delivery, cultivation)
-- [ ] Market events
-- [ ] Seasonal price modifiers
-- [ ] Skill progression (farming)
-- [ ] Farm leveling
+- [x] All 11 crop types
+- [x] Crop quality system (4 tiers)
+- [ ] Fertilizer system — Zod schema exists; no first-class API/UI
+- [x] Contract system (delivery, cultivation) — 6 contracts in API service
+- [x] Market events
+- [x] Seasonal price modifiers
+- [x] Skill progression (farming) — XP / `GET /progression`
+- [x] Farm leveling
 
 ### Deliverables
 
@@ -209,17 +210,17 @@
 
 ### Features
 
-- [ ] Chicken and coop
-- [ ] Goat and pen
-- [ ] Animal feeding
-- [ ] Animal products
-- [ ] Animal health/happiness
-- [ ] Building construction
-- [ ] Building upgrades
-- [ ] Building maintenance
-- [ ] Weather system
-- [ ] Seasonal effects
-- [ ] Visual farm life (animations, particles)
+- [x] Chicken and coop
+- [x] Goat and pen
+- [x] Animal feeding
+- [x] Animal products
+- [x] Animal health/happiness
+- [x] Building construction
+- [x] Building upgrades
+- [x] Building maintenance
+- [x] Weather system
+- [x] Seasonal effects
+- [ ] Visual farm life (animations, particles) — sprites exist; limited motion
 
 ### Deliverables
 
@@ -253,16 +254,16 @@
 
 ### Features
 
-- [ ] Kgotla scene
-- [ ] NPC interactions
-- [ ] Reputation system
-- [ ] Community quests
-- [ ] Bushveld exploration
-- [ ] Resource gathering
-- [ ] Rare discoveries
-- [ ] Energy system
-- [ ] Kgotla quests
-- [ ] Community projects
+- [x] Kgotla scene — React; Phaser scene unregistered
+- [x] NPC interactions
+- [x] Reputation system
+- [x] Community quests
+- [x] Bushveld exploration — React + API gather
+- [x] Resource gathering
+- [x] Rare discoveries
+- [ ] Energy system — `STARTING_ENERGY` constant; not a full action-energy loop
+- [x] Kgotla quests
+- [x] Community projects
 
 ### Deliverables
 
@@ -296,16 +297,16 @@
 
 ### Features
 
-- [ ] PWA service worker
-- [ ] Offline support
+- [x] PWA service worker — custom `sw.js`, not next-pwa
+- [ ] Offline support — SW skips `/api/`; no client sim
 - [ ] Push notifications
-- [ ] Settings page
-- [ ] Profile management
+- [x] Settings page — volume sliders inert (no audio)
+- [x] Profile management — `GET /profile`; limited UI
 - [ ] Achievement system
-- [ ] Daily bonuses
+- [ ] Daily bonuses — config constant only
 - [ ] Production chains (mill, dairy, bakery)
 - [ ] Automation (irrigation, auto-feeder)
-- [ ] Error handling polish
+- [ ] Error handling polish — filter not registered
 - [ ] Performance optimization
 
 ### Deliverables
@@ -343,11 +344,11 @@
 - [ ] Payment provider integration (Orange Money, Mascom)
 - [ ] Stripe integration (cards)
 - [ ] Premium currency (Gems)
-- [ ] Cosmetic shop
+- [ ] Cosmetic shop — SKUs exist; no player web UI
 - [ ] Season pass
-- [ ] Extra storage purchase
-- [ ] Payment reconciliation
-- [ ] Admin dashboard
+- [ ] Extra storage purchase — SKU logged, not fully applied
+- [ ] Payment reconciliation — stub completes immediately
+- [x] Admin dashboard
 - [ ] Final QA
 - [ ] Launch preparation
 

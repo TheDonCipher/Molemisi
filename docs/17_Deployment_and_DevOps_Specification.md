@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — Local stack is **pnpm** + `pnpm supabase:*` + `pnpm dev` (ports 3000/3001/3002). Phaser standalone is :3002, not :3000/game. Redis is not running. No staging/production deploy. CI: `.github/workflows/ci.yml`.
 
 ---
 
@@ -15,24 +16,26 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/molemisi/game.git
-cd game
+git clone https://github.com/your-username/molemisi.git
+cd molemisi
 
 # Install dependencies
-npm install
+pnpm install
 
-# Set up environment
-cp .env.example .env.development
+# Set up environment (do not set NODE_ENV)
+cp .env.example .env.local
 
 # Start Supabase local
-npx supabase start
+pnpm supabase:start
 
-# Run migrations
-npx supabase db reset
+# Run migrations (+ seed.sql)
+pnpm supabase:reset
 
-# Start development servers
-npm run dev
+# Start development servers (web 3000, api 3001, game 3002)
+pnpm dev
 ```
+
+Canonical walkthrough: `docs/DEVELOPMENT_SETUP.md`.
 
 ### Development Services
 
@@ -40,9 +43,10 @@ npm run dev
 | --------------- | -------------------------- | ----- |
 | Next.js Web     | http://localhost:3000      | 3000  |
 | NestJS API      | http://localhost:3001      | 3001  |
-| Phaser Game     | http://localhost:3000/game | 3000  |
+| React game      | http://localhost:3000/game | 3000  |
+| Phaser (Vite)   | http://localhost:3002      | 3002  |
 | Supabase Studio | http://localhost:54323     | 54323 |
-| Redis           | localhost:6379             | 6379  |
+| Redis           | not used locally           | —     |
 
 ---
 
@@ -120,25 +124,24 @@ npx supabase db push --linked --project-ref <prod-ref>
 
 ### Pipeline
 
+As-built CI (`.github/workflows/ci.yml`): pnpm 9, Node 20, jobs `install` then parallel `lint` / `typecheck` / `test`, then `build`. No deploy job.
+
 ```yaml
-# .github/workflows/ci.yml
+# Target / simplified; live file uses pnpm cache restore across jobs
 name: CI
-
-on: [push, pull_request]
-
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+      - uses: actions/checkout@v4
+      - run: pnpm lint
+      # typecheck, test, build similarly; see repo workflow
+```
 
   deploy-staging:
     needs: test

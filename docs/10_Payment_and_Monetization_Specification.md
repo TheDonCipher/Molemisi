@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — Provider interface + `StubPaymentProvider` only. 13 SKUs in `packages/game-config/src/store.ts`. No Stripe/Orange Money. No React store UI.
 
 ---
 

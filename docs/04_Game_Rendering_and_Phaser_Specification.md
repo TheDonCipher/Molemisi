@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — `apps/game` is Vite + Phaser 3 on port 3002. Only Boot, Preload, and FarmScene are registered. Pixel assets load from `generated-assets.ts`. This spec's full scene/object tree is **not** the running game.
 
 ---
 

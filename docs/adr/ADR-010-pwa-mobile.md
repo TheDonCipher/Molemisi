@@ -1,7 +1,8 @@
 # ADR-010: PWA-First Mobile Strategy
 
-**Status:** Accepted
+**Status:** Accepted (minimal PWA)
 **Date:** 2026-09-02
+**As-built (2026-09-06):** `manifest.json` + `public/sw.js` (network-first, skips `/api/`). No next-pwa, no push.
 
 ---
 
