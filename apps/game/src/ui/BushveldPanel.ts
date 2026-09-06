@@ -68,7 +68,7 @@ export class BushveldPanel {
 
     // Title
     const title = this.scene.add.text(0, -panelHeight / 2 + 20, '🌿 Bushveld', {
-      font: '18px monospace',
+      font: '18px Molemisi Pixel',
       color: '#81C784',
     });
     title.setOrigin(0.5, 0.5);
@@ -76,7 +76,7 @@ export class BushveldPanel {
 
     // Close button
     const closeBtn = this.scene.add.text(panelWidth / 2 - 20, -panelHeight / 2 + 20, '✕', {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color: '#F44336',
     });
     closeBtn.setOrigin(0.5, 0.5);
@@ -86,7 +86,7 @@ export class BushveldPanel {
 
     // Loading text
     const loading = this.scene.add.text(0, 0, 'Loading...', {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#BCAAA4',
     });
     loading.setOrigin(0.5, 0.5);
@@ -121,14 +121,14 @@ export class BushveldPanel {
 
       // Zone name
       const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${zone.name}`, {
-        font: '12px monospace',
+        font: '12px Molemisi Pixel',
         color: '#F5E6D3',
       });
       container.add(text);
 
       // Description
       const desc = this.scene.add.text(-panelWidth / 2 + 30, y + 16, zone.description, {
-        font: '9px monospace',
+        font: '9px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(desc);
@@ -138,7 +138,7 @@ export class BushveldPanel {
         panelWidth / 2 - 30,
         y + 7,
         `⚡${zone.energyCost} | Explored: ${zone.explored}`,
-        { font: '10px monospace', color: '#81C784' },
+        { font: '10px Molemisi Pixel', color: '#81C784' },
       );
       info.setOrigin(1, 0.5);
       container.add(info);
@@ -151,13 +151,13 @@ export class BushveldPanel {
         -panelWidth / 2 + 30,
         y + 30,
         `Resources: ${resourceText}`,
-        { font: '9px monospace', color: '#66BB6A' },
+        { font: '9px Molemisi Pixel', color: '#66BB6A' },
       );
       container.add(resources);
 
       // Gather button
       const gatherBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '🔍 Gather', {
-        font: '11px monospace',
+        font: '11px Molemisi Pixel',
         color: '#4CAF50',
         backgroundColor: '#1b5e20',
         padding: { x: 8, y: 4 },
@@ -201,7 +201,7 @@ export class BushveldPanel {
   private showFeedback(message: string, color: string): void {
     const width = this.scene.cameras.main.width;
     const text = this.scene.add.text(width / 2, 100, message, {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color,
       backgroundColor: '#3e2723',
       padding: { x: 12, y: 6 },

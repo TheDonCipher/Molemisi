@@ -88,14 +88,14 @@ export class TutorialOverlay {
       cardX,
       cardY - cardHeight / 2 + 16,
       `${this.currentStep + 1} / ${TUTORIAL_STEPS.length}`,
-      { font: '10px monospace', color: '#BCAAA4' },
+      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
     );
     stepText.setOrigin(0.5, 0.5);
     this.container.add(stepText);
 
     // Title
     const title = this.scene.add.text(cardX, cardY - cardHeight / 2 + 40, step.title, {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color: '#FF8F00',
       wordWrap: { width: cardWidth - 40 },
       align: 'center',
@@ -105,7 +105,7 @@ export class TutorialOverlay {
 
     // Message
     const message = this.scene.add.text(cardX, cardY + 10, step.message, {
-      font: '12px monospace',
+      font: '12px Molemisi Pixel',
       color: '#F5E6D3',
       wordWrap: { width: cardWidth - 40 },
       align: 'center',
@@ -118,7 +118,7 @@ export class TutorialOverlay {
     const isLast = this.currentStep === TUTORIAL_STEPS.length - 1;
     const btnLabel = isLast ? "Let's Go! 🚀" : 'Next →';
     const btn = this.scene.add.text(cardX, cardY + cardHeight / 2 - 30, btnLabel, {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#4CAF50',
       backgroundColor: '#1b5e20',
       padding: { x: 16, y: 8 },
@@ -146,7 +146,7 @@ export class TutorialOverlay {
       cardY - cardHeight / 2 + 16,
       'Skip',
       {
-        font: '10px monospace',
+        font: '10px Molemisi Pixel',
         color: '#BCAAA4',
       },
     );

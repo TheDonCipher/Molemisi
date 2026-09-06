@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { hasAsset } from '../generated-assets';
 import { CROPS } from '@molemisi/game-config';
+import { FONT_DISPLAY, FONT_BODY } from '../fonts';
 
 /**
  * MarketScene — Trading hub.
@@ -25,7 +26,7 @@ export class MarketScene extends Phaser.Scene {
 
     // --- Title ---
     const title = this.add.text(400, 16, '🏪 MARKET', {
-      fontFamily: 'Space Grotesk, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '18px',
       fontStyle: 'bold',
       color: '#FFD700',
@@ -49,7 +50,7 @@ export class MarketScene extends Phaser.Scene {
       stall.setDepth(10);
 
       const label = this.add.text(x, y + 30, name, {
-        fontFamily: 'Space Mono, monospace',
+        fontFamily: FONT_DISPLAY,
         fontSize: '10px',
         fontStyle: 'bold',
         color: '#F5E6D3',
@@ -115,7 +116,7 @@ export class MarketScene extends Phaser.Scene {
       container.add(sprite);
 
       const label = this.add.text(0, 38, name, {
-        fontFamily: 'Space Mono, monospace',
+        fontFamily: FONT_DISPLAY,
         fontSize: '10px',
         fontStyle: 'bold',
         color: '#F5E6D3',
@@ -140,7 +141,7 @@ export class MarketScene extends Phaser.Scene {
 
     // --- Buy/Sell Buttons ---
     const buyBtn = this.add.text(250, 440, '🛒 BUY SEEDS', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '13px',
       fontStyle: 'bold',
       color: '#4C2700',
@@ -155,7 +156,7 @@ export class MarketScene extends Phaser.Scene {
     buyBtn.on('pointerout', () => buyBtn.setBackgroundColor('#FF8F00'));
 
     const sellBtn = this.add.text(550, 440, '💰 SELL CROPS', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '13px',
       fontStyle: 'bold',
       color: '#F5E6D3',
@@ -174,7 +175,7 @@ export class MarketScene extends Phaser.Scene {
 
     // --- Back button ---
     const backBtn = this.add.text(400, 465, '← Back to Farm', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '11px',
       fontStyle: 'bold',
       color: '#BCAAA4',
@@ -243,7 +244,7 @@ export class MarketScene extends Phaser.Scene {
     container.add(titleBar);
 
     const titleText = this.add.text(0, -80, title, {
-      fontFamily: 'Space Grotesk, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '14px',
       fontStyle: 'bold',
       color: '#FFD700',
@@ -252,7 +253,7 @@ export class MarketScene extends Phaser.Scene {
     container.add(titleText);
 
     const msgText = this.add.text(0, 0, message, {
-      fontFamily: 'Rubik, sans-serif',
+      fontFamily: FONT_BODY,
       fontSize: '13px',
       color: '#F5E6D3',
       wordWrap: { width: 300 },
@@ -262,7 +263,7 @@ export class MarketScene extends Phaser.Scene {
     container.add(msgText);
 
     const closeBtn = this.add.text(0, 70, '[ CLOSE ]', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '12px',
       fontStyle: 'bold',
       color: '#BCAAA4',

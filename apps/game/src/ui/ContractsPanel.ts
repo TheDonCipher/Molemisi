@@ -73,7 +73,7 @@ export class ContractsPanel {
 
     // Title
     const title = this.scene.add.text(0, -panelHeight / 2 + 20, '📋 Contracts', {
-      font: '18px monospace',
+      font: '18px Molemisi Pixel',
       color: '#FF8F00',
     });
     title.setOrigin(0.5, 0.5);
@@ -81,7 +81,7 @@ export class ContractsPanel {
 
     // Close button
     const closeBtn = this.scene.add.text(panelWidth / 2 - 20, -panelHeight / 2 + 20, '✕', {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color: '#F44336',
     });
     closeBtn.setOrigin(0.5, 0.5);
@@ -91,7 +91,7 @@ export class ContractsPanel {
 
     // Loading text
     const loading = this.scene.add.text(0, 0, 'Loading...', {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#BCAAA4',
     });
     loading.setOrigin(0.5, 0.5);
@@ -125,7 +125,7 @@ export class ContractsPanel {
     // Active contracts first
     if (active.length > 0) {
       const activeTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Active Contracts:', {
-        font: '12px monospace',
+        font: '12px Molemisi Pixel',
         color: '#81C784',
       });
       container.add(activeTitle);
@@ -143,7 +143,7 @@ export class ContractsPanel {
 
         // Contract name
         const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${contract.name}`, {
-          font: '11px monospace',
+          font: '11px Molemisi Pixel',
           color: '#F5E6D3',
         });
         container.add(text);
@@ -153,7 +153,7 @@ export class ContractsPanel {
           .map((r) => `${r.itemType}: ${Math.min(r.current, r.quantity)}/${r.quantity}`)
           .join(' | ');
         const reqLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, reqText, {
-          font: '9px monospace',
+          font: '9px Molemisi Pixel',
           color: '#BCAAA4',
         });
         container.add(reqLabel);
@@ -164,7 +164,7 @@ export class ContractsPanel {
         const timeColor = hoursLeft < 6 ? '#F44336' : hoursLeft < 24 ? '#FF9800' : '#4CAF50';
 
         const timeText = this.scene.add.text(panelWidth / 2 - 30, y + 7, `${hoursLeft}h left`, {
-          font: '10px monospace',
+          font: '10px Molemisi Pixel',
           color: timeColor,
         });
         timeText.setOrigin(1, 0.5);
@@ -174,7 +174,7 @@ export class ContractsPanel {
         const allMet = contract.requirements.every((r) => r.current >= r.quantity);
         if (allMet) {
           const completeBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '✅ Complete', {
-            font: '10px monospace',
+            font: '10px Molemisi Pixel',
             color: '#4CAF50',
           });
           completeBtn.setOrigin(1, 0.5);
@@ -190,7 +190,7 @@ export class ContractsPanel {
     // Available contracts
     y += 10;
     const availTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Available Contracts:', {
-      font: '12px monospace',
+      font: '12px Molemisi Pixel',
       color: '#FFB74D',
     });
     container.add(availTitle);
@@ -202,7 +202,7 @@ export class ContractsPanel {
 
     if (availableContracts.length === 0) {
       const none = this.scene.add.text(0, y + 20, 'No new contracts available', {
-        font: '12px monospace',
+        font: '12px Molemisi Pixel',
         color: '#BCAAA4',
       });
       none.setOrigin(0.5, 0.5);
@@ -225,14 +225,14 @@ export class ContractsPanel {
         -panelWidth / 2 + 30,
         y,
         `${emoji} ${contract.name} (${contract.difficulty})`,
-        { font: '11px monospace', color: '#F5E6D3' },
+        { font: '11px Molemisi Pixel', color: '#F5E6D3' },
       );
       container.add(text);
 
       // Requirements
       const reqText = contract.requirements.map((r) => `${r.itemType} x${r.quantity}`).join(', ');
       const reqLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, `Needs: ${reqText}`, {
-        font: '9px monospace',
+        font: '9px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(reqLabel);
@@ -242,14 +242,14 @@ export class ContractsPanel {
         panelWidth / 2 - 30,
         y + 7,
         `💰${contract.rewards.currency} ⭐${contract.rewards.xp}XP`,
-        { font: '10px monospace', color: '#FFB74D' },
+        { font: '10px Molemisi Pixel', color: '#FFB74D' },
       );
       rewardText.setOrigin(1, 0.5);
       container.add(rewardText);
 
       // Accept button
       const acceptBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '📝 Accept', {
-        font: '10px monospace',
+        font: '10px Molemisi Pixel',
         color: '#4CAF50',
       });
       acceptBtn.setOrigin(1, 0.5);
@@ -288,7 +288,7 @@ export class ContractsPanel {
   private showFeedback(message: string, color: string): void {
     const width = this.scene.cameras.main.width;
     const text = this.scene.add.text(width / 2, 100, message, {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color,
       backgroundColor: '#3e2723',
       padding: { x: 12, y: 6 },

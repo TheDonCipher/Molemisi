@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { hasAsset } from '../generated-assets';
+import { FONT_DISPLAY, FONT_BODY } from '../fonts';
 
 /**
  * BushveldScene — Wild exploration zone.
@@ -23,7 +24,7 @@ export class BushveldScene extends Phaser.Scene {
 
     // --- Title ---
     const title = this.add.text(400, 16, '🌿 BUSHVILD', {
-      fontFamily: 'Space Grotesk, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '18px',
       fontStyle: 'bold',
       color: '#9CD67A',
@@ -66,7 +67,7 @@ export class BushveldScene extends Phaser.Scene {
 
       // Label
       const label = this.add.text(0, 24, name, {
-        fontFamily: 'Space Mono, monospace',
+        fontFamily: FONT_DISPLAY,
         fontSize: '9px',
         fontStyle: 'bold',
         color: '#F5E6D3',
@@ -101,7 +102,7 @@ export class BushveldScene extends Phaser.Scene {
       });
 
       const caveLabel = this.add.text(680, 200, 'Cave', {
-        fontFamily: 'Space Mono, monospace',
+        fontFamily: FONT_DISPLAY,
         fontSize: '10px',
         fontStyle: 'bold',
         color: '#BCAAA4',
@@ -163,7 +164,7 @@ export class BushveldScene extends Phaser.Scene {
       scout.add(sprite);
 
       const label = this.add.text(0, 38, 'Scout', {
-        fontFamily: 'Space Mono, monospace',
+        fontFamily: FONT_DISPLAY,
         fontSize: '10px',
         fontStyle: 'bold',
         color: '#F5E6D3',
@@ -185,7 +186,7 @@ export class BushveldScene extends Phaser.Scene {
 
     // --- Zone indicator ---
     const zone = this.add.text(16, 460, 'Zone: Savanna — Easy', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '10px',
       color: '#9CD67A',
       backgroundColor: '#2C1810',
@@ -195,7 +196,7 @@ export class BushveldScene extends Phaser.Scene {
 
     // --- Back button ---
     const backBtn = this.add.text(400, 460, '← Back to Farm', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '12px',
       fontStyle: 'bold',
       color: '#FF8F00',
@@ -233,7 +234,7 @@ export class BushveldScene extends Phaser.Scene {
     container.add(titleBar);
 
     const titleText = this.add.text(0, -70, title, {
-      fontFamily: 'Space Grotesk, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '14px',
       fontStyle: 'bold',
       color: '#9CD67A',
@@ -242,7 +243,7 @@ export class BushveldScene extends Phaser.Scene {
     container.add(titleText);
 
     const msgText = this.add.text(0, 0, message, {
-      fontFamily: 'Rubik, sans-serif',
+      fontFamily: FONT_BODY,
       fontSize: '12px',
       color: '#F5E6D3',
       wordWrap: { width: 300 },
@@ -252,7 +253,7 @@ export class BushveldScene extends Phaser.Scene {
     container.add(msgText);
 
     const closeBtn = this.add.text(0, 60, '[ CLOSE ]', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '12px',
       fontStyle: 'bold',
       color: '#BCAAA4',

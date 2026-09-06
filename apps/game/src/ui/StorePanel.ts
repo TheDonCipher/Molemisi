@@ -68,7 +68,7 @@ export class StorePanel {
     // Title
     const title = this.scene.add.text(width / 2, panelY + 25, '🛒 Store', {
       fontSize: '20px',
-      fontFamily: 'Arial',
+      fontFamily: "'Molemisi Pixel', sans-serif",
       color: '#ffd700',
     });
     title.setOrigin(0.5);
@@ -77,7 +77,7 @@ export class StorePanel {
     // Close button
     const closeBtn = this.scene.add.text(panelX + panelW - 25, panelY + 10, '✕', {
       fontSize: '20px',
-      fontFamily: 'Arial',
+      fontFamily: "'Molemisi Pixel', sans-serif",
       color: '#ff6666',
     });
     closeBtn.setInteractive({ useHandCursor: true });
@@ -100,7 +100,7 @@ export class StorePanel {
       const tabX = panelX + 30 + i * 140;
       const tab = this.scene.add.text(tabX, tabY, cat.label, {
         fontSize: '14px',
-        fontFamily: 'Arial',
+        fontFamily: "'Molemisi Pixel', sans-serif",
         color: i === 0 ? '#ffd700' : '#aaa',
         backgroundColor: i === 0 ? '#4a3520' : 'transparent',
         padding: { x: 8, y: 4 },
@@ -240,7 +240,7 @@ export class StorePanel {
 
       const name = this.scene.add.text(x + 15, currentY + 8, item.name, {
         fontSize: '14px',
-        fontFamily: 'Arial',
+        fontFamily: "'Molemisi Pixel', sans-serif",
         color: '#ffffff',
         fontStyle: 'bold',
       });
@@ -249,7 +249,7 @@ export class StorePanel {
 
       const desc = this.scene.add.text(x + 15, currentY + 28, item.description, {
         fontSize: '11px',
-        fontFamily: 'Arial',
+        fontFamily: "'Molemisi Pixel', sans-serif",
         color: '#aaa',
         wordWrap: { width: w - 140 },
       });
@@ -260,7 +260,7 @@ export class StorePanel {
       const priceLabel = `${item.price} ${item.currency}`;
       const buyBtn = this.scene.add.text(x + w - 100, currentY + 20, `💰 ${priceLabel}`, {
         fontSize: '12px',
-        fontFamily: 'Arial',
+        fontFamily: "'Molemisi Pixel', sans-serif",
         color: '#ffd700',
         backgroundColor: '#5a4020',
         padding: { x: 8, y: 4 },

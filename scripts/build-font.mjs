@@ -38,6 +38,12 @@ function syncToWebApp() {
   mkdirSync(webFontDir, { recursive: true });
   copyFileSync(src, join(webFontDir, 'MolemisiPixel-Bold.ttf'));
   console.log('[font] Synced canonical font to apps/web/public/fonts/');
+
+  // Phaser game (standalone app) also serves it at /fonts/
+  const gameFontDir = join(root, 'apps', 'game', 'public', 'fonts');
+  mkdirSync(gameFontDir, { recursive: true });
+  copyFileSync(src, join(gameFontDir, 'MolemisiPixel-Bold.ttf'));
+  console.log('[font] Synced canonical font to apps/game/public/fonts/');
 }
 
 function rebuildHandcrafted() {

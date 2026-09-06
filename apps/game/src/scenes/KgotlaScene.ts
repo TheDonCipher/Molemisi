@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { hasAsset } from '../generated-assets';
+import { FONT_DISPLAY, FONT_BODY } from '../fonts';
 
 /**
  * KgotlaScene — Community gathering place.
@@ -26,7 +27,7 @@ export class KgotlaScene extends Phaser.Scene {
 
     // --- Title ---
     const title = this.add.text(400, 16, '🏛️ KGOTLA', {
-      fontFamily: 'Space Grotesk, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '18px',
       fontStyle: 'bold',
       color: '#FFD700',
@@ -87,7 +88,7 @@ export class KgotlaScene extends Phaser.Scene {
 
       // Name tag
       const label = this.add.text(0, 38, name, {
-        fontFamily: 'Space Mono, monospace',
+        fontFamily: FONT_DISPLAY,
         fontSize: '10px',
         fontStyle: 'bold',
         color: '#F5E6D3',
@@ -157,7 +158,7 @@ export class KgotlaScene extends Phaser.Scene {
 
     // --- Back button (bottom) ---
     const backBtn = this.add.text(400, 460, '← Back to Farm', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '12px',
       fontStyle: 'bold',
       color: '#FF8F00',
@@ -175,7 +176,7 @@ export class KgotlaScene extends Phaser.Scene {
 
     // --- Reputation badge ---
     const repBadge = this.add.text(780, 16, '★★★☆☆', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '14px',
       color: '#FFD700',
       stroke: '#2C1810',
@@ -220,7 +221,7 @@ export class KgotlaScene extends Phaser.Scene {
     container.add(titleBar);
 
     const titleText = this.add.text(0, -80, title, {
-      fontFamily: 'Space Grotesk, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '14px',
       fontStyle: 'bold',
       color: '#FF8F00',
@@ -230,7 +231,7 @@ export class KgotlaScene extends Phaser.Scene {
 
     // Message
     const msgText = this.add.text(0, 0, message, {
-      fontFamily: 'Rubik, sans-serif',
+      fontFamily: FONT_BODY,
       fontSize: '13px',
       color: '#F5E6D3',
       wordWrap: { width: 300 },
@@ -241,7 +242,7 @@ export class KgotlaScene extends Phaser.Scene {
 
     // Close button
     const closeBtn = this.add.text(0, 70, '[ CLOSE ]', {
-      fontFamily: 'Space Mono, monospace',
+      fontFamily: FONT_DISPLAY,
       fontSize: '12px',
       fontStyle: 'bold',
       color: '#BCAAA4',

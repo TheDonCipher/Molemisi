@@ -69,7 +69,7 @@ export class WorldEventsPanel {
 
     // Title
     const title = this.scene.add.text(0, -panelHeight / 2 + 20, '🌍 World Events', {
-      font: '18px monospace',
+      font: '18px Molemisi Pixel',
       color: '#FFB74D',
     });
     title.setOrigin(0.5, 0.5);
@@ -77,7 +77,7 @@ export class WorldEventsPanel {
 
     // Close button
     const closeBtn = this.scene.add.text(panelWidth / 2 - 20, -panelHeight / 2 + 20, '✕', {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color: '#F44336',
     });
     closeBtn.setOrigin(0.5, 0.5);
@@ -87,7 +87,7 @@ export class WorldEventsPanel {
 
     // Loading text
     const loading = this.scene.add.text(0, 0, 'Loading...', {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#BCAAA4',
     });
     loading.setOrigin(0.5, 0.5);
@@ -120,7 +120,7 @@ export class WorldEventsPanel {
     // Active events
     if (active.length > 0) {
       const activeTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Active Events:', {
-        font: '12px monospace',
+        font: '12px Molemisi Pixel',
         color: '#81C784',
       });
       container.add(activeTitle);
@@ -137,14 +137,14 @@ export class WorldEventsPanel {
 
         // Event name
         const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${event.name}`, {
-          font: '11px monospace',
+          font: '11px Molemisi Pixel',
           color: '#F5E6D3',
         });
         container.add(text);
 
         // Description
         const desc = this.scene.add.text(-panelWidth / 2 + 30, y + 14, event.description, {
-          font: '9px monospace',
+          font: '9px Molemisi Pixel',
           color: '#BCAAA4',
         });
         container.add(desc);
@@ -155,7 +155,7 @@ export class WorldEventsPanel {
         const timeColor = hoursLeft < 2 ? '#F44336' : hoursLeft < 6 ? '#FF9800' : '#4CAF50';
 
         const timeText = this.scene.add.text(panelWidth / 2 - 30, y + 7, `${hoursLeft}h left`, {
-          font: '10px monospace',
+          font: '10px Molemisi Pixel',
           color: timeColor,
         });
         timeText.setOrigin(1, 0.5);
@@ -173,7 +173,7 @@ export class WorldEventsPanel {
           .join(' | ');
 
         const effectsLabel = this.scene.add.text(panelWidth / 2 - 30, y + 22, effectsText, {
-          font: '9px monospace',
+          font: '9px Molemisi Pixel',
           color: '#FFB74D',
         });
         effectsLabel.setOrigin(1, 0.5);
@@ -183,7 +183,7 @@ export class WorldEventsPanel {
       });
     } else {
       const noActive = this.scene.add.text(0, y + 20, 'No active events', {
-        font: '12px monospace',
+        font: '12px Molemisi Pixel',
         color: '#BCAAA4',
       });
       noActive.setOrigin(0.5, 0.5);
@@ -194,7 +194,7 @@ export class WorldEventsPanel {
     // Available events to trigger
     y += 10;
     const availTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Available Events:', {
-      font: '12px monospace',
+      font: '12px Molemisi Pixel',
       color: '#FFB74D',
     });
     container.add(availTitle);
@@ -202,7 +202,7 @@ export class WorldEventsPanel {
 
     if (available.length === 0) {
       const none = this.scene.add.text(0, y + 20, 'No events available for current season', {
-        font: '12px monospace',
+        font: '12px Molemisi Pixel',
         color: '#BCAAA4',
       });
       none.setOrigin(0.5, 0.5);
@@ -224,7 +224,7 @@ export class WorldEventsPanel {
         -panelWidth / 2 + 30,
         y,
         `${emoji} ${event.name} (${event.duration}h)`,
-        { font: '11px monospace', color: '#F5E6D3' },
+        { font: '11px Molemisi Pixel', color: '#F5E6D3' },
       );
       container.add(text);
 
@@ -238,14 +238,14 @@ export class WorldEventsPanel {
         .join(', ');
 
       const effectsLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, effectsText, {
-        font: '9px monospace',
+        font: '9px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(effectsLabel);
 
       // Trigger button
       const triggerBtn = this.scene.add.text(panelWidth / 2 - 30, y + 7, '🎪 Trigger', {
-        font: '10px monospace',
+        font: '10px Molemisi Pixel',
         color: '#4CAF50',
         backgroundColor: '#1b5e20',
         padding: { x: 6, y: 3 },
@@ -274,7 +274,7 @@ export class WorldEventsPanel {
   private showFeedback(message: string, color: string): void {
     const width = this.scene.cameras.main.width;
     const text = this.scene.add.text(width / 2, 100, message, {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color,
       backgroundColor: '#3e2723',
       padding: { x: 12, y: 6 },

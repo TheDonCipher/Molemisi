@@ -54,7 +54,7 @@ export class InventoryPanel {
 
     // Title
     const title = this.scene.add.text(0, -panelHeight / 2 + 20, '📦 Inventory', {
-      font: '18px monospace',
+      font: '18px Molemisi Pixel',
       color: '#FF8F00',
     });
     title.setOrigin(0.5, 0.5);
@@ -62,7 +62,7 @@ export class InventoryPanel {
 
     // Close button
     const closeBtn = this.scene.add.text(panelWidth / 2 - 20, -panelHeight / 2 + 20, '✕', {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color: '#F44336',
     });
     closeBtn.setOrigin(0.5, 0.5);
@@ -72,7 +72,7 @@ export class InventoryPanel {
 
     // Loading text
     const loading = this.scene.add.text(0, 0, 'Loading...', {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#BCAAA4',
     });
     loading.setOrigin(0.5, 0.5);
@@ -134,7 +134,7 @@ export class InventoryPanel {
 
     if (items.length === 0) {
       const empty = this.scene.add.text(0, 0, 'Inventory is empty', {
-        font: '14px monospace',
+        font: '14px Molemisi Pixel',
         color: '#BCAAA4',
       });
       empty.setOrigin(0.5, 0.5);
@@ -156,7 +156,7 @@ export class InventoryPanel {
       if (categoryItems.length === 0) return;
 
       const catTitle = this.scene.add.text(-panelWidth / 2 + 20, y, label, {
-        font: '11px monospace',
+        font: '11px Molemisi Pixel',
         color: '#81C784',
       });
       this.container!.add(catTitle);
@@ -168,13 +168,13 @@ export class InventoryPanel {
         const qualityStr = item.quality !== 'normal' ? ` (${item.quality})` : '';
 
         const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${name}${qualityStr}`, {
-          font: '12px monospace',
+          font: '12px Molemisi Pixel',
           color: '#F5E6D3',
         });
         this.container!.add(text);
 
         const qty = this.scene.add.text(panelWidth / 2 - 30, y, `x${item.quantity}`, {
-          font: '12px monospace',
+          font: '12px Molemisi Pixel',
           color: '#FFB74D',
         });
         qty.setOrigin(1, 0.5);

@@ -65,7 +65,7 @@ export class ProgressPanel {
 
     // Title
     const title = this.scene.add.text(0, -panelHeight / 2 + 20, '⭐ Progress', {
-      font: '18px monospace',
+      font: '18px Molemisi Pixel',
       color: '#FF8F00',
     });
     title.setOrigin(0.5, 0.5);
@@ -73,7 +73,7 @@ export class ProgressPanel {
 
     // Close button
     const closeBtn = this.scene.add.text(panelWidth / 2 - 20, -panelHeight / 2 + 20, '✕', {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color: '#F44336',
     });
     closeBtn.setOrigin(0.5, 0.5);
@@ -83,7 +83,7 @@ export class ProgressPanel {
 
     // Loading text
     const loading = this.scene.add.text(0, 0, 'Loading...', {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#BCAAA4',
     });
     loading.setOrigin(0.5, 0.5);
@@ -105,7 +105,7 @@ export class ProgressPanel {
 
     // Level and XP bar
     const levelText = this.scene.add.text(-panelWidth / 2 + 20, y, `Farm Level: ${data.level}`, {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#FFB74D',
     });
     this.container.add(levelText);
@@ -133,7 +133,7 @@ export class ProgressPanel {
       panelWidth / 2 - 20,
       y + barHeight / 2,
       `${data.xp} / ${data.xpToNextLevel} XP`,
-      { font: '10px monospace', color: '#F5E6D3' },
+      { font: '10px Molemisi Pixel', color: '#F5E6D3' },
     );
     xpLabel.setOrigin(1, 0.5);
     this.container.add(xpLabel);
@@ -141,7 +141,7 @@ export class ProgressPanel {
     // Unlocks section
     y += 35;
     const unlocksTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Unlocks:', {
-      font: '12px monospace',
+      font: '12px Molemisi Pixel',
       color: '#81C784',
     });
     this.container.add(unlocksTitle);
@@ -152,7 +152,7 @@ export class ProgressPanel {
       -panelWidth / 2 + 30,
       y,
       `🌱 Crops: ${data.unlockedCrops.length} unlocked`,
-      { font: '10px monospace', color: '#BCAAA4' },
+      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
     );
     this.container.add(cropText);
     y += 16;
@@ -162,7 +162,7 @@ export class ProgressPanel {
       -panelWidth / 2 + 30,
       y,
       `🐄 Animals: ${data.unlockedAnimals.length} unlocked`,
-      { font: '10px monospace', color: '#BCAAA4' },
+      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
     );
     this.container.add(animalText);
     y += 16;
@@ -172,14 +172,14 @@ export class ProgressPanel {
       -panelWidth / 2 + 30,
       y,
       `🏗️ Buildings: ${data.unlockedBuildings.length} unlocked`,
-      { font: '10px monospace', color: '#BCAAA4' },
+      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
     );
     this.container.add(buildingText);
     y += 25;
 
     // Achievements section
     const achTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Achievements:', {
-      font: '12px monospace',
+      font: '12px Molemisi Pixel',
       color: '#FFB74D',
     });
     this.container.add(achTitle);
@@ -192,7 +192,7 @@ export class ProgressPanel {
       panelWidth / 2 - 20,
       y - 4,
       `${unlockedCount}/${totalCount}`,
-      { font: '10px monospace', color: '#BCAAA4' },
+      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
     );
     achCount.setOrigin(1, 0.5);
     this.container.add(achCount);
@@ -204,13 +204,13 @@ export class ProgressPanel {
       const color = ach.unlocked ? '#FFB74D' : '#666666';
 
       const achText = this.scene.add.text(-panelWidth / 2 + 30, y, `${icon} ${ach.name}`, {
-        font: '10px monospace',
+        font: '10px Molemisi Pixel',
         color,
       });
       this.container!.add(achText);
 
       const descText = this.scene.add.text(-panelWidth / 2 + 50, y + 12, ach.description, {
-        font: '9px monospace',
+        font: '9px Molemisi Pixel',
         color: '#BCAAA4',
       });
       this.container!.add(descText);

@@ -70,7 +70,7 @@ export class KgotlaPanel {
 
     // Title
     const title = this.scene.add.text(0, -panelHeight / 2 + 20, '🏛️ Kgotla', {
-      font: '18px monospace',
+      font: '18px Molemisi Pixel',
       color: '#FF8F00',
     });
     title.setOrigin(0.5, 0.5);
@@ -78,7 +78,7 @@ export class KgotlaPanel {
 
     // Close button
     const closeBtn = this.scene.add.text(panelWidth / 2 - 20, -panelHeight / 2 + 20, '✕', {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color: '#F44336',
     });
     closeBtn.setOrigin(0.5, 0.5);
@@ -88,7 +88,7 @@ export class KgotlaPanel {
 
     // Loading text
     const loading = this.scene.add.text(0, 0, 'Loading...', {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#BCAAA4',
     });
     loading.setOrigin(0.5, 0.5);
@@ -120,7 +120,7 @@ export class KgotlaPanel {
 
     // NPCs section
     const npcTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Community Members:', {
-      font: '12px monospace',
+      font: '12px Molemisi Pixel',
       color: '#81C784',
     });
     container.add(npcTitle);
@@ -141,7 +141,7 @@ export class KgotlaPanel {
         -panelWidth / 2 + 30,
         y,
         `${emoji} ${npc.name} - ${npc.role}`,
-        { font: '11px monospace', color: '#F5E6D3' },
+        { font: '11px Molemisi Pixel', color: '#F5E6D3' },
       );
       container.add(text);
 
@@ -171,14 +171,14 @@ export class KgotlaPanel {
         -panelWidth / 2 + 30 + repBarWidth + 4,
         y + 16,
         `${npc.tier} (${npc.reputation})`,
-        { font: '9px monospace', color: '#BCAAA4' },
+        { font: '9px Molemisi Pixel', color: '#BCAAA4' },
       );
       repLabel.setOrigin(0, 0.5);
       container.add(repLabel);
 
       // Talk button
       const talkBtn = this.scene.add.text(panelWidth / 2 - 30, y + 8, '💬 Talk', {
-        font: '10px monospace',
+        font: '10px Molemisi Pixel',
         color: '#4CAF50',
       });
       talkBtn.setOrigin(1, 0.5);
@@ -192,7 +192,7 @@ export class KgotlaPanel {
     // Projects section
     y += 10;
     const projTitle = this.scene.add.text(-panelWidth / 2 + 20, y, 'Community Projects:', {
-      font: '12px monospace',
+      font: '12px Molemisi Pixel',
       color: '#FFB74D',
     });
     container.add(projTitle);
@@ -202,7 +202,7 @@ export class KgotlaPanel {
       const statusEmoji = project.completed ? '✅' : '🏗️';
 
       const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${statusEmoji} ${project.name}`, {
-        font: '11px monospace',
+        font: '11px Molemisi Pixel',
         color: '#F5E6D3',
       });
       container.add(text);
@@ -229,7 +229,7 @@ export class KgotlaPanel {
         -panelWidth / 2 + 30 + barWidth + 4,
         y + 16,
         `${project.currentContributions}/${project.requiredContributions}`,
-        { font: '9px monospace', color: '#BCAAA4' },
+        { font: '9px Molemisi Pixel', color: '#BCAAA4' },
       );
       progressLabel.setOrigin(0, 0.5);
       container.add(progressLabel);
@@ -237,7 +237,7 @@ export class KgotlaPanel {
       // Donate button (if not completed)
       if (!project.completed) {
         const donateBtn = this.scene.add.text(panelWidth / 2 - 30, y + 8, '💰 Donate', {
-          font: '10px monospace',
+          font: '10px Molemisi Pixel',
           color: '#FFB74D',
         });
         donateBtn.setOrigin(1, 0.5);
@@ -290,7 +290,7 @@ export class KgotlaPanel {
 
     // NPC name
     const nameLabel = this.scene.add.text(0, 50 - dialogHeight / 2 + 20, npcName, {
-      font: '14px monospace',
+      font: '14px Molemisi Pixel',
       color: '#FF8F00',
     });
     nameLabel.setOrigin(0.5, 0.5);
@@ -298,7 +298,7 @@ export class KgotlaPanel {
 
     // Message
     const msgLabel = this.scene.add.text(0, 50, message, {
-      font: '11px monospace',
+      font: '11px Molemisi Pixel',
       color: '#F5E6D3',
       wordWrap: { width: dialogWidth - 40 },
       align: 'center',
@@ -310,7 +310,7 @@ export class KgotlaPanel {
     // Quest button
     if (questAvailable) {
       const questBtn = this.scene.add.text(0, 50 + dialogHeight / 2 - 30, '📝 Complete Quest', {
-        font: '12px monospace',
+        font: '12px Molemisi Pixel',
         color: '#4CAF50',
         backgroundColor: '#1b5e20',
         padding: { x: 12, y: 6 },
@@ -323,7 +323,7 @@ export class KgotlaPanel {
 
     // Close dialog button
     const closeDialog = this.scene.add.text(dialogWidth / 2 - 10, 50 - dialogHeight / 2 + 10, '✕', {
-      font: '12px monospace',
+      font: '12px Molemisi Pixel',
       color: '#BCAAA4',
     });
     closeDialog.setOrigin(0.5, 0.5);
@@ -384,7 +384,7 @@ export class KgotlaPanel {
   private showFeedback(message: string, color: string): void {
     const width = this.scene.cameras.main.width;
     const text = this.scene.add.text(width / 2, 100, message, {
-      font: '16px monospace',
+      font: '16px Molemisi Pixel',
       color,
       backgroundColor: '#3e2723',
       padding: { x: 12, y: 6 },
