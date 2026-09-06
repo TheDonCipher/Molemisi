@@ -13,6 +13,7 @@
 **Primary Currency:** Botswana Pula (P)  
 **Target Market:** Botswana initially, with potential regional/global expansion  
 **Document Status:** Product Master Specification  
+**Implementation note (2026-09-06):** This PRD is product intent. As-built status is `docs/DEVELOPMENT_STATE.md`. The live player client is React at `/game`; Phaser is a standalone Vite app. Payments are stubbed.  
 **Version:** 1.0  
 **Date:** September 2026
 

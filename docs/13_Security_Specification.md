@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — Supabase JWT in localStorage, `AuthGuard`, `AdminGuard` (`profiles.is_admin`), farm ownership checks, RLS, in-memory 60/min rate limit. Config PUT is not admin-gated.
 
 ---
 

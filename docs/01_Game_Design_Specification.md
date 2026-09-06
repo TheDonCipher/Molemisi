@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — core loop, systems, and content counts largely exist in NestJS + `packages/game-config`. Player UI is React `/game`, not Phaser. See `DEVELOPMENT_STATE.md`.
 
 ---
 

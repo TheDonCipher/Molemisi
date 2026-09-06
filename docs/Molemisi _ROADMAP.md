@@ -6,6 +6,7 @@
 **Project:** Molemisi  
 **Version:** 1.0  
 **Status:** Development Baseline  
+**Implementation note (2026-09-06):** Milestones M0–M15 are largely done; M16 Alpha is in progress. This roadmap remains the planned sequence. Live checklist: `docs/DEVELOPMENT_STATE.md` and `docs/20_MVP_Implementation_Plan.md`.  
 **Audience:** Lead Developer, Software Engineers, Game Developers, Technical Artists, QA, AI Coding Agents  
 **Primary Objective:** Provide the authoritative sequence for transforming Molemisi from an empty repository into a production-ready web-based pixel farm simulator.
 

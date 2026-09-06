@@ -2,9 +2,10 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-03
 > Complements: Document 03 (UI/UX Specification), Document 05 (Art Direction)
+> Implementation: 2026-09-06 — Partial. React screens + pixel assets exist. No audio. Phaser polish in this spec is not the live player path.
 
 ---
 

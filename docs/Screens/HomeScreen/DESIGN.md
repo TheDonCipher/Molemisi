@@ -122,6 +122,8 @@ spacing:
   gutter-desktop: 1.5rem
 ---
 
+> Implementation (2026-09-06): React `FarmScreen` at `/game` is the live farm HUD. Phaser `FarmScene` is standalone on :3002.
+
 ## Brand & Style
 
 The design system embodies a tranquil, rural agricultural simulation set in Botswana's vibrant landscapes. It delivers a tactile, nostalgic 16-bit retro aesthetic imbued with the warmth of dusk and golden hour. The visual tone balances comforting simplicity with grounded craftsmanship: deep timber tones, sundrenched clay, lush acacia vegetation, and soft woven cream accents.

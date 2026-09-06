@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-02
+**As-built (2026-09-06):** Redis is not in the stack. Rate limit is in-memory. Matches “optional / later” if the ADR deferred it.
 
 ---
 

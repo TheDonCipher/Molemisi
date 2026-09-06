@@ -1,6 +1,6 @@
 # ADR-011: Capacitor for Native Packaging
 
-**Status:** Accepted (Future)
+**Status:** Accepted (Future) — not started
 **Date:** 2026-09-02
 
 ---

@@ -2,218 +2,72 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 0.1.0
-> Status: Complete
-> Last Updated: 2026-09-02
+> Status: Superseded by implementation
+> Last updated: 2026-09-06
+
+This file was the M1 scaffold checklist (2026-09-02). The scaffold is done. Use `docs/DEVELOPMENT_STATE.md` as the live inventory.
 
 ---
 
-## Completed Components
+## Historical scaffold (complete)
 
-### Repository Structure ✅
+- pnpm + Turborepo, TypeScript, ESLint 9 flat config, Prettier
+- `apps/web`, `apps/game`, `apps/api`
+- Packages: shared, game-types, game-config, validation
+- Supabase config, 16 migrations, seed.sql
+- GitHub Actions: lint, typecheck, test, build
 
-- [x] pnpm workspaces configured
-- [x] Turborepo configured
-- [x] TypeScript base config
-- [x] ESLint configured
-- [x] Prettier configured
-- [x] .gitignore configured
-- [x] .env.example created
-
-### Applications ✅
-
-- [x] `apps/web` - Next.js application with auth pages
-- [x] `apps/game` - Phaser game with FarmScene
-- [x] `apps/api` - NestJS API with module structure
-
-### Shared Packages ✅
-
-- [x] `packages/shared` - Utilities and constants
-- [x] `packages/game-types` - TypeScript type definitions
-- [x] `packages/game-config` - Game configuration data
-- [x] `packages/validation` - Zod validation schemas
-
-### Supabase ✅
-
-- [x] `supabase/config.toml` - Local development config
-- [x] `supabase/migrations/` - Database schema
-- [x] `supabase/seed/` - Development seed data
-
-### Authentication ✅
-
-- [x] Supabase Auth integration
-- [x] Registration endpoint
-- [x] Login endpoint
-- [x] JWT validation guard
-- [x] Profile creation on register
-- [x] Farm creation on register
-
-### API Foundation ✅
-
-- [x] Health endpoint
-- [x] Farm retrieval endpoint
-- [x] Crop planting endpoint
-- [x] Crop watering endpoint
-- [x] Crop harvesting endpoint
-- [x] Inventory retrieval endpoint
-- [x] Error handling filter
-- [x] Request validation
-
-### Phaser Foundation ✅
-
-- [x] BootScene
-- [x] PreloadScene
-- [x] FarmScene with interactive plots
-- [x] PlotObject with state management
-- [x] Context menu system
-- [x] Floating text feedback
-- [x] Demo mode (no API required)
-
-### Testing ✅
-
-- [x] Jest configured
-- [x] Health controller test
-- [x] Crops service test (basic)
-- [x] E2E test config
-
-### CI/CD ✅
-
-- [x] GitHub Actions workflow
-- [x] Lint job
-- [x] Typecheck job
-- [x] Test job
-- [x] Build job
-
-### Documentation ✅
-
-- [x] README.md
-- [x] DEVELOPMENT_SETUP.md
-- [x] ARCHITECTURE_OVERVIEW.md
-- [x] KNOWN_LIMITATIONS.md
-- [x] SCAFFOLD_AUDIT.md
+Those boxes stay checked. They are no longer the interesting status.
 
 ---
 
-## Architectural Decisions
+## What grew after the scaffold
 
-1. **Modular Monolith** - All NestJS modules in single process
-2. **Supabase Auth** - Using Supabase for authentication
-3. **Server-Authoritative** - All game logic on server
-4. **Zod Validation** - Shared schemas between client and server
-5. **Game Config Package** - Centralized game configuration
-6. **Demo Mode** - Game works without API connection
+Implemented beyond the original vertical slice:
 
----
-
-## Deviations from Documentation
-
-1. **Token Storage** - Using localStorage instead of httpOnly cookies (simpler for scaffold)
-2. **Module Structure** - Simplified NestJS module structure (no domain/application/infrastructure layers yet)
-3. **Testing** - Minimal tests (full test suite deferred to implementation phase)
-4. **Asset Pipeline** - Using placeholder assets (no actual sprite sheets)
+- Full Nest module set (see DEVELOPMENT_STATE)
+- Elapsed-time simulation, weather, seasons
+- Livestock, buildings, market, contracts, progression
+- Kgotla, Bushveld, world events, notifications
+- Admin UI + `AdminGuard` + `is_admin`
+- PWA manifest + service worker
+- PixelLab asset pipeline (209 manifest entries)
+- Stub payments + 13 SKUs
+- In-memory rate limit and HTTP audit logger
 
 ---
 
-## Known Limitations
+## Deviations that still matter
 
-1. No crop growth simulation
-2. No weather system
-3. No season system
-4. No livestock system
-5. No building system
-6. No market system
-7. No contracts
-8. No Kgotla
-9. No Bushveld
-10. No PWA configuration
-11. No rate limiting
-12. No idempotency
+| Scaffold / spec assumption | As built |
+| --- | --- |
+| Phaser in Next.js | React `/game`; Phaser standalone on 3002 |
+| Placeholder rectangles | Pixel assets in `assets/` |
+| No rate limit | 60/min in-memory |
+| No PWA | Custom SW |
+| No admin role | `profiles.is_admin` |
+| Token in localStorage | Still true |
+| `npm run dev` | **pnpm** + turbo |
+| `db:seed` | Broken (missing seed.ts) |
 
 ---
 
-## Technical Debt
+## Verification (architecture invariants)
 
-1. Token storage in localStorage
-2. Basic error handling
-3. No structured logging
-4. Direct Supabase client usage
-5. No repository pattern
-6. No client-side state management
-
----
-
-## Next Implementation Priorities
-
-1. Crop growth simulation (time-based)
-2. Weather system
-3. Season system
-4. Livestock system
-5. Building system
-6. Market system
-7. PWA configuration
-8. Integration tests
-9. E2E tests
-10. Rate limiting
-
----
-
-## Verification Checklist
-
-### Does the frontend bypass NestJS? ✅ NO
-
-- All game actions go through API
-
-### Does Phaser contain business logic? ✅ NO
-
-- Phaser only handles rendering and input
-
-### Can the client directly manipulate currency? ✅ NO
-
-- Currency changes happen server-side
-
-### Can one player access another player's farm? ✅ NO
-
-- RLS policies enforce ownership
-
-### Are Supabase service credentials exposed? ✅ NO
-
-- Service role key only in server environment
-
-### Are database migrations reproducible? ✅ YES
-
-- Migrations in supabase/migrations/
-
-### Can the game run without live payment credentials? ✅ YES
-
-- No payment integration yet
-
-### Are game constants centralized? ✅ YES
-
-- In packages/game-config/
-
-### Can new crops be added without rewriting logic? ✅ YES
-
-- Add to packages/game-config/src/crops.ts
-
-### Can new buildings be added without rewriting logic? ✅ YES
-
-- Add to packages/game-config/src/buildings.ts
-
-### Can Kgotla and Bushveld be added without restructuring? ✅ YES
-
-- Add new NestJS modules
-
-### Can the simulation operate independently of Phaser? ✅ YES
-
-- Simulation runs server-side
-
-### Can the application support mobile packaging? ✅ YES
-
-- PWA-ready, Capacitor possible later
+| Question | Answer |
+| --- | --- |
+| Does the frontend bypass NestJS for game mutations? | No (except some Bushveld UI demo paths) |
+| Does Phaser contain economy logic? | No |
+| Can the client set currency locally for real farms? | No — server ledger |
+| Can one player read another farm via RLS + API ownership? | API checks farm ownership; RLS on player tables |
+| Service role in the browser? | No |
+| Migrations reproducible? | Yes, `supabase/migrations/` |
+| Payments without live keys? | Yes, stub |
+| New crop without core rewrite? | Yes, `packages/game-config/src/crops.ts` |
+| Simulation without Phaser? | Yes |
 
 ---
 
 ## Conclusion
 
-The Molemisi scaffold is **complete and functional**. The vertical slice (plant → grow → harvest → inventory) works end-to-end. The architecture is clean, extensible, and follows the documentation specifications.
-
-The scaffold provides a solid foundation for incremental feature development.
+Scaffold complete. Product is in **M16 Alpha**. Remaining work is quality, honesty of the Phaser/React split, payments, audio, and the gaps in `KNOWN_LIMITATIONS.md`.

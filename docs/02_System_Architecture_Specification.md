@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — NestJS modular monolith + Supabase match this doc. Phaser is **not** hosted inside Next.js; Redis is unused. As-built diagram: `ARCHITECTURE_OVERVIEW.md`.
 
 ---
 
@@ -256,12 +257,12 @@ apps/
                              │ HTTPS + JWT
 ```
 
-**Auth token sharing:**
+**Auth token sharing (as-built 2026-09-06):**
 
 - Next.js handles login/registration
-- Auth JWT token is stored in httpOnly cookie
-- Phaser client reads token for API calls
-- Token refresh is handled by Next.js shell
+- Auth JWT is stored in `localStorage` (`token` and `molemisi_token`), not an httpOnly cookie
+- Phaser `ApiClient` reads the same keys when the standalone client is used
+- There is no `/auth/refresh` endpoint; no Next.js token-refresh shell
 
 ---
 

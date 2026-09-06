@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — Live prefix `/api/v1`. As-built route list is in `DEVELOPMENT_STATE.md`. Rate limit is a flat 60 req/min, not the table in section 1. No `/auth/refresh`. Config routes are not admin-only.
 
 ---
 
@@ -57,6 +58,10 @@ Version is included in the URL path. Breaking changes require a new version.
 - File uploads: `multipart/form-data`
 
 ### Rate Limits
+
+**As-built:** one global in-memory limiter, **60 requests / 60 seconds** per user id (or IP). Not Redis. Not per-route.
+
+Design targets (not implemented):
 
 | Scope                 | Limit        | Window   |
 | --------------------- | ------------ | -------- |

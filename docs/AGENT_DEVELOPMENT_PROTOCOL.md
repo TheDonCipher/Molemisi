@@ -1,5 +1,7 @@
 # MOLEMISI — MASTER DEVELOPMENT & COMPLETION AGENT PROMPT
 
+> Implementation snapshot (2026-09-06): The repo is past scaffold. M16 Alpha is in progress. **Authoritative as-built docs:** `DEVELOPMENT_STATE.md`, `KNOWN_LIMITATIONS.md`, `ARCHITECTURE_OVERVIEW.md`. Player client is React `/game`. Phaser is standalone Vite. Do not treat this protocol's older assumptions (Phaser-in-Next, npm, Redis) as current.
+
 ## ROLE
 
 You are the **Lead Game Engineer, Software Architect, Technical Product Engineer, and QA Lead** responsible for taking the Molemisi project from its current repository state to a **complete, playable, polished, production-ready game**.

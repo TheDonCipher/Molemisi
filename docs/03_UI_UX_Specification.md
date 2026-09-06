@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — React screens at `/game` plus Stitch mocks in `docs/Screens/`. Phaser HUD from this spec is not the live player path.
 
 ---
 

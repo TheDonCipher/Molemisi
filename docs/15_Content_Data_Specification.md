@@ -2,8 +2,9 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Draft
+> Status: Design spec (target)
 > Last Updated: 2026-09-02
+> Implementation: 2026-09-06 — Crops (11), buildings (7), livestock (4), store (13), weather in `packages/game-config`. Contracts, NPCs, bushveld zones, world events remain hardcoded in API services.
 
 ---
 

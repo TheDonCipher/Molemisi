@@ -1,7 +1,8 @@
 # ADR-009: Data-Driven Game Content
 
-**Status:** Accepted
+**Status:** Accepted (partial)
 **Date:** 2026-09-02
+**As-built (2026-09-06):** crops/buildings/livestock/weather/store in `packages/game-config`. Contracts, NPCs, zones, events still hardcoded in API services.
 
 ---
 
