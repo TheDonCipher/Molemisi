@@ -55,20 +55,20 @@ Player browser
 
 ## Applications
 
-| App | Package | Port | Role |
-| --- | --- | --- | --- |
-| `apps/web` | `@molemisi/web` | 3000 | Next.js 14 App Router, Tailwind, PWA |
-| `apps/api` | `@molemisi/api` | 3001 | NestJS 10, Supabase Auth JWT |
-| `apps/game` | `@molemisi/game` | 3002 | Phaser 3 + Vite standalone client |
+| App         | Package          | Port | Role                                 |
+| ----------- | ---------------- | ---- | ------------------------------------ |
+| `apps/web`  | `@molemisi/web`  | 3000 | Next.js 14 App Router, Tailwind, PWA |
+| `apps/api`  | `@molemisi/api`  | 3001 | NestJS 10, Supabase Auth JWT         |
+| `apps/game` | `@molemisi/game` | 3002 | Phaser 3 + Vite standalone client    |
 
 ## Shared packages
 
-| Package | Contents |
-| --- | --- |
+| Package                | Contents                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `packages/game-config` | 11 crops, 7 buildings, 4 animals, weather/seasons, 13 store SKUs, theme tokens, XP/economy constants. `GAME_VERSION = 0.1.0` |
-| `packages/game-types` | Plot/building/contract/weather unions, entity shapes, crop DTOs |
-| `packages/shared` | `API_VERSION`, pagination helpers, `clamp`, `calculateLevel`, `generateId` |
-| `packages/validation` | Zod schemas for auth and game actions (only register/login/plant wired in controllers) |
+| `packages/game-types`  | Plot/building/contract/weather unions, entity shapes, crop DTOs                                                              |
+| `packages/shared`      | `API_VERSION`, pagination helpers, `clamp`, `calculateLevel`, `generateId`                                                   |
+| `packages/validation`  | Zod schemas for auth and game actions (only register/login/plant wired in controllers)                                       |
 
 Contracts (6), Kgotla NPCs (5) + projects (3), Bushveld zones (5), and world events (10) are **hardcoded in API services**, not in `game-config`.
 
@@ -76,17 +76,17 @@ Contracts (6), Kgotla NPCs (5) + projects (3), Bushveld zones (5), and world eve
 
 ## Web routes (`apps/web`)
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Landing |
+| Route                           | Purpose                                                          |
+| ------------------------------- | ---------------------------------------------------------------- |
+| `/`                             | Landing                                                          |
 | `/auth/login`, `/auth/register` | Player auth; stores `molemisi_token` and `token` in localStorage |
-| `/game` | React game shell |
-| `/admin/login` | Admin login (same `/auth/login`, then probes `/admin/economy`) |
-| `/admin` | Dashboard + player search |
-| `/admin/players/[id]` | Player inspection and moderation |
-| `/admin/economy` | Economy overview |
-| `/admin/audit` | Ledger |
-| `/admin/config` | Live `game_config` editor |
+| `/game`                         | React game shell                                                 |
+| `/admin/login`                  | Admin login (same `/auth/login`, then probes `/admin/economy`)   |
+| `/admin`                        | Dashboard + player search                                        |
+| `/admin/players/[id]`           | Player inspection and moderation                                 |
+| `/admin/economy`                | Economy overview                                                 |
+| `/admin/audit`                  | Ledger                                                           |
+| `/admin/config`                 | Live `game_config` editor                                        |
 
 No `/admin/players` index page (search is on the dashboard). No player logout in Settings (API `POST /auth/logout` exists; web does not call it).
 
@@ -156,22 +156,22 @@ Auth is **Supabase JWT** via `Authorization: Bearer`. `AuthGuard` verifies with 
 
 16 migrations, `20260902000000`–`20260902000015`:
 
-| Migration | Summary |
-| --- | --- |
-| 000000 | Core: profiles, farms, plots, crops, buildings, livestock, inventory, ledger + RLS |
-| 000001 | `plant_crop_transaction` RPC |
-| 000002 | Weather / simulation columns |
-| 000003 | Market prices, transactions, events |
-| 000004 | Contracts + `profiles.xp` |
-| 000005 | Kgotla reputation and projects |
-| 000006 | Bushveld explorations |
-| 000007 | World events |
-| 000008 | Payments |
-| 000009 | Analytics events (RLS, no user policies) |
-| 000010–000013 | `game_config` + audit log + default keys cleanup |
-| 000012 | Ban / warn columns |
-| 000014 | Notifications |
-| 000015 | `profiles.is_admin`, `is_admin()`, `set_admin()` |
+| Migration     | Summary                                                                            |
+| ------------- | ---------------------------------------------------------------------------------- |
+| 000000        | Core: profiles, farms, plots, crops, buildings, livestock, inventory, ledger + RLS |
+| 000001        | `plant_crop_transaction` RPC                                                       |
+| 000002        | Weather / simulation columns                                                       |
+| 000003        | Market prices, transactions, events                                                |
+| 000004        | Contracts + `profiles.xp`                                                          |
+| 000005        | Kgotla reputation and projects                                                     |
+| 000006        | Bushveld explorations                                                              |
+| 000007        | World events                                                                       |
+| 000008        | Payments                                                                           |
+| 000009        | Analytics events (RLS, no user policies)                                           |
+| 000010–000013 | `game_config` + audit log + default keys cleanup                                   |
+| 000012        | Ban / warn columns                                                                 |
+| 000014        | Notifications                                                                      |
+| 000015        | `profiles.is_admin`, `is_admin()`, `set_admin()`                                   |
 
 API uses the **service-role** client. RLS is defense in depth.
 
@@ -195,19 +195,25 @@ Promote an admin: `node scripts/create-admin.mjs` (creates `admin@molemisi.co`).
 
 ## Assets
 
-- Source: `assets/` + `assets/manifest.json` (**209** entries)
-- Groups: 71 crops, 49 icons, 17 scene-props, 12 animals, 12 fx, 10 decor, 7 buildings, 7 ground, 7 backgrounds, 6 weather, 6 UI, 5 NPCs
+- Source: `assets/` + `assets/manifest.json` (**261** entries, 14 groups)
+- Groups: 71 crops, 49 icons, 47 item-icons (seeds/crops/animal products/materials/tools/buildings), 17 scene-props, 12 animals, 12 fx, 10 decor, 8 backgrounds, 7 buildings, 7 ground, 6 weather, 6 UI, 5 NPCs, 4 branding
 - `pnpm assets:sync` copies into `apps/web/public/assets` and `apps/game/public/assets`, writes `apps/game/src/generated-assets.ts`
 - Hooked as root `predev` / `prebuild`
 - PixelLab generator: `pnpm assets:generate` (`PIXELLAB_API_KEY`)
 
-Scene stitch backgrounds: farm, kgotla, bushveld, market (`docs/23_Scene_Render_Specifications.md`).
+Scene stitch backgrounds: farm, kgotla, bushveld, market (`docs/23_Scene_Render_Specifications.md`); market also has a PixelLab portrait background (`market_portrait`).
+
+**Branding** (`assets/branding/` + `assets/branding/media/`): logo emblem + `logo_alt` (light-bg shield) + `logo_mono` (watermark) + `logo_wide` (banner art); composited wordmark lockups, 512 social square, 1200×630 OG card (wired into site metadata), emblem cards, single-color watermark. Media compositor: `scripts/generate-media-assets.mjs` (zero-dependency PNG codec in `scripts/lib/png.mjs`, hand-drawn 5×7 pixel font). Usage rules: `docs/PRESS-KIT.md`.
+
+**Web item icons** (`apps/web/src/lib/pixelIcons.ts` + `components/PixelIcon.tsx`): inventory, market, blueprints and the farm seed picker render PixelLab pixel icons with emoji fallback.
 
 ---
 
 ## PWA / mobile
 
-- `apps/web/public/manifest.json`, icons 192/512
+- `apps/web/public/manifest.json` — icons 192/512 + `icon-maskable-512` (purpose `maskable`), background `#1A0F0A`, theme `#FF8F00`
+- Icons + favicon generated from `assets/branding/logo.png` by `scripts/generate-icons.mjs`: `favicon.ico` (16/32/48 classic BMP entries), `favicon-16/32.png` (alpha-weighted box downscale), `icon-192/512.png`, maskable variant, Next.js `src/app/icon.png`
+- iOS launch: 24 `apple-touch-startup-image` splash screens (12 devices, portrait + landscape) linked with device media queries in `layout.tsx`; Android builds its splash from the manifest
 - `apps/web/public/sw.js` — cache `molemisi-v1`, network-first, skips `/api/`
 - Registered in `apps/web/src/app/layout.tsx`
 - Not `next-pwa`. No push notifications. No Capacitor packaging.
@@ -231,37 +237,39 @@ Scene stitch backgrounds: farm, kgotla, bushveld, market (`docs/23_Scene_Render_
 
 ## Scripts
 
-| Script | Purpose |
-| --- | --- |
-| `scripts/sync-assets.mjs` | Copy assets + generate typed manifest |
-| `scripts/generate-pixellab-assets.mjs` | PixelLab batch generator |
-| `scripts/kill-dev.mjs` | Kill 3000/3001/3002 (`pnpm dev:kill`) |
-| `scripts/create-admin.mjs` | Create/promote admin user |
-| `scripts/test-game-loop.mjs` | Live farming smoke test |
-| `scripts/test-full-suite.mjs` | Live multi-system API test |
+| Script                                 | Purpose                                                    |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `scripts/sync-assets.mjs`              | Copy assets + generate typed manifest                      |
+| `scripts/generate-pixellab-assets.mjs` | PixelLab batch generator                                   |
+| `scripts/generate-icons.mjs`           | Favicons, `favicon.ico`, PWA icons, iOS splash (from logo) |
+| `scripts/generate-media-assets.mjs`    | Wordmark lockups, OG card, social square                   |
+| `scripts/kill-dev.mjs`                 | Kill 3000/3001/3002 (`pnpm dev:kill`)                      |
+| `scripts/create-admin.mjs`             | Create/promote admin user                                  |
+| `scripts/test-game-loop.mjs`           | Live farming smoke test                                    |
+| `scripts/test-full-suite.mjs`          | Live multi-system API test                                 |
 
 ---
 
 ## Feature inventory vs gaps
 
-| Area | Status |
-| --- | --- |
-| Register / login / me | Done |
-| Player logout UI | Missing (API no-op exists) |
-| Token refresh endpoint | Missing (Supabase returns refreshToken) |
-| Farming loop | Done (React + API; Phaser farm demo too) |
-| Buildings / livestock | API done; Phaser objects not used |
-| Market / contracts / XP | Done |
-| Kgotla / Bushveld | API + React; Phaser scenes unregistered |
-| Seasons / weather / events | Done on server |
-| Admin dashboard + guard | Done |
-| Rate limit | In-memory 60/min |
-| PWA install | Manifest + SW |
-| Payments | Stub only |
-| Sound / music | None (Settings sliders are inert) |
-| Push notifications | None |
-| Redis | None (ADR-012 deferred) |
-| Next `/api` proxy | None |
+| Area                       | Status                                                           |
+| -------------------------- | ---------------------------------------------------------------- |
+| Register / login / me      | Done                                                             |
+| Player logout UI           | Missing (API no-op exists)                                       |
+| Token refresh endpoint     | Missing (Supabase returns refreshToken)                          |
+| Farming loop               | Done (React + API; Phaser farm demo too)                         |
+| Buildings / livestock      | API done; Phaser objects not used                                |
+| Market / contracts / XP    | Done                                                             |
+| Kgotla / Bushveld          | API + React; Phaser scenes unregistered                          |
+| Seasons / weather / events | Done on server                                                   |
+| Admin dashboard + guard    | Done                                                             |
+| Rate limit                 | In-memory 60/min                                                 |
+| PWA install                | Manifest + SW + favicon.ico + full icon set + iOS splash screens |
+| Payments                   | Stub only                                                        |
+| Sound / music              | None (Settings sliders are inert)                                |
+| Push notifications         | None                                                             |
+| Redis                      | None (ADR-012 deferred)                                          |
+| Next `/api` proxy          | None                                                             |
 
 ---
 
