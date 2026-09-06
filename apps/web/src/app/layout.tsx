@@ -38,10 +38,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
       { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
       { url: '/icons/favicon-16.png', sizes: '16x16', type: 'image/png' },
     ],
-    shortcut: '/icons/favicon-32.png',
+    shortcut: '/favicon.ico',
     apple: '/icons/icon-192.png',
   },
   appleWebApp: {
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="48x48" />
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
         {/* iOS PWA splash screens (portrait + landscape per device) */}

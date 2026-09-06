@@ -1,299 +1,204 @@
 #!/usr/bin/env node
 /**
- * Molemisi — App icon generator (zero-dependency).
+ * Molemisi — App icon + favicon generator (zero-dependency).
  *
- * Reads assets/branding/logo.png (64x64 pixel art) and produces every icon
- * the web app needs, using nearest-neighbor scaling (correct for pixel art):
+ * Reads assets/branding/logo.png (64x64 pixel art) and produces:
  *
- *   public/icons/favicon-16.png   16x16  transparent
- *   public/icons/favicon-32.png   32x32  transparent
- *   public/icons/icon-192.png     192x192 solid bg, padded
- *   public/icons/icon-512.png     512x512 solid bg, padded
- *   public/icons/icon-maskable-512.png  512x512 with safe-zone padding
- *   apps/web/src/app/icon.png     32x32  (Next.js App Router favicon)
+ *   apps/web/public/icons/favicon-16.png   16x16  transparent (box downscale)
+ *   apps/web/public/icons/favicon-32.png   32x32  transparent (box downscale)
+ *   apps/web/public/icons/icon-192.png     192x192 solid bg, padded
+ *   apps/web/public/icons/icon-512.png     512x512 solid bg, padded
+ *   apps/web/public/icons/icon-maskable-512.png  safe-zone padding
+ *   apps/web/public/favicon.ico            16 + 32 + 48 (classic BMP entries)
+ *   apps/web/src/app/icon.png              32x32 (Next.js App Router favicon)
+ *   apps/web/public/icons/splash/*.png     iOS splash screens
  *
- * PNG codec: decode/encode with Node's zlib + a minimal PNG writer.
- * Scale: integer nearest-neighbor for crisp pixels, centered on canvas.
- *
- * Usage: node scripts/generate-icons.mjs
+ * Downscale: alpha-weighted box filter (crisper than averaging alone at 16px).
+ * Upscale: integer nearest-neighbor (correct for pixel art).
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deflateSync } from 'node:zlib';
+import { decodePng, encodePng, scaleNearest, fillColor } from './lib/png.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LOGO = join(root, 'assets', 'branding', 'logo.png');
 const ICONS_DIR = join(root, 'apps', 'web', 'public', 'icons');
+const PUBLIC_DIR = join(root, 'apps', 'web', 'public');
 const APP_ICON = join(root, 'apps', 'web', 'src', 'app', 'icon.png');
 
-/* ---------------- Minimal PNG decoder (8-bit RGBA, non-interlaced) -------- */
+/* ---------------- Scaling ------------------------------------------------- */
 
-function crc32(buf) {
-  let c;
-  const table =
-    crc32.table ||
-    (crc32.table = (() => {
-      const t = new Int32Array(256);
-      for (let n = 0; n < 256; n++) {
-        c = n;
-        for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-        t[n] = c;
-      }
-      return t;
-    })());
-  let crc = -1;
-  for (let i = 0; i < buf.length; i++) crc = (crc >>> 8) ^ table[(crc ^ buf[i]) & 0xff];
-  return (crc ^ -1) >>> 0;
-}
+/**
+ * Alpha-weighted box downscale for arbitrary ratios (e.g. 64 -> 16/32/48).
+ * Each destination pixel averages the source rectangle it covers, weighted by
+ * alpha so transparent padding doesn't muddy colors. Alpha edges snap to
+ * 0/255 so tiny sizes stay crisp instead of muddy.
+ */
+function downscaleBox(src, srcW, srcH, destW, destH) {
+  const out = new Uint8Array(destW * destH * 4);
+  for (let dy = 0; dy < destH; dy++) {
+    const y0 = (dy * srcH) / destH;
+    const y1 = ((dy + 1) * srcH) / destH;
+    for (let dx = 0; dx < destW; dx++) {
+      const x0 = (dx * srcW) / destW;
+      const x1 = ((dx + 1) * srcW) / destW;
 
-function decodePng(bytes) {
-  const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  if (!bytes.subarray(0, 8).equals(sig)) throw new Error('Not a PNG file');
-  let pos = 8;
-  let width = 0;
-  let height = 0;
-  let bitDepth = 0;
-  let colorType = 0;
-  const idat = [];
-
-  while (pos < bytes.length) {
-    const len = bytes.readUInt32BE(pos);
-    const type = bytes.toString('ascii', pos + 4, pos + 8);
-    const data = bytes.subarray(pos + 8, pos + 8 + len);
-
-    if (type === 'IHDR') {
-      width = data.readUInt32BE(0);
-      height = data.readUInt32BE(4);
-      bitDepth = data[8];
-      colorType = data[9];
-      if (bitDepth !== 8) throw new Error(`Unsupported bit depth ${bitDepth}`);
-      if (colorType !== 6) throw new Error(`Unsupported color type ${colorType} (need RGBA)`);
-      if (data[12] !== 0) throw new Error('Interlaced PNG not supported');
-    } else if (type === 'IDAT') {
-      idat.push(data);
-    } else if (type === 'IEND') {
-      break;
-    }
-    pos += 12 + len;
-  }
-
-  const raw = inflateSync(Buffer.concat(idat));
-  const stride = width * 4;
-  const pixels = new Uint8Array(width * height * 4);
-  let p = 0;
-
-  // Undo per-scanline filters
-  const prev = new Uint8Array(stride);
-  for (let y = 0; y < height; y++) {
-    const filter = raw[p++];
-    const line = raw.subarray(p, p + stride);
-    p += stride;
-    const cur = new Uint8Array(stride);
-
-    for (let x = 0; x < stride; x++) {
-      const a = x >= 4 ? cur[x - 4] : 0;
-      const b = prev[x];
-      const c = x >= 4 ? prev[x - 4] : 0;
-      let val = line[x];
-      switch (filter) {
-        case 0:
-          break;
-        case 1:
-          val = (val + a) & 0xff;
-          break;
-        case 2:
-          val = (val + b) & 0xff;
-          break;
-        case 3:
-          val = (val + ((a + b) >> 1)) & 0xff;
-          break;
-        case 4: {
-          const pa = Math.abs(b - c);
-          const pb = Math.abs(a - c);
-          const pc = Math.abs(a + b - 2 * c);
-          const pred = pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
-          val = (val + pred) & 0xff;
-          break;
+      let r = 0,
+        g = 0,
+        b = 0,
+        aSum = 0,
+        wSum = 0;
+      for (let sy = Math.floor(y0); sy < Math.ceil(y1); sy++) {
+        const yCover = Math.min(y1, sy + 1) - Math.max(y0, sy);
+        if (yCover <= 0) continue;
+        for (let sx = Math.floor(x0); sx < Math.ceil(x1); sx++) {
+          const xCover = Math.min(x1, sx + 1) - Math.max(x0, sx);
+          if (xCover <= 0) continue;
+          const s = (sy * srcW + sx) * 4;
+          const area = xCover * yCover;
+          const alpha = src[s + 3] / 255;
+          const w = area * alpha;
+          r += src[s] * w;
+          g += src[s + 1] * w;
+          b += src[s + 2] * w;
+          aSum += w;
+          wSum += area;
         }
       }
-      cur[x] = val;
-    }
-    pixels.set(cur, y * stride);
-    prev.set(cur);
-  }
-  return { width, height, pixels };
-}
-
-/* ---------------- Minimal PNG encoder (RGBA, filter 0) -------------------- */
-
-function encodePng(width, height, pixels) {
-  const stride = width * 4;
-  const raw = Buffer.alloc((stride + 1) * height);
-  for (let y = 0; y < height; y++) {
-    raw[y * (stride + 1)] = 0; // filter: none
-    Buffer.from(pixels.buffer, y * stride, stride).copy(raw, y * (stride + 1) + 1);
-  }
-  const idat = deflateSync(raw, { level: 9 });
-
-  const chunk = (type, data) => {
-    const out = Buffer.alloc(12 + data.length);
-    out.writeUInt32BE(data.length, 0);
-    out.write(type, 4, 'ascii');
-    data.copy(out, 8);
-    out.writeUInt32BE(crc32(out.subarray(4, 8 + data.length)), 8 + data.length);
-    return out;
-  };
-
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0);
-  ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // RGBA
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', idat),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
-
-/* ---------------- Nearest-neighbor integer scaling ------------------------ */
-
-function scaleNearest(src, srcW, srcH, destW, destH) {
-  const out = new Uint8Array(destW * destH * 4);
-  const ratio = Math.min(Math.floor(destW / srcW), Math.floor(destH / srcH)) || 1;
-  const drawW = srcW * ratio;
-  const drawH = srcH * ratio;
-  const offX = Math.floor((destW - drawW) / 2);
-  const offY = Math.floor((destH - drawH) / 2);
-
-  for (let y = 0; y < drawH; y++) {
-    const sy = Math.floor(y / ratio);
-    for (let x = 0; x < drawW; x++) {
-      const sx = Math.floor(x / ratio);
-      const s = (sy * srcW + sx) * 4;
-      const d = ((y + offY) * destW + (x + offX)) * 4;
-      out[d] = src[s];
-      out[d + 1] = src[s + 1];
-      out[d + 2] = src[s + 2];
-      out[d + 3] = src[s + 3];
+      const d = (dy * destW + dx) * 4;
+      if (aSum === 0) continue; // fully transparent
+      const cov = aSum / wSum;
+      // Color = average over visible coverage
+      out[d] = Math.round(r / aSum);
+      out[d + 1] = Math.round(g / aSum);
+      out[d + 2] = Math.round(b / aSum);
+      // Alpha snap: crisp edges at tiny sizes (0.25/0.75 thresholds)
+      out[d + 3] = cov < 0.25 ? 0 : cov > 0.75 ? 255 : Math.round(cov * 255);
     }
   }
   return out;
 }
 
-function compositeOnColor(pixels, w, h, [r, g, b]) {
-  const out = new Uint8Array(w * h * 4);
-  for (let i = 0; i < w * h; i++) {
-    const a = pixels[i * 4 + 3] / 255;
-    out[i * 4] = Math.round(pixels[i * 4] * a + r * (1 - a));
-    out[i * 4 + 1] = Math.round(pixels[i * 4 + 1] * a + g * (1 - a));
-    out[i * 4 + 2] = Math.round(pixels[i * 4 + 2] * a + b * (1 - a));
-    out[i * 4 + 3] = 255;
+/* ---------------- ICO writer (classic BMP entries) ------------------------ */
+
+/** Build 32bpp bottom-up BGRA DIB (XOR + AND mask) for one ICO entry. */
+function bmpEntry(width, height, rgba) {
+  const xorSize = width * height * 4;
+  const andStride = Math.ceil(width / 8);
+  const andPad = (4 - (andStride % 4)) % 4;
+  const andSize = (andStride + andPad) * height;
+
+  const buf = Buffer.alloc(40 + xorSize + andSize);
+  // BITMAPINFOHEADER
+  buf.writeUInt32LE(40, 0);
+  buf.writeInt32LE(width, 4);
+  buf.writeInt32LE(height * 2, 8); // XOR + AND
+  buf.writeUInt16LE(1, 12); // planes
+  buf.writeUInt16LE(32, 14); // bpp
+  buf.writeUInt32LE(0, 16); // compression: BI_RGB
+  buf.writeUInt32LE(xorSize + andSize, 20); // size image
+  // XOR mask: bottom-up BGRA
+  let p = 40;
+  for (let y = height - 1; y >= 0; y--) {
+    for (let x = 0; x < width; x++) {
+      const s = (y * width + x) * 4;
+      buf[p++] = rgba[s + 2]; // B
+      buf[p++] = rgba[s + 1]; // G
+      buf[p++] = rgba[s]; // R
+      buf[p++] = rgba[s + 3]; // A
+    }
   }
-  return out;
+  // AND mask: all zero (alpha channel governs)
+  return buf;
 }
 
-/* ---------------- Main ---------------------------------------------------- */
+/** Multi-size .ico with classic BMP entries (16/32/48). */
+function buildIco(sizes) {
+  const entries = sizes.map(({ size, rgba }) => ({
+    size,
+    data: bmpEntry(size, size, rgba),
+  }));
+  const count = entries.length;
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0); // reserved
+  header.writeUInt16LE(1, 2); // type: icon
+  header.writeUInt16LE(count, 4);
+
+  const dir = Buffer.alloc(16 * count);
+  let offset = 6 + 16 * count;
+  entries.forEach((e, i) => {
+    const o = i * 16;
+    dir[o] = e.size === 256 ? 0 : e.size; // width
+    dir[o + 1] = e.size === 256 ? 0 : e.size; // height
+    dir[o + 2] = 0; // palette
+    dir[o + 3] = 0; // reserved
+    dir.writeUInt16LE(1, o + 4); // planes
+    dir.writeUInt16LE(32, o + 6); // bpp
+    dir.writeUInt32LE(e.data.length, o + 8);
+    dir.writeUInt32LE(offset, o + 12);
+    offset += e.data.length;
+  });
+
+  return Buffer.concat([header, dir, ...entries.map((e) => e.data)]);
+}
+
+/* ---------------- Load source --------------------------------------------- */
 
 const logoBytes = readFileSync(LOGO);
-const { inflateSync } = await import('node:zlib');
-
-const { width, height, pixels } = (() => {
-  const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  if (!logoBytes.subarray(0, 8).equals(sig)) throw new Error('logo.png is not a PNG');
-  let pos = 8;
-  let w = 0,
-    h = 0,
-    idat = [];
-  while (pos < logoBytes.length) {
-    const len = logoBytes.readUInt32BE(pos);
-    const type = logoBytes.toString('ascii', pos + 4, pos + 8);
-    const data = logoBytes.subarray(pos + 8, pos + 8 + len);
-    if (type === 'IHDR') {
-      w = data.readUInt32BE(0);
-      h = data.readUInt32BE(4);
-      if (data[8] !== 8 || data[9] !== 6) throw new Error('logo.png must be 8-bit RGBA');
-      if (data[12] !== 0) throw new Error('Interlaced PNG not supported');
-    } else if (type === 'IDAT') idat.push(data);
-    else if (type === 'IEND') break;
-    pos += 12 + len;
-  }
-  const raw = inflateSync(Buffer.concat(idat));
-  const stride = w * 4;
-  const px = new Uint8Array(w * h * 4);
-  const prev = new Uint8Array(stride);
-  let p = 0;
-  for (let y = 0; y < h; y++) {
-    const filter = raw[p++];
-    const line = raw.subarray(p, p + stride);
-    p += stride;
-    const cur = new Uint8Array(stride);
-    for (let x = 0; x < stride; x++) {
-      const a = x >= 4 ? cur[x - 4] : 0;
-      const b = prev[x];
-      const c = x >= 4 ? prev[x - 4] : 0;
-      let val = line[x];
-      switch (filter) {
-        case 1:
-          val = (val + a) & 0xff;
-          break;
-        case 2:
-          val = (val + b) & 0xff;
-          break;
-        case 3:
-          val = (val + ((a + b) >> 1)) & 0xff;
-          break;
-        case 4: {
-          const pa = Math.abs(b - c),
-            pb = Math.abs(a - c),
-            pc = Math.abs(a + b - 2 * c);
-          val = (val + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 0xff;
-          break;
-        }
-      }
-      cur[x] = val;
-    }
-    px.set(cur, y * stride);
-    prev.set(cur);
-  }
-  return { width: w, height: h, pixels: px };
-})();
-
+const { width, height, pixels } = decodePng(logoBytes);
 console.log(`[icons] Source: ${LOGO} (${width}x${height})`);
 mkdirSync(ICONS_DIR, { recursive: true });
 
-// Favicon set — transparent, tight crop
+/* ---------------- Favicons (true box downscales) --------------------------- */
+
+const fav16 = downscaleBox(pixels, width, height, 16, 16);
+const fav32 = downscaleBox(pixels, width, height, 32, 32);
+const fav48 = downscaleBox(pixels, width, height, 48, 48);
+
+writeFileSync(join(ICONS_DIR, 'favicon-16.png'), encodePng(16, 16, fav16));
+writeFileSync(join(ICONS_DIR, 'favicon-32.png'), encodePng(32, 32, fav32));
 writeFileSync(
-  join(ICONS_DIR, 'favicon-16.png'),
-  encodePng(16, 16, scaleNearest(pixels, width, height, 16, 16)),
-);
-writeFileSync(
-  join(ICONS_DIR, 'favicon-32.png'),
-  encodePng(32, 32, scaleNearest(pixels, width, height, 32, 32)),
+  join(PUBLIC_DIR, 'favicon.ico'),
+  buildIco([
+    { size: 16, rgba: fav16 },
+    { size: 32, rgba: fav32 },
+    { size: 48, rgba: fav48 },
+  ]),
 );
 
-// PWA icons — solid dark background (#1a0f0a from manifest), 90% content scale
-const BG = [26, 15, 10];
+// Next.js App Router favicon (src/app/icon.png)
+writeFileSync(APP_ICON, encodePng(32, 32, fav32));
+
+/* ---------------- PWA icons (integer NN upscales) -------------------------- */
+
+const BG = [26, 15, 10]; // #1A0F0A — matches manifest background_color
+
 for (const size of [192, 512]) {
-  // Pad the art to 90% so it doesn't touch the icon edge
-  const padded = Math.round(size / 0.9);
-  const scaled = scaleNearest(pixels, width, height, padded, padded);
-  // Recomposite onto a size canvas with bg
+  const ratio = Math.floor(size / Math.max(width, height)); // 3 or 8
+  const drawW = width * ratio;
+  const drawH = height * ratio;
+  const scaled = scaleNearest(pixels, width, height, drawW, drawH);
+  const comp = new Uint8Array(drawW * drawH * 4);
+  for (let i = 0; i < drawW * drawH; i++) {
+    const a = scaled[i * 4 + 3] / 255;
+    comp[i * 4] = Math.round(scaled[i * 4] * a + BG[0] * (1 - a));
+    comp[i * 4 + 1] = Math.round(scaled[i * 4 + 1] * a + BG[1] * (1 - a));
+    comp[i * 4 + 2] = Math.round(scaled[i * 4 + 2] * a + BG[2] * (1 - a));
+    comp[i * 4 + 3] = 255;
+  }
+  // Center on the icon canvas at 90%
   const out = new Uint8Array(size * size * 4);
-  const off = Math.floor((size - padded) / 2);
-  const comp = compositeOnColor(scaled, padded, padded, BG);
-  for (let y = 0; y < padded; y++) {
-    if (y + off < 0 || y + off >= size) continue;
-    for (let x = 0; x < padded; x++) {
-      if (x + off < 0 || x + off >= size) continue;
-      const s = (y * padded + x) * 4;
+  fillColor(out, size, size, [...BG, 255]);
+  const off = Math.floor((size - drawW) / 2);
+  for (let y = 0; y < drawH; y++) {
+    for (let x = 0; x < drawW; x++) {
+      const s = (y * drawW + x) * 4;
       const d = ((y + off) * size + (x + off)) * 4;
       out[d] = comp[s];
       out[d + 1] = comp[s + 1];
       out[d + 2] = comp[s + 2];
-      out[d + 3] = comp[s + 3];
+      out[d + 3] = 255;
     }
   }
   writeFileSync(join(ICONS_DIR, `icon-${size}.png`), encodePng(size, size, out));
@@ -303,31 +208,29 @@ for (const size of [192, 512]) {
 {
   const size = 512;
   const inner = Math.round(size * 0.8);
-  const scaled = scaleNearest(pixels, width, height, inner, inner);
-  const comp = compositeOnColor(scaled, inner, inner, BG);
+  const ratio = Math.floor(inner / Math.max(width, height)); // 5
+  const drawW = width * ratio;
+  const drawH = height * ratio;
+  const scaled = scaleNearest(pixels, width, height, drawW, drawH);
   const out = new Uint8Array(size * size * 4);
-  const off = Math.floor((size - inner) / 2);
-  for (let y = 0; y < inner; y++) {
-    for (let x = 0; x < inner; x++) {
-      const s = (y * inner + x) * 4;
+  fillColor(out, size, size, [...BG, 255]);
+  const off = Math.floor((size - drawW) / 2);
+  for (let y = 0; y < drawH; y++) {
+    for (let x = 0; x < drawW; x++) {
+      const s = (y * drawW + x) * 4;
+      const a = scaled[s + 3] / 255;
       const d = ((y + off) * size + (x + off)) * 4;
-      out[d] = comp[s];
-      out[d + 1] = comp[s + 1];
-      out[d + 2] = comp[s + 2];
-      out[d + 3] = comp[s + 3];
+      out[d] = Math.round(scaled[s] * a + BG[0] * (1 - a));
+      out[d + 1] = Math.round(scaled[s + 1] * a + BG[1] * (1 - a));
+      out[d + 2] = Math.round(scaled[s + 2] * a + BG[2] * (1 - a));
+      out[d + 3] = 255;
     }
   }
   writeFileSync(join(ICONS_DIR, 'icon-maskable-512.png'), encodePng(size, size, out));
 }
 
-// Next.js App Router favicon (src/app/icon.png)
-writeFileSync(APP_ICON, encodePng(32, 32, scaleNearest(pixels, width, height, 32, 32)));
+/* ---------------- iOS splash screens --------------------------------------- */
 
-/* ---------------- iOS splash screens (apple-touch-startup-image) ---------- */
-
-const SPLASH_BG = [26, 15, 10]; // matches manifest background_color #1a0f0a
-
-// [fileW, fileH] — portrait + landscape variants are generated for each.
 const SPLASH_SIZES = [
   [1290, 2796], // iPhone 14/15/16 Pro Max
   [1179, 2556], // iPhone 14/15/16 Pro
@@ -344,7 +247,6 @@ const SPLASH_SIZES = [
 ];
 
 function makeSplash(fileW, fileH) {
-  // Logo sized to ~22% of the shorter edge, nearest-neighbor integer ratio
   const target = Math.round(Math.min(fileW, fileH) * 0.22);
   const ratio = Math.max(1, Math.floor(target / Math.max(width, height)));
   const drawW = width * ratio;
@@ -352,21 +254,14 @@ function makeSplash(fileW, fileH) {
   const logo = scaleNearest(pixels, width, height, drawW, drawH);
 
   const out = new Uint8Array(fileW * fileH * 4);
-  // Solid background
-  for (let i = 0; i < fileW * fileH; i++) {
-    out[i * 4] = SPLASH_BG[0];
-    out[i * 4 + 1] = SPLASH_BG[1];
-    out[i * 4 + 2] = SPLASH_BG[2];
-    out[i * 4 + 3] = 255;
-  }
-  // Centered logo (opaque pixels only)
+  fillColor(out, fileW, fileH, [...BG, 255]);
   const offX = Math.floor((fileW - drawW) / 2);
   const offY = Math.floor((fileH - drawH) / 2);
   for (let y = 0; y < drawH; y++) {
     for (let x = 0; x < drawW; x++) {
       const s = (y * drawW + x) * 4;
-      if (logo[s + 3] < 8) continue; // fully transparent
       const a = logo[s + 3] / 255;
+      if (a === 0) continue;
       const d = ((y + offY) * fileW + (x + offX)) * 4;
       out[d] = Math.round(logo[s] * a + out[d] * (1 - a));
       out[d + 1] = Math.round(logo[s + 1] * a + out[d + 1] * (1 - a));
@@ -386,7 +281,8 @@ for (const [w, h] of SPLASH_SIZES) {
   splashCount += 2;
 }
 
-console.log('[icons] Wrote favicon-16/32, icon-192/512, icon-maskable-512, app/icon.png');
+console.log('[icons] Wrote favicon-16/32 + favicon.ico (16/32/48), app/icon.png');
+console.log('[icons] Wrote icon-192/512, icon-maskable-512');
 console.log(
   `[icons] Wrote ${splashCount} iOS splash screens (${SPLASH_SIZES.length} devices, portrait + landscape)`,
 );
