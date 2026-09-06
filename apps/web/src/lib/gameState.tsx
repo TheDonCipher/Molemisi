@@ -88,6 +88,8 @@ export interface Blueprint {
   title: string;
   subtitle: string;
   icon: string;
+  /** Pixel-art icon URL (PixelLab) — falls back to emoji `icon` when null. */
+  image?: string | null;
   costPula: number;
   costWood: number;
   costStone: number;
@@ -449,6 +451,7 @@ const DEMO_BLUEPRINTS: Blueprint[] = [
     title: 'Chicken Coop (Lv.1)',
     subtitle: 'Houses up to 6 hens',
     icon: '🏠',
+    image: pixelItemIcon('coop'),
     costPula: 200,
     costWood: 20,
     costStone: 10,
@@ -461,6 +464,7 @@ const DEMO_BLUEPRINTS: Blueprint[] = [
     title: 'Goat Kraal',
     subtitle: 'Shelter for milch goats',
     icon: '🐐',
+    image: pixelItemIcon('goat_pen'),
     costPula: 450,
     costWood: 40,
     costStone: 25,
@@ -473,6 +477,7 @@ const DEMO_BLUEPRINTS: Blueprint[] = [
     title: 'Deep Borehole Well',
     subtitle: 'Expands water to 300L',
     icon: '💧',
+    image: pixelItemIcon('borehole'),
     costPula: 350,
     costWood: 0,
     costStone: 15,

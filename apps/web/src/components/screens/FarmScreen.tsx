@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { useGame, Plot } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
+import { PixelIcon } from '@/components/PixelIcon';
 
 const SEED_OPTIONS = [
   { name: 'Sorghum', cost: 15, icon: '🌾', trait: 'Drought Resistant', itemType: 'sorghum_seed' },
@@ -286,7 +287,7 @@ export function FarmScreen() {
                   className="w-full flex items-center justify-between p-2.5 bg-surface-container-high hover:bg-wood-medium border border-wood-border transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">{seed.icon}</span>
+                    <PixelIcon itemType={seed.itemType} emoji={seed.icon} size={24} />
                     <div className="text-left">
                       <span className="font-headline text-xs text-cream-surface font-bold block">
                         {seed.name}

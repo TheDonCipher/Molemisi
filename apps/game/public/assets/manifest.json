@@ -2408,5 +2408,165 @@
     },
     "kind": "pixflux",
     "prompt": "traditional Botswana village open-air market seen from a player standing in the square, woven baskets filled with grain and produce on wooden display tables, thatched shade structures, colorful cloth canopies strung overhead, red earth ground, acacia trees at the edges, warm late-afternoon light, bustling but cozy, empty center area for UI overlay"
+  },
+  "tool_hoe": {
+    "group": "item-icons",
+    "file": "ui/items/tool_hoe.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "wooden farming hoe with steel blade, diagonal view, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "tool_watering_can": {
+    "group": "item-icons",
+    "file": "ui/items/tool_watering_can.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "metal watering can with long spout, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "tool_basket": {
+    "group": "item-icons",
+    "file": "ui/items/tool_basket.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "woven reed gathering basket with handle, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "tool_sickle": {
+    "group": "item-icons",
+    "file": "ui/items/tool_sickle.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "curved steel sickle with wooden handle, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "tool_pickaxe": {
+    "group": "item-icons",
+    "file": "ui/items/tool_pickaxe.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "stone pickaxe with wooden handle, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "tool_canteen": {
+    "group": "item-icons",
+    "file": "ui/items/tool_canteen.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "round clay water canteen with cork stopper and strap, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "tool_field_scope": {
+    "group": "item-icons",
+    "file": "ui/items/tool_field_scope.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "brass field spyglass telescope collapsed, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_well": {
+    "group": "item-icons",
+    "file": "ui/items/building_well.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "round stone well with wooden roof and bucket, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_coop": {
+    "group": "item-icons",
+    "file": "ui/items/building_coop.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small wooden chicken coop with ramp and red roof, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_goat_pen": {
+    "group": "item-icons",
+    "file": "ui/items/building_goat_pen.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "wooden goat pen shelter with fence, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_barn": {
+    "group": "item-icons",
+    "file": "ui/items/building_barn.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "large wooden storage barn with corrugated roof, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_paddock": {
+    "group": "item-icons",
+    "file": "ui/items/building_paddock.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "cattle paddock with wooden post fence, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_mill": {
+    "group": "item-icons",
+    "file": "ui/items/building_mill.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small grain mill with turning wooden wheel, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_pig_pen": {
+    "group": "item-icons",
+    "file": "ui/items/building_pig_pen.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "pig pen with low wooden fence and mud patch, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_borehole": {
+    "group": "item-icons",
+    "file": "ui/items/building_borehole.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "modern deep borehole water pump with metal pipe, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_greenhouse": {
+    "group": "item-icons",
+    "file": "ui/items/building_greenhouse.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small glass greenhouse with plants inside, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
   }
 }

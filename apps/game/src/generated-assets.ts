@@ -84,6 +84,78 @@ export const ASSET_MANIFEST: GeneratedAsset[] = [
     "group": "buildings"
   },
   {
+    "id": "building_barn",
+    "file": "ui/items/building_barn.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "building_borehole",
+    "file": "ui/items/building_borehole.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "building_coop",
+    "file": "ui/items/building_coop.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "building_goat_pen",
+    "file": "ui/items/building_goat_pen.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "building_greenhouse",
+    "file": "ui/items/building_greenhouse.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "building_mill",
+    "file": "ui/items/building_mill.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "building_paddock",
+    "file": "ui/items/building_paddock.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "building_pig_pen",
+    "file": "ui/items/building_pig_pen.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "building_well",
+    "file": "ui/items/building_well.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
     "id": "buildings_construct",
     "file": "ui/icons/buildings_construct.png",
     "width": 32,
@@ -1796,6 +1868,62 @@ export const ASSET_MANIFEST: GeneratedAsset[] = [
     "group": "crops"
   },
   {
+    "id": "tool_basket",
+    "file": "ui/items/tool_basket.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "tool_canteen",
+    "file": "ui/items/tool_canteen.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "tool_field_scope",
+    "file": "ui/items/tool_field_scope.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "tool_hoe",
+    "file": "ui/items/tool_hoe.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "tool_pickaxe",
+    "file": "ui/items/tool_pickaxe.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "tool_sickle",
+    "file": "ui/items/tool_sickle.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
+    "id": "tool_watering_can",
+    "file": "ui/items/tool_watering_can.png",
+    "width": 32,
+    "height": 32,
+    "kind": "pixen",
+    "group": "item-icons"
+  },
+  {
     "id": "water_drop",
     "file": "particles/water_drop.png",
     "width": 32,
@@ -2037,6 +2165,55 @@ export const ASSET_GROUPS: Record<string, string[]> = {
     "pig_pen_lvl1",
     "well_lvl1"
   ],
+  "item-icons": [
+    "building_barn",
+    "building_borehole",
+    "building_coop",
+    "building_goat_pen",
+    "building_greenhouse",
+    "building_mill",
+    "building_paddock",
+    "building_pig_pen",
+    "building_well",
+    "material_herb_wild",
+    "material_marula",
+    "material_reeds",
+    "material_salt",
+    "material_stone",
+    "material_wood",
+    "product_cowpeas",
+    "product_egg",
+    "product_groundnuts",
+    "product_herbs",
+    "product_maize",
+    "product_milk",
+    "product_millet",
+    "product_pepper",
+    "product_saffron",
+    "product_sesame",
+    "product_sorghum",
+    "product_tomatoes",
+    "product_watermelon",
+    "product_wool",
+    "seed_cowpeas",
+    "seed_groundnuts",
+    "seed_herbs",
+    "seed_maize",
+    "seed_millet",
+    "seed_pepper",
+    "seed_saffron",
+    "seed_sesame",
+    "seed_sorghum",
+    "seed_tomatoes",
+    "seed_watermelon",
+    "tool_basket",
+    "tool_canteen",
+    "tool_field_scope",
+    "tool_hoe",
+    "tool_pickaxe",
+    "tool_sickle",
+    "tool_watering_can"
+  ],
   "backgrounds": [
     "bushveld_riverbank",
     "bushveld_savanna",
@@ -2179,39 +2356,6 @@ export const ASSET_GROUPS: Record<string, string[]> = {
     "grass_water",
     "plot_empty",
     "plot_soil"
-  ],
-  "item-icons": [
-    "material_herb_wild",
-    "material_marula",
-    "material_reeds",
-    "material_salt",
-    "material_stone",
-    "material_wood",
-    "product_cowpeas",
-    "product_egg",
-    "product_groundnuts",
-    "product_herbs",
-    "product_maize",
-    "product_milk",
-    "product_millet",
-    "product_pepper",
-    "product_saffron",
-    "product_sesame",
-    "product_sorghum",
-    "product_tomatoes",
-    "product_watermelon",
-    "product_wool",
-    "seed_cowpeas",
-    "seed_groundnuts",
-    "seed_herbs",
-    "seed_maize",
-    "seed_millet",
-    "seed_pepper",
-    "seed_saffron",
-    "seed_sesame",
-    "seed_sorghum",
-    "seed_tomatoes",
-    "seed_watermelon"
   ]
 };
 

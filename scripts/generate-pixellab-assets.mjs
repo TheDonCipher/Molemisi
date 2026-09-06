@@ -465,6 +465,24 @@ const ITEM_ICONS = [
   ['material_marula', 'three round marula fruits with one cut open showing flesh'],
   ['material_salt', 'small pile of coarse white mineral salt crystals'],
   ['material_herb_wild', 'bundle of dried wild bushveld herbs tied with twine'],
+  // tools
+  ['tool_hoe', 'wooden farming hoe with steel blade, diagonal view'],
+  ['tool_watering_can', 'metal watering can with long spout'],
+  ['tool_sickle', 'curved steel sickle with wooden handle'],
+  ['tool_basket', 'woven reed gathering basket with handle'],
+  ['tool_pickaxe', 'stone pickaxe with wooden handle'],
+  ['tool_canteen', 'round clay water canteen with cork stopper and strap'],
+  ['tool_field_scope', 'brass field spyglass telescope collapsed'],
+  // buildings (match the world building sprites)
+  ['building_well', 'round stone well with wooden roof and bucket'],
+  ['building_coop', 'small wooden chicken coop with ramp and red roof'],
+  ['building_barn', 'large wooden storage barn with corrugated roof'],
+  ['building_goat_pen', 'wooden goat pen shelter with fence'],
+  ['building_mill', 'small grain mill with turning wooden wheel'],
+  ['building_paddock', 'cattle paddock with wooden post fence'],
+  ['building_pig_pen', 'pig pen with low wooden fence and mud patch'],
+  ['building_borehole', 'modern deep borehole water pump with metal pipe'],
+  ['building_greenhouse', 'small glass greenhouse with plants inside'],
 ];
 
 for (const [id, desc] of ITEM_ICONS) {

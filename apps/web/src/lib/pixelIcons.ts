@@ -50,6 +50,32 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
   mineral_salt: 'material_salt',
   herb_wild: 'material_herb_wild',
   wild_herbs: 'material_herb_wild',
+
+  // Tools
+  hoe: 'tool_hoe',
+  watering_can: 'tool_watering_can',
+  sickle: 'tool_sickle',
+  basket: 'tool_basket',
+  woven_basket: 'tool_basket',
+  pickaxe: 'tool_pickaxe',
+  stone_pickaxe: 'tool_pickaxe',
+  canteen: 'tool_canteen',
+  clay_canteen: 'tool_canteen',
+  field_scope: 'tool_field_scope',
+
+  // Buildings (inventory blueprints)
+  well: 'building_well',
+  coop: 'building_coop',
+  chicken_coop: 'building_coop',
+  barn: 'building_barn',
+  goat_pen: 'building_goat_pen',
+  goat_kraal: 'building_goat_pen',
+  mill: 'building_mill',
+  paddock: 'building_paddock',
+  pig_pen: 'building_pig_pen',
+  borehole: 'building_borehole',
+  borehole_well: 'building_borehole',
+  greenhouse: 'building_greenhouse',
 };
 
 /** Pixel icon URL for an itemType/cropType, or null when unknown. */
