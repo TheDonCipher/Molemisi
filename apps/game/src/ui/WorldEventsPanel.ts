@@ -137,14 +137,14 @@ export class WorldEventsPanel {
 
         // Event name
         const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${event.name}`, {
-          font: '11px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#F5E6D3',
         });
         container.add(text);
 
         // Description
         const desc = this.scene.add.text(-panelWidth / 2 + 30, y + 14, event.description, {
-          font: '10px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#BCAAA4',
         });
         container.add(desc);
@@ -155,7 +155,7 @@ export class WorldEventsPanel {
         const timeColor = hoursLeft < 2 ? '#F44336' : hoursLeft < 6 ? '#FF9800' : '#4CAF50';
 
         const timeText = this.scene.add.text(panelWidth / 2 - 30, y + 7, `${hoursLeft}h left`, {
-          font: '10px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: timeColor,
         });
         timeText.setOrigin(1, 0.5);
@@ -173,7 +173,7 @@ export class WorldEventsPanel {
           .join(' | ');
 
         const effectsLabel = this.scene.add.text(panelWidth / 2 - 30, y + 22, effectsText, {
-          font: '10px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#FFB74D',
         });
         effectsLabel.setOrigin(1, 0.5);
@@ -224,7 +224,7 @@ export class WorldEventsPanel {
         -panelWidth / 2 + 30,
         y,
         `${emoji} ${event.name} (${event.duration}h)`,
-        { font: '11px Molemisi Pixel', color: '#F5E6D3' },
+        { font: '12px Molemisi Pixel', color: '#F5E6D3' },
       );
       container.add(text);
 
@@ -238,14 +238,14 @@ export class WorldEventsPanel {
         .join(', ');
 
       const effectsLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, effectsText, {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(effectsLabel);
 
       // Trigger button
       const triggerBtn = this.scene.add.text(panelWidth / 2 - 30, y + 7, '🎪 Trigger', {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#4CAF50',
         backgroundColor: '#1b5e20',
         padding: { x: 6, y: 3 },

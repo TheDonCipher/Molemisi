@@ -146,7 +146,7 @@ export class BuildPanel {
           -panelWidth / 2 + 30,
           y,
           `${stateEmoji} ${name} Lv.${building.level}`,
-          { font: '11px Molemisi Pixel', color: '#F5E6D3' },
+          { font: '12px Molemisi Pixel', color: '#F5E6D3' },
         );
         container.add(text);
 
@@ -157,7 +157,7 @@ export class BuildPanel {
           building.state === 'CONSTRUCTION'
             ? `Building... (${building.constructionEndsAt ? new Date(building.constructionEndsAt).toLocaleTimeString() : '...'})`
             : building.state,
-          { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+          { font: '12px Molemisi Pixel', color: '#BCAAA4' },
         );
         container.add(stateLabel);
 
@@ -167,7 +167,7 @@ export class BuildPanel {
         // Upgrade button (only for ACTIVE buildings below max level)
         if (building.state === 'ACTIVE' && building.level < 3) {
           const upgradeBtn = this.scene.add.text(btnX, y + 7, '⬆️ Upgrade', {
-            font: '10px Molemisi Pixel',
+            font: '12px Molemisi Pixel',
             color: '#FFB74D',
             backgroundColor: '#4a3000',
             padding: { x: 6, y: 3 },
@@ -182,7 +182,7 @@ export class BuildPanel {
         // Maintain button (for MAINTENANCE_NEEDED or DISABLED)
         if (building.state === 'MAINTENANCE_NEEDED' || building.state === 'DISABLED') {
           const maintainBtn = this.scene.add.text(btnX, y + 7, '🔧 Repair', {
-            font: '10px Molemisi Pixel',
+            font: '12px Molemisi Pixel',
             color: '#4CAF50',
             backgroundColor: '#1b5e20',
             padding: { x: 6, y: 3 },
@@ -199,7 +199,7 @@ export class BuildPanel {
           const wearPercent = Math.round(building.wear * 100);
           const wearColor = wearPercent > 80 ? '#F44336' : wearPercent > 50 ? '#FF9800' : '#4CAF50';
           const wearLabel = this.scene.add.text(btnX, y + 7, `Wear: ${wearPercent}%`, {
-            font: '10px Molemisi Pixel',
+            font: '12px Molemisi Pixel',
             color: wearColor,
           });
           wearLabel.setOrigin(1, 0.5);
@@ -224,7 +224,7 @@ export class BuildPanel {
       availableToBuild.forEach((building) => {
         // Building name
         const nameText = this.scene.add.text(-panelWidth / 2 + 30, y, building.name, {
-          font: '11px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#F5E6D3',
         });
         this.container!.add(nameText);
@@ -236,13 +236,13 @@ export class BuildPanel {
           -panelWidth / 2 + 30,
           y + 14,
           `Cost: ${costStr} | Time: ${timeStr} | Cap: ${building.capacity}`,
-          { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+          { font: '12px Molemisi Pixel', color: '#BCAAA4' },
         );
         this.container!.add(detailText);
 
         // Build button
         const buildBtn = this.scene.add.text(panelWidth / 2 - 30, y + 7, '🔨 Build', {
-          font: '10px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#4CAF50',
           backgroundColor: '#1b5e20',
           padding: { x: 6, y: 3 },

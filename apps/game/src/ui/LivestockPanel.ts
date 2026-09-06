@@ -156,7 +156,7 @@ export class LivestockPanel {
           -panelWidth / 2 + 30,
           y,
           `${emoji} ${displayName} ${statusEmoji}`,
-          { font: '11px Molemisi Pixel', color: '#F5E6D3' },
+          { font: '12px Molemisi Pixel', color: '#F5E6D3' },
         );
         container.add(text);
 
@@ -181,7 +181,7 @@ export class LivestockPanel {
         container.add(hungerFill);
 
         const hungerLabel = this.scene.add.text(barX + barWidth + 4, barY, 'Hunger', {
-          font: '10px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#BCAAA4',
         });
         hungerLabel.setOrigin(0, 0.5);
@@ -193,7 +193,7 @@ export class LivestockPanel {
         // Collect button (if product ready)
         if (animal.productReady) {
           const collectBtn = this.scene.add.text(btnX, y + 8, '📦 Collect', {
-            font: '10px Molemisi Pixel',
+            font: '12px Molemisi Pixel',
             color: '#4CAF50',
             backgroundColor: '#1b5e20',
             padding: { x: 6, y: 3 },
@@ -208,7 +208,7 @@ export class LivestockPanel {
         // Feed button
         if (animal.hunger < 1.0 && !animal.isSick) {
           const feedBtn = this.scene.add.text(btnX, y + 8, '🍽️ Feed', {
-            font: '10px Molemisi Pixel',
+            font: '12px Molemisi Pixel',
             color: '#FFB74D',
             backgroundColor: '#4a3000',
             padding: { x: 6, y: 3 },
@@ -223,7 +223,7 @@ export class LivestockPanel {
         // Pet button
         if (!animal.isSick) {
           const petBtn = this.scene.add.text(btnX, y + 8, '❤️ Pet', {
-            font: '10px Molemisi Pixel',
+            font: '12px Molemisi Pixel',
             color: '#E91E63',
             backgroundColor: '#4a0020',
             padding: { x: 6, y: 3 },
@@ -259,7 +259,7 @@ export class LivestockPanel {
       const emoji = animalEmojis[animal.id] || '🐾';
 
       const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${animal.name}`, {
-        font: '11px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#F5E6D3',
       });
       this.container!.add(text);
@@ -269,7 +269,7 @@ export class LivestockPanel {
         -panelWidth / 2 + 30,
         y + 14,
         `${animal.purchaseCost}P | ${animal.productType} x${animal.productQuantity} / ${animal.productionCycleHours}h`,
-        { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+        { font: '12px Molemisi Pixel', color: '#BCAAA4' },
       );
       this.container!.add(detail);
 
@@ -279,14 +279,14 @@ export class LivestockPanel {
           -panelWidth / 2 + 30,
           y + 26,
           `Owned: ${animal.count}`,
-          { font: '10px Molemisi Pixel', color: '#81C784' },
+          { font: '12px Molemisi Pixel', color: '#81C784' },
         );
         this.container!.add(countText);
       }
 
       // Buy button
       const buyBtn = this.scene.add.text(panelWidth / 2 - 30, y + 8, '🛒 Buy', {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#4CAF50',
         backgroundColor: '#1b5e20',
         padding: { x: 6, y: 3 },

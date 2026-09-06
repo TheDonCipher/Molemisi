@@ -143,7 +143,7 @@ export class ContractsPanel {
 
         // Contract name
         const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${emoji} ${contract.name}`, {
-          font: '11px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#F5E6D3',
         });
         container.add(text);
@@ -153,7 +153,7 @@ export class ContractsPanel {
           .map((r) => `${r.itemType}: ${Math.min(r.current, r.quantity)}/${r.quantity}`)
           .join(' | ');
         const reqLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, reqText, {
-          font: '10px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#BCAAA4',
         });
         container.add(reqLabel);
@@ -164,7 +164,7 @@ export class ContractsPanel {
         const timeColor = hoursLeft < 6 ? '#F44336' : hoursLeft < 24 ? '#FF9800' : '#4CAF50';
 
         const timeText = this.scene.add.text(panelWidth / 2 - 30, y + 7, `${hoursLeft}h left`, {
-          font: '10px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: timeColor,
         });
         timeText.setOrigin(1, 0.5);
@@ -174,7 +174,7 @@ export class ContractsPanel {
         const allMet = contract.requirements.every((r) => r.current >= r.quantity);
         if (allMet) {
           const completeBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '✅ Complete', {
-            font: '10px Molemisi Pixel',
+            font: '12px Molemisi Pixel',
             color: '#4CAF50',
           });
           completeBtn.setOrigin(1, 0.5);
@@ -225,14 +225,14 @@ export class ContractsPanel {
         -panelWidth / 2 + 30,
         y,
         `${emoji} ${contract.name} (${contract.difficulty})`,
-        { font: '11px Molemisi Pixel', color: '#F5E6D3' },
+        { font: '12px Molemisi Pixel', color: '#F5E6D3' },
       );
       container.add(text);
 
       // Requirements
       const reqText = contract.requirements.map((r) => `${r.itemType} x${r.quantity}`).join(', ');
       const reqLabel = this.scene.add.text(-panelWidth / 2 + 30, y + 14, `Needs: ${reqText}`, {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(reqLabel);
@@ -242,14 +242,14 @@ export class ContractsPanel {
         panelWidth / 2 - 30,
         y + 7,
         `💰${contract.rewards.currency} ⭐${contract.rewards.xp}XP`,
-        { font: '10px Molemisi Pixel', color: '#FFB74D' },
+        { font: '12px Molemisi Pixel', color: '#FFB74D' },
       );
       rewardText.setOrigin(1, 0.5);
       container.add(rewardText);
 
       // Accept button
       const acceptBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '📝 Accept', {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#4CAF50',
       });
       acceptBtn.setOrigin(1, 0.5);

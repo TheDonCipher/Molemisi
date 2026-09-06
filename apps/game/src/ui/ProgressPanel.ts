@@ -133,7 +133,7 @@ export class ProgressPanel {
       panelWidth / 2 - 20,
       y + barHeight / 2,
       `${data.xp} / ${data.xpToNextLevel} XP`,
-      { font: '10px Molemisi Pixel', color: '#F5E6D3' },
+      { font: '12px Molemisi Pixel', color: '#F5E6D3' },
     );
     xpLabel.setOrigin(1, 0.5);
     this.container.add(xpLabel);
@@ -152,7 +152,7 @@ export class ProgressPanel {
       -panelWidth / 2 + 30,
       y,
       `🌱 Crops: ${data.unlockedCrops.length} unlocked`,
-      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+      { font: '12px Molemisi Pixel', color: '#BCAAA4' },
     );
     this.container.add(cropText);
     y += 16;
@@ -162,7 +162,7 @@ export class ProgressPanel {
       -panelWidth / 2 + 30,
       y,
       `🐄 Animals: ${data.unlockedAnimals.length} unlocked`,
-      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+      { font: '12px Molemisi Pixel', color: '#BCAAA4' },
     );
     this.container.add(animalText);
     y += 16;
@@ -172,7 +172,7 @@ export class ProgressPanel {
       -panelWidth / 2 + 30,
       y,
       `🏗️ Buildings: ${data.unlockedBuildings.length} unlocked`,
-      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+      { font: '12px Molemisi Pixel', color: '#BCAAA4' },
     );
     this.container.add(buildingText);
     y += 25;
@@ -192,7 +192,7 @@ export class ProgressPanel {
       panelWidth / 2 - 20,
       y - 4,
       `${unlockedCount}/${totalCount}`,
-      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+      { font: '12px Molemisi Pixel', color: '#BCAAA4' },
     );
     achCount.setOrigin(1, 0.5);
     this.container.add(achCount);
@@ -204,13 +204,13 @@ export class ProgressPanel {
       const color = ach.unlocked ? '#FFB74D' : '#666666';
 
       const achText = this.scene.add.text(-panelWidth / 2 + 30, y, `${icon} ${ach.name}`, {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color,
       });
       this.container!.add(achText);
 
       const descText = this.scene.add.text(-panelWidth / 2 + 50, y + 12, ach.description, {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#BCAAA4',
       });
       this.container!.add(descText);

@@ -201,7 +201,7 @@ export class MarketPanel {
 
       const eventText = events.map((e) => `${e.name}: ${e.description}`).join(' | ');
       const eventLabel = this.scene.add.text(panelX, yOffset + 10, `📢 ${eventText}`, {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#FFB74D',
         wordWrap: { width: panelWidth - 60 },
       });
@@ -224,7 +224,7 @@ export class MarketPanel {
         panelX - panelWidth / 2 + 20,
         y,
         crop?.name ?? seed.itemType,
-        { font: '11px Molemisi Pixel', color: '#F5E6D3' },
+        { font: '12px Molemisi Pixel', color: '#F5E6D3' },
       );
       this.container!.add(name);
 
@@ -241,13 +241,13 @@ export class MarketPanel {
         panelX + panelWidth / 2 - 110,
         y,
         `${trendEmoji} ${seed.currentPrice}P`,
-        { font: '11px Molemisi Pixel', color: priceColor },
+        { font: '12px Molemisi Pixel', color: priceColor },
       );
       this.container!.add(price);
 
       // Buy button
       const buyBtn = this.scene.add.text(panelX + panelWidth / 2 - 40, y, '[Buy]', {
-        font: '11px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#4CAF50',
       });
       buyBtn.setInteractive({ useHandCursor: true });
@@ -317,7 +317,7 @@ export class MarketPanel {
         panelX - panelWidth / 2 + 20,
         y,
         `${item.itemType} x${item.quantity}`,
-        { font: '11px Molemisi Pixel', color: '#F5E6D3' },
+        { font: '12px Molemisi Pixel', color: '#F5E6D3' },
       );
       this.container!.add(name);
 
@@ -329,13 +329,13 @@ export class MarketPanel {
         panelX + panelWidth / 2 - 110,
         y,
         `${trendEmoji} ${unitPrice}P`,
-        { font: '11px Molemisi Pixel', color: priceColor },
+        { font: '12px Molemisi Pixel', color: priceColor },
       );
       this.container!.add(price);
 
       // Sell button
       const sellBtn = this.scene.add.text(panelX + panelWidth / 2 - 40, y, '[Sell]', {
-        font: '11px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#FF8F00',
       });
       sellBtn.setInteractive({ useHandCursor: true });

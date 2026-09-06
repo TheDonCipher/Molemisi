@@ -68,7 +68,7 @@ export class BushveldScene extends Phaser.Scene {
       // Label
       const label = this.add.text(0, 24, name, {
         fontFamily: FONT_DISPLAY,
-        fontSize: '10px',
+        fontSize: '12px',
         fontStyle: 'bold',
         color: '#F5E6D3',
         backgroundColor: '#2C1810',
@@ -103,7 +103,7 @@ export class BushveldScene extends Phaser.Scene {
 
       const caveLabel = this.add.text(680, 200, 'Cave', {
         fontFamily: FONT_DISPLAY,
-        fontSize: '10px',
+        fontSize: '12px',
         fontStyle: 'bold',
         color: '#BCAAA4',
         backgroundColor: '#2C1810',
@@ -165,7 +165,7 @@ export class BushveldScene extends Phaser.Scene {
 
       const label = this.add.text(0, 38, 'Scout', {
         fontFamily: FONT_DISPLAY,
-        fontSize: '10px',
+        fontSize: '12px',
         fontStyle: 'bold',
         color: '#F5E6D3',
         backgroundColor: '#2C1810',
@@ -187,7 +187,7 @@ export class BushveldScene extends Phaser.Scene {
     // --- Zone indicator ---
     const zone = this.add.text(16, 460, 'Zone: Savanna — Easy', {
       fontFamily: FONT_DISPLAY,
-      fontSize: '10px',
+      fontSize: '12px',
       color: '#9CD67A',
       backgroundColor: '#2C1810',
       padding: { x: 6, y: 3 },

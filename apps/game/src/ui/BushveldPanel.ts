@@ -128,7 +128,7 @@ export class BushveldPanel {
 
       // Description
       const desc = this.scene.add.text(-panelWidth / 2 + 30, y + 16, zone.description, {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#BCAAA4',
       });
       container.add(desc);
@@ -138,7 +138,7 @@ export class BushveldPanel {
         panelWidth / 2 - 30,
         y + 7,
         `⚡${zone.energyCost} | Explored: ${zone.explored}`,
-        { font: '10px Molemisi Pixel', color: '#81C784' },
+        { font: '12px Molemisi Pixel', color: '#81C784' },
       );
       info.setOrigin(1, 0.5);
       container.add(info);
@@ -151,13 +151,13 @@ export class BushveldPanel {
         -panelWidth / 2 + 30,
         y + 30,
         `Resources: ${resourceText}`,
-        { font: '10px Molemisi Pixel', color: '#66BB6A' },
+        { font: '12px Molemisi Pixel', color: '#66BB6A' },
       );
       container.add(resources);
 
       // Gather button
       const gatherBtn = this.scene.add.text(panelWidth / 2 - 30, y + 22, '🔍 Gather', {
-        font: '11px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#4CAF50',
         backgroundColor: '#1b5e20',
         padding: { x: 8, y: 4 },

@@ -156,7 +156,7 @@ export class InventoryPanel {
       if (categoryItems.length === 0) return;
 
       const catTitle = this.scene.add.text(-panelWidth / 2 + 20, y, label, {
-        font: '11px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#81C784',
       });
       this.container!.add(catTitle);

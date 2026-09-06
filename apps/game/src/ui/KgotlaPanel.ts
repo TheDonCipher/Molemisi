@@ -141,7 +141,7 @@ export class KgotlaPanel {
         -panelWidth / 2 + 30,
         y,
         `${emoji} ${npc.name} - ${npc.role}`,
-        { font: '11px Molemisi Pixel', color: '#F5E6D3' },
+        { font: '12px Molemisi Pixel', color: '#F5E6D3' },
       );
       container.add(text);
 
@@ -171,14 +171,14 @@ export class KgotlaPanel {
         -panelWidth / 2 + 30 + repBarWidth + 4,
         y + 16,
         `${npc.tier} (${npc.reputation})`,
-        { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+        { font: '12px Molemisi Pixel', color: '#BCAAA4' },
       );
       repLabel.setOrigin(0, 0.5);
       container.add(repLabel);
 
       // Talk button
       const talkBtn = this.scene.add.text(panelWidth / 2 - 30, y + 8, '💬 Talk', {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#4CAF50',
       });
       talkBtn.setOrigin(1, 0.5);
@@ -202,7 +202,7 @@ export class KgotlaPanel {
       const statusEmoji = project.completed ? '✅' : '🏗️';
 
       const text = this.scene.add.text(-panelWidth / 2 + 30, y, `${statusEmoji} ${project.name}`, {
-        font: '11px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#F5E6D3',
       });
       container.add(text);
@@ -229,7 +229,7 @@ export class KgotlaPanel {
         -panelWidth / 2 + 30 + barWidth + 4,
         y + 16,
         `${project.currentContributions}/${project.requiredContributions}`,
-        { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+        { font: '12px Molemisi Pixel', color: '#BCAAA4' },
       );
       progressLabel.setOrigin(0, 0.5);
       container.add(progressLabel);
@@ -237,7 +237,7 @@ export class KgotlaPanel {
       // Donate button (if not completed)
       if (!project.completed) {
         const donateBtn = this.scene.add.text(panelWidth / 2 - 30, y + 8, '💰 Donate', {
-          font: '10px Molemisi Pixel',
+          font: '12px Molemisi Pixel',
           color: '#FFB74D',
         });
         donateBtn.setOrigin(1, 0.5);
@@ -298,7 +298,7 @@ export class KgotlaPanel {
 
     // Message
     const msgLabel = this.scene.add.text(0, 50, message, {
-      font: '11px Molemisi Pixel',
+      font: '12px Molemisi Pixel',
       color: '#F5E6D3',
       wordWrap: { width: dialogWidth - 40 },
       align: 'center',

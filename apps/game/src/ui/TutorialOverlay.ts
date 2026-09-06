@@ -88,7 +88,7 @@ export class TutorialOverlay {
       cardX,
       cardY - cardHeight / 2 + 16,
       `${this.currentStep + 1} / ${TUTORIAL_STEPS.length}`,
-      { font: '10px Molemisi Pixel', color: '#BCAAA4' },
+      { font: '12px Molemisi Pixel', color: '#BCAAA4' },
     );
     stepText.setOrigin(0.5, 0.5);
     this.container.add(stepText);
@@ -146,7 +146,7 @@ export class TutorialOverlay {
       cardY - cardHeight / 2 + 16,
       'Skip',
       {
-        font: '10px Molemisi Pixel',
+        font: '12px Molemisi Pixel',
         color: '#BCAAA4',
       },
     );
