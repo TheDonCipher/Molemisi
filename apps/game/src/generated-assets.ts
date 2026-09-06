@@ -836,6 +836,30 @@ export const ASSET_MANIFEST: GeneratedAsset[] = [
     "group": "branding"
   },
   {
+    "id": "logo_alt",
+    "file": "branding/logo_alt.png",
+    "width": 64,
+    "height": 64,
+    "kind": "pixen",
+    "group": "branding"
+  },
+  {
+    "id": "logo_mono",
+    "file": "branding/logo_mono.png",
+    "width": 64,
+    "height": 64,
+    "kind": "pixen",
+    "group": "branding"
+  },
+  {
+    "id": "logo_wide",
+    "file": "branding/logo_wide.png",
+    "width": 400,
+    "height": 160,
+    "kind": "pixen",
+    "group": "branding"
+  },
+  {
     "id": "maize_product",
     "file": "sprites/crops/maize/product_maize.png",
     "width": 32,
@@ -2366,7 +2390,10 @@ export const ASSET_GROUPS: Record<string, string[]> = {
     "plot_soil"
   ],
   "branding": [
-    "logo"
+    "logo",
+    "logo_alt",
+    "logo_mono",
+    "logo_wide"
   ]
 };
 

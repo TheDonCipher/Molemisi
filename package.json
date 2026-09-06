@@ -18,10 +18,11 @@
     "supabase:migration:new": "supabase migration new",
     "db:seed": "pnpm --filter @molemisi/api db:seed",
     "dev:kill": "node scripts/kill-dev.mjs",
-    "assets:generate": "node scripts/generate-pixellab-assets.mjs && pnpm assets:sync && node scripts/generate-icons.mjs",
+    "assets:generate": "node scripts/generate-pixellab-assets.mjs && pnpm assets:sync && node scripts/generate-icons.mjs && node scripts/generate-media-assets.mjs",
     "assets:dry-run": "node scripts/generate-pixellab-assets.mjs --dry-run",
     "assets:sync": "node scripts/sync-assets.mjs",
     "icons:generate": "node scripts/generate-icons.mjs",
+    "media:generate": "node scripts/generate-media-assets.mjs",
     "predev": "pnpm assets:sync && node scripts/generate-icons.mjs",
     "prebuild": "pnpm assets:sync && node scripts/generate-icons.mjs"
   },

@@ -24,6 +24,18 @@ export const metadata: Metadata = {
   title: 'Molemisi - Botswana Farm Sim',
   description: 'A pixel-art farm management simulator inspired by Botswana',
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'Molemisi - Botswana Farm Sim',
+    description: 'A cozy pixel-art farm management simulator inspired by Botswana',
+    images: ['/assets/branding/media/molemisi-og.png'],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Molemisi - Botswana Farm Sim',
+    description: 'A cozy pixel-art farm management simulator inspired by Botswana',
+    images: ['/assets/branding/media/molemisi-og.png'],
+  },
   icons: {
     icon: [
       { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },

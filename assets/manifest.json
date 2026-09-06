@@ -2578,5 +2578,35 @@
     },
     "kind": "pixen",
     "prompt": "game logo emblem, a golden sorghum grain sprig with three seed heads rising from a small red-earth mound, enclosed in a round terracotta badge with a cream border ring, bold and readable at small sizes, centered, no text, no letters"
+  },
+  "logo_mono": {
+    "group": "branding",
+    "file": "branding/logo_mono.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "monochrome stencil game logo emblem, a single dark-brown color silhouette of a sorghum grain sprig inside a round badge ring, flat one-color stamp style for watermarks, centered, no text, no letters"
+  },
+  "logo_alt": {
+    "group": "branding",
+    "file": "branding/logo_alt.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "alternate game logo emblem, a rounded shield crest holding a golden sorghum sprig with a rising amber sun behind it, terracotta and cream palette, bold readable silhouette, centered, no text, no letters"
+  },
+  "logo_wide": {
+    "group": "branding",
+    "file": "branding/logo_wide.png",
+    "size": {
+      "w": 400,
+      "h": 160
+    },
+    "kind": "pixen",
+    "prompt": "wide horizontal game banner emblem, a golden sorghum sprig in the center flanked by two small acacia trees with a rising amber sun above red-earth field strips along the bottom, warm terracotta amber cream palette, transparent background, no text, no letters"
   }
 }

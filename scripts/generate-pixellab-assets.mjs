@@ -760,6 +760,35 @@ add(
   { noBg: true, detail: 'medium detail' },
 );
 
+// Branding — media variants
+add(
+  'branding',
+  'logo_alt',
+  'branding/logo_alt.png',
+  { w: 64, h: 64 },
+  'pixen',
+  'alternate game logo emblem, a rounded shield crest holding a golden sorghum sprig with a rising amber sun behind it, terracotta and cream palette, bold readable silhouette, centered, no text, no letters',
+  { noBg: true, detail: 'medium detail' },
+);
+add(
+  'branding',
+  'logo_mono',
+  'branding/logo_mono.png',
+  { w: 64, h: 64 },
+  'pixen',
+  'monochrome stencil game logo emblem, a single dark-brown color silhouette of a sorghum grain sprig inside a round badge ring, flat one-color stamp style for watermarks, centered, no text, no letters',
+  { noBg: true, detail: 'low detail' },
+);
+add(
+  'branding',
+  'logo_wide',
+  'branding/logo_wide.png',
+  { w: 400, h: 160 },
+  'pixen',
+  'wide horizontal game banner emblem, a golden sorghum sprig in the center flanked by two small acacia trees with a rising amber sun above red-earth field strips along the bottom, warm terracotta amber cream palette, transparent background, no text, no letters',
+  { noBg: true, detail: 'medium detail' },
+);
+
 // Weather
 for (const [id, desc] of WEATHER_FX) {
   add(
