@@ -29,23 +29,38 @@ const getArg = (name, def) => {
 const WEIGHT = getArg('--weight', 'Bold');
 const GLYPH_PX = parseInt(getArg('--px', '16'), 10);
 const SEED = getArg('--seed') ? parseInt(getArg('--seed'), 10) : Math.floor(Math.random() * 1e9);
+// --name tags the output files (and font family name) so multiple grid sizes
+// can coexist: 'Molemisi Pixel' (16px canonical) vs 'Molemisi Pixel Small' (8px).
+const NAME_TAG = getArg('--name', '');
+const FONT_NAME = NAME_TAG ? `Molemisi Pixel ${NAME_TAG}` : 'Molemisi Pixel';
+const FILE_STEM = NAME_TAG
+  ? `MolemisiPixel-${NAME_TAG.replace(/\s+/g, '')}`
+  : 'MolemisiPixel-Bold';
 
 /**
  * Style description per the Molemisi font spec: 16-bit RPG pixel font,
  * bold geometric glyphs, sharp carved spur serifs, tribal bracketed
  * terminals, uniform line weight, crisp off-white, no anti-aliasing.
+ * The 8px variant emphasizes density/legibility for tiny HUD text.
  */
-const DESCRIPTION = [
-  '16-bit RPG pixel font for game UI, bold geometric glyphs,',
-  'sharp carved spur serifs and tribal bracketed terminals,',
-  'uniform line weight on a strict pixel grid,',
-  'crisp off-white letters, clean pixel lines, no anti-aliasing,',
-  'high-contrast display silhouette with distinctive cutout counters,',
-  'complete uppercase A-Z, lowercase a-z, numbers 0-9 and basic punctuation,',
-  'retro game UI aesthetic, legible at small sizes',
-].join(' ');
-
-const FONT_NAME = 'Molemisi Pixel';
+const DESCRIPTION = GLYPH_PX <= 8
+  ? [
+    'tiny dense pixel font for retro game HUD text, compact bold glyphs,',
+    'sharp carved spur serifs and tribal bracketed terminals,',
+    'uniform line weight on a strict 8 pixel grid, minimal internal detail,',
+    'crisp off-white letters, clean pixel lines, no anti-aliasing,',
+    'high legibility at very small sizes, open counters,',
+    'complete uppercase A-Z, lowercase a-z, numbers 0-9 and basic punctuation,',
+  ].join(' ')
+  : [
+    '16-bit RPG pixel font for game UI, bold geometric glyphs,',
+    'sharp carved spur serifs and tribal bracketed terminals,',
+    'uniform line weight on a strict pixel grid,',
+    'crisp off-white letters, clean pixel lines, no anti-aliasing,',
+    'high-contrast display silhouette with distinctive cutout counters,',
+    'complete uppercase A-Z, lowercase a-z, numbers 0-9 and basic punctuation,',
+    'retro game UI aesthetic, legible at small sizes',
+  ].join(' ');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -162,7 +177,11 @@ for (const f of files) {
           : f.name.toLowerCase().includes('atlas') || f.name.toLowerCase().includes('png')
             ? 'png'
             : 'bin';
-    const name = `${FONT_NAME.toLowerCase().replace(/ /g, '-')}-${f.name.replace(/\./g, '_')}.${ext}`;
+    const isTtf = ext === 'ttf';
+    const base = isTtf
+      ? FILE_STEM
+      : `${FILE_STEM.toLowerCase()}-${f.name.replace(/\./g, '_')}`;
+    const name = `${base}.${ext}`;
     writeFileSync(join(outDir, name), buf);
     console.log(`[font] saved ${name} (${(buf.length / 1024).toFixed(1)} KB)`);
     saved++;
@@ -172,5 +191,8 @@ for (const f of files) {
 }
 
 // Save the raw response for inspection regardless
-writeFileSync(join(outDir, 'last-response.json'), JSON.stringify(result, null, 2));
-console.log(`[font] Done. ${saved} file(s) saved to assets/branding/font/ (raw response in last-response.json)`);
+const responseName = NAME_TAG
+  ? `last-response-${NAME_TAG.toLowerCase().replace(/\s+/g, '-')}.json`
+  : 'last-response.json';
+writeFileSync(join(outDir, responseName), JSON.stringify(result, null, 2));
+console.log(`[font] Done. ${saved} file(s) saved to assets/branding/font/ (raw response in ${responseName})`);

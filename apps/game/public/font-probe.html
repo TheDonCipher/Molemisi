@@ -11,6 +11,13 @@
     font-style: normal;
     font-display: block;
   }
+  @font-face {
+    font-family: 'Molemisi Pixel Small';
+    src: url('/fonts/MolemisiPixel-Small.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: block;
+  }
   body { background: #1a0f0a; color: #f5e6d3; font-family: monospace; margin: 12px; }
   .spec { margin: 6px 0; white-space: nowrap; }
 </style>
@@ -77,21 +84,29 @@
         };
       };
       const mol = measure("700 " + px + "px 'Molemisi Pixel'");
+      const sm = measure("700 " + px + "px 'Molemisi Pixel Small'");
       const ctl = measure("700 " + px + "px monospace");
       out.push(
         px + 'px MOL: width=' + mol.width.toFixed(1) + ' crisp=' + mol.crisp + '% ink=' + mol.inkW + 'x' + mol.inkH +
-        ' | MONO: width=' + ctl.width.toFixed(1) + ' crisp=' + ctl.crisp + '%' +
-        ' | distinct=' + (Math.abs(mol.width - ctl.width) > 0.5)
+        ' | SMALL: width=' + sm.width.toFixed(1) + ' crisp=' + sm.crisp + '% ink=' + sm.inkW + 'x' + sm.inkH +
+        ' | MONO: width=' + ctl.width.toFixed(1) + ' crisp=' + ctl.crisp + '%'
       );
     }
     rows.push(...out);
 
     // DOM specimens at each size (screenshot artifact)
-    for (const px of [10, 12, 16, 24, 32]) {
+    for (const px of [10, 12, 14, 16, 24, 32]) {
       const d = document.createElement('div');
       d.className = 'spec';
       d.style.font = "700 " + px + "px 'Molemisi Pixel'";
-      d.textContent = px + 'px: BUILDINGS 1,240P Water 68% Kgotla — Ready';
+      d.textContent = px + 'px MOL: BUILDINGS 1,240P Water 68% Kgotla — Ready';
+      specs.appendChild(d);
+    }
+    for (const px of [10, 12, 13, 14]) {
+      const d = document.createElement('div');
+      d.className = 'spec';
+      d.style.font = "700 " + px + "px 'Molemisi Pixel Small'";
+      d.textContent = px + 'px SMALL: BUILDINGS 1,240P Water 68% Kgotla — Ready';
       specs.appendChild(d);
     }
 

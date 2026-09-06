@@ -29,21 +29,26 @@ mkdirSync(outDir, { recursive: true });
 /* ---------------------------------------------------------------- helpers */
 
 function syncToWebApp() {
-  const src = join(outDir, 'MolemisiPixel-Bold.ttf');
-  if (!existsSync(src)) {
+  // Both font grids: canonical 16px display + dense 8px small-text variant
+  const fontsToSync = [
+    'MolemisiPixel-Bold.ttf',
+    'MolemisiPixel-Small.ttf',
+  ].filter((f) => existsSync(join(outDir, f)));
+
+  if (!fontsToSync.includes('MolemisiPixel-Bold.ttf')) {
     console.error('[font] Canonical MolemisiPixel-Bold.ttf missing — run scripts/generate-font.mjs');
     process.exit(1);
   }
+
   const webFontDir = join(root, 'apps', 'web', 'public', 'fonts');
   mkdirSync(webFontDir, { recursive: true });
-  copyFileSync(src, join(webFontDir, 'MolemisiPixel-Bold.ttf'));
-  console.log('[font] Synced canonical font to apps/web/public/fonts/');
-
-  // Phaser game (standalone app) also serves it at /fonts/
   const gameFontDir = join(root, 'apps', 'game', 'public', 'fonts');
   mkdirSync(gameFontDir, { recursive: true });
-  copyFileSync(src, join(gameFontDir, 'MolemisiPixel-Bold.ttf'));
-  console.log('[font] Synced canonical font to apps/game/public/fonts/');
+  for (const f of fontsToSync) {
+    copyFileSync(join(outDir, f), join(webFontDir, f));
+    copyFileSync(join(outDir, f), join(gameFontDir, f));
+    console.log(`[font] Synced ${f} -> apps/web/public/fonts/ + apps/game/public/fonts/`);
+  }
 }
 
 function rebuildHandcrafted() {
