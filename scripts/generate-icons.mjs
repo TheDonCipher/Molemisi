@@ -323,4 +323,70 @@ for (const size of [192, 512]) {
 // Next.js App Router favicon (src/app/icon.png)
 writeFileSync(APP_ICON, encodePng(32, 32, scaleNearest(pixels, width, height, 32, 32)));
 
+/* ---------------- iOS splash screens (apple-touch-startup-image) ---------- */
+
+const SPLASH_BG = [26, 15, 10]; // matches manifest background_color #1a0f0a
+
+// [fileW, fileH] — portrait + landscape variants are generated for each.
+const SPLASH_SIZES = [
+  [1290, 2796], // iPhone 14/15/16 Pro Max
+  [1179, 2556], // iPhone 14/15/16 Pro
+  [1170, 2532], // iPhone 13/14
+  [1125, 2436], // iPhone X/XS/11 Pro/12/13 mini
+  [1242, 2688], // iPhone XS Max/11 Pro Max
+  [828, 1792], // iPhone XR/11
+  [1242, 2208], // iPhone 8 Plus
+  [750, 1334], // iPhone 8/SE
+  [640, 1136], // iPhone SE 1st gen / 5s
+  [2048, 2732], // iPad Pro 12.9"
+  [1668, 2388], // iPad Pro 11"
+  [1536, 2048], // iPad Air/Mini
+];
+
+function makeSplash(fileW, fileH) {
+  // Logo sized to ~22% of the shorter edge, nearest-neighbor integer ratio
+  const target = Math.round(Math.min(fileW, fileH) * 0.22);
+  const ratio = Math.max(1, Math.floor(target / Math.max(width, height)));
+  const drawW = width * ratio;
+  const drawH = height * ratio;
+  const logo = scaleNearest(pixels, width, height, drawW, drawH);
+
+  const out = new Uint8Array(fileW * fileH * 4);
+  // Solid background
+  for (let i = 0; i < fileW * fileH; i++) {
+    out[i * 4] = SPLASH_BG[0];
+    out[i * 4 + 1] = SPLASH_BG[1];
+    out[i * 4 + 2] = SPLASH_BG[2];
+    out[i * 4 + 3] = 255;
+  }
+  // Centered logo (opaque pixels only)
+  const offX = Math.floor((fileW - drawW) / 2);
+  const offY = Math.floor((fileH - drawH) / 2);
+  for (let y = 0; y < drawH; y++) {
+    for (let x = 0; x < drawW; x++) {
+      const s = (y * drawW + x) * 4;
+      if (logo[s + 3] < 8) continue; // fully transparent
+      const a = logo[s + 3] / 255;
+      const d = ((y + offY) * fileW + (x + offX)) * 4;
+      out[d] = Math.round(logo[s] * a + out[d] * (1 - a));
+      out[d + 1] = Math.round(logo[s + 1] * a + out[d + 1] * (1 - a));
+      out[d + 2] = Math.round(logo[s + 2] * a + out[d + 2] * (1 - a));
+      out[d + 3] = 255;
+    }
+  }
+  return encodePng(fileW, fileH, out);
+}
+
+const splashDir = join(ICONS_DIR, 'splash');
+mkdirSync(splashDir, { recursive: true });
+let splashCount = 0;
+for (const [w, h] of SPLASH_SIZES) {
+  writeFileSync(join(splashDir, `apple-splash-${w}x${h}.png`), makeSplash(w, h));
+  writeFileSync(join(splashDir, `apple-splash-${h}x${w}.png`), makeSplash(h, w));
+  splashCount += 2;
+}
+
 console.log('[icons] Wrote favicon-16/32, icon-192/512, icon-maskable-512, app/icon.png');
+console.log(
+  `[icons] Wrote ${splashCount} iOS splash screens (${SPLASH_SIZES.length} devices, portrait + landscape)`,
+);
