@@ -51,6 +51,28 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
   herb_wild: 'material_herb_wild',
   wild_herbs: 'material_herb_wild',
 
+  // Bushveld materials (02 §6.2) — files use the Setswana names
+  clay: 'material_letsopa',
+  letsopa: 'material_letsopa',
+  palm_fiber: 'material_mokolwane',
+  mokolwane: 'material_mokolwane',
+  thatch: 'material_lotlhaka',
+  lotlhaka: 'material_lotlhaka',
+  phane: 'material_phane',
+  manure: 'material_manyoro',
+  manyoro: 'material_manyoro',
+
+  // Crafted goods (02 §6.3)
+  poleto: 'product_poleto',
+  thapo: 'product_thapo',
+  setena: 'product_setena',
+  bupi: 'product_bupi',
+  borotho: 'product_borotho',
+
+  // Morula (F18 — the crop that replaced Saffron)
+  morula: 'product_morula',
+  morula_seed: 'seed_morula',
+
   // Tools
   hoe: 'tool_hoe',
   watering_can: 'tool_watering_can',

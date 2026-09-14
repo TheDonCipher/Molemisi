@@ -12,7 +12,7 @@ export interface Contract {
   description: string;
   category: string;
   requirements: Array<{ itemType: string; quantity: number }>;
-  rewards: { currency: number; xp: number };
+  rewards: { currency: number };
   difficulty: string;
   timeLimitHours: number;
 }
@@ -24,7 +24,7 @@ export interface ActiveContract {
   description: string;
   category: string;
   requirements: Array<{ itemType: string; quantity: number; current: number }>;
-  rewards: { currency: number; xp: number };
+  rewards: { currency: number };
   acceptedAt: string;
   expiresAt: string;
   completed: boolean;
@@ -42,7 +42,7 @@ export class ContractsService {
       description: 'Deliver 10 sorghum to the community store.',
       category: 'local',
       requirements: [{ itemType: 'sorghum', quantity: 10 }],
-      rewards: { currency: 150, xp: 30 },
+      rewards: { currency: 150 },
       difficulty: 'easy',
       timeLimitHours: 48,
     },
@@ -52,7 +52,7 @@ export class ContractsService {
       description: 'Supply 15 maize for the village feast.',
       category: 'community',
       requirements: [{ itemType: 'maize', quantity: 15 }],
-      rewards: { currency: 300, xp: 50 },
+      rewards: { currency: 300 },
       difficulty: 'medium',
       timeLimitHours: 72,
     },
@@ -62,7 +62,7 @@ export class ContractsService {
       description: 'Gather 10 eggs from your chickens.',
       category: 'local',
       requirements: [{ itemType: 'egg', quantity: 10 }],
-      rewards: { currency: 80, xp: 20 },
+      rewards: { currency: 80 },
       difficulty: 'easy',
       timeLimitHours: 36,
     },
@@ -76,7 +76,7 @@ export class ContractsService {
         { itemType: 'maize', quantity: 7 },
         { itemType: 'millet', quantity: 5 },
       ],
-      rewards: { currency: 500, xp: 80 },
+      rewards: { currency: 500 },
       difficulty: 'hard',
       timeLimitHours: 96,
     },
@@ -86,7 +86,7 @@ export class ContractsService {
       description: 'Process and deliver 5 flour to the market.',
       category: 'commercial',
       requirements: [{ itemType: 'flour', quantity: 5 }],
-      rewards: { currency: 200, xp: 40 },
+      rewards: { currency: 200 },
       difficulty: 'medium',
       timeLimitHours: 48,
     },
@@ -96,31 +96,17 @@ export class ContractsService {
       description: 'Provide 8 cowpeas for the school nutrition program.',
       category: 'community',
       requirements: [{ itemType: 'cowpeas', quantity: 8 }],
-      rewards: { currency: 180, xp: 35 },
+      rewards: { currency: 180 },
       difficulty: 'easy',
       timeLimitHours: 48,
     },
   ];
 
-  async getAvailableContracts(farmId: string): Promise<Contract[]> {
-    const adminClient = this.supabaseService.getAdminClient();
-
-    // Get farm level to filter difficulty
-    const { data: farm } = await adminClient
-      .from('farms')
-      .select('level')
-      .eq('id', farmId)
-      .single();
-
-    const farmLevel = (farm?.level as number) || 1;
-
-    // Filter contracts by difficulty/level
-    return this.CONTRACTS.filter((c) => {
-      if (c.difficulty === 'easy') return farmLevel >= 1;
-      if (c.difficulty === 'medium') return farmLevel >= 3;
-      if (c.difficulty === 'hard') return farmLevel >= 5;
-      return true;
-    });
+  async getAvailableContracts(_farmId: string): Promise<Contract[]> {
+    // D5/C12 — no level gating. Difficulty is a display label only; every
+    // contract is available from the start. Returning them all here means the
+    // client needs no farm level to reason about availability.
+    return this.CONTRACTS;
   }
 
   async getActiveContracts(farmId: string): Promise<ActiveContract[]> {
@@ -238,7 +224,7 @@ export class ContractsService {
     farmId: string,
     userId: string,
     activeContractId: string,
-  ): Promise<{ currencyReward: number; xpReward: number }> {
+  ): Promise<{ currencyReward: number }> {
     const adminClient = this.supabaseService.getAdminClient();
 
     // Verify ownership
@@ -310,29 +296,19 @@ export class ContractsService {
       }
     }
 
-    // Add rewards
+    // Add rewards — currency only (D5/C12: no XP, no levels).
     const { data: profile } = await adminClient
       .from('profiles')
-      .select('currency, xp, level')
+      .select('currency')
       .eq('id', userId)
       .single();
 
     const currentCurrency = (profile?.currency as number) || 0;
-    const currentXp = (profile?.xp as number) || 0;
-    const currentLevel = (profile?.level as number) || 1;
-
-    const newXp = currentXp + contract.rewards.xp;
-
-    // Check for level up
-    const xpRequired = Math.ceil(100 * Math.pow(currentLevel + 1, 1.5));
-    const newLevel = newXp >= xpRequired ? currentLevel + 1 : currentLevel;
 
     await adminClient
       .from('profiles')
       .update({
         currency: currentCurrency + contract.rewards.currency,
-        xp: newXp,
-        level: newLevel,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
@@ -354,7 +330,6 @@ export class ContractsService {
 
     return {
       currencyReward: contract.rewards.currency,
-      xpReward: contract.rewards.xp,
     };
   }
 

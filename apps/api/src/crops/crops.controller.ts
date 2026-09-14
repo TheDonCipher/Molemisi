@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { CropsService } from './crops.service';
 import { FarmsService } from '../farms/farms.service';
 import { AuthGuard } from '../common/guards/auth.guard';
@@ -13,6 +13,16 @@ export class CropsController {
     private cropsService: CropsService,
     private farmsService: FarmsService,
   ) {}
+
+  @Get()
+  async listPlots(
+    @Param('farmId') farmId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    await this.farmsService.verifyFarmOwnership(farmId, user.id);
+    const plots = await this.cropsService.getFarmPlots(farmId);
+    return { success: true, data: plots };
+  }
 
   @Post(':plotId/plant')
   async plantCrop(
@@ -30,17 +40,6 @@ export class CropsController {
       input.cropType,
       input.seedId,
     );
-    return { success: true, data: result };
-  }
-
-  @Post(':plotId/water')
-  async waterCrop(
-    @Param('farmId') farmId: string,
-    @Param('plotId') plotId: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
-    await this.farmsService.verifyFarmOwnership(farmId, user.id);
-    const result = await this.cropsService.waterCrop(farmId, plotId);
     return { success: true, data: result };
   }
 

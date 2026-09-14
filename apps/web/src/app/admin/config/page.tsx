@@ -43,13 +43,11 @@ interface CropConfig {
   seedCost: number;
   sellPrice: number;
   waterNeeds: number;
-  xpReward: number;
 }
 
 const CATEGORY_META: Record<string, { title: string; icon: string }> = {
   farm: { title: 'Farm Settings', icon: '🏡' },
   economy: { title: 'Economy Settings', icon: '💰' },
-  progression: { title: 'Progression', icon: '📈' },
   weather: { title: 'Weather', icon: '🌤️' },
   simulation: { title: 'Simulation', icon: '⚙️' },
 };
@@ -64,11 +62,6 @@ const LABEL_MAP: Record<string, string> = {
   MARKET_UPDATE_HOURS: 'Market Update (hours)',
   SELL_TAX_RATE: 'Sell Tax Rate %',
   CONTRACT_BONUS: 'Contract Bonus %',
-  XP_PER_LEVEL: 'XP Per Level',
-  XP_PLANT: 'XP: Plant',
-  XP_WATER: 'XP: Water',
-  XP_HARVEST: 'XP: Harvest',
-  XP_FORAGE: 'XP: Forage',
   CLEAR_PROB: 'Clear Weather %',
   CLOUDY_PROB: 'Cloudy %',
   RAIN_PROB: 'Rain %',
@@ -126,7 +119,6 @@ export default function ConfigPage() {
           seedCost: val.seedCost || 10,
           sellPrice: val.sellPrice || 10,
           waterNeeds: val.waterNeeds || 50,
-          xpReward: val.xpReward || 10,
         };
       });
       setCrops(parsedCrops);
@@ -187,7 +179,6 @@ export default function ConfigPage() {
           seedCost: crop.seedCost,
           sellPrice: crop.sellPrice,
           waterNeeds: crop.waterNeeds,
-          xpReward: crop.xpReward,
         },
       }));
 
@@ -314,14 +305,13 @@ export default function ConfigPage() {
       {/* Crops Editor */}
       {activeSection === 'crops' && (
         <div className="bg-wood-dark border border-wood-border overflow-hidden">
-          <div className="grid grid-cols-8 gap-2 px-4 py-2 bg-wood-medium border-b border-wood-border font-mono text-[10px] text-on-surface-variant uppercase">
+          <div className="grid grid-cols-7 gap-2 px-4 py-2 bg-wood-medium border-b border-wood-border font-mono text-[10px] text-on-surface-variant uppercase">
             <span>Crop</span>
             <span>Stages</span>
             <span>Yield</span>
             <span>Seed Cost</span>
             <span>Sell Price</span>
             <span>Water %</span>
-            <span>XP</span>
             <span>Profit</span>
           </div>
           {crops.map((crop, i) => {
@@ -329,7 +319,7 @@ export default function ConfigPage() {
             return (
               <div
                 key={crop.name}
-                className="grid grid-cols-8 gap-2 px-4 py-2 border-b border-wood-border/50 items-center"
+                className="grid grid-cols-7 gap-2 px-4 py-2 border-b border-wood-border/50 items-center"
               >
                 <span className="font-headline text-xs text-cream-surface font-bold">
                   {crop.name}
@@ -363,12 +353,6 @@ export default function ConfigPage() {
                   value={crop.waterNeeds}
                   onChange={(e) => updateCrop(i, 'waterNeeds', Number(e.target.value))}
                   className="w-14 px-2 py-1 bg-surface-container-high border border-wood-border font-mono text-xs text-sky-blue text-center focus:outline-none focus:border-primary"
-                />
-                <input
-                  type="number"
-                  value={crop.xpReward}
-                  onChange={(e) => updateCrop(i, 'xpReward', Number(e.target.value))}
-                  className="w-14 px-2 py-1 bg-surface-container-high border border-wood-border font-mono text-xs text-primary text-center focus:outline-none focus:border-primary"
                 />
                 <span
                   className={`font-mono text-xs font-bold ${

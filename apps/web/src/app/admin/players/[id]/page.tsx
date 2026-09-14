@@ -34,8 +34,6 @@ interface PlayerOverview {
     display_name: string;
     email: string;
     currency: number;
-    farm_level: number;
-    farm_xp: number;
     energy: number;
     is_banned: boolean;
     ban_reason: string | null;
@@ -46,7 +44,6 @@ interface PlayerOverview {
   farm: {
     id: string;
     name: string;
-    level: number;
     plot_count: number;
     weather: string;
     season: string;
@@ -364,13 +361,11 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
             <div className="font-mono text-sm text-gold-currency font-bold">
               P{profile.currency?.toLocaleString() || 0}
             </div>
-            <div className="font-mono text-xs text-primary font-bold">Lv.{profile.farm_level}</div>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-3 mt-4">
-          {[
-            { label: 'XP', value: `${profile.farm_xp || 0}` },
-            { label: 'Energy', value: `${profile.energy || 0}` },
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            {[
+              { label: 'Energy', value: `${profile.energy || 0}` },
             {
               label: 'Joined',
               value: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '—',
@@ -466,7 +461,6 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Plots', value: `${farm.plot_count}` },
-              { label: 'Level', value: `${farm.level}` },
               { label: 'Season', value: farm.season || '—' },
               { label: 'Day', value: `${farm.current_day || 1}` },
               { label: 'Weather', value: farm.weather || '—' },

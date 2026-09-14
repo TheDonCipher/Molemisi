@@ -10,7 +10,12 @@ import { BushveldScreen } from '../../components/screens/BushveldScreen';
 import { InventoryScreen } from '../../components/screens/InventoryScreen';
 import { KgotlaScreen } from '../../components/screens/KgotlaScreen';
 import { MarketScreen } from '../../components/screens/MarketScreen';
+import { StoreScreen } from '../../components/screens/StoreScreen';
+import { CraftingScreen } from '../../components/screens/CraftingScreen';
 import { SettingsScreen } from '../../components/screens/SettingsScreen';
+import { WalletScreen } from '../../components/screens/WalletScreen';
+import { JournalScreen } from '../../components/screens/JournalScreen';
+import { hydrateTokenFromSession, initAuthSync } from '../../lib/auth';
 
 function GameContent() {
   const { activeNav, loading } = useGame();
@@ -30,6 +35,14 @@ function GameContent() {
         return <KgotlaScreen />;
       case 'market':
         return <MarketScreen />;
+      case 'store':
+        return <StoreScreen />;
+      case 'crafting':
+        return <CraftingScreen />;
+      case 'wallet':
+        return <WalletScreen />;
+      case 'journal':
+        return <JournalScreen />;
       case 'settings':
       case 'config':
         return <SettingsScreen />;
@@ -87,12 +100,33 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('molemisi_token') || localStorage.getItem('token');
-    if (!token) {
+    let cancelled = false;
+
+    const run = async () => {
+      let token = localStorage.getItem('molemisi_token') || localStorage.getItem('token');
+      if (!token) {
+        // localStorage may be empty while the browser Supabase session is still
+        // valid (e.g. after a hard refresh) — hydrate the token mirror from it.
+        token = await hydrateTokenFromSession();
+      }
+      if (!token) {
+        window.location.href = '/auth/login';
+        return;
+      }
+      if (!cancelled) setMounted(true);
+    };
+    run();
+
+    // Keep the token mirror fresh as Supabase rotates the JWT, and bounce to the
+    // login page on a real sign-out.
+    const unsubscribe = initAuthSync(() => {
       window.location.href = '/auth/login';
-      return;
-    }
-    setMounted(true);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   if (!mounted) {

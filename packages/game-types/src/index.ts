@@ -29,8 +29,6 @@ export interface Profile {
   display_name: string;
   avatar_url: string | null;
   farm_name: string;
-  farm_level: number;
-  farm_xp: number;
   farming_skill: number;
   farming_skill_xp: number;
   husbandry_skill: number;

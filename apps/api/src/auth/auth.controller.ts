@@ -31,11 +31,14 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard)
   async me(@Request() req: { user: { id: string; email: string } }) {
+    const { role, isAdmin } = await this.authService.getRole(req.user.id);
     return {
       success: true,
       data: {
         id: req.user.id,
         email: req.user.email,
+        role,
+        isAdmin,
       },
     };
   }

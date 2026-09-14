@@ -35,7 +35,6 @@ interface Player {
   id: string;
   display_name: string;
   currency: number;
-  farm_level: number;
   created_at: string;
 }
 
@@ -171,9 +170,8 @@ export default function AdminDashboard() {
         </h2>
         <div className="bg-wood-dark border border-wood-border overflow-hidden">
           {/* Table header */}
-          <div className="grid grid-cols-5 gap-2 px-4 py-2 bg-wood-medium border-b border-wood-border font-mono text-[10px] text-on-surface-variant uppercase">
+          <div className="grid grid-cols-4 gap-2 px-4 py-2 bg-wood-medium border-b border-wood-border font-mono text-[10px] text-on-surface-variant uppercase">
             <span className="col-span-2">Player</span>
-            <span>Level</span>
             <span>Currency</span>
             <span>Joined</span>
           </div>
@@ -182,7 +180,7 @@ export default function AdminDashboard() {
             <Link
               key={p.id}
               href={`/admin/players/${p.id}`}
-              className="grid grid-cols-5 gap-2 px-4 py-3 border-b border-wood-border/50 hover:bg-surface-container-high transition-colors items-center"
+              className="grid grid-cols-4 gap-2 px-4 py-3 border-b border-wood-border/50 hover:bg-surface-container-high transition-colors items-center"
             >
               <div className="col-span-2">
                 <span className="font-headline text-xs text-cream-surface font-bold block">
@@ -192,7 +190,6 @@ export default function AdminDashboard() {
                   {p.id}
                 </span>
               </div>
-              <span className="font-mono text-xs text-primary font-bold">Lv.{p.farm_level}</span>
               <span className="font-mono text-xs text-gold-currency font-bold">
                 P{p.currency?.toLocaleString() || 0}
               </span>

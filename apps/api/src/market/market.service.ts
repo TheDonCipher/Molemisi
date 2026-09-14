@@ -1,15 +1,80 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { WalletService } from '../wallet/wallet.service';
+import { InventoryService } from '../inventory/inventory.service';
+import {
+  COOP_TAX_RATE,
+  PRICE_BAND,
+  CRAFTED_BAND,
+  CRAFTED_CATEGORIES,
+  getItemDef,
+} from '@molemisi/game-config';
+
+/**
+ * Pula is NUMERIC(12,2) in the wallet, so every derived amount is rounded to
+ * two decimals at the point it is computed. Doing it once here — rather than
+ * letting each call site round or not — is what stops a hundred tiny rounding
+ * differences from turning into a reconciliation problem.
+ */
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+/**
+ * Crafted and processed goods (DITSALO, DIKUNO) are exempt from the speculative
+ * price band (C14). One predicate, shared by the band and the quote, so the two
+ * cannot disagree about which regime an item is in.
+ */
+function isCrafted(itemType: string): boolean {
+  const def = getItemDef(itemType);
+  return !!def && (CRAFTED_CATEGORIES as readonly string[]).includes(def.category);
+}
+
+/**
+ * Which price band an item sells in. Crafted and processed goods get the narrow
+ * 0.9–1.1 band instead of the speculative 0.5–2.0 one (C14). Anything
+ * unrecognised falls back to the wide band, which is the safe default.
+ */
+function bandFor(itemType: string): { min: number; max: number } {
+  return isCrafted(itemType)
+    ? { min: CRAFTED_BAND.min, max: CRAFTED_BAND.max }
+    : { min: PRICE_BAND.min, max: PRICE_BAND.max };
+}
 
 export interface SellResult {
   transaction: {
     itemType: string;
     quantity: number;
     pricePerUnit: number;
+    /** Gross, before the Co-op's cut. */
     totalPrice: number;
+    /** The Co-op's 5% (02 §4.1). Zero for nothing — every sale pays it. */
+    tax: number;
+    /** What actually lands in the wallet. This is the number the UI must show. */
+    netProceeds: number;
   };
   currencyAdded: number;
   newCurrencyBalance: number;
+}
+
+/**
+ * A read-only preview of a sale (07 §7.5). Same numbers as `SellResult.transaction`
+ * would be, with nothing written — so the confirm sheet can show the fee *before*
+ * the button, which 01 §4 requires ("never surprise the player with a cost").
+ */
+export interface SaleQuote {
+  itemType: string;
+  quantity: number;
+  pricePerUnit: number;
+  /** Before the Co-op's cut. */
+  gross: number;
+  tax: number;
+  /** 0.05, from config — never restated in the client. */
+  taxRate: number;
+  /** What would land in the wallet. */
+  netProceeds: number;
+  /** Crafted goods sit in the narrow band and do not drift with the market (C14). */
+  band: 'wide' | 'crafted';
 }
 
 export interface BuyResult {
@@ -43,21 +108,68 @@ export interface MarketEvent {
 
 @Injectable()
 export class MarketService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private wallet: WalletService,
+    private inventory: InventoryService,
+  ) {}
 
-  // Price multiplier bounds
-  private readonly MIN_PRICE_MULT = 0.5;
-  private readonly MAX_PRICE_MULT = 2.0;
+  // Price multiplier bounds — sourced from config, not restated here.
+  private readonly MIN_PRICE_MULT = PRICE_BAND.min;
+  private readonly MAX_PRICE_MULT = PRICE_BAND.max;
   private readonly SUPPLY_IMPACT = 0.002; // per unit sold
   private readonly DEMAND_IMPACT = 0.001; // per unit bought
   private readonly PRICE_DECAY = 0.02; // price moves toward base per update
+
+  /**
+   * The one place a Co-op sale's fee is computed. `sellItem` and `quoteSale` both
+   * call it, so the confirm sheet the player saw and the credit they actually get
+   * cannot drift apart — a quote that disagrees with the sale is worse than no
+   * quote at all (07 §7.5).
+   */
+  private computeSale(pricePerUnit: number, quantity: number): {
+    gross: number;
+    tax: number;
+    netProceeds: number;
+  } {
+    const gross = Math.round(pricePerUnit * quantity);
+    const tax = round2(gross * COOP_TAX_RATE);
+    return { gross, tax, netProceeds: round2(gross - tax) };
+  }
+
+  /**
+   * Preview a sale without writing anything: price today, gross, the Co-op's 5%
+   * and the net the player would receive. Reuses `computeSale`, so it is exact.
+   */
+  async quoteSale(itemType: string, quantity: number): Promise<SaleQuote> {
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      throw new BadRequestException('quantity must be a positive number');
+    }
+
+    const pricePerUnit = await this.getDynamicPrice(itemType);
+    if (pricePerUnit <= 0) {
+      throw new BadRequestException('Item has no market value');
+    }
+
+    const { gross, tax, netProceeds } = this.computeSale(pricePerUnit, quantity);
+    return {
+      itemType,
+      quantity,
+      pricePerUnit,
+      gross,
+      tax,
+      taxRate: COOP_TAX_RATE,
+      netProceeds,
+      band: isCrafted(itemType) ? 'crafted' : 'wide',
+    };
+  }
 
   async sellItem(
     farmId: string,
     userId: string,
     itemType: string,
     quantity: number,
-    quality: string = 'normal',
+    _quality: string = 'normal',
   ): Promise<SellResult> {
     const adminClient = this.supabaseService.getAdminClient();
 
@@ -67,21 +179,13 @@ export class MarketService {
       .select('user_id')
       .eq('id', farmId)
       .single();
-
     if (!farm || farm.user_id !== userId) {
       throw new NotFoundException('Farm not found');
     }
 
-    // 2. Check inventory has the item
-    const { data: item } = await adminClient
-      .from('inventory')
-      .select('*')
-      .eq('farm_id', farmId)
-      .eq('item_type', itemType)
-      .eq('quality', quality)
-      .single();
-
-    if (!item || (item.quantity as number) < quantity) {
+    // 2. Check inventory has the item (canonical store)
+    const owned = await this.inventory.countOwned(userId, itemType);
+    if (owned < quantity) {
       throw new BadRequestException('Insufficient items in inventory');
     }
 
@@ -91,72 +195,41 @@ export class MarketService {
       throw new BadRequestException('Item has no market value');
     }
 
-    // Apply quality multiplier
-    const qualityMult = this.getQualityMultiplier(quality);
-    const totalPrice = Math.round(pricePerUnit * qualityMult * quantity);
-
+    // 4. Co-op tax, taken server-side (02 §4.1). Crafted goods are exempt from the
+    //    price BAND, not the tax (C14) — they still pay 5%. Computed by the same
+    //    helper the quote endpoint uses, so the two can never disagree.
+    const { gross, tax, netProceeds } = this.computeSale(pricePerUnit, quantity);
     const now = new Date().toISOString();
 
-    // 4. Deduct from inventory
-    const newQuantity = (item.quantity as number) - quantity;
-    if (newQuantity <= 0) {
-      await adminClient.from('inventory').delete().eq('id', item.id);
-    } else {
-      await adminClient
-        .from('inventory')
-        .update({ quantity: newQuantity, updated_at: now })
-        .eq('id', item.id);
-    }
+    // 5. Remove from inventory (the only sanctioned writer)
+    await this.inventory.removeItem(userId, itemType, quantity);
 
-    // 5. Add currency to profile
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('currency')
-      .eq('id', userId)
-      .single();
+    const newCurrency = await this.wallet.credit(userId, 'pula', netProceeds, 'coop_sale');
 
-    const currentCurrency = (profile?.currency as number) ?? 0;
-    const newCurrency = currentCurrency + totalPrice;
-
-    await adminClient
-      .from('profiles')
-      .update({ currency: newCurrency, updated_at: now })
-      .eq('id', userId);
-
-    // 6. Record ledger entry
-    await adminClient.from('game_ledger_entries').insert({
-      farm_id: farmId,
-      entry_type: 'CROP_SALE',
-      currency_change: totalPrice,
-      currency_balance_after: newCurrency,
-      item_type: itemType,
-      item_quantity_change: -quantity,
-      item_quality: quality,
-      description: `Sold ${quantity} ${itemType} for ${totalPrice} Pula`,
-    });
-
-    // 7. Record market transaction
+    // 7. Record market transaction (audit only)
     await adminClient.from('market_transactions').insert({
       farm_id: farmId,
       transaction_type: 'SELL',
       item_type: itemType,
       quantity,
-      price_per_unit: Math.round(pricePerUnit * qualityMult),
-      total_price: totalPrice,
-      quality,
+      price_per_unit: pricePerUnit,
+      total_price: gross,
+      quality: 'normal',
     });
 
-    // 8. Update supply/demand (selling increases supply, lowers price)
+    // 8. Update supply/demand
     await this.updateSupplyDemand(itemType, quantity, 0);
 
     return {
       transaction: {
         itemType,
         quantity,
-        pricePerUnit: Math.round(pricePerUnit * qualityMult),
-        totalPrice,
+        pricePerUnit,
+        totalPrice: gross,
+        tax,
+        netProceeds,
       },
-      currencyAdded: totalPrice,
+      currencyAdded: netProceeds,
       newCurrencyBalance: newCurrency,
     };
   }
@@ -175,7 +248,6 @@ export class MarketService {
       .select('user_id')
       .eq('id', farmId)
       .single();
-
     if (!farm || farm.user_id !== userId) {
       throw new NotFoundException('Farm not found');
     }
@@ -187,71 +259,19 @@ export class MarketService {
     }
 
     const totalPrice = pricePerUnit * quantity;
-
-    // 3. Check currency
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('currency')
-      .eq('id', userId)
-      .single();
-
-    const currentCurrency = (profile?.currency as number) ?? 0;
-    if (currentCurrency < totalPrice) {
-      throw new BadRequestException(
-        `Insufficient funds. Required: ${totalPrice}, Available: ${currentCurrency}`,
-      );
-    }
-
     const now = new Date().toISOString();
 
-    // 4. Deduct currency
-    const newCurrency = currentCurrency - totalPrice;
-    await adminClient
-      .from('profiles')
-      .update({ currency: newCurrency, updated_at: now })
-      .eq('id', userId);
+    // 3. Spend through the wallet (05 §P2). Atomic check-and-debit.
+    const newCurrency = await this.wallet.spendPula(
+      userId,
+      totalPrice,
+      itemType.includes('_seed') ? 'seed_purchase' : 'coop_sale',
+    );
 
-    // 5. Add to inventory (upsert)
-    const category = itemType.includes('_seed') ? 'seed' : 'material';
+    // 4. Add to the canonical inventory store (handles stack + slot caps)
+    await this.inventory.addItem(userId, farmId, itemType, quantity);
 
-    const { data: existingItem } = await adminClient
-      .from('inventory')
-      .select('*')
-      .eq('farm_id', farmId)
-      .eq('item_type', itemType)
-      .eq('quality', 'normal')
-      .single();
-
-    if (existingItem) {
-      await adminClient
-        .from('inventory')
-        .update({
-          quantity: (existingItem.quantity as number) + quantity,
-          updated_at: now,
-        })
-        .eq('id', existingItem.id);
-    } else {
-      await adminClient.from('inventory').insert({
-        farm_id: farmId,
-        item_type: itemType,
-        item_category: category,
-        quantity,
-        quality: 'normal',
-      });
-    }
-
-    // 6. Record ledger entry
-    await adminClient.from('game_ledger_entries').insert({
-      farm_id: farmId,
-      entry_type: 'SEED_PURCHASE',
-      currency_change: -totalPrice,
-      currency_balance_after: newCurrency,
-      item_type: itemType,
-      item_quantity_change: quantity,
-      description: `Bought ${quantity} ${itemType} for ${totalPrice} Pula`,
-    });
-
-    // 7. Record market transaction
+    // 5. Record market transaction (audit only)
     await adminClient.from('market_transactions').insert({
       farm_id: farmId,
       transaction_type: 'BUY',
@@ -262,7 +282,7 @@ export class MarketService {
       quality: 'normal',
     });
 
-    // 8. Update supply/demand (buying increases demand, raises price)
+    // 6. Update supply/demand
     await this.updateSupplyDemand(itemType, 0, quantity);
 
     return {
@@ -279,11 +299,8 @@ export class MarketService {
 
   async getPrices(): Promise<MarketPrice[]> {
     const adminClient = this.supabaseService.getAdminClient();
-
     const { data: prices } = await adminClient.from('market_prices').select('*');
-
     if (!prices) return [];
-
     return await Promise.all(
       (prices ?? []).map(async (p: Record<string, unknown>) => {
         const itemType = p.item_type as string;
@@ -293,26 +310,15 @@ export class MarketService {
         const demand = (p.demand as number) || 0;
         const trend =
           currentPrice > basePrice ? 'up' : currentPrice < basePrice ? 'down' : 'stable';
-
-        return {
-          itemType,
-          basePrice,
-          currentPrice,
-          trend,
-          supply,
-          demand,
-        };
+        return { itemType, basePrice, currentPrice, trend, supply, demand };
       }),
     );
   }
 
   async getActiveEvents(): Promise<MarketEvent[]> {
     const adminClient = this.supabaseService.getAdminClient();
-
     const now = new Date().toISOString();
-
     const { data: events } = await adminClient.from('market_events').select('*').gt('ends_at', now);
-
     return (events ?? []).map((e: Record<string, unknown>) => ({
       id: e.id as string,
       name: e.name as string,
@@ -323,60 +329,41 @@ export class MarketService {
     }));
   }
 
-  /**
-   * Calculate dynamic price based on supply/demand and active events.
-   */
   private async getDynamicPrice(itemType: string): Promise<number> {
     const adminClient = this.supabaseService.getAdminClient();
-
     const { data: priceData } = await adminClient
       .from('market_prices')
       .select('base_price, supply, demand')
       .eq('item_type', itemType)
       .single();
-
     if (!priceData) return 0;
 
     const basePrice = priceData.base_price as number;
     const supply = (priceData.supply as number) || 0;
     const demand = (priceData.demand as number) || 0;
 
-    // Supply/demand modifier
     const supplyDemandRatio = supply > 0 ? demand / supply : 1;
     const supplyDemandModifier = Math.max(-0.3, Math.min(0.3, (supplyDemandRatio - 1) * 0.3));
-
-    // Check for active market events
     const eventModifier = await this.getEventModifier(itemType);
 
-    // Calculate final price
-    const priceMultiplier = 1 + supplyDemandModifier + eventModifier;
-    const finalPrice = Math.round(
-      basePrice * Math.max(this.MIN_PRICE_MULT, Math.min(this.MAX_PRICE_MULT, priceMultiplier)),
-    );
+    // C14 — crafted/processed goods are exempt from the 0.5x–2.0x band (stable 1.0x ±10%).
+    const band = bandFor(itemType);
 
+    const priceMultiplier = 1 + supplyDemandModifier + eventModifier;
+    const finalPrice = Math.round(basePrice * Math.max(band.min, Math.min(band.max, priceMultiplier)));
     return finalPrice;
   }
 
-  /**
-   * Get event-based price modifier for an item type.
-   */
   private async getEventModifier(itemType: string): Promise<number> {
     const adminClient = this.supabaseService.getAdminClient();
     const now = new Date().toISOString();
-
-    const { data: events } = await adminClient
-      .from('market_events')
-      .select('effect, multiplier')
-      .gt('ends_at', now);
-
+    const { data: events } = await adminClient.from('market_events').select('effect, multiplier').gt('ends_at', now);
     if (!events || events.length === 0) return 0;
 
     let modifier = 0;
     for (const event of events) {
       const effect = event.effect as string;
       const multiplier = event.multiplier as number;
-
-      // Check if this event affects this item type
       if (
         effect === 'all' ||
         (effect === 'grain' && ['sorghum', 'maize', 'millet'].includes(itemType)) ||
@@ -387,33 +374,24 @@ export class MarketService {
         modifier += multiplier - 1;
       }
     }
-
     return modifier;
   }
 
-  /**
-   * Update supply/demand counters after a transaction.
-   */
   private async updateSupplyDemand(
     itemType: string,
     supplyIncrease: number,
     demandIncrease: number,
   ): Promise<void> {
     const adminClient = this.supabaseService.getAdminClient();
-
-    // Get current values
     const { data: current } = await adminClient
       .from('market_prices')
       .select('supply, demand')
       .eq('item_type', itemType)
       .single();
-
     if (!current) return;
 
     const currentSupply = (current.supply as number) || 0;
     const currentDemand = (current.demand as number) || 0;
-
-    // Update with decay (supply/demand naturally decay over time)
     const decayedSupply = Math.max(0, currentSupply * (1 - this.PRICE_DECAY) + supplyIncrease);
     const decayedDemand = Math.max(0, currentDemand * (1 - this.PRICE_DECAY) + demandIncrease);
 
@@ -424,18 +402,5 @@ export class MarketService {
         demand: Math.round(decayedDemand),
       })
       .eq('item_type', itemType);
-  }
-
-  private getQualityMultiplier(quality: string): number {
-    switch (quality) {
-      case 'excellent':
-        return 2.0;
-      case 'good':
-        return 1.5;
-      case 'poor':
-        return 0.5;
-      default:
-        return 1.0;
-    }
   }
 }

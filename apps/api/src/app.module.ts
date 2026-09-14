@@ -11,7 +11,6 @@ import { SimulationModule } from './simulation/simulation.module';
 import { BuildingsModule } from './buildings/buildings.module';
 import { LivestockModule } from './livestock/livestock.module';
 import { ContractsModule } from './contracts/contracts.module';
-import { ProgressionModule } from './progression/progression.module';
 import { KgotlaModule } from './kgotla/kgotla.module';
 import { BushveldModule } from './bushveld/bushveld.module';
 import { WorldEventsModule } from './world-events/world-events.module';
@@ -19,7 +18,14 @@ import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { GameConfigModule } from './config/config.module';
+import { WalletModule } from './wallet/wallet.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { CraftingModule } from './crafting/crafting.module';
+import { WaterModule } from './water/water.module';
+import { ProgressionModule } from './progression/progression.module';
+import { ChapterModule } from './chapters/chapter.module';
+import { MonetisationModule } from './monetisation/monetisation.module';
+import { DevModule } from './dev/dev.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -39,7 +45,6 @@ import { DatabaseModule } from './database/database.module';
     BuildingsModule,
     LivestockModule,
     ContractsModule,
-    ProgressionModule,
     KgotlaModule,
     BushveldModule,
     WorldEventsModule,
@@ -48,6 +53,13 @@ import { DatabaseModule } from './database/database.module';
     AnalyticsModule,
     GameConfigModule,
     NotificationsModule,
+    WalletModule,
+    CraftingModule,
+    WaterModule,
+    ProgressionModule,
+    ChapterModule,
+    MonetisationModule,
+    DevModule,
   ],
 })
 export class AppModule {}

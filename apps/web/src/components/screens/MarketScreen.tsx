@@ -1,14 +1,30 @@
 'use client';
 
 import React from 'react';
-import { useGame, type MarketItem, type InventoryItem } from '@/lib/gameState';
+import { useGame, apiFetch, type MarketItem, type InventoryItem } from '@/lib/gameState';
 import { useTranslation } from '@/lib/useTranslation';
 import { PixelIcon } from '@/components/PixelIcon';
+
+/**
+ * A read-only preview of a sale, from `GET /market/quote` (07 §7.5). Same numbers
+ * the sale itself will produce, because the server computes both from one helper.
+ */
+interface SaleQuote {
+  itemType: string;
+  quantity: number;
+  pricePerUnit: number;
+  gross: number;
+  tax: number;
+  taxRate: number;
+  netProceeds: number;
+  band: 'wide' | 'crafted';
+}
 
 function ConfirmModal({
   open,
   title,
   message,
+  details,
   onConfirm,
   onCancel,
   confirmLabel,
@@ -17,6 +33,8 @@ function ConfirmModal({
   open: boolean;
   title: string;
   message: string;
+  /** Optional breakdown rendered between the message and the buttons (07 §7.5). */
+  details?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
   confirmLabel?: string;
@@ -33,9 +51,10 @@ function ConfirmModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="font-headline text-base font-bold text-cream-surface mb-2">{title}</div>
-        <div className="font-body text-sm text-cream-surface/90 mb-5 leading-relaxed">
+        <div className="font-body text-sm text-cream-surface/90 mb-3 leading-relaxed">
           {message}
         </div>
+        {details && <div className="mb-4">{details}</div>}
         <div className="flex gap-3">
           <button
             onClick={onCancel}
@@ -55,6 +74,36 @@ function ConfirmModal({
   );
 }
 
+/** One line of the fee breakdown: label on the left, amount on the right. */
+function QuoteRow({
+  label,
+  value,
+  strong,
+  tone,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  tone?: 'muted' | 'normal';
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className={`text-cream-surface/${strong ? '90' : '70'}`}>{label}</span>
+      <span
+        className={
+          strong
+            ? 'font-bold text-gold-currency text-[15px]'
+            : tone === 'muted'
+              ? 'text-cream-surface/70'
+              : 'text-cream-surface'
+        }
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export function MarketScreen() {
   const {
     pula,
@@ -65,6 +114,7 @@ export function MarketScreen() {
     quickSellProduce,
     showToast,
     setActiveNav,
+    marketEvents,
   } = useGame();
   const { tl } = useTranslation();
 
@@ -73,6 +123,7 @@ export function MarketScreen() {
     open: boolean;
     title: string;
     message: string;
+    details?: React.ReactNode;
     fn: () => void;
   }>({ open: false, title: '', message: '', fn: () => {} });
 
@@ -90,6 +141,7 @@ export function MarketScreen() {
       open: true,
       title: `${tl('buyConfirm')} ${item.name}`,
       message: `${tl('buyConfirm')} ${qty}x ${item.name} P${total}? Pula: P${pula}.`,
+      details: undefined,
       fn: () => {
         buyMarketItem(item, qty);
         showToast(tl('bought'), `${qty}x ${item.name}`, '🛒', 'success');
@@ -98,15 +150,50 @@ export function MarketScreen() {
     });
   }
 
-  function handleSell(item: InventoryItem, qty: number) {
-    const total = item.unitValue * qty;
+  /**
+   * 07 §7.5 / 01 §4 — the fee is shown *before* the button, never after. So we ask
+   * the server for a quote first and render price today → gross → Co-op tax → net,
+   * instead of the old client-side guess that quoted a hardcoded unit value and
+   * hid the tax entirely.
+   */
+  async function handleSell(item: InventoryItem, qty: number) {
+    if (qty <= 0) return;
+    const itemType = item.itemType || item.name.toLowerCase().replace(/\s+/g, '_');
+
+    let quote: SaleQuote;
+    try {
+      quote = await apiFetch<SaleQuote>(
+        'GET',
+        `/market/quote?itemType=${encodeURIComponent(itemType)}&quantity=${qty}`,
+      );
+    } catch {
+      // No price → no sale. Never open a confirm sheet with numbers we can't stand
+      // behind, and never guess one.
+      showToast(tl('sellFailed'), tl('priceUnavailable'), '⚠️', 'error');
+      return;
+    }
+
+    const taxPct = `${Math.round(quote.taxRate * 100)}%`;
+
     setConfirmState({
       open: true,
       title: `${tl('sellConfirm')} ${item.name}`,
-      message: `${tl('sellConfirm')} ${qty}x ${item.name} P${total}?`,
+      message: `${qty} × ${item.name}`,
+      details: (
+        <div className="font-mono text-[13px] leading-relaxed">
+          <QuoteRow label={tl('priceToday')} value={`P ${quote.pricePerUnit}`} />
+          <QuoteRow label={tl('gross')} value={`P ${quote.gross.toFixed(2)}`} />
+          <QuoteRow
+            label={`${tl('coopTax')} (${taxPct})`}
+            value={`−P ${quote.tax.toFixed(2)}`}
+            tone="muted"
+          />
+          <div className="my-2 border-t border-wood-border" />
+          <QuoteRow label={tl('youReceive')} value={`P ${quote.netProceeds.toFixed(2)}`} strong />
+        </div>
+      ),
       fn: () => {
-        sellInventoryItem(item, qty);
-        showToast(tl('sold'), `${qty}x ${item.name} P${total}`, '💰', 'success');
+        void sellInventoryItem(item, qty);
         setConfirmState((s) => ({ ...s, open: false }));
       },
     });
@@ -117,6 +204,7 @@ export function MarketScreen() {
       open: true,
       title: tl('sellAllProduce'),
       message: tl('sellAllConfirm'),
+      details: undefined,
       fn: () => {
         quickSellProduce();
         showToast(tl('sold'), '', '💰', 'success');
@@ -169,6 +257,24 @@ export function MarketScreen() {
           )}
         </div>
 
+        {/* Market event banner — what is moving prices right now (02 §4). */}
+        {marketEvents.length > 0 && (
+          <div className="mb-4 border-2 border-gold-currency bg-wood-dark/90 px-3.5 py-2.5">
+            <div className="font-headline text-[13px] font-bold text-gold-currency mb-1">
+              📣 Market Event{marketEvents.length > 1 ? 's' : ''}
+            </div>
+            {marketEvents.map((ev) => (
+              <div key={ev.id} className="font-body text-[12px] text-cream-surface/90 leading-snug">
+                <span className="font-bold text-cream-surface">{ev.name}</span>
+                {ev.multiplier !== 1 && (
+                  <span className="ml-1 font-mono text-status-success">×{ev.multiplier}</span>
+                )}{' '}
+                — {ev.description}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Buy / Sell Toggle */}
         <div className="flex gap-2 mb-5">
           {(['buy', 'sell'] as const).map((m) => (
@@ -205,9 +311,17 @@ export function MarketScreen() {
                   <div className="flex-1 min-w-0">
                     <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
                       {item.name}
+                      {item.badge && (
+                        <span className="ml-2 align-middle text-[11px] font-mono font-bold uppercase text-status-success">
+                          {item.trend === 'up' ? '▲' : item.trend === 'down' ? '▼' : ''} {item.badge}
+                        </span>
+                      )}
                     </div>
                     <div className="font-mono text-[13px] font-bold text-gold-currency">
                       P{item.price}
+                      {item.basePrice !== undefined && item.basePrice !== item.price && (
+                        <span className="ml-1 text-cream-surface/50 line-through">P{item.basePrice}</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-1.5">
@@ -250,7 +364,6 @@ export function MarketScreen() {
             )}
             {sellables.map((item: InventoryItem) => {
               const qty = item.quantity;
-              const total = item.unitValue * qty;
               return (
                 <div
                   key={item.id}
@@ -261,15 +374,19 @@ export function MarketScreen() {
                     <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
                       {item.name}
                     </div>
+                    {/* The live price is quoted on the confirm sheet, not here — the
+                        client has no honest per-row price for goods (only seeds), and
+                        showing a stale one is worse than showing none (01 §4). */}
                     <div className="font-mono text-xs text-cream-surface/75">
-                      ×{qty} · P{item.unitValue} {tl('each')} ·{' '}
-                      <span className="text-gold-currency font-bold">P{total}</span>
+                      ×{qty} · {tl('tapToSell')}
                     </div>
                   </div>
                   <div className="flex gap-1.5">
                     <button
                       disabled={qty < 1}
-                      onClick={() => handleSell(item, 1)}
+                      onClick={() => {
+                        void handleSell(item, 1);
+                      }}
                       className={`px-3.5 py-2 font-headline text-[13px] font-bold active:translate-y-0.5 ${
                         qty >= 1
                           ? 'bg-status-success text-wood-dark'
@@ -280,7 +397,9 @@ export function MarketScreen() {
                     </button>
                     <button
                       disabled={qty < 1}
-                      onClick={() => handleSell(item, qty)}
+                      onClick={() => {
+                        void handleSell(item, qty);
+                      }}
                       className={`px-3.5 py-2 font-headline text-[13px] font-bold uppercase active:translate-y-0.5 ${
                         qty >= 1
                           ? 'bg-status-success text-wood-dark'
@@ -311,6 +430,7 @@ export function MarketScreen() {
           open={confirmState.open}
           title={confirmState.title}
           message={confirmState.message}
+          details={confirmState.details}
           onConfirm={confirmState.fn}
           onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
           confirmLabel={tl('confirm')}

@@ -13,13 +13,17 @@ export function MobileFooterNav() {
     { id: 'kgotla', label: tl('kgotla'), icon: 'account_balance', navTarget: 'Kgotla' },
     { id: 'bushveld', label: tl('wild'), icon: 'forest', navTarget: 'Bushveld' },
     { id: 'market', label: tl('market'), icon: 'storefront', navTarget: 'Market' },
+    { id: 'store', label: tl('store'), icon: 'shopping_cart', navTarget: 'Store' },
+    { id: 'wallet', label: tl('wallet'), icon: 'account_balance_wallet', navTarget: 'Wallet' },
+    { id: 'crafting', label: tl('crafting'), icon: 'handyman', navTarget: 'Crafting' },
     { id: 'inventory', label: tl('bag'), icon: 'backpack', navTarget: 'Inventory' },
+    { id: 'journal', label: tl('journal'), icon: 'menu_book', navTarget: 'Journal' },
     { id: 'settings', label: tl('config'), icon: 'settings', navTarget: 'Settings' },
   ];
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-40 bg-wood-medium border-t-2 border-wood-border md:hidden select-none">
-      <nav className="h-14 grid grid-cols-6 items-center px-1">
+      <nav className="h-14 grid grid-cols-10 items-center px-1">
         {NAV_ITEMS.map((item) => {
           const isActive =
             activeNav.toLowerCase() === item.id ||

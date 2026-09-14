@@ -1,220 +1,263 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { WalletService } from '../wallet/wallet.service';
+import { WaterService } from '../water/water.service';
+import { CraftingService } from '../crafting/crafting.service';
+import {
+  BOTHO_DAILY_CAP,
+  BOTHO_THRESHOLDS,
+  DAILY_TOP_UP_CAP_BWP,
+  SCENES,
+  chapterForDate,
+  elderLine,
+  findsForScene,
+  getCropConfig,
+  type ElderSnapshot,
+} from '@molemisi/game-config';
 
-export interface ProgressionData {
-  level: number;
-  xp: number;
-  xpToNextLevel: number;
-  xpProgress: number;
-  unlockedCrops: string[];
-  unlockedAnimals: string[];
-  unlockedBuildings: string[];
-  achievements: Achievement[];
+/**
+ * P5 — Kgotla and the Three Pillars (05 §P5; 02 §6.4 thresholds; 03 §7 Elder).
+ *
+ * The three pillars have **no levels and no XP** (D5/C12). Standing is one number —
+ * Botho — and this service is the only place that reads it back to the player. If a
+ * level or XP field ever appears in a response from here, that is a bug.
+ */
+
+export interface PulaView {
+  balance: number;
+  /** R4 — the daily top-up cap, in Botswana time. */
+  topUpUsedToday: number;
+  topUpCap: number;
+  topUpRemaining: number;
 }
 
-interface Achievement {
-  id: string;
+export interface BothoThreshold {
+  key: string;
+  value: number;
+  remaining: number;
+}
+
+export interface BothoView {
+  current: number;
+  thresholds: Record<string, number>;
+  /** The next rung, or null when the player has passed all of them. */
+  next: BothoThreshold | null;
+  earnedToday: number;
+  dailyCap: number;
+  remainingToday: number;
+}
+
+export interface JournalView {
+  pagesComplete: number;
+  totalPages: number;
+}
+
+export interface ProgressionView {
+  pula: PulaView;
+  botho: BothoView;
+  journal: JournalView;
+}
+
+export interface SceneAccess {
+  slug: string;
   name: string;
-  description: string;
-  icon: string;
+  setswana: string;
+  blurb: string;
+  bothoRequired: number;
   unlocked: boolean;
-  unlockedAt: string | null;
+  /** Row exists but has no content yet — the client shows "coming soon". */
+  comingSoon: boolean;
+  /** False for a scene that ships with zero hotspots. */
+  hasContent: boolean;
 }
+
+export interface ElderGuidance {
+  id: string;
+  setswana: string;
+  english: string;
+  snapshot: ElderSnapshot;
+}
+
+/** Botho's rungs, in the order a player meets them (02 §6.4). */
+export const BOTHO_LADDER: Array<{ key: string; value: number }> = [
+  { key: 'BUPI_RECIPE', value: BOTHO_THRESHOLDS.BUPI_RECIPE },
+  { key: 'DEEP_BUSHVELD', value: BOTHO_THRESHOLDS.DEEP_BUSHVELD },
+  { key: 'LETSEMA', value: BOTHO_THRESHOLDS.LETSEMA },
+  { key: 'PRIZE_ELIGIBILITY', value: BOTHO_THRESHOLDS.PRIZE_ELIGIBILITY },
+];
 
 @Injectable()
 export class ProgressionService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabase: SupabaseService,
+    private wallet: WalletService,
+    private water: WaterService,
+    private crafting: CraftingService,
+  ) {}
 
-  // Pre-defined achievements
-  private readonly ACHIEVEMENTS: Array<{
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-    check: (stats: PlayerStats) => boolean;
-  }> = [
-    {
-      id: 'first_harvest',
-      name: 'First Harvest',
-      description: 'Harvest your first crop',
-      icon: '🌾',
-      check: (s) => s.cropsHarvested >= 1,
-    },
-    {
-      id: 'ten_harvests',
-      name: 'Green Thumb',
-      description: 'Harvest 10 crops',
-      icon: '🌿',
-      check: (s) => s.cropsHarvested >= 10,
-    },
-    {
-      id: 'first_sale',
-      name: 'Market Trader',
-      description: 'Sell your first item',
-      icon: '💰',
-      check: (s) => s.itemsSold >= 1,
-    },
-    {
-      id: 'hundred_sales',
-      name: 'Merchant',
-      description: 'Sell 100 items total',
-      icon: '🏪',
-      check: (s) => s.itemsSold >= 100,
-    },
-    {
-      id: 'first_building',
-      name: 'Builder',
-      description: 'Construct your first building',
-      icon: '🏗️',
-      check: (s) => s.buildingsBuilt >= 1,
-    },
-    {
-      id: 'first_animal',
-      name: 'Farmer',
-      description: 'Purchase your first animal',
-      icon: '🐄',
-      check: (s) => s.animalsPurchased >= 1,
-    },
-    {
-      id: 'rich',
-      name: 'Wealthy',
-      description: 'Accumulate 10,000 Pula',
-      icon: '💎',
-      check: (s) => s.maxCurrency >= 10000,
-    },
-    {
-      id: 'level_5',
-      name: 'Experienced',
-      description: 'Reach farm level 5',
-      icon: '⭐',
-      check: (s) => s.level >= 5,
-    },
-    {
-      id: 'level_10',
-      name: 'Master Farmer',
-      description: 'Reach farm level 10',
-      icon: '🌟',
-      check: (s) => s.level >= 10,
-    },
-    {
-      id: 'contract_1',
-      name: 'Contractor',
-      description: 'Complete your first contract',
-      icon: '📋',
-      check: (s) => s.contractsCompleted >= 1,
-    },
-  ];
+  /**
+   * `GET /progression` — the whole standing read in one call.
+   * Note the absence of level and XP: they do not exist any more (D5).
+   */
+  async getProgression(playerId: string, now = new Date()): Promise<ProgressionView> {
+    const [wallet, topUpToday, bothoToday, journal] = await Promise.all([
+      this.wallet.getWallet(playerId),
+      this.wallet.topUpTotalToday(playerId, now),
+      this.wallet.bothoEarnedToday(playerId, now),
+      this.journalProgress(playerId),
+    ]);
 
-  async getProgression(userId: string): Promise<ProgressionData> {
-    const adminClient = this.supabaseService.getAdminClient();
+    const botho = wallet.botho_points;
+    const next = BOTHO_LADDER.find((rung) => botho < rung.value) ?? null;
 
-    // Get profile
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    return {
+      pula: {
+        balance: Number(wallet.pula_balance),
+        topUpUsedToday: topUpToday,
+        topUpCap: DAILY_TOP_UP_CAP_BWP,
+        topUpRemaining: Math.max(0, DAILY_TOP_UP_CAP_BWP - topUpToday),
+      },
+      botho: {
+        current: botho,
+        thresholds: { ...BOTHO_THRESHOLDS },
+        next: next ? { ...next, remaining: next.value - botho } : null,
+        earnedToday: bothoToday,
+        dailyCap: BOTHO_DAILY_CAP,
+        // I4 — this is the legal control. A player who has hit the cap can do the
+        // act; they simply stop accruing standing for it today.
+        remainingToday: Math.max(0, BOTHO_DAILY_CAP - bothoToday),
+      },
+      journal,
+    };
+  }
 
-    if (!profile) {
-      throw new NotFoundException('Profile not found');
+  /**
+   * A page is complete when every distinct find in the scene has been discovered
+   * (04 §7). The reward is the restoration of the scene's art — there is no
+   * numeric buff, by design (R5/C6).
+   */
+  async journalProgress(playerId: string): Promise<JournalView> {
+    // Deep Bushveld ships with zero hotspots, so it is not counted as a page:
+    // a scene with nothing to find would otherwise read as complete on day one.
+    const pages = SCENES.filter((s) => findsForScene(s.slug).length > 0);
+
+    const { data } = await this.supabase
+      .getAdminClient()
+      .from('field_journal_entries')
+      .select('scene_id, discovery_slug')
+      .eq('player_id', playerId);
+
+    const byScene = new Map<string, Set<string>>();
+    for (const row of (data ?? []) as Array<Record<string, unknown>>) {
+      const scene = String(row.scene_id ?? '');
+      const slug = String(row.discovery_slug ?? '');
+      const set = byScene.get(scene) ?? new Set<string>();
+      set.add(slug);
+      byScene.set(scene, set);
     }
 
-    const level = (profile.level as number) || 1;
-    const xp = (profile.xp as number) || 0;
-    const xpToNextLevel = Math.ceil(100 * Math.pow(level + 1, 1.5));
-    const xpProgress = xp / xpToNextLevel;
+    let pagesComplete = 0;
+    for (const scene of pages) {
+      const found = byScene.get(scene.slug)?.size ?? 0;
+      if (found >= findsForScene(scene.slug).length) pagesComplete++;
+    }
 
-    // Get unlocked content based on level
-    const { CROPS } = await import('@molemisi/game-config');
-    const { ANIMALS } = await import('@molemisi/game-config');
-    const { BUILDINGS } = await import('@molemisi/game-config');
-
-    const unlockedCrops = Object.values(CROPS)
-      .filter((c) => c.unlockLevel <= level)
-      .map((c) => c.id);
-
-    const unlockedAnimals = Object.values(ANIMALS)
-      .filter((a) => a.unlockLevel <= level)
-      .map((a) => a.id);
-
-    const unlockedBuildings = Object.values(BUILDINGS)
-      .filter((b) => b.unlockLevel <= level)
-      .map((b) => b.id);
-
-    // Get player stats for achievements
-    const stats = await this.getPlayerStats(userId, level, (profile.currency as number) || 0);
-
-    // Check achievements
-    const achievements = this.ACHIEVEMENTS.map((a) => ({
-      id: a.id,
-      name: a.name,
-      description: a.description,
-      icon: a.icon,
-      unlocked: a.check(stats),
-      unlockedAt: a.check(stats) ? new Date().toISOString() : null,
-    }));
-
-    return {
-      level,
-      xp,
-      xpToNextLevel,
-      xpProgress,
-      unlockedCrops,
-      unlockedAnimals,
-      unlockedBuildings,
-      achievements,
-    };
+    return { pagesComplete, totalPages: pages.length };
   }
 
-  private async getPlayerStats(
-    userId: string,
-    level: number,
-    maxCurrency: number,
-  ): Promise<PlayerStats> {
-    const adminClient = this.supabaseService.getAdminClient();
+  /**
+   * 03 §7 — the Elder reads REAL state, not a dialogue tree. Every field of the
+   * snapshot is queried live, so the line changes when the tank empties, when rain
+   * comes in, or when a craft finishes. The rules themselves live in config
+   * (`ELDER_RULES`), ordered, first match wins.
+   */
+  async getElderGuidance(farmId: string, now = new Date()): Promise<ElderGuidance> {
+    const admin = this.supabase.getAdminClient();
 
-    // Get ledger stats
-    const { data: ledgerEntries } = await adminClient
-      .from('game_ledger_entries')
-      .select('entry_type')
-      .eq('user_id', userId);
+    const { data: farm } = await admin
+      .from('farms')
+      .select('id, user_id, weather_state')
+      .eq('id', farmId)
+      .single();
 
-    const entries = ledgerEntries ?? [];
-    const cropsHarvested = entries.filter((e) => e.entry_type === 'CROP_SALE').length;
-    const itemsSold = entries.filter((e) => e.entry_type === 'CROP_SALE').length;
-    const buildingsBuilt = entries.filter((e) => e.entry_type === 'BUILD').length;
+    if (!farm) throw new NotFoundException('Farm not found');
+    const row = farm as Record<string, unknown>;
+    const playerId = row.user_id as string;
 
-    // Get animal count
-    const { count: animalsPurchased } = await adminClient
-      .from('livestock')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
+    const tank = await this.water.getTankStatus(farmId);
+    const tankPct = tank.capacity > 0 ? (tank.waterLevel / tank.capacity) * 100 : 0;
 
-    // Get completed contracts
-    const { count: contractsCompleted } = await adminClient
-      .from('active_contracts')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('completed', true);
+    const { data: plots } = await admin
+      .from('farm_plots')
+      .select('state')
+      .eq('farm_id', farmId);
+    const readyPlots = (plots ?? []).filter(
+      (p) => (p as Record<string, unknown>).state === 'READY',
+    ).length;
 
-    return {
-      cropsHarvested,
-      itemsSold,
-      buildingsBuilt,
-      animalsPurchased: animalsPurchased || 0,
-      contractsCompleted: contractsCompleted || 0,
-      level,
-      maxCurrency,
+    // "Thirsty" is a fact the water engine already recorded: a crop that grew
+    // nothing on its last tick because the tank was dry. Not a guess.
+    const { data: crops } = await admin
+      .from('crop_instances')
+      .select('crop_type, growth_progress_hours, hydration')
+      .eq('farm_id', farmId);
+    let thirstyPlots = 0;
+    for (const c of (crops ?? []) as Array<Record<string, unknown>>) {
+      const growthHours = getCropConfig(String(c.crop_type ?? ''))?.growthHours;
+      if (growthHours == null) continue;
+      const progress = Number(c.growth_progress_hours ?? 0);
+      if (progress < growthHours && Number(c.hydration ?? 1) <= 0) thirstyPlots++;
+    }
+
+    const jobs = await this.crafting.listJobs(playerId);
+    const uncollectedCrafts = jobs.filter(
+      (j) => !j.collected && new Date(j.readyAt).getTime() <= now.getTime(),
+    ).length;
+
+    const snapshot: ElderSnapshot = {
+      tankPct,
+      weather: String(row.weather_state ?? 'clear'),
+      botho: await this.wallet.getBotho(playerId),
+      // The year is real (04 §9.1), so the season is whoever the calendar says it
+      // is — not a per-farm clock. This is what makes the dry-season line fire.
+      chapter: chapterForDate(now).slug,
+      readyPlots,
+      thirstyPlots,
+      uncollectedCrafts,
+      contributedToday: (await this.wallet.contributedToday(playerId, now)) > 0,
     };
-  }
-}
 
-interface PlayerStats {
-  cropsHarvested: number;
-  itemsSold: number;
-  buildingsBuilt: number;
-  animalsPurchased: number;
-  contractsCompleted: number;
-  level: number;
-  maxCurrency: number;
+    const line = elderLine(snapshot);
+    return { id: line.id, setswana: line.setswana, english: line.english, snapshot };
+  }
+
+  /**
+   * Scene access, gated on Botho rather than a retired level (C12/D6).
+   *
+   * A locked scene is reported, not refused: the client needs to show the row with
+   * its requirement so the player can see what standing buys. Deep Bushveld is the
+   * interesting case — unlocked at 300 but with zero hotspots, so it carries
+   * `comingSoon` rather than a 403 (05 §P5).
+   */
+  async getSceneAccess(playerId: string): Promise<SceneAccess[]> {
+    const botho = await this.wallet.getBotho(playerId);
+
+    return SCENES.map((scene) => {
+      const bothoRequired = scene.unlock?.bothoGte ?? 0;
+      const unlocked = botho >= bothoRequired;
+      const hasContent = findsForScene(scene.slug).length > 0;
+      return {
+        slug: scene.slug,
+        name: scene.name,
+        setswana: scene.setswana,
+        blurb: scene.blurb,
+        bothoRequired,
+        unlocked,
+        // Unlocked-but-empty reads as "coming soon"; locked reads as locked.
+        // Neither is ever a 403 — a wall tells the player nothing.
+        comingSoon: unlocked && !hasContent,
+        hasContent,
+      };
+    });
+  }
 }

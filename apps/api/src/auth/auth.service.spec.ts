@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { SupabaseService } from '../database/supabase.service';
+import { InventoryService } from '../inventory/inventory.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -10,11 +11,21 @@ describe('AuthService', () => {
     getAnonClient: jest.fn(),
   };
 
+  // P3 cutover: registration seeds the starter kit (seeds + tools) via the canonical
+  // InventoryService. Stub it.
+  const mockInventoryService = {
+    addItem: jest.fn().mockResolvedValue({ added: 1, overflow: 0 }),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthService, { provide: SupabaseService, useValue: mockSupabaseService }],
+      providers: [
+        AuthService,
+        { provide: SupabaseService, useValue: mockSupabaseService },
+        { provide: InventoryService, useValue: mockInventoryService },
+      ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);

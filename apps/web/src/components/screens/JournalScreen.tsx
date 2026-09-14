@@ -1,0 +1,190 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useGame } from '../../lib/gameState';
+import { useKgotla } from '../../lib/kgotla';
+import { useTranslation } from '../../lib/useTranslation';
+import { useDiscoveries, DiscoveredFind } from '../../lib/discoveries';
+import { mogoloEntry } from '../../lib/journalVoice';
+
+const RARITY_TONE: Record<string, string> = {
+  common: 'border-wood-border text-on-surface-variant',
+  uncommon: 'border-gold-currency/50 text-gold-currency',
+  rare: 'border-primary/60 text-primary',
+};
+
+/**
+ * A single Field Journal entry, in Mogolo's voice.
+ *
+ * Per the narrative-voice doc: one line always (the physical sign), plus an
+ * optional "Mogolo's Note" collapsed by default (Progressive Disclosure).
+ */
+function DiscoveryEntry({ find }: { find: DiscoveredFind }) {
+  const { tl } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const entry = mogoloEntry(find.slug, find.name);
+  const tone = RARITY_TONE[find.rarity] ?? RARITY_TONE.common;
+
+  return (
+    <div className="px-3 py-3">
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <span className="font-mono text-[11px] text-cream-surface font-bold truncate">
+          {find.name}
+          {find.setswana ? (
+            <span className="text-on-surface-variant font-normal"> · {find.setswana}</span>
+          ) : null}
+        </span>
+        <span className={`font-mono text-[9px] uppercase shrink-0 px-1.5 py-0.5 border ${tone}`}>
+          {find.rarity}
+        </span>
+      </div>
+
+      {/* The sign — always shown. */}
+      <p className="font-body text-[12px] text-cream-surface/90 italic leading-snug">
+        {entry.sign}
+      </p>
+
+      {/* Mogolo's Note — collapsed by default. */}
+      {entry.note && (
+        <div className="mt-1.5">
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="font-mono text-[9px] uppercase text-primary/80 hover:text-primary transition-colors"
+            aria-expanded={open}
+          >
+            {open ? '▾ ' : '▸ '}
+            {tl('mogoloNote')}
+          </button>
+          {open && (
+            <p className="font-body text-[11px] text-on-surface-variant mt-1 leading-snug border-l-2 border-primary/30 pl-2">
+              {entry.note}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function JournalScreen() {
+  const { quests, setActiveNav } = useGame();
+  const { journal, reload } = useKgotla();
+  const { tl } = useTranslation();
+  const discoveries = useDiscoveries();
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  const pages = journal?.pagesComplete ?? 0;
+  const total = journal?.totalPages ?? 0;
+  const pct = total > 0 ? Math.round((pages / total) * 100) : 0;
+
+  return (
+    <div className="w-full px-4 py-6 max-w-lg mx-auto select-none pb-20 md:pb-10">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-headline text-lg text-primary uppercase font-bold">{tl('journal')}</h1>
+        <button
+          onClick={() => setActiveNav('Farm')}
+          className="font-mono text-xs text-primary hover:text-cream-surface px-2 py-1"
+        >
+          {tl('backToFarm')}
+        </button>
+      </div>
+
+      {/* Restoration progress — the C18 restoration arc. */}
+      <section className="mb-6">
+        <div className="bg-wood-dark p-4 border border-wood-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-mono text-xs text-on-surface-variant uppercase">
+              {tl('restoration')}
+            </span>
+            <span className="font-mono text-[11px] text-gold-currency font-bold">
+              {pages}/{total} {tl('pages') || 'pages'}
+            </span>
+          </div>
+          <div className="w-full h-3 bg-surface-container-lowest overflow-hidden border border-wood-border">
+            <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+          </div>
+          <p className="font-mono text-[9px] text-on-surface-variant mt-2">
+            {pct}% {tl('restored') || 'restored'}
+          </p>
+        </div>
+      </section>
+
+      {/* Discoveries — Mogolo's voice. */}
+      <section className="mb-6">
+        <h2 className="font-headline text-xs text-on-surface-variant uppercase tracking-wider mb-3 font-bold">
+          {tl('discoveries') || 'Discoveries'}
+          {discoveries.length > 0 && (
+            <span className="ml-2 text-primary">({discoveries.length})</span>
+          )}
+        </h2>
+        {discoveries.length === 0 ? (
+          <div className="bg-wood-dark p-6 border border-wood-border text-center">
+            <span className="text-2xl">🪶</span>
+            <p className="font-body text-[11px] text-on-surface-variant mt-2 italic leading-snug">
+              {tl('journalEmpty')}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-wood-dark border border-wood-border divide-y divide-wood-border/50">
+            {discoveries.map((d) => (
+              <DiscoveryEntry key={d.slug} find={d} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Quest log */}
+      <section>
+        <h2 className="font-headline text-xs text-on-surface-variant uppercase tracking-wider mb-3 font-bold">
+          {tl('quests') || 'Quests'}
+        </h2>
+        {quests.length === 0 ? (
+          <div className="bg-wood-dark p-6 border border-wood-border text-center">
+            <span className="text-2xl">📖</span>
+            <p className="font-mono text-[10px] text-on-surface-variant mt-2">
+              {tl('noQuests') || 'No quests yet.'}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-wood-dark border border-wood-border divide-y divide-wood-border/50">
+            {quests.map((q) => {
+              const done = q.claimed;
+              const complete = q.current >= q.target;
+              return (
+                <div key={q.id} className="px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[11px] text-cream-surface font-bold truncate">
+                      {q.icon} {q.title}
+                    </span>
+                    <span
+                      className={`font-mono text-[9px] uppercase shrink-0 px-1.5 py-0.5 border ${
+                        done
+                          ? 'border-status-success/50 text-status-success'
+                          : complete
+                            ? 'border-gold-currency/50 text-gold-currency'
+                            : 'border-wood-border text-on-surface-variant'
+                      }`}
+                    >
+                      {done
+                        ? tl('claimed') || 'Claimed'
+                        : complete
+                          ? tl('ready') || 'Ready'
+                          : `${q.current}/${q.target}`}
+                    </span>
+                  </div>
+                  <p className="font-mono text-[9px] text-on-surface-variant mt-0.5 truncate">
+                    {q.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}

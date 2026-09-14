@@ -1,9 +1,9 @@
 # Scaffold Audit
 
 > **Molemisi Farm Management Simulator**
-> Version: 0.1.0
+> Version: repo 0.1.0 / game-config 1.0.0-mvp
 > Status: Superseded by implementation
-> Last updated: 2026-09-06
+> Last updated: 2026-09-14
 
 This file was the M1 scaffold checklist (2026-09-02). The scaffold is done. Use `docs/DEVELOPMENT_STATE.md` as the live inventory.
 
@@ -14,7 +14,7 @@ This file was the M1 scaffold checklist (2026-09-02). The scaffold is done. Use 
 - pnpm + Turborepo, TypeScript, ESLint 9 flat config, Prettier
 - `apps/web`, `apps/game`, `apps/api`
 - Packages: shared, game-types, game-config, validation
-- Supabase config, 16 migrations, seed.sql
+- Supabase config, 27 migrations, seed.sql
 - GitHub Actions: lint, typecheck, test, build
 
 Those boxes stay checked. They are no longer the interesting status.
@@ -31,8 +31,8 @@ Implemented beyond the original vertical slice:
 - Kgotla, Bushveld, world events, notifications
 - Admin UI + `AdminGuard` + `is_admin`
 - PWA manifest + service worker
-- PixelLab asset pipeline (209 manifest entries)
-- Stub payments + 13 SKUs
+- PixelLab asset pipeline (261 manifest entries)
+- Stub payments + store SKUs (the three boosts are withdrawn)
 - In-memory rate limit and HTTP audit logger
 
 ---
@@ -70,4 +70,4 @@ Implemented beyond the original vertical slice:
 
 ## Conclusion
 
-Scaffold complete. Product is in **M16 Alpha**. Remaining work is quality, honesty of the Phaser/React split, payments, audio, and the gaps in `KNOWN_LIMITATIONS.md`.
+Scaffold complete. Product is **code-complete for MVP** but **not yet deployable** — the linked Supabase project is 11 migrations behind. Remaining work is the migration push, the Phaser/React split cleanup, payments, audio, and the gaps in `KNOWN_LIMITATIONS.md`.

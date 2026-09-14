@@ -5,8 +5,9 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { InventoryService } from '../inventory/inventory.service';
 import { RegisterInput, LoginInput } from '@molemisi/validation';
-import { STARTING_CURRENCY, STARTING_PLOTS } from '@molemisi/game-config';
+import { STARTING_PULA, STARTING_PLOTS } from '@molemisi/game-config';
 
 export interface AuthResult {
   user: { id: string; email: string; displayName: string };
@@ -16,7 +17,10 @@ export interface AuthResult {
 
 @Injectable()
 export class AuthService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private inventory: InventoryService,
+  ) {}
 
   async register(input: RegisterInput): Promise<AuthResult> {
     const client = this.supabaseService.getClient();
@@ -54,12 +58,13 @@ export class AuthService {
       session = signInData.session;
     }
 
-    // Create profile
+    // Create profile. `currency: STARTING_PULA` seeds the wallet mirror via the
+    // on_profile_created trigger (P2) — keep it so the wallet starts funded.
     const { error: profileError } = await adminClient.from('profiles').insert({
       id: authData.user.id,
       display_name: input.displayName,
       farm_name: `${input.displayName}'s Farm`,
-      currency: STARTING_CURRENCY,
+      currency: STARTING_PULA,
     });
 
     if (profileError) {
@@ -89,33 +94,35 @@ export class AuthService {
     }));
 
     const { error: plotsError } = await adminClient.from('farm_plots').insert(plots);
-
     if (plotsError) {
       throw new BadRequestException('Failed to create farm plots');
     }
 
-    // Create initial inventory with starter seeds
-    const starterInventory = [
-      {
-        farm_id: farm.id,
-        item_type: 'sorghum_seed',
-        item_category: 'seed',
-        quantity: 10,
-        quality: 'normal',
-      },
-      {
-        farm_id: farm.id,
-        item_type: 'maize_seed',
-        item_category: 'seed',
-        quantity: 5,
-        quality: 'normal',
-      },
-    ];
+    // Starter Jojo Tank (water_source), full and ACTIVE. The tank is the water mechanic
+    // (03 §1.2); every farm has one from day one so growth isn't softlocked behind the
+    // 800-Pula build cost. Maintenance (setena) is the ongoing cost (03 §3.5).
+    const { error: tankError } = await adminClient.from('buildings').insert({
+      farm_id: farm.id,
+      building_type: 'water_source',
+      level: 1,
+      state: 'ACTIVE',
+      capacity: 60,
+      wear: 0,
+      water_level: 60,
+      last_maintained_at: new Date().toISOString(),
+    });
+    if (tankError) {
+      throw new BadRequestException('Failed to create water tank');
+    }
 
-    const { error: inventoryError } = await adminClient.from('inventory').insert(starterInventory);
-
-    if (inventoryError) {
-      throw new BadRequestException('Failed to create starter inventory');
+    // Starter kit into the canonical inventory store (player_inventory). Tools are
+    // equipment (F15) — owned once, never occupy a storage slot. Seeds get the player
+    // growing on day one.
+    const playerId = authData.user.id;
+    await this.inventory.addItem(playerId, farm.id, 'sorghum_seed', 10);
+    await this.inventory.addItem(playerId, farm.id, 'maize_seed', 5);
+    for (const tool of ['mogoma', 'selepe', 'watering_can', 'pickaxe']) {
+      await this.inventory.addItem(playerId, farm.id, tool, 1);
     }
 
     return {
@@ -174,6 +181,25 @@ export class AuthService {
       },
       token: data.session.access_token,
       refreshToken: data.session.refresh_token,
+    };
+  }
+
+  /**
+   * Resolve the account tier for a user. Used by GET /auth/me so the client can
+   * gate the /dev area and admin affordances. `is_admin` is honoured alongside
+   * the canonical `role` column for back-compat.
+   */
+  async getRole(userId: string): Promise<{ role: string; isAdmin: boolean }> {
+    const { data } = await this.supabaseService
+      .getAdminClient()
+      .from('profiles')
+      .select('role, is_admin')
+      .eq('id', userId)
+      .single();
+
+    return {
+      role: data?.role ?? 'player',
+      isAdmin: data?.is_admin === true || data?.role === 'admin',
     };
   }
 }

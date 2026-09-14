@@ -52,6 +52,7 @@ res = await fetch(`${URL}/rest/v1/profiles`, {
     display_name: 'Admin',
     farm_name: 'Admin Farm',
     is_admin: true,
+    role: 'admin',
     is_banned: false,
   }),
 });
@@ -61,7 +62,7 @@ if (!res.ok) {
   const upd = await fetch(`${URL}/rest/v1/profiles?id=eq.${userId}`, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify({ is_admin: true }),
+    body: JSON.stringify({ is_admin: true, role: 'admin' }),
   });
   console.log('upsert →', res.status, t.slice(0, 120), '| update →', upd.status);
 } else {
@@ -70,7 +71,7 @@ if (!res.ok) {
 
 // 3. Verify
 const check = await fetch(
-  `${URL}/rest/v1/profiles?id=eq.${userId}&select=id,display_name,is_admin,is_banned`,
+  `${URL}/rest/v1/profiles?id=eq.${userId}&select=id,display_name,is_admin,role,is_banned`,
   { headers },
 );
 console.log('3. verify:', await check.json());

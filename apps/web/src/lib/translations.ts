@@ -25,8 +25,32 @@ export const translations = {
   kgotla: { en: 'Kgotla', tn: 'Kgotla' },
   wild: { en: 'Wild', tn: 'Naga' },
   market: { en: 'Market', tn: 'Dishopo' },
+  store: { en: 'Store', tn: 'Lebentlele' },
+  crafting: { en: 'Craft', tn: 'Botaki' },
   bag: { en: 'Bag', tn: 'Letlole' },
   config: { en: 'Config', tn: 'Peakanyo' },
+  wallet: { en: 'Wallet', tn: 'Spiša' },
+  journal: { en: 'Journal', tn: 'Tlaleho' },
+  logout: { en: 'Log Out', tn: 'Tsoa' },
+  devTools: { en: 'Dev Tools', tn: 'Didirisiwa tsa Dev' },
+
+  // ---- Wallet & Journal ----
+  refresh: { en: '↻', tn: '↻' },
+  subscription: { en: 'Subscription', tn: 'Tumellano' },
+  history: { en: 'History', tn: 'Histori' },
+  noHistory: { en: 'No transactions yet.', tn: 'Ha go na ditšhelete tse di dirilenggo.' },
+  walletNote: { en: 'Madi and withdrawals arrive in v1.1. Pula and Botho are the v1 currencies.', tn: 'Madi le go tsoa go dirwa mo v1.1. Pula le Botho ke tšhelete ya v1.' },
+  pages: { en: 'pages', tn: 'maqephe' },
+  restored: { en: 'restored', tn: 'e boletsoe' },
+  quests: { en: 'Quests', tn: 'Dithata' },
+  noQuests: { en: 'No quests yet.', tn: 'Ha go na dithata gape.' },
+  discoveries: { en: 'Discoveries', tn: 'Dintho tse di bonweng' },
+  noDiscoveries: { en: 'Nothing foraged yet.', tn: 'Ha go na se o se fenyang gape.' },
+  mogoloNote: { en: "Mogolo's Note", tn: 'Tlhaloso ya Mogolo' },
+  journalEmpty: {
+    en: 'Mogolo says the bush keeps its secrets until you walk it. Forage the Bushveld to begin your journal.',
+    tn: 'Mogolo o re naga e boloka diphiri tsa yone go fitlha o tsamaya mo go yone. Fula Bushveld go simolola tlaleho ya gago.',
+  },
 
   // ---- Farm Screen ----
   emptySoil: { en: 'Empty Soil', tn: 'Mobu e Se Naga' },
@@ -42,6 +66,7 @@ export const translations = {
   granary: { en: 'Granary:', tn: 'Mogolo:' },
   growth: { en: 'Growth', tn: 'Ngwago' },
   wellPumped: { en: 'Well Pumped', tn: 'Lentswe le Hudiilwe' },
+  noTank: { en: 'NO TANK', tn: 'GA GO NA THANKA' },
   wellPumpedDesc: {
     en: 'Extracted 15L from bedrock aquifer.',
     tn: 'Go ntšhitse 15L mo meyeng ya mobu.',
@@ -81,6 +106,17 @@ export const translations = {
   buyConfirm: { en: 'Buy', tn: 'Reka' },
   sellConfirm: { en: 'Sell', tn: 'Radisa' },
   each: { en: 'each', tn: 'nngwe' },
+  tapToSell: { en: 'tap to sell', tn: 'tobetsa go radisa' },
+  // 07 §7.5 — the fee is shown before the button, never after (01 §4).
+  priceToday: { en: 'Price today', tn: 'Theko ya gompieno' },
+  gross: { en: 'Gross', tn: 'Kakaretso' },
+  coopTax: { en: 'Co-op tax', tn: 'Lekgetho la Co-op' },
+  youReceive: { en: 'You receive', tn: 'O amogela' },
+  priceUnavailable: {
+    en: 'Could not fetch a price for that. Please try again.',
+    tn: 'Ga go a kgona go bona theko. Leka gape.',
+  },
+  sellFailed: { en: 'Sell Failed', tn: 'Go Radisa go Paletse' },
 
   // ---- Inventory Screen ----
   inventory: { en: 'Inventory', tn: 'Sesupu' },
@@ -109,6 +145,22 @@ export const translations = {
   baobab: { en: 'Ancient Baobab', tn: 'Baobab ya Kgale' },
   cave: { en: 'Granite Cave', tn: 'Keletšo ya Granite' },
   energy: { en: 'Energy', tn: 'Bollong' },
+
+  // ---- Bushveld Screen (Bushveld wiring) ----
+  kagiso: { en: 'Kagiso', tn: 'Kagiso' },
+  settled: { en: 'Settled', tn: 'E Khutsitseng' },
+  resting: { en: 'Resting', tn: 'E Khutšang' },
+  notSettled: { en: 'Not settled', tn: 'Ga e a Khutsa' },
+  needsKagiso: { en: 'Need {n} Kagiso', tn: 'E hloka Kagiso {n}' },
+  sparkle: { en: 'Sparkle', tn: 'Lesedi' },
+  seasonal: { en: 'In season', tn: 'Nakong' },
+  newDiscovery: { en: 'New Discovery!', tn: 'Tlhakiso e Ncha!' },
+  sceneLocked: { en: 'Locked', tn: 'E Notlilwe' },
+  comingSoon: { en: 'Coming soon', tn: 'E tla go feta nako' },
+  restoration: { en: 'Restoration', tn: 'Tokafatšo' },
+  finds: { en: 'Finds', tn: 'Dintho' },
+  tapToGather: { en: 'Tap to gather', tn: 'Tobetsa go kokota' },
+  bothoNeeded: { en: 'Botho {n} to enter', tn: 'Botho {n} go tsena' },
 
   // ---- Kgotla Screen ----
   communityHub: { en: 'Community Hub', tn: 'Setšhaba sa Setšo' },

@@ -7,6 +7,7 @@ dist/
 build/
 .next/
 out/
+.next.prev-1789021611/
 
 # Environment files
 .env
@@ -46,3 +47,8 @@ yarn-error.log*
 
 # Misc
 *.tsbuildinfo
+apps/web/.next.prev-1789021611/cache/webpack/server-production/3.pack
+apps/web/.next.prev-1789021611/trace
+
+# Agent / working memory (project data, not source)
+.workbuddy-ai/

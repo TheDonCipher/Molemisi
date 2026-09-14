@@ -84,7 +84,7 @@ export class AdminService {
     const { data, error } = await this.supabase
       .getClient()
       .from('profiles')
-      .select('id, display_name, currency, farm_level, created_at')
+      .select('id, display_name, currency, created_at')
       .or(`display_name.ilike.%${query}%`)
       .limit(limit);
 
@@ -314,8 +314,6 @@ export class AdminService {
       .getClient()
       .from('farms')
       .update({
-        level: 1,
-        xp: 0,
         plot_count: 4,
         weather_state: 'clear',
         season: 'spring',
@@ -332,8 +330,6 @@ export class AdminService {
       .from('profiles')
       .update({
         currency: 100,
-        farm_xp: 0,
-        farm_level: 1,
         energy: 100,
         updated_at: new Date().toISOString(),
       })

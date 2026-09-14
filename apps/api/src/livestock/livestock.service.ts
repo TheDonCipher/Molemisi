@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { WalletService } from '../wallet/wallet.service';
 import { getAnimalConfig } from '@molemisi/game-config';
 
 interface LivestockRow {
@@ -24,7 +25,10 @@ interface LivestockRow {
 
 @Injectable()
 export class LivestockService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private wallet: WalletService,
+  ) {}
 
   async listLivestock(farmId: string): Promise<
     Array<{
@@ -84,17 +88,6 @@ export class LivestockService {
       throw new BadRequestException(`Unknown animal type: ${animalType}`);
     }
 
-    // Check farm level requirement
-    const { data: farm } = await adminClient
-      .from('farms')
-      .select('level')
-      .eq('id', farmId)
-      .single();
-
-    if (farm && (farm.level as number) < config.unlockLevel) {
-      throw new BadRequestException(`Farm level ${config.unlockLevel} required for ${config.name}`);
-    }
-
     // Check if player has the required building
     const { data: building } = await adminClient
       .from('buildings')
@@ -123,22 +116,8 @@ export class LivestockService {
       );
     }
 
-    // Check currency
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('currency')
-      .eq('id', userId)
-      .single();
-
-    if (!profile || (profile.currency as number) < config.purchaseCost) {
-      throw new BadRequestException(`Insufficient currency. Need ${config.purchaseCost} P`);
-    }
-
-    // Deduct currency
-    await adminClient
-      .from('profiles')
-      .update({ currency: (profile.currency as number) - config.purchaseCost })
-      .eq('id', userId);
+    // Spend through the wallet (05 §P2). Atomic check-and-debit.
+    await this.wallet.spendPula(userId, config.purchaseCost, 'seed_purchase');
 
     // Create animal
     const { data: animal, error } = await adminClient
@@ -163,15 +142,7 @@ export class LivestockService {
       throw new Error('Failed to create animal');
     }
 
-    // Record ledger entry
-    await adminClient.from('game_ledger_entries').insert({
-      user_id: userId,
-      entry_type: 'PURCHASE',
-      item_type: animalType,
-      quantity: 1,
-      currency_change: -config.purchaseCost,
-      description: `Purchased ${config.name}${name ? ` "${name}"` : ''}`,
-    });
+    // Ledger row is written by wallet_apply(); game_ledger_entries is retired.
 
     return {
       id: (animal as Record<string, unknown>).id as string,
@@ -362,15 +333,6 @@ export class LivestockService {
   > {
     const adminClient = this.supabaseService.getAdminClient();
 
-    // Get farm level
-    const { data: farm } = await adminClient
-      .from('farms')
-      .select('level')
-      .eq('id', farmId)
-      .single();
-
-    const farmLevel = (farm?.level as number) || 1;
-
     // Get owned animal counts
     const { data: ownedAnimals } = await adminClient.from('livestock').select('animal_type');
 
@@ -383,7 +345,6 @@ export class LivestockService {
     // Return all available animals
     const { ANIMALS } = await import('@molemisi/game-config');
     return Object.values(ANIMALS)
-      .filter((a) => a.unlockLevel <= farmLevel)
       .map((a) => ({
         id: a.id,
         name: a.name,

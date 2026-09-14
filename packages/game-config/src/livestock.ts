@@ -1,8 +1,17 @@
+/**
+ * Livestock — docs/MVP/03_Core_Systems.md §5.
+ *
+ * D5/C12 — levels and XP are RETIRED. Animals are NOT level-gated (the old
+ * `unlockLevel` has been deleted). Progression is the Pura/Botho/Journal pillar
+ * set, so an animal is available as soon as the player can pay its
+ * `purchaseCost` and has the required building. The `getUnlockedAnimals(level)`
+ * helper that filtered on a level is gone too.
+ */
+
 export interface AnimalConfig {
   id: string;
   name: string;
   description: string;
-  unlockLevel: number;
   feedPerDay: number;
   feedType: string;
   productionCycleHours: number;
@@ -22,7 +31,6 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     id: 'chicken',
     name: 'Chicken',
     description: 'A friendly chicken that lays eggs daily.',
-    unlockLevel: 1,
     feedPerDay: 2,
     feedType: 'grain',
     productionCycleHours: 12,
@@ -40,7 +48,6 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     id: 'goat',
     name: 'Goat',
     description: 'A hardy goat that produces milk.',
-    unlockLevel: 3,
     feedPerDay: 4,
     feedType: 'hay',
     productionCycleHours: 24,
@@ -58,7 +65,6 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     id: 'cow',
     name: 'Cow',
     description: 'A dairy cow that produces milk.',
-    unlockLevel: 5,
     feedPerDay: 8,
     feedType: 'hay',
     productionCycleHours: 24,
@@ -76,7 +82,6 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     id: 'pig',
     name: 'Pig',
     description: 'A pig that occasionally finds truffles.',
-    unlockLevel: 6,
     feedPerDay: 6,
     feedType: 'mixed_feed',
     productionCycleHours: 48,
@@ -94,8 +99,4 @@ export const ANIMALS: Record<string, AnimalConfig> = {
 
 export function getAnimalConfig(animalType: string): AnimalConfig | undefined {
   return ANIMALS[animalType];
-}
-
-export function getUnlockedAnimals(level: number): AnimalConfig[] {
-  return Object.values(ANIMALS).filter((a) => a.unlockLevel <= level);
 }

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { establishSession } from '../../../lib/auth';
 
 const API_BASE = 'http://localhost:3001/api/v1';
 
@@ -47,9 +48,12 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Store admin session
+      // Establish the browser Supabase session so admin logout is a real
+      // Supabase sign-out, then store the admin session markers.
+      await establishSession(token, data.data.refreshToken);
       localStorage.setItem('molemisi_admin_token', token);
       localStorage.setItem('molemisi_admin_email', email);
+      localStorage.setItem('molemisi_role', 'admin');
       router.push('/admin');
     } catch {
       setError('Network error. Please try again.');

@@ -1,183 +1,192 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useBushveld, BushveldHotspot } from '../../lib/bushveld';
 import { useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
 
-const RESOURCES = [
-  {
-    id: 'marula',
-    nameKey: 'marula' as const,
-    icon: '🌿',
-    reward: '+3 Marula Fruit',
-    energy: 0,
-    position: 'left-[8%] bottom-[25%]',
-    lootName: 'Marula Fruit',
-  },
-  {
-    id: 'waterhole',
-    nameKey: 'waterhole' as const,
-    icon: '💧',
-    reward: '+2 River Reeds',
-    energy: 5,
-    position: 'left-[45%] bottom-[30%]',
-    lootName: 'River Reeds',
-  },
-  {
-    id: 'baobab',
-    nameKey: 'baobab' as const,
-    icon: '🌳',
-    reward: '+15 Energy',
-    energy: -15,
-    position: 'right-[18%] top-[35%]',
-    lootName: undefined,
-  },
-  {
-    id: 'cave',
-    nameKey: 'cave' as const,
-    icon: '🪨',
-    reward: '+2 Raw Stone',
-    energy: 10,
-    position: 'right-[8%] bottom-[28%]',
-    lootName: 'Granite Stone',
-  },
-];
+const STAGE_LABEL = ['Degraded', 'Partial', 'Recovered', 'Full'];
+
+function fmtPip(seconds: number): string {
+  if (!seconds || seconds <= 0) return '';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 export function BushveldScreen() {
-  const { energy, maxEnergy, forageBushveld, setActiveNav } = useGame();
+  const { setActiveNav } = useGame();
   const { tl } = useTranslation();
+  const { scenes, active, hotspots, loading, busy, selectScene, collect } = useBushveld();
+  const [selected, setSelected] = useState<BushveldHotspot | null>(null);
 
-  const [selectedResource, setSelectedResource] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const energyPercent = Math.round((energy / maxEnergy) * 100);
-  const resource = RESOURCES.find((r) => r.id === selectedResource);
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2000);
-  }, []);
-
-  const handleForage = (r: (typeof RESOURCES)[0]) => {
-    if (r.energy > 0 && energy < r.energy) {
-      showToast(tl('notEnoughEnergy'));
-      return;
-    }
-    forageBushveld(
-      r.id,
-      r.energy,
-      r.reward,
-      `Foraged from ${tl(r.nameKey)}`,
-      'spa',
-      r.lootName,
-      r.id === 'cave' ? 2 : 2,
-    );
-    showToast(r.reward);
-    setSelectedResource(null);
-  };
+  const bgSrc = active?.restorationAssetKey
+    ? `/assets/${active.restorationAssetKey}`
+    : '/assets/backgrounds/bushveld_scene.png';
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
-      {/* Background */}
+      {/* Background — prefers the API's restoration asset key, falls back to the
+          generic Bushveld backdrop (the stage/hotspot PNGs are a pending art drop). */}
       <div className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-0">
         <img
-          alt="Botswana Savanna"
-          className="w-full h-full object-cover object-center filter saturate-[1.1]"
-          src="/assets/backgrounds/bushveld_scene.png"
+          alt="Bushveld"
+          className="w-full h-full object-cover object-center"
+          src={bgSrc}
           onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
+            const img = e.target as HTMLImageElement;
+            img.src = '/assets/backgrounds/bushveld_scene.png';
+            img.onerror = null;
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
-      {/* Top HUD */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-3 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
-          <span className="text-lg">🧭</span>
-          <div>
-            <span className="font-headline text-xs text-primary uppercase font-bold block">
-              {tl('bushveld')}
-            </span>
-            <span className="font-mono text-[9px] text-on-surface-variant">
-              {tl('savannaFringe')}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
-          <span className="text-sm">⚡</span>
-          <div className="w-16 h-2 bg-surface-container-lowest overflow-hidden">
-            <div
-              className={`h-full transition-all ${
-                energy < 20
-                  ? 'bg-status-danger'
-                  : energy < 50
-                    ? 'bg-status-warning'
-                    : 'bg-status-success'
-              }`}
-              style={{ width: `${energyPercent}%` }}
-            />
-          </div>
-          <span className="font-mono text-[10px] text-cream-surface font-bold">{energy}</span>
-        </div>
-      </div>
-
-      {/* Resources */}
-      <div className="relative z-10 flex-1 bg-black/25" style={{ minHeight: '60vh' }}>
-        {RESOURCES.map((r) => (
+      {/* Scene tabs */}
+      <div className="relative z-10 flex gap-1 px-2 py-2 overflow-x-auto">
+        {scenes.map((s) => (
           <button
-            key={r.id}
-            onClick={() => setSelectedResource(selectedResource === r.id ? null : r.id)}
-            className={`absolute ${r.position} z-20 transition-all active:scale-95`}
+            key={s.slug}
+            onClick={() => selectScene(s.slug)}
+            className={`px-3 py-1.5 text-xs font-mono uppercase border whitespace-nowrap ${
+              active?.slug === s.slug
+                ? 'bg-primary-container text-on-primary-container border-primary'
+                : 'bg-wood-dark/80 text-on-surface-variant border-wood-border'
+            }`}
           >
-            <div
-              className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl border-2 shadow-lg ${
-                selectedResource === r.id
-                  ? 'border-primary ring-2 ring-primary/50 bg-primary-container'
-                  : 'border-wood-border bg-wood-dark/80 hover:border-primary/50'
-              }`}
-            >
-              {r.icon}
-            </div>
-            <span className="block text-center font-mono text-[9px] text-cream-surface mt-1 bg-wood-dark/60 px-1">
-              {tl(r.nameKey)}
-            </span>
+            {s.name}
+            {!s.unlocked && ' 🔒'}
           </button>
         ))}
       </div>
 
-      {/* Resource Action Card */}
-      {resource && (
+      {/* Kagiso + restoration HUD (replaces the retired Energy bar, D5) */}
+      {active && (
+        <div className="relative z-10 flex items-center justify-between px-4 py-2 gap-2">
+          <div className="flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
+            <span className="font-headline text-xs text-primary uppercase font-bold">{tl('kagiso')}</span>
+            <div className="flex gap-0.5">
+              {Array.from({ length: active.kagisoMax }).map((_, i) => (
+                <span
+                  key={i}
+                  className={`w-3 h-3 rounded-sm border ${
+                    i < active.kagiso
+                      ? 'bg-status-success border-status-success'
+                      : 'bg-surface-container-lowest border-wood-border'
+                  }`}
+                />
+              ))}
+            </div>
+            {active.secondsToNextPip > 0 && (
+              <span className="font-mono text-[9px] text-on-surface-variant">
+                +1 {fmtPip(active.secondsToNextPip)}
+              </span>
+            )}
+          </div>
+          <div className="bg-wood-dark/90 px-3 py-1.5 border border-wood-border text-right">
+            <span className="font-mono text-[9px] text-on-surface-variant block">
+              {tl('restoration')}
+            </span>
+            <span className="font-headline text-xs text-primary uppercase font-bold">
+              {STAGE_LABEL[active.restorationStage] ?? ''} ({active.findsDiscovered}/
+              {active.findsTotal})
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Hotspots */}
+      <div className="relative z-10 flex-1" style={{ minHeight: '55vh' }}>
+        {active && active.unlocked && hotspots.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="font-body text-sm text-cream-surface bg-wood-dark/70 px-3 py-2 border border-wood-border">
+              {tl('comingSoon')}
+            </p>
+          </div>
+        )}
+        {active && !active.unlocked && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center bg-wood-dark/80 px-4 py-3 border border-wood-border">
+              <p className="font-headline text-sm text-primary uppercase font-bold">
+                {tl('sceneLocked')}
+              </p>
+              <p className="font-body text-xs text-on-surface-variant mt-1">
+                {tl('bothoNeeded').replace('{n}', '300')}
+              </p>
+            </div>
+          </div>
+        )}
+        {hotspots.map((h) => {
+          const isReady = h.state === 'ready';
+          return (
+            <button
+              key={h.id}
+              onClick={() => setSelected(h)}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${h.x}%`, top: `${h.y}%` }}
+            >
+              <span
+                className={`block w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg relative ${
+                  isReady
+                    ? 'bg-primary-container/90 border-primary animate-pulse'
+                    : 'bg-wood-dark/70 border-wood-border opacity-60'
+                }`}
+              >
+                🌿
+                {h.isSparklingToday && (
+                  <span className="absolute -top-2 -right-2 text-yellow-300 text-sm">✦</span>
+                )}
+                {h.isSeasonalActiveToday && (
+                  <span className="absolute -bottom-2 -right-2 text-pink-300 text-xs">🌸</span>
+                )}
+              </span>
+              <span className="block text-center font-mono text-[9px] text-cream-surface mt-0.5 bg-wood-dark/60 px-1 max-w-[80px] truncate">
+                {h.tell}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected hotspot action */}
+      {selected && (
         <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-sm mx-auto animate-slide-up">
           <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">{resource.icon}</span>
+              <span className="text-xl">🌿</span>
               <span className="font-headline text-sm text-cream-surface font-bold">
-                {tl(resource.nameKey)}
+                {selected.tell}
               </span>
             </div>
-            <p className="font-body text-xs text-on-surface-variant mb-3">
-              {resource.reward}
-              {resource.energy > 0 && (
-                <span className="text-status-warning ml-1">
-                  (-{resource.energy} {tl('energy')})
-                </span>
-              )}
-              {resource.energy < 0 && (
-                <span className="text-status-success ml-1">
-                  (+{Math.abs(resource.energy)} {tl('energy')})
-                </span>
-              )}
+            <p className="font-body text-xs text-on-surface-variant mb-1">
+              {tl('kagiso')} cost: {selected.kagisoCost}
             </p>
+            {selected.state === 'ready' && (
+              <p className="font-mono text-[10px] text-status-success mb-3">{tl('tapToGather')}</p>
+            )}
+            {selected.state === 'scene_not_settled' && (
+              <p className="font-mono text-[10px] text-status-warning mb-3">
+                {tl('notSettled')} — {tl('needsKagiso').replace('{n}', String(selected.kagisoCost))}
+              </p>
+            )}
+            {selected.state === 'resting' && (
+              <p className="font-mono text-[10px] text-status-warning mb-3">
+                {tl('resting')} · ~{Math.ceil((selected.etaSeconds ?? 0) / 60)} min
+              </p>
+            )}
             <div className="flex gap-2">
               <button
-                onClick={() => handleForage(resource)}
-                className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
+                disabled={!isReady(selected) || busy}
+                onClick={() => {
+                  collect(selected);
+                  setSelected(null);
+                }}
+                className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
               >
-                {resource.energy < 0 ? tl('rest') : tl('collect')}
+                {tl('collect')}
               </button>
               <button
-                onClick={() => setSelectedResource(null)}
+                onClick={() => setSelected(null)}
                 className="py-2 px-3 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
               >
                 {tl('leave')}
@@ -197,14 +206,15 @@ export function BushveldScreen() {
         </button>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
-          <div className="bg-status-success/90 text-wood-dark px-4 py-2 font-mono text-xs font-bold shadow-lg">
-            {toast}
-          </div>
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#210e0b]/70">
+          <p className="font-headline text-sm text-primary uppercase font-bold">{tl('bushveld')}…</p>
         </div>
       )}
     </div>
   );
+}
+
+function isReady(h: BushveldHotspot) {
+  return h.state === 'ready';
 }

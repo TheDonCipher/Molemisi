@@ -21,7 +21,7 @@ function getToken() {
 }
 
 export function HeaderNav() {
-  const { pula, farmLevel, activeNav, setActiveNav } = useGame();
+  const { pula, activeNav, setActiveNav } = useGame();
   const { tl } = useTranslation();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -32,6 +32,10 @@ export function HeaderNav() {
     { id: 'kgotla', label: tl('kgotla') },
     { id: 'bushveld', label: tl('wild') },
     { id: 'market', label: tl('market') },
+    { id: 'store', label: tl('store') },
+    { id: 'wallet', label: tl('wallet') },
+    { id: 'journal', label: tl('journal') },
+    { id: 'crafting', label: tl('crafting') },
     { id: 'inventory', label: tl('bag') },
     { id: 'settings', label: tl('config') },
   ];
@@ -133,16 +137,13 @@ export function HeaderNav() {
           </span>
         </div>
 
-        {/* Pula + Level chip */}
+        {/* Pula chip */}
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1 bg-wood-dark px-2 py-1 border border-wood-border">
             <span className="text-[10px]">💰</span>
             <span className="font-mono text-[10px] md:text-[11px] text-gold-currency font-bold">
               {pula.toLocaleString()}
             </span>
-          </div>
-          <div className="hidden sm:flex items-center gap-1 bg-wood-dark px-2 py-1 border border-wood-border">
-            <span className="font-mono text-[10px] text-primary font-bold">Lv.{farmLevel}</span>
           </div>
         </div>
 
@@ -158,21 +159,11 @@ export function HeaderNav() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => {
-                    const navName =
-                      tab.id === 'farm'
-                        ? 'Farm'
-                        : tab.id === 'kgotla'
-                          ? 'Kgotla'
-                          : tab.id === 'bushveld'
-                            ? 'Bushveld'
-                            : tab.id === 'market'
-                              ? 'Market'
-                              : tab.id === 'inventory'
-                                ? 'Inventory'
-                                : 'Settings';
-                    setActiveNav(navName);
-                  }}
+                  onClick={() =>
+                    // Screens are matched case-insensitively, so the nav id
+                    // capitalised is the whole mapping — no lookup table.
+                    setActiveNav(tab.id.charAt(0).toUpperCase() + tab.id.slice(1))
+                  }
                   className={`px-2 md:px-3 py-1 font-mono text-[10px] md:text-xs uppercase whitespace-nowrap transition-colors ${
                     isActive
                       ? 'text-primary font-bold border-b-2 border-primary'

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { establishSession, fetchRole } from '../../../lib/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -28,9 +29,10 @@ export default function LoginPage() {
         return;
       }
 
-      // Store token and redirect to game
-      localStorage.setItem('molemisi_token', data.data.token);
-      localStorage.setItem('token', data.data.token);
+      // Hand the session to the browser Supabase client (it owns token refresh
+      // and logout), mirror the token for apiFetch, and cache the account role.
+      await establishSession(data.data.token, data.data.refreshToken);
+      await fetchRole();
       window.location.href = '/game';
     } catch {
       setError('Network error. Please try again.');

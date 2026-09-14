@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { WaterService } from '../water/water.service';
 import {
-  getCropConfig,
   getAnimalConfig,
   getBuildingConfig,
   generateWeather,
-  getSeasonGrowthModifier,
   getNextSeason,
   MAX_OFFLINE_HOURS,
   SELF_SUSTAINING_THRESHOLD_HOURS,
@@ -14,24 +13,6 @@ import {
   type WeatherState,
   type Season,
 } from '@molemisi/game-config';
-
-interface CropInstanceRow {
-  id: string;
-  plot_id: string;
-  farm_id: string;
-  crop_type: string;
-  growth_stage: number;
-  max_growth_stages: number;
-  hydration: number;
-  health: number;
-  fertilizer_active: boolean;
-  fertilizer_bonus: number;
-  disease_events: number;
-  pest_events: number;
-  planted_at: string;
-  last_watered_at: string;
-  expected_ready_at: string | null;
-}
 
 interface LivestockRow {
   id: string;
@@ -88,7 +69,10 @@ export interface SimulationResult {
 
 @Injectable()
 export class SimulationService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private waterService: WaterService,
+  ) {}
 
   /**
    * Run the complete elapsed-time simulation for a farm.
@@ -165,45 +149,14 @@ export class SimulationService {
       result.notifications.push(`Season changed to ${newSeason}!`);
     }
 
-    // Get all active crops
-    const { data: crops } = await adminClient
-      .from('crop_instances')
-      .select('*')
-      .eq('farm_id', farmId);
-
-    if (crops && crops.length > 0) {
-      for (const rawCrop of crops) {
-        const crop = rawCrop as unknown as CropInstanceRow;
-        const cropResult = this.simulateCrop(crop, cappedHours, currentWeather);
-        result.cropsSimulated++;
-
-        if (cropResult.advanced) result.cropsAdvanced++;
-        if (cropResult.withered) result.cropsWithered++;
-        if (cropResult.ready) result.cropsReady++;
-
-        // Update crop in database
-        await adminClient
-          .from('crop_instances')
-          .update({
-            growth_stage: cropResult.newStage,
-            hydration: cropResult.newHydration,
-            health: cropResult.newHealth,
-            disease_events: cropResult.diseaseEvents,
-            pest_events: cropResult.pestEvents,
-            updated_at: new Date(now).toISOString(),
-          })
-          .eq('id', crop.id);
-
-        // Update plot state
-        await adminClient
-          .from('farm_plots')
-          .update({
-            state: cropResult.newState,
-            updated_at: new Date(now).toISOString(),
-          })
-          .eq('id', crop.plot_id);
-      }
-    }
+    // Crops — delegated to the P4 water-gated growth engine. The legacy per-stage sim
+    // (drought-withering, disease/pest rolls) is removed: 03 §1.1/§1.3 retired those
+    // fail-states, and an empty tank must halt growth without killing the crop.
+    const growth = await this.waterService.advanceFarmGrowth(farmId, new Date(now));
+    result.cropsSimulated = growth.cropsAdvanced;
+    result.cropsAdvanced = growth.cropsAdvanced;
+    result.cropsReady = growth.cropsReady;
+    result.cropsWithered = 0;
 
     // Get all livestock
     const { data: livestock } = await adminClient
@@ -297,129 +250,6 @@ export class SimulationService {
       .eq('id', farmId);
 
     return result;
-  }
-
-  /**
-   * Simulate a single crop's growth over elapsed hours.
-   */
-  private simulateCrop(
-    crop: CropInstanceRow,
-    elapsedHours: number,
-    weather: WeatherState,
-  ): {
-    newStage: number;
-    newHydration: number;
-    newHealth: number;
-    newState: string;
-    diseaseEvents: number;
-    pestEvents: number;
-    advanced: boolean;
-    withered: boolean;
-    ready: boolean;
-  } {
-    const config = getCropConfig(crop.crop_type);
-    if (!config) {
-      return {
-        newStage: crop.growth_stage,
-        newHydration: crop.hydration,
-        newHealth: crop.health,
-        newState: 'GROWING',
-        diseaseEvents: crop.disease_events,
-        pestEvents: crop.pest_events,
-        advanced: false,
-        withered: false,
-        ready: false,
-      };
-    }
-
-    let hydration = crop.hydration;
-    let health = crop.health;
-    let diseaseEvents = crop.disease_events;
-    let pestEvents = crop.pest_events;
-
-    // Decay hydration
-    const decayAmount = config.waterDecayRate * elapsedHours;
-    hydration = Math.max(0, hydration - decayAmount);
-
-    // Rain adds hydration
-    if (weather.type === 'rain') {
-      hydration = Math.min(1.0, hydration + 0.2 * elapsedHours);
-    } else if (weather.type === 'storm') {
-      hydration = Math.min(1.0, hydration + 0.3 * elapsedHours);
-    }
-
-    // Calculate growth
-    let newStage = crop.growth_stage;
-    const alreadyReady = crop.growth_stage >= crop.max_growth_stages;
-
-    if (!alreadyReady && hydration > 0.2) {
-      // Growth multiplier: scales with hydration (0.2-1.0)
-      const hydrationMultiplier = Math.max(0.2, hydration);
-
-      // Season modifier
-      const seasonModifier = getSeasonGrowthModifier(weather.season);
-
-      // Fertilizer bonus
-      const fertilizerMultiplier = crop.fertilizer_active ? 1 + crop.fertilizer_bonus : 1;
-
-      // Effective growth hours
-      const effectiveGrowthHours =
-        elapsedHours * hydrationMultiplier * seasonModifier * fertilizerMultiplier;
-
-      // Hours per stage
-      const hoursPerStage = config.timePerStage / 60;
-
-      // How many stages can we advance?
-      const stagesAdvanced = Math.floor(effectiveGrowthHours / hoursPerStage);
-
-      if (stagesAdvanced > 0) {
-        newStage = Math.min(crop.max_growth_stages, crop.growth_stage + stagesAdvanced);
-
-        // Disease/pest check at each stage boundary
-        for (let i = 0; i < stagesAdvanced; i++) {
-          const diseaseChance = this.getDiseaseChance(config, weather, hydration);
-          if (Math.random() < diseaseChance) {
-            diseaseEvents++;
-            health = Math.max(0, health - 0.25);
-          }
-
-          const pestChance = this.getPestChance(config, weather);
-          if (Math.random() < pestChance) {
-            pestEvents++;
-            health = Math.max(0, health - 0.15);
-          }
-        }
-      }
-    }
-
-    // Check for withering
-    let newState = 'GROWING';
-    let withered = false;
-    let ready = false;
-
-    if (hydration === 0 && elapsedHours > 6) {
-      newState = 'WITHERED';
-      withered = true;
-    } else if (newStage >= crop.max_growth_stages) {
-      newState = 'READY';
-      ready = !alreadyReady;
-    } else if (newStage > 0) {
-      newState = 'GROWING';
-    } else {
-      newState = 'PLANTED';
-    }
-
-    return {
-      newStage,
-      newHydration: hydration,
-      newHealth: health,
-      newState,
-      diseaseEvents,
-      pestEvents,
-      advanced: newStage > crop.growth_stage,
-      withered,
-      ready,
-    };
   }
 
   /**
@@ -613,30 +443,6 @@ export class SimulationService {
     }
 
     return changes;
-  }
-
-  /**
-   * Calculate disease chance based on crop config, weather, and hydration.
-   */
-  private getDiseaseChance(
-    config: { diseaseChancePerStage: number },
-    weather: WeatherState,
-    hydration: number,
-  ): number {
-    const baseChance = config.diseaseChancePerStage;
-    const humidityModifier = weather.type === 'rain' ? 1.3 : weather.type === 'storm' ? 1.5 : 1.0;
-    const hydrationModifier = hydration < 0.3 ? 1.2 : 1.0;
-    return Math.min(baseChance * humidityModifier * hydrationModifier, 0.5);
-  }
-
-  /**
-   * Calculate pest chance based on crop config and weather.
-   */
-  private getPestChance(config: { pestChancePerStage: number }, weather: WeatherState): number {
-    const baseChance = config.pestChancePerStage;
-    const warmthModifier = weather.temperature > 30 ? 1.4 : 1.0;
-    const rainModifier = weather.type === 'rain' || weather.type === 'storm' ? 0.5 : 1.0;
-    return Math.min(baseChance * warmthModifier * rainModifier, 0.4);
   }
 
   private emptyResult(): SimulationResult {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useGame, Plot } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
 import { PixelIcon } from '@/components/PixelIcon';
@@ -25,12 +25,11 @@ export function FarmScreen() {
     pula,
     waterLevel,
     maxWater,
+    hasTank,
     refillWell,
     plots,
     harvestPlot,
-    waterPlot,
     plantPlot,
-    quickWaterAll,
     quickHarvestAll,
     granaryEggs,
     granarySorghum,
@@ -45,13 +44,6 @@ export function FarmScreen() {
 
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [showCropPicker, setShowCropPicker] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2000);
-  }, []);
-
   // Seed picker from inventory
   const availableSeeds = inventory
     .filter((i) => i.itemType?.endsWith('_seed') && i.quantity > 0)
@@ -79,37 +71,25 @@ export function FarmScreen() {
 
   const handlePlant = (seed: (typeof seedPicker)[0]) => {
     if (selectedPlot) {
+      // plantPlot reports its own outcome (Planted! / Plant Failed) once the
+      // server responds — don't fire a premature success toast on top of it.
       plantPlot(selectedPlot.id, seed.name, seed.cost, seed.icon);
-      showToast(`${tl('planted')} ${seed.name}`);
       setSelectedPlot(null);
       setShowCropPicker(false);
     }
   };
 
-  const handleWater = () => {
-    if (selectedPlot) {
-      waterPlot(selectedPlot.id);
-      showToast(tl('watered'));
-      setSelectedPlot(null);
-    }
-  };
-
   const handleHarvest = () => {
     if (selectedPlot) {
+      // harvestPlot reports its own outcome (Harvest Complete / Harvest Failed).
       harvestPlot(selectedPlot.id);
-      showToast(tl('harvested'));
       setSelectedPlot(null);
     }
-  };
-
-  const handleQuickWater = () => {
-    quickWaterAll();
-    showToast(tl('allFieldsWatered'));
   };
 
   const handleQuickHarvest = () => {
+    // quickHarvestAll reports its own outcome (Harvest Complete / Nothing Ready).
     quickHarvestAll();
-    showToast(tl('allHarvested'));
   };
 
   const waterPercent = Math.round((waterLevel / maxWater) * 100);
@@ -159,7 +139,7 @@ export function FarmScreen() {
                     ? 'border-primary ring-2 ring-primary/50 shadow-lg'
                     : plot.canHarvest
                       ? 'border-gold-currency animate-pulse'
-                      : plot.canWater
+                      : plot.stalled
                         ? 'border-sky-blue'
                         : 'border-wood-border hover:border-primary/50'
                 }`}
@@ -173,18 +153,20 @@ export function FarmScreen() {
                     {tl('ready')}
                   </span>
                 )}
-                {plot.canWater && (
-                  <span className="font-mono text-[9px] text-sky-blue font-bold">
-                    💧 {plot.hydration}%
-                  </span>
+                {plot.stalled && (
+                  // Not a water level — a stall. The crop stopped because the
+                  // tank is empty, and the only fix is the shared tank.
+                  <span className="font-mono text-[9px] text-sky-blue font-bold">💧 DRY</span>
                 )}
                 {plot.state === 'TILLED' && (
                   <span className="font-mono text-[9px] text-secondary">{tl('emptySoil')}</span>
                 )}
-                {plot.state === 'GROWING' && !plot.canWater && (
+                {plot.state === 'GROWING' && (
                   <div className="w-full h-1.5 bg-surface-container-high overflow-hidden">
                     <div
-                      className="h-full bg-status-success transition-all"
+                      className={`h-full transition-all ${
+                        plot.stalled ? 'bg-sky-blue/50' : 'bg-status-success'
+                      }`}
                       style={{ width: `${plot.stageProgress}%` }}
                     />
                   </div>
@@ -228,12 +210,17 @@ export function FarmScreen() {
                   {tl('plant')}
                 </button>
               )}
-              {selectedPlot.canWater && (
+              {selectedPlot.stalled && (
+                // Points at the real fix instead of offering a per-plot action
+                // that no longer exists on the server.
                 <button
-                  onClick={handleWater}
+                  onClick={() => {
+                    refillWell();
+                    setSelectedPlot(null);
+                  }}
                   className="flex-1 py-2 bg-sky-deep text-cream-surface font-mono text-xs uppercase font-bold active:translate-y-0.5"
                 >
-                  {tl('water')}
+                  {tl('pumpWell')}
                 </button>
               )}
               {selectedPlot.canHarvest && (
@@ -310,13 +297,8 @@ export function FarmScreen() {
 
       {/* Quick Actions */}
       <div className="fixed bottom-20 md:bottom-4 left-4 z-20 flex flex-col gap-2">
-        <button
-          onClick={handleQuickWater}
-          className="w-10 h-10 bg-sky-deep/90 text-cream-surface border border-sky-blue flex items-center justify-center shadow-md active:scale-95"
-          title={tl('waterAll')}
-        >
-          💧
-        </button>
+        {/* No "water all" button: there is no per-plot action to batch. The 🚰
+            below fills the one shared tank for the whole farm. */}
         <button
           onClick={handleQuickHarvest}
           className="w-10 h-10 bg-primary-container/90 text-on-primary-container border border-primary flex items-center justify-center shadow-md active:scale-95"
@@ -326,8 +308,9 @@ export function FarmScreen() {
         </button>
         <button
           onClick={() => {
+            // refillWell reports its own outcome (+N L for M Pula, or the
+            // failure) — don't stack a second toast on top of it.
             refillWell();
-            showToast(tl('wellPumped'));
           }}
           className="w-10 h-10 bg-wood-dark/90 text-cream-surface border border-wood-border flex items-center justify-center shadow-md active:scale-95"
           title={tl('pumpWell')}
@@ -343,23 +326,22 @@ export function FarmScreen() {
             <span className="text-sm">💧</span>
             <div className="w-16 h-2 bg-surface-container-lowest overflow-hidden">
               <div
-                className="h-full bg-sky-blue transition-all"
-                style={{ width: `${waterPercent}%` }}
+                className={`h-full transition-all ${
+                  hasTank ? 'bg-sky-blue' : 'bg-status-error/60'
+                }`}
+                style={{ width: `${hasTank ? waterPercent : 0}%` }}
               />
             </div>
-            <span className="font-mono text-[10px] text-sky-blue font-bold">{waterLevel}L</span>
+            <span
+              className={`font-mono text-[10px] font-bold ${
+                hasTank ? 'text-sky-blue' : 'text-status-error'
+              }`}
+            >
+              {hasTank ? `${waterLevel}L` : tl('noTank')}
+            </span>
           </div>
         </div>
       </div>
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
-          <div className="bg-status-success/90 text-wood-dark px-4 py-2 font-mono text-xs font-bold shadow-lg">
-            {toast}
-          </div>
-        </div>
-      )}
 
       {/* Granary Quick View */}
       <button

@@ -1,6 +1,6 @@
 # Development Setup
 
-Last updated 2026-09-06.
+Last updated 2026-09-14.
 
 ## Prerequisites
 
@@ -76,6 +76,12 @@ Applies `supabase/migrations/*` and `supabase/seed/seed.sql`.
 
 **Do not run `pnpm db:seed`.** The Nest script `apps/api/src/database/seed.ts` is missing.
 
+> **Deploying to the linked remote project:** the local flow (`supabase:start` +
+> `supabase:reset`) targets a Docker instance. The production-shaped target
+> `nyapfgawanqvnkkjudxb` is **11 migrations behind** — push them with
+> `supabase db push` (after `supabase link`) and then `supabase db` seed, or run the SQL in
+> `supabase/migrations/` + `seed/seed.sql` by hand. See `DEVELOPMENT_STATE.md` Headline status.
+
 ### 6. Dev servers
 
 ```bash
@@ -118,6 +124,16 @@ node scripts/create-admin.mjs
 ```
 
 Default account is defined in that script. Sign in at `/admin/login`.
+
+For a **dev** account (separate `DevGuard` area at `/dev`):
+
+```bash
+node scripts/create-dev.mjs
+```
+
+> Role tiers `player|admin|dev` are defined by migration `000021`, which — like all of
+> `000016`–`000021` — is **not yet pushed** to the linked project. Until then, `AdminGuard`
+> and `DevGuard` fail closed. See `DEVELOPMENT_STATE.md` Headline status.
 
 ### Tests
 

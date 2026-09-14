@@ -1,12 +1,24 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { SimulationService } from '../simulation/simulation.service';
+import { PlotView, toPlotViews } from '../crops/plot-view';
 
+/**
+ * GET /farms/current payload.
+ *
+ * `plots` is the canonical PlotView — the same shape `GET /farms/:farmId/plots`
+ * returns — so the two read paths cannot disagree about what a plot is.
+ *
+ * P4 changed what a plot *is*: growth is hour-based (readiness =
+ * `crop.growthProgressHours >= crop.growthHours`) and there is no per-plot
+ * `hydration` for the client to act on, because water now lives in one shared
+ * Jojo tank for the whole farm (see `GET /water`). The old `crop.hydration`
+ * field was a leftover of the retired per-plot watering action.
+ */
 export interface FarmWithPlots {
   farm: {
     id: string;
     name: string;
-    level: number;
     plotCount: number;
     weather: string;
     weatherTemperature: number;
@@ -15,16 +27,7 @@ export interface FarmWithPlots {
     currentDay: number;
     lastSimulatedAt: string;
   };
-  plots: Array<{
-    id: string;
-    slotIndex: number;
-    state: string;
-    crop?: {
-      type: string;
-      growthStage: number;
-      hydration: number;
-    };
-  }>;
+  plots: PlotView[];
 }
 
 @Injectable()
@@ -74,7 +77,6 @@ export class FarmsService {
       farm: {
         id: farm.id,
         name: farm.name,
-        level: farm.level,
         plotCount: farm.plot_count,
         weather: farm.weather_state,
         weatherTemperature: farm.weather_temperature,
@@ -83,20 +85,7 @@ export class FarmsService {
         currentDay: farm.current_day,
         lastSimulatedAt: farm.last_simulated_at || new Date().toISOString(),
       },
-      plots: (plots ?? []).map((plot: Record<string, unknown>) => ({
-        id: plot.id as string,
-        slotIndex: plot.slot_index as number,
-        state: plot.state as string,
-        crop:
-          Array.isArray(plot.crop_instances) && plot.crop_instances.length > 0
-            ? {
-                type: (plot.crop_instances[0] as Record<string, unknown>).crop_type as string,
-                growthStage: (plot.crop_instances[0] as Record<string, unknown>)
-                  .growth_stage as number,
-                hydration: (plot.crop_instances[0] as Record<string, unknown>).hydration as number,
-              }
-            : undefined,
-      })),
+      plots: toPlotViews((plots ?? []) as Array<Record<string, unknown>>),
     };
   }
 

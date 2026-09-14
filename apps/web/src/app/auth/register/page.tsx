@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { establishSession, fetchRole } from '../../../lib/auth';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -29,9 +30,11 @@ export default function RegisterPage() {
         return;
       }
 
-      // Store token and redirect to game
-      localStorage.setItem('molemisi_token', data.data.token);
-      localStorage.setItem('token', data.data.token);
+      // Registration returns a live Supabase session (the API provisions the
+      // profile + farm + starter kit). Hand it to the browser client and cache
+      // the account role before entering the game.
+      await establishSession(data.data.token, data.data.refreshToken);
+      await fetchRole();
       window.location.href = '/game';
     } catch {
       setError('Network error. Please try again.');

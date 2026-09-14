@@ -16,7 +16,7 @@ import { resolveItemIcon, pixelItemIcon } from './pixelIcons';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
-async function apiFetch<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
+export async function apiFetch<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
   const token =
     typeof window !== 'undefined'
       ? localStorage.getItem('molemisi_token') || localStorage.getItem('token')
@@ -34,7 +34,12 @@ async function apiFetch<T = unknown>(method: string, path: string, body?: unknow
   const json = await res.json();
   if (!res.ok) {
     const msg = json?.error?.message || json?.message || `API error ${res.status}`;
-    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    // Attach status + raw body so callers can branch on structured errors
+    // (e.g. Bushveld's 409 { reason, etaSeconds }).
+    const err = new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    (err as any).status = res.status;
+    (err as any).body = json;
+    throw err;
   }
   // API wraps in { success, data } — unwrap
   return (json?.data ?? json) as T;
@@ -52,6 +57,17 @@ export interface ToastMessage {
   type?: 'success' | 'warning' | 'error' | 'info';
 }
 
+/**
+ * A plot as the Farm grid draws it.
+ *
+ * There is deliberately no `hydration` and no `canWater`. P4 retired per-plot
+ * watering: water is one shared Jojo tank per farm (04 §1.2), so a plot cannot
+ * be dry or watered on its own. Growth is hour-based — `stageProgress` is
+ * `growthProgressHours / growthHours`, not a stage bucket.
+ *
+ * `stalled` is the honest replacement for the old water bar: the crop is
+ * growing-but-frozen because the tank ran dry. The fix is the tank, not the plot.
+ */
 export interface Plot {
   id: number;
   label: string;
@@ -59,11 +75,10 @@ export interface Plot {
   cropName: string;
   stage: string;
   stageProgress: number;
-  hydration: number;
+  stalled: boolean;
   icon: string;
   yieldInfo: string;
   canHarvest: boolean;
-  canWater: boolean;
   canPlant: boolean;
   serverId?: string;
   cropType?: string;
@@ -93,7 +108,6 @@ export interface Blueprint {
   costPula: number;
   costWood: number;
   costStone: number;
-  requiredLevel: number;
   status: 'ready' | 'locked' | 'built';
   benefitText: string;
 }
@@ -103,7 +117,6 @@ export interface LootItem {
   text: string;
   subtext: string;
   rewardPula?: number;
-  rewardXp?: number;
   icon: string;
   timestamp: string;
 }
@@ -120,7 +133,6 @@ export interface Quest {
   rewardText: string;
   pulaReward: number;
   repReward: number;
-  xpReward: number;
   claimed: boolean;
 }
 
@@ -133,24 +145,37 @@ export interface MarketItem {
   image?: string | null;
   /** itemType for pixel icon lookup (e.g. "sorghum_seed"). */
   itemType?: string;
+  /**
+   * What the player will actually be charged right now — the server's
+   * `currentPrice`, never `basePrice`. The market moves (02 §4); quoting the
+   * base price and charging the live one is how a market screen lies.
+   */
   price: number;
+  /** The un-moved reference price, shown struck-through when the live one differs. */
+  basePrice?: number;
+  trend?: 'up' | 'down' | 'stable';
   description: string;
   badge?: string;
 }
 
-export interface DeliveryContract {
+/** Mirrors `MarketPrice` in apps/api/src/market/market.service.ts. */
+export interface MarketPriceView {
+  itemType: string;
+  basePrice: number;
+  currentPrice: number;
+  trend: 'up' | 'down' | 'stable';
+  supply: number;
+  demand: number;
+}
+
+/** Mirrors `MarketEvent` in apps/api/src/market/market.service.ts. */
+export interface MarketEventView {
   id: string;
-  number: string;
-  title: string;
-  source: string;
+  name: string;
   description: string;
-  expiresIn: string;
-  current: number;
-  target: number;
-  unit: string;
-  pulaReward: number;
-  xpReward: number;
-  claimed: boolean;
+  effect: string;
+  multiplier: number;
+  endsAt: string;
 }
 
 // ============================================================
@@ -201,15 +226,29 @@ function getCropName(type: string): string {
   return CROP_NAMES[type] || type.charAt(0).toUpperCase() + type.slice(1);
 }
 
-// Map server plot to UI plot
-function mapServerPlotToUI(
-  slotIndex: number,
-  serverPlot: {
+/**
+ * The plot shape the API actually returns — the canonical `PlotView` shared by
+ * GET /farms/current and GET /farms/:farmId/plots (apps/api/src/crops/plot-view.ts).
+ */
+interface ServerPlot {
+  id: string;
+  slotIndex: number;
+  state: string;
+  crop: {
     id: string;
-    state: string;
-    crop?: { type: string; growthStage: number; hydration: number };
-  },
-): Plot {
+    type: string;
+    displayName: string;
+    growthStage: number;
+    growthProgressHours: number;
+    growthHours: number;
+    plantedAt: string;
+    expectedReadyAt: string | null;
+    stalled: boolean;
+  } | null;
+}
+
+// Map server plot to UI plot
+function mapServerPlotToUI(slotIndex: number, serverPlot: ServerPlot): Plot {
   const stateMap: Record<string, Plot['state']> = {
     EMPTY: 'TILLED',
     PLANTED: 'GROWING',
@@ -218,39 +257,41 @@ function mapServerPlotToUI(
     WITHERED: 'THIRSTY',
   };
 
-  const uiState = stateMap[serverPlot.state] || 'TILLED';
   const crop = serverPlot.crop;
   const hasCrop = !!crop;
-  const hydration = crop ? Math.round(crop.hydration * 100) : 40;
-  const stage = crop ? crop.growthStage : 0;
-  const maxStages = 4;
-  const stageProgress = crop ? Math.round((stage / maxStages) * 100) : 0;
+
+  // P4: growth is hour-based. Progress is real elapsed growing hours against
+  // the crop's configured total — never a 0-4 stage bucket, which would jump
+  // in four lumps and hide whether a crop is nearly ready.
+  const stageProgress = hasCrop
+    ? Math.min(
+        100,
+        Math.round(((crop!.growthProgressHours ?? 0) / (crop!.growthHours || 1)) * 100),
+      )
+    : 0;
+
+  const isReady = serverPlot.state === 'READY';
+  const uiState = hasCrop && crop!.stalled && !isReady ? 'THIRSTY' : stateMap[serverPlot.state] || 'TILLED';
 
   return {
     id: slotIndex + 1,
     label: `PLOT ${slotIndex + 1}`,
     state: uiState,
-    cropName: hasCrop ? getCropName(crop!.type) : 'Empty Soil',
-    stage: hasCrop
-      ? serverPlot.state === 'READY'
-        ? 'READY'
-        : `STAGE ${stage + 1}/${maxStages}`
-      : 'TILLED',
+    // displayName comes from game-config server-side, so the label is always
+    // the same words the rest of the game uses for this crop.
+    cropName: hasCrop ? crop!.displayName : 'Empty Soil',
+    stage: hasCrop ? (isReady ? 'READY' : `${stageProgress}%`) : 'TILLED',
     stageProgress,
-    hydration,
+    stalled: hasCrop ? crop!.stalled : false,
     icon: hasCrop ? getCropIcon(crop!.type) : '🌱',
     yieldInfo: hasCrop
-      ? serverPlot.state === 'READY'
+      ? isReady
         ? 'Ready!'
-        : stage === 0
-          ? 'Germinating'
+        : crop!.stalled
+          ? 'Tank is dry'
           : 'Growing'
       : 'Tap to Plant',
-    canHarvest: serverPlot.state === 'READY',
-    canWater:
-      hasCrop &&
-      (serverPlot.state === 'PLANTED' || serverPlot.state === 'GROWING') &&
-      hydration < 100,
+    canHarvest: isReady,
     canPlant: !hasCrop,
     serverId: serverPlot.id,
     cropType: crop?.type,
@@ -264,15 +305,15 @@ function mapServerPlotToUI(
 const DEMO_PLOTS: Plot[] = Array.from({ length: 12 }, (_, i) => ({
   id: i + 1,
   label: `PLOT ${i + 1}`,
-  state: i === 0 ? 'READY' : i < 4 ? 'GROWING' : 'TILLED',
+  state: i === 0 ? 'READY' : i === 3 ? 'THIRSTY' : i < 4 ? 'GROWING' : 'TILLED',
   cropName: i === 0 ? 'Sorghum' : i === 1 ? 'Sweet Maize' : i === 2 ? 'Cowpeas' : 'Empty Soil',
-  stage: i === 0 ? 'READY' : i < 4 ? `STAGE ${i}/4` : 'TILLED',
+  stage: i === 0 ? 'READY' : i < 4 ? `${i * 25}%` : 'TILLED',
   stageProgress: i === 0 ? 100 : i < 4 ? i * 25 : 0,
-  hydration: 40 + i * 5,
+  stalled: i === 3, // one stalled plot so the dry-tank state is visible offline
   icon: i === 0 ? '🌾' : i === 1 ? '🌽' : i === 2 ? '🫘' : '🌱',
-  yieldInfo: i === 0 ? 'Ready!' : i < 4 ? 'Growing' : 'Tap to Plant',
+  yieldInfo:
+    i === 0 ? 'Ready!' : i === 3 ? 'Tank is dry' : i < 4 ? 'Growing' : 'Tap to Plant',
   canHarvest: i === 0,
-  canWater: i > 0 && i < 4,
   canPlant: i >= 4,
 }));
 
@@ -381,37 +422,6 @@ const DEMO_MARKET_ITEMS: MarketItem[] = [
   },
 ];
 
-const DEMO_CONTRACTS: DeliveryContract[] = [
-  {
-    id: 'c1',
-    number: '#804',
-    title: 'Brewery Supply',
-    source: 'Village Brewery',
-    description: 'Deliver sorghum for harvest celebration.',
-    expiresIn: '2 Days',
-    current: 18,
-    target: 40,
-    unit: 'Bags',
-    pulaReward: 650,
-    xpReward: 120,
-    claimed: false,
-  },
-  {
-    id: 'c2',
-    number: '#809',
-    title: 'Safari Camp Kitchen',
-    source: 'Delta Camp',
-    description: 'Weekly fresh produce order.',
-    expiresIn: '4 Days',
-    current: 25,
-    target: 25,
-    unit: 'Crates',
-    pulaReward: 480,
-    xpReward: 90,
-    claimed: false,
-  },
-];
-
 const DEMO_QUESTS: Quest[] = [
   {
     id: 'q1',
@@ -425,7 +435,6 @@ const DEMO_QUESTS: Quest[] = [
     rewardText: '+100 Pula',
     pulaReward: 100,
     repReward: 50,
-    xpReward: 60,
     claimed: false,
   },
   {
@@ -440,7 +449,6 @@ const DEMO_QUESTS: Quest[] = [
     rewardText: '+200 Pula',
     pulaReward: 200,
     repReward: 40,
-    xpReward: 80,
     claimed: false,
   },
 ];
@@ -448,14 +456,13 @@ const DEMO_QUESTS: Quest[] = [
 const DEMO_BLUEPRINTS: Blueprint[] = [
   {
     id: 'coop',
-    title: 'Chicken Coop (Lv.1)',
+    title: 'Chicken Coop',
     subtitle: 'Houses up to 6 hens',
     icon: '🏠',
     image: pixelItemIcon('coop'),
     costPula: 200,
     costWood: 20,
     costStone: 10,
-    requiredLevel: 5,
     status: 'ready',
     benefitText: 'Enables daily egg collection',
   },
@@ -468,8 +475,7 @@ const DEMO_BLUEPRINTS: Blueprint[] = [
     costPula: 450,
     costWood: 40,
     costStone: 25,
-    requiredLevel: 6,
-    status: 'locked',
+    status: 'ready',
     benefitText: 'Unlocks goat dairy',
   },
   {
@@ -481,7 +487,6 @@ const DEMO_BLUEPRINTS: Blueprint[] = [
     costPula: 350,
     costWood: 0,
     costStone: 15,
-    requiredLevel: 5,
     status: 'ready',
     benefitText: '+150L water reserve',
   },
@@ -493,11 +498,21 @@ const DEMO_BLUEPRINTS: Blueprint[] = [
 
 export interface GameState {
   pula: number;
-  farmLevel: number;
-  farmXp: number;
-  maxXp: number;
+  botho: number;
+  /**
+   * Re-fetch farm + wallet state from the server.
+   *
+   * Any screen that spends or receives value must call this rather than mutating
+   * `pula` locally — the server is the only authority on a balance (I7). Several
+   * older actions (`constructBlueprint`, `buyMarketItem`) still decrement locally
+   * and drift; new code must not repeat that mistake.
+   */
+  refresh: () => Promise<void>;
+  /** Litres currently in the shared Jojo tank — a farm-wide resource, not per-plot. */
   waterLevel: number;
   maxWater: number;
+  /** False when the farm has no tank yet; growth cannot advance until one is built. */
+  hasTank: boolean;
   energy: number;
   maxEnergy: number;
   daylight: string;
@@ -520,10 +535,9 @@ export interface GameState {
 
   plots: Plot[];
   harvestPlot: (plotId: number) => void;
-  waterPlot: (plotId: number) => void;
   plantPlot: (plotId: number, seedName: string, cost: number, icon: string) => void;
-  quickWaterAll: () => void;
   quickHarvestAll: () => void;
+  /** Fill the Jojo tank. Costs Pula and tops up the whole farm at once. */
   refillWell: () => void;
   collectEggs: () => void;
 
@@ -531,8 +545,6 @@ export interface GameState {
   selectedItem: InventoryItem | null;
   setSelectedItem: (item: InventoryItem | null) => void;
   sellInventoryItem: (item: InventoryItem, qty?: number) => void;
-  millFlour: (item: InventoryItem) => void;
-  donateKgotla: (item: InventoryItem) => void;
   blueprints: Blueprint[];
   constructBlueprint: (blueprintId: string) => void;
 
@@ -556,9 +568,11 @@ export interface GameState {
   claimQuest: (questId: string) => void;
 
   marketItems: MarketItem[];
+  /** Live prices by itemType — the same numbers the server will charge. */
+  marketPrices: Record<string, MarketPriceView>;
+  /** Events currently moving those prices. Empty is a valid, quiet market. */
+  marketEvents: MarketEventView[];
   buyMarketItem: (item: MarketItem, qty: number) => void;
-  contracts: DeliveryContract[];
-  claimContract: (contractId: string) => void;
   quickSellProduce: () => void;
 
   toast: ToastMessage | null;
@@ -584,17 +598,16 @@ const GameContext = createContext<GameState | null>(null);
 export function GameProvider({ children }: { children: ReactNode }) {
   // --- Profile state ---
   const [pula, setPula] = useState(0);
-  const [farmLevel, setFarmLevel] = useState(1);
-  const [farmXp, setFarmXp] = useState(0);
-  const maxXp = 3000;
+  const [botho, setBotho] = useState(0);
   const [energy, setEnergy] = useState(100);
   const maxEnergy = 100;
   const [farmId, setFarmId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // --- Farm state ---
-  const [waterLevel, setWaterLevel] = useState(85);
+  const [waterLevel, setWaterLevel] = useState(0);
   const [maxWater, setMaxWater] = useState(100);
+  const [hasTank, setHasTank] = useState(false);
   const [season, setSeason] = useState('Spring');
   const [currentDay, setCurrentDay] = useState(1);
   const [soilFertility] = useState(92);
@@ -620,7 +633,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [activeNpc, setActiveNpc] = useState('Elder Neo');
   const [quests, setQuests] = useState<Quest[]>(DEMO_QUESTS);
   const [marketItems, setMarketItems] = useState<MarketItem[]>(DEMO_MARKET_ITEMS);
-  const [contracts, setContracts] = useState<DeliveryContract[]>(DEMO_CONTRACTS);
+  const [marketPrices, setMarketPrices] = useState<Record<string, MarketPriceView>>({});
+  const [marketEvents, setMarketEvents] = useState<MarketEventView[]>([]);
 
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [bgmVolume, setBgmVolume] = useState(70);
@@ -649,24 +663,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   // ============================================================
-  // XP helper
-  // ============================================================
-
-  const addXp = useCallback(
-    (amount: number) => {
-      setFarmXp((prev) => {
-        const next = prev + amount;
-        if (next >= maxXp) {
-          setFarmLevel((lvl) => lvl + 1);
-          return next - maxXp;
-        }
-        return next;
-      });
-    },
-    [maxXp],
-  );
-
-  // ============================================================
   // Load real data from API
   // ============================================================
 
@@ -681,54 +677,48 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Fetch profile + farm + inventory + market in parallel
-      const [profile, farmData, pricesData] = await Promise.allSettled([
+      // Fetch profile + wallet + farm + market in parallel.
+      //
+      // Pula and Botho come from GET /wallet (player_wallets — the source of
+      // truth since P2), NOT from the profile's legacy `currency` column, which
+      // is a D5 leftover that nothing writes any more.
+      const [profile, wallet, farmData, pricesData, eventsData] = await Promise.allSettled([
         apiFetch<{
           id: string;
           displayName: string;
           farmName: string;
-          farmLevel: number;
-          farmXp: number;
           currency: number;
           energy: number;
           maxEnergy: number;
         }>('GET', '/profile'),
+        apiFetch<{ pula: number; botho: number }>('GET', '/wallet'),
         apiFetch<{
           farm: {
             id: string;
             name: string;
-            level: number;
             plotCount: number;
             weather: string;
             weatherTemperature: number;
             season: string;
             currentDay: number;
           };
-          plots: Array<{
-            id: string;
-            slotIndex: number;
-            state: string;
-            crop?: { type: string; growthStage: number; hydration: number };
-          }>;
+          plots: ServerPlot[];
         }>('GET', '/farms/current'),
-        apiFetch<
-          Array<{
-            itemType: string;
-            name: string;
-            category: string;
-            basePrice: number;
-          }>
-        >('GET', '/market/prices').catch(() => null),
+        apiFetch<MarketPriceView[]>('GET', '/market/prices').catch(() => null),
+        apiFetch<MarketEventView[]>('GET', '/market/events').catch(() => []),
       ]);
+
+      // Apply wallet (Pula + Botho). Falls back to nothing — a stale number is
+      // worse than a missing one when the number is spendable.
+      if (wallet.status === 'fulfilled') {
+        setPula(wallet.value.pula ?? 0);
+        setBotho(wallet.value.botho ?? 0);
+      }
 
       // Apply profile
       if (profile.status === 'fulfilled') {
         const p = profile.value;
-        setPula(p.currency);
-        setFarmLevel(p.farmLevel);
-        setFarmXp(p.farmXp);
         setEnergy(p.energy);
-        setMaxWater(100);
       }
 
       // Apply farm + plots
@@ -737,11 +727,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setFarmId(fd.farm.id);
         setSeason(fd.farm.season || 'Spring');
         setCurrentDay(fd.farm.currentDay || 1);
-        setWaterLevel(85);
 
         // Map plots
         const uiPlots = fd.plots.map((sp) => mapServerPlotToUI(sp.slotIndex, sp));
         setPlots(uiPlots);
+
+        // The Jojo tank is farm-wide, so it needs the farm id — which is why
+        // this is a second round rather than one of the parallel calls above.
+        try {
+          const tank = await apiFetch<{
+            hasTank: boolean;
+            waterLevel: number;
+            capacity: number;
+            state: string;
+          }>('GET', `/farms/${fd.farm.id}/water`);
+          setHasTank(tank.hasTank);
+          setWaterLevel(tank.waterLevel);
+          setMaxWater(tank.capacity);
+        } catch {
+          // No tank reachable (or none built) — leave the level at 0 rather
+          // than inventing a full tank the player cannot actually draw from.
+          setHasTank(false);
+          setWaterLevel(0);
+        }
 
         // Fetch inventory for THIS farm
         try {
@@ -797,27 +805,61 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Apply market prices
+      // Apply market prices. `currentPrice` is what the server charges and what
+      // it pays — using `basePrice` here quoted a number the market never honoured.
       if (pricesData.status === 'fulfilled' && Array.isArray(pricesData.value)) {
-        const items = pricesData.value.map((p) => ({
-          id: `seed-${p.itemType}`,
-          name: `${getCropName(p.itemType)} Seeds`,
-          category: p.category || 'Crop',
-          icon: getCropIcon(p.itemType),
-          image: pixelItemIcon(`${p.itemType}_seed`) || pixelItemIcon(p.itemType),
-          itemType: `${p.itemType}_seed`,
-          price: p.basePrice || 15,
-          description: `Buy ${getCropName(p.itemType)} seeds to plant.`,
-          badge: undefined,
-        }));
+        const prices = pricesData.value;
+
+        // The price lookup every money question should use, keyed by raw itemType
+        // (includes both `sorghum` crop rows and `sorghum_seed` seed rows).
+        const byType: Record<string, MarketPriceView> = {};
+        for (const p of prices) byType[p.itemType] = p;
+        setMarketPrices(byType);
+
+        // Only seed rows are buyable here. `market_prices` ALSO holds the grown
+        // crop rows (e.g. `sorghum`); mapping those would mint a bogus
+        // `sorghum_seed` entry and duplicate the real `sorghum_seed` one — two
+        // "Sorghum Seeds" cards at different prices.
+        const seedPrices = prices.filter((p) => p.itemType.endsWith('_seed'));
+        const items = seedPrices.map((p) => {
+          const cropType = p.itemType.replace(/_seed$/, '');
+          return {
+            id: `seed-${p.itemType}`,
+            name: `${getCropName(cropType)} Seeds`,
+            category: 'Seed',
+            icon: getCropIcon(cropType),
+            image: pixelItemIcon(p.itemType) || pixelItemIcon(cropType),
+            itemType: p.itemType,
+            price: p.currentPrice ?? p.basePrice,
+            basePrice: p.basePrice,
+            trend: p.trend,
+            description: `Buy ${getCropName(cropType)} seeds to plant.`,
+            badge: p.trend === 'up' ? 'Rising' : p.trend === 'down' ? 'Cheap' : undefined,
+          };
+        });
         if (items.length > 0) setMarketItems(items);
       }
+
+      // What is moving the market right now. Worth showing: a x1.4 event is the
+      // difference between a good sale and a bad one, and it is invisible otherwise.
+      if (eventsData.status === 'fulfilled' && Array.isArray(eventsData.value)) {
+        setMarketEvents(eventsData.value);
+      }
     } catch (err) {
+      // The player is now sitting on the DEMO_* sample farm with no live data.
+      // That is a real state, not just a console line — surface it so they know
+      // their actions aren't being saved and we never silently lie about success.
       console.warn('[Game] API unavailable, using demo data', err);
+      showToast(
+        'Offline — Demo Mode',
+        'Could not reach the server. Showing sample data — your actions are not being saved.',
+        '⚠️',
+        'warning',
+      );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   // Load on mount
   useEffect(() => {
@@ -839,40 +881,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        await apiFetch('POST', `/farms/${farmId}/plots/${plot.serverId}/harvest`, {});
-        addXp(10);
-        showToast('Harvest Complete', `${plot.cropName} harvested! +10 XP`, '🌾', 'success');
+        const result = await apiFetch<{
+          harvest: { yield: number; quality: string };
+          inventoryAddition: { quantity: number };
+        }>('POST', `/farms/${farmId}/plots/${plot.serverId}/harvest`, {});
+        // No XP — D5 retired it. The reward is the crop itself; Pula comes from
+        // selling it at market, which is the loop the economy is built on.
+        showToast(
+          'Harvest Complete',
+          `${result.inventoryAddition?.quantity ?? result.harvest?.yield ?? 1}x ${plot.cropName} (${result.harvest?.quality ?? 'Normal'}) to your store.`,
+          '🌾',
+          'success',
+        );
         await refreshFarmData();
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Harvest failed';
         showToast('Harvest Failed', msg, '⚠️', 'error');
       }
     },
-    [plots, farmId, addXp, showToast, refreshFarmData],
+    [plots, farmId, showToast, refreshFarmData],
   );
 
-  const waterPlot = useCallback(
-    async (plotId: number) => {
-      const plot = plots.find((p) => p.id === plotId);
-      if (!plot || !plot.canWater || !farmId) return;
-
-      if (!plot.serverId) {
-        showToast('Plot Error', 'Cannot water — plot not synced.', '⚠️', 'error');
-        return;
-      }
-
-      try {
-        await apiFetch('POST', `/farms/${farmId}/plots/${plot.serverId}/water`, {});
-        addXp(2);
-        showToast('Watered!', `${plot.cropName} watered. +2 XP`, '💧', 'info');
-        await refreshFarmData();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Water failed';
-        showToast('Water Failed', msg, '⚠️', 'error');
-      }
-    },
-    [plots, farmId, addXp, showToast, refreshFarmData],
-  );
+  // NOTE: there is deliberately no `waterPlot`. Per-plot watering was retired in
+  // P4 — the endpoint these calls used (`POST /farms/:id/plots/:plotId/water`)
+  // no longer exists on the server. Water is the shared Jojo tank: see
+  // `refillWell` below.
 
   // Map common seed names to cropType
   const NAME_TO_CROPTYPE: Record<string, string> = {
@@ -922,38 +955,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
           cropType,
           seedId: seedEntry.id,
         });
-        addXp(5);
-        showToast('Planted!', `Planted ${getCropName(cropType)}. +5 XP`, '🌱', 'success');
+        showToast('Planted!', `Planted ${getCropName(cropType)}.`, '🌱', 'success');
         await refreshFarmData();
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Plant failed';
         showToast('Plant Failed', msg, '⚠️', 'error');
       }
     },
-    [plots, farmId, inventory, addXp, showToast, refreshFarmData],
+    [plots, farmId, inventory, showToast, refreshFarmData],
   );
 
-  const quickWaterAll = useCallback(async () => {
-    if (!farmId) return;
-    let watered = 0;
-    for (const plot of plots) {
-      if (plot.canWater && plot.serverId) {
-        try {
-          await apiFetch('POST', `/farms/${farmId}/plots/${plot.serverId}/water`, {});
-          watered++;
-        } catch {
-          /* skip */
-        }
-      }
-    }
-    if (watered > 0) {
-      addXp(2 * watered);
-      showToast('Fields Watered', `Watered ${watered} plots.`, '💧', 'info');
-      await refreshFarmData();
-    } else {
-      showToast('No Plots', 'No plots need water.', '💧', 'info');
-    }
-  }, [farmId, plots, addXp, showToast, refreshFarmData]);
+  // NOTE: `quickWaterAll` is gone for the same reason as `waterPlot` — there is
+  // no per-plot action to batch any more. Refilling the tank is the one call.
 
   const quickHarvestAll = useCallback(async () => {
     if (!farmId) return;
@@ -969,18 +982,41 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     }
     if (harvested > 0) {
-      addXp(10 * harvested);
       showToast('Harvest Complete', `Harvested ${harvested} plots!`, '🌾', 'success');
       await refreshFarmData();
     } else {
       showToast('Nothing Ready', 'No crops ready to harvest.', '🌾', 'info');
     }
-  }, [farmId, plots, addXp, showToast, refreshFarmData]);
+  }, [farmId, plots, showToast, refreshFarmData]);
 
-  const refillWell = useCallback(() => {
-    setWaterLevel((prev) => Math.min(maxWater, prev + 15));
-    showToast('Well Pumped', 'Extracted 15L from bedrock aquifer.', '💧', 'info');
-  }, [maxWater, showToast]);
+  /**
+   * Fill the Jojo tank — the farm's single shared water store (04 §1.2).
+   *
+   * This used to be a local `setWaterLevel(+15)` that lied: it invented litres
+   * the server never had, so the UI showed water that growth would not honour.
+   */
+  const refillWell = useCallback(async () => {
+    if (!farmId) return;
+    try {
+      const result = await apiFetch<{ added: number; cost: number; waterLevel: number }>(
+        'POST',
+        `/farms/${farmId}/water/refill`,
+        {},
+      );
+      setWaterLevel(result.waterLevel);
+      setHasTank(true);
+      showToast(
+        'Tank Filled',
+        `+${result.added}L for ${result.cost} Pula.`,
+        '💧',
+        'success',
+      );
+      await refreshFarmData();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Refill failed';
+      showToast('Refill Failed', msg, '⚠️', 'error');
+    }
+  }, [farmId, showToast, refreshFarmData]);
 
   const collectEggs = useCallback(() => {
     setGranaryEggs((prev) => prev + 2);
@@ -998,14 +1034,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (sellQty <= 0 || item.quantity < sellQty) return;
 
       try {
-        await apiFetch('POST', '/market/sell', {
+        const result = await apiFetch<{
+          transaction: { netProceeds: number };
+        }>('POST', '/market/sell', {
           farmId,
           itemType: item.itemType || item.name.toLowerCase().replace(/\s+/g, '_'),
           quantity: sellQty,
           quality: item.grade || 'normal',
         });
-        const earnings = sellQty * item.unitValue;
-        showToast('Sold!', `Sold ${sellQty}x ${item.name} for +${earnings} Pula.`, '💰', 'success');
+        const earnings = result.transaction?.netProceeds ?? sellQty * item.unitValue;
+        showToast('Sold!', `Sold ${sellQty}x ${item.name} for +${earnings} Pula after 5% Co-op tax.`, '💰', 'success');
         await refreshFarmData();
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Sell failed';
@@ -1013,33 +1051,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     },
     [farmId, showToast, refreshFarmData],
-  );
-
-  const millFlour = useCallback(
-    (item: InventoryItem) => {
-      if (item.quantity < 2) {
-        showToast('Not Enough', 'Need at least 2 units to mill.', '🌾', 'warning');
-        return;
-      }
-      setInventory((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity - 2 } : i)),
-      );
-      addXp(15);
-      showToast('Milling Done', `Milled 2x ${item.name}. +15 XP`, '⚙️', 'success');
-    },
-    [addXp, showToast],
-  );
-
-  const donateKgotla = useCallback(
-    (item: InventoryItem) => {
-      if (item.quantity < 1) return;
-      setInventory((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i)),
-      );
-      setReputation((prev) => Math.min(maxReputation, prev + 25));
-      showToast('Donated!', `Donated 1x ${item.name}. +25 Rep`, '🏛️', 'success');
-    },
-    [maxReputation, showToast],
   );
 
   const constructBlueprint = useCallback(
@@ -1053,13 +1064,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setPula((prev) => prev - bp.costPula);
       setWood((prev) => prev - bp.costWood);
       setStone((prev) => prev - bp.costStone);
-      addXp(50);
       setBlueprints((prev) =>
         prev.map((b) => (b.id === blueprintId ? { ...b, status: 'built' as const } : b)),
       );
-      showToast('Built!', `Completed ${bp.title}! +50 XP`, '🔨', 'success');
+      showToast('Built!', `Completed ${bp.title}!`, '🔨', 'success');
     },
-    [blueprints, pula, wood, stone, addXp, showToast],
+    [blueprints, pula, wood, stone, showToast],
   );
 
   const buyMarketItem = useCallback(
@@ -1077,58 +1087,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
         });
         showToast('Bought!', `Bought ${qty}x ${item.name}. -${total} Pula.`, '🛍️', 'success');
         await refreshFarmData();
-      } catch {
-        // Fallback to client-side
-        if (pula < total) {
-          showToast('Insufficient Pula', `Need ${total} Pula.`, '💰', 'warning');
-          return;
-        }
-        setPula((prev) => prev - total);
-        setInventory((prev) => {
-          const existing = prev.find((i) =>
-            i.name.toLowerCase().includes(item.name.toLowerCase().split(' ')[0] ?? ''),
-          );
-          if (existing) {
-            return prev.map((i) =>
-              i.id === existing.id ? { ...i, quantity: i.quantity + qty } : i,
-            );
-          }
-          return [
-            ...prev,
-            {
-              id: `inv-${Date.now()}`,
-              name: item.name,
-              category: 'seed' as const,
-              icon: item.icon,
-              quantity: qty,
-              unitValue: Math.round(item.price * 0.8),
-              grade: 'Normal',
-              description: item.description,
-              itemType: item.id.replace('seed-', '') + '_seed',
-            },
-          ];
-        });
-        showToast('Purchased', `Bought ${qty}x ${item.name}.`, '🛍️', 'success');
+      } catch (err) {
+        // No client-side fallback. If the server rejected or failed the purchase
+        // we must NOT mint inventory or deduct Pula locally — that would let the
+        // UI report a buy that never happened, and in a real-money game a fake
+        // purchase is a data-integrity and trust hazard. Surface the failure only.
+        const msg = err instanceof Error ? err.message : 'Purchase failed';
+        showToast('Purchase Failed', msg || `Could not buy ${qty}x ${item.name}.`, '⚠️', 'error');
       }
     },
     [farmId, pula, showToast, refreshFarmData],
   );
 
-  const claimContract = useCallback(
-    (contractId: string) => {
-      const c = contracts.find((x) => x.id === contractId);
-      if (!c || c.claimed) return;
-      setPula((prev) => prev + c.pulaReward);
-      addXp(c.xpReward);
-      setContracts((prev) => prev.map((x) => (x.id === contractId ? { ...x, claimed: true } : x)));
-      showToast('Contract Complete', `+${c.pulaReward} Pula +${c.xpReward} XP`, '📜', 'success');
-    },
-    [contracts, addXp, showToast],
-  );
-
   const quickSellProduce = useCallback(async () => {
     if (!farmId) return;
     let sold = 0;
+    let count = 0;
     for (const item of inventory) {
       if (
         (item.category === 'crops' || item.category === 'animal') &&
@@ -1136,20 +1110,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
         !item.itemType?.includes('_seed')
       ) {
         try {
-          await apiFetch('POST', '/market/sell', {
+          const result = await apiFetch<{
+            transaction: { netProceeds: number };
+          }>('POST', '/market/sell', {
             farmId,
             itemType: item.itemType || item.name.toLowerCase().replace(/\s+/g, '_'),
             quantity: item.quantity,
             quality: item.grade || 'normal',
           });
-          sold += item.quantity * item.unitValue;
+          sold += result.transaction?.netProceeds ?? item.quantity * item.unitValue;
+          count += item.quantity;
         } catch {
           /* skip */
         }
       }
     }
-    if (sold > 0) {
-      showToast('Quick Sell', `Sold all crops for +${sold} Pula.`, '💰', 'success');
+    if (count > 0) {
+      showToast('Quick Sell', `Sold ${count} items for +${sold} Pula (incl. 5% Co-op tax).`, '💰', 'success');
       await refreshFarmData();
     } else {
       showToast('Nothing to Sell', 'No crops in inventory.', '📦', 'info');
@@ -1181,10 +1158,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         subtext: description,
         icon,
         timestamp: 'Just Now',
-        rewardXp: 5,
       };
       setLootFeed((prev) => [newLoot, ...prev.slice(0, 4)]);
-      addXp(5);
       if (lootName) {
         setInventory((prev) => {
           const existing = prev.find((i) => i.name.toLowerCase().includes(lootName.toLowerCase()));
@@ -1210,7 +1185,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
       showToast(rewardText, description, '✨', 'success');
     },
-    [energy, maxEnergy, addXp, showToast],
+    [energy, maxEnergy, showToast],
   );
 
   // ============================================================
@@ -1231,11 +1206,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!q || q.claimed) return;
       setPula((prev) => prev + q.pulaReward);
       setReputation((prev) => Math.min(maxReputation, prev + q.repReward));
-      addXp(q.xpReward);
       setQuests((prev) => prev.map((x) => (x.id === questId ? { ...x, claimed: true } : x)));
       showToast('Quest Done', `+${q.pulaReward} Pula +${q.repReward} Rep`, '🏛️', 'success');
     },
-    [quests, maxReputation, addXp, showToast],
+    [quests, maxReputation, showToast],
   );
 
   // ============================================================
@@ -1249,11 +1223,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     <GameContext.Provider
       value={{
         pula,
-        farmLevel,
-        farmXp,
-        maxXp,
+        botho,
         waterLevel,
         maxWater,
+        hasTank,
         energy,
         maxEnergy,
         daylight,
@@ -1266,6 +1239,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setActiveNav,
         farmId,
         loading,
+        refresh: refreshFarmData,
 
         wood,
         stone,
@@ -1276,9 +1250,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         plots,
         harvestPlot,
-        waterPlot,
         plantPlot,
-        quickWaterAll,
         quickHarvestAll,
         refillWell,
         collectEggs,
@@ -1287,8 +1259,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         selectedItem,
         setSelectedItem,
         sellInventoryItem,
-        millFlour,
-        donateKgotla,
         blueprints,
         constructBlueprint,
 
@@ -1305,9 +1275,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         marketItems,
         buyMarketItem,
-        contracts,
-        claimContract,
         quickSellProduce,
+        marketPrices,
+        marketEvents,
 
         toast,
         showToast,

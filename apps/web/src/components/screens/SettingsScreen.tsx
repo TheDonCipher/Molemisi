@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
+import { supabaseLogout, getStoredRole } from '../../lib/auth';
 
 export function SettingsScreen() {
   const {
@@ -13,11 +14,23 @@ export function SettingsScreen() {
     language,
     setLanguage,
     pula,
-    farmLevel,
-    farmXp,
     setActiveNav,
   } = useGame();
   const { tl } = useTranslation();
+  const [role, setRole] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  useEffect(() => {
+    setRole(getStoredRole());
+  }, []);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    // Real Supabase sign-out (invalidates the session), then clear the local
+    // token mirror. AuthGuard re-arms on the login page.
+    await supabaseLogout();
+    window.location.href = '/auth/login';
+  };
 
   return (
     <div className="w-full px-4 py-6 max-w-lg mx-auto select-none pb-20 md:pb-10">
@@ -109,20 +122,33 @@ export function SettingsScreen() {
             <span className="text-secondary font-bold">{tl('connected')}</span>
           </div>
           <div className="flex justify-between font-mono text-xs">
-            <span className="text-on-surface-variant">{tl('farm')}</span>
-            <span className="text-cream-surface font-bold">
-              {tl('level')} {farmLevel}
-            </span>
-          </div>
-          <div className="flex justify-between font-mono text-xs">
-            <span className="text-on-surface-variant">{tl('experience')}</span>
-            <span className="text-primary font-bold">{farmXp} XP</span>
-          </div>
-          <div className="flex justify-between font-mono text-xs">
             <span className="text-on-surface-variant">{tl('purse')}</span>
             <span className="text-gold-currency font-bold">{pula.toLocaleString()} P</span>
           </div>
         </div>
+
+        {/* Dev accounts (role='dev') get a link to the separate /dev tooling area
+            for testing and debugging — distinct from the admin panel. */}
+        {role === 'dev' && (
+          <button
+            onClick={() => {
+              window.location.href = '/dev';
+            }}
+            className="w-full mt-3 py-2.5 font-mono text-xs uppercase font-bold border border-primary/50 text-primary hover:bg-primary/10 transition-colors"
+          >
+            {tl('devTools')}
+          </button>
+        )}
+
+        {/* Log out: real Supabase sign-out (supabaseLogout), then clear the local
+            token mirror. AuthGuard re-arms on the login page. */}
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="w-full mt-3 py-2.5 font-mono text-xs uppercase font-bold border border-status-error/50 text-status-error hover:bg-status-error/10 transition-colors disabled:opacity-50"
+        >
+          {loggingOut ? '…' : tl('logout')}
+        </button>
       </section>
 
       {/* About */}

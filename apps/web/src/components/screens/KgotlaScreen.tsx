@@ -1,83 +1,32 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useGame, DeliveryContract } from '../../lib/gameState';
+import { useKgotla } from '../../lib/kgotla';
+import { useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
-const NPCS = [
-  {
-    name: 'Elder Neo',
-    role: 'Village Chief',
-    roleKey: 'communityHub' as const,
-    avatar: '/assets/sprites/npcs/elder_neo.png',
-    fallback: '👴',
-    dialogue: 'The community granary runs low before the dry season. Can you help?',
-    contractFilter: (c: DeliveryContract) =>
-      c.title.toLowerCase().includes('grain') || c.title.toLowerCase().includes('granary'),
-  },
-  {
-    name: 'Mama Naledi',
-    role: 'Produce Trader',
-    roleKey: 'communityHub' as const,
-    avatar: '/assets/sprites/npcs/mama_naledi.png',
-    fallback: '👩',
-    dialogue: 'I pay top Pula for drought-resistant cowpeas. Bring what you grow!',
-    contractFilter: (c: DeliveryContract) =>
-      c.title.toLowerCase().includes('safari') || c.title.toLowerCase().includes('kitchen'),
-  },
-  {
-    name: 'Refilwe',
-    role: 'Herbalist',
-    roleKey: 'communityHub' as const,
-    avatar: '/assets/sprites/npcs/refilwe.png',
-    fallback: '🧙‍♀️',
-    dialogue: 'Wild marula bark heals both cattle and elders. Forage me 5 bundles.',
-    contractFilter: () => false,
-  },
-  {
-    name: 'Tau',
-    role: 'Bush Scout',
-    roleKey: 'communityHub' as const,
-    avatar: '/assets/sprites/npcs/bushveld_scout.png',
-    fallback: '🧭',
-    dialogue: 'The savanna fringe has ripe fruits and mineral caves. Ready to explore?',
-    contractFilter: () => false,
-  },
-  {
-    name: 'Vendor Kabelo',
-    role: 'Market Trader',
-    roleKey: 'communityHub' as const,
-    avatar: '/assets/sprites/npcs/market_vendor.png',
-    fallback: '🛒',
-    dialogue: 'Everything has a price, friend. What are you looking to trade today?',
-    contractFilter: (c: DeliveryContract) =>
-      c.title.toLowerCase().includes('brewery') || c.title.toLowerCase().includes('supply'),
-  },
-];
 
 export function KgotlaScreen() {
-  const { reputation, maxReputation, setActiveNav, contracts, claimContract } = useGame();
+  const { setActiveNav } = useGame();
   const { tl } = useTranslation();
+  const { npcs, projects, botho, journal, elder, contribution, loading, talk, completeQuest, donate } =
+    useKgotla();
 
-  const [selectedNpc, setSelectedNpc] = useState<number | null>(null);
-  const [showContracts, setShowContracts] = useState(false);
-  const [detailContract, setDetailContract] = useState<DeliveryContract | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [dialogue, setDialogue] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const npc = selectedNpc !== null ? NPCS[selectedNpc] : null;
-  const npcContracts = npc ? contracts.filter((c) => npc.contractFilter(c)) : [];
+  const selected = npcs.find((n) => n.id === selectedId) ?? null;
 
-  /** The NPC associated with the contract open in the detail modal (defaults to Elder Neo). */
-  const detailNpc = detailContract
-    ? (NPCS.find((n) => n.contractFilter(detailContract)) ?? NPCS[0])
-    : null;
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
+  const openNpc = async (id: string) => {
+    setSelectedId(id);
+    setBusy(true);
+    const t = await talk(id);
+    setDialogue(t?.message ?? null);
+    setBusy(false);
   };
 
-  /** Opens a contract's detail view anchored under the NPC's portrait. */
-  const openContractDetail = (contract: DeliveryContract) => setDetailContract(contract);
+  const pct = (cur: number, req: number) => Math.max(0, Math.min(100, Math.round((cur / req) * 100)));
+  const donateBlocked = !!contribution && contribution.remainingToday <= 0;
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
@@ -94,384 +43,162 @@ export function KgotlaScreen() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
-      {/* Top HUD */}
+      {/* Top HUD — Botho (the single standing number, D5) + Field Journal */}
       <div className="relative z-10 flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-3 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
-          <span className="text-lg">🏛️</span>
+        <div className="flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
+          <span className="text-lg">🤝</span>
           <div>
-            <span className="font-headline text-xs text-primary uppercase font-bold block">
-              Kgotla
-            </span>
-            <span className="font-mono text-[9px] text-on-surface-variant">
-              {tl('communityHub')}
+            <span className="font-headline text-xs text-primary uppercase font-bold block">Botho</span>
+            <span className="font-mono text-[10px] text-gold-currency font-bold">
+              {botho ? botho.current : '—'}
+              {botho?.next
+                ? ` → ${botho.next.label ?? botho.next.value} (${botho.next.remaining})`
+                : botho
+                  ? ' · maxed'
+                  : ''}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
-          <span className="text-sm">⭐</span>
-          <span className="font-mono text-[10px] text-gold-currency font-bold">
-            {reputation} / {maxReputation}
+          <span className="text-sm">📖</span>
+          <span className="font-mono text-[10px] text-on-surface-variant font-bold">
+            {journal ? `${journal.pagesComplete}/${journal.totalPages}` : '—'} pages
           </span>
         </div>
       </div>
 
-      {/* NPCs */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8 bg-black/25">
-        <div className="w-full max-w-lg">
-          <div className="grid grid-cols-2 gap-4">
-            {NPCS.map((n, i) => (
-              <button
-                key={n.name}
-                onClick={() => {
-                  setSelectedNpc(selectedNpc === i ? null : i);
-                  setShowContracts(false);
-                }}
-                className={`bg-wood-dark/85 p-3 border text-left transition-all active:scale-95 ${
-                  selectedNpc === i
-                    ? 'border-primary ring-2 ring-primary/50 shadow-lg'
-                    : 'border-wood-border hover:border-primary/50'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div
-                    className="w-16 h-16 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center shrink-0 rounded-sm"
-                    style={{ imageRendering: 'pixelated' }}
-                  >
-                    <img
-                      src={n.avatar}
-                      alt={n.name}
-                      className="w-14 h-14 object-contain"
-                      style={{ imageRendering: 'pixelated' }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove(
-                          'hidden',
-                        );
-                      }}
-                    />
-                    <span className="text-3xl hidden">{n.fallback}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <span className="font-headline text-xs text-cream-surface font-bold block truncate">
-                      {n.name}
-                    </span>
-                    <span className="font-mono text-[9px] text-on-surface-variant block">
-                      {n.role}
-                    </span>
-                  </div>
-                </div>
-                <p className="font-body text-[11px] text-on-surface-variant leading-snug line-clamp-2">
-                  &ldquo;{n.dialogue}&rdquo;
-                </p>
-              </button>
-            ))}
+      {/* Botho daily cap (legal control, I4) + Elder's guidance (reads real state) */}
+      <div className="relative z-10 px-4 space-y-2">
+        {botho && (
+          <div className="bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[10px] text-on-surface-variant">
+            Botho earned today: {botho.earnedToday}/{botho.dailyCap} · {botho.remainingToday} left
           </div>
-
-          {/* Contracts Button */}
-          <button
-            onClick={() => {
-              setShowContracts(!showContracts);
-              setSelectedNpc(null);
-            }}
-            className={`w-full mt-4 p-3 border transition-all ${
-              showContracts
-                ? 'bg-primary-container border-primary'
-                : 'bg-wood-dark/85 border-wood-border hover:border-primary/50'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📜</span>
-                <span className="font-headline text-xs text-cream-surface font-bold uppercase">
-                  {tl('activeContracts')}
-                </span>
-              </div>
-              <span className="font-mono text-[10px] text-on-surface-variant">
-                {contracts.filter((c) => !c.claimed).length}
-              </span>
+        )}
+        {elder && (
+          <div className="bg-primary-container/80 px-3 py-2 border border-primary">
+            <div className="font-mono text-[9px] uppercase text-primary font-bold mb-0.5">
+              Elder&apos;s guidance
             </div>
-          </button>
+            <p className="font-body text-[12px] text-on-primary-container leading-snug">{elder.english}</p>
+            {elder.setswana && (
+              <p className="font-body text-[11px] text-on-primary-container/70 mt-0.5">{elder.setswana}</p>
+            )}
+          </div>
+        )}
+      </div>
 
-          {/* Contracts List */}
-          {showContracts && (
-            <div className="mt-2 space-y-2 animate-slide-up">
-              {contracts.map((contract) => {
-                const progressPct = Math.round((contract.current / contract.target) * 100);
-                const isComplete = contract.current >= contract.target;
-                return (
-                  <div key={contract.id} className="bg-wood-dark/95 p-3 border border-wood-border">
-                    <button
-                      onClick={() => openContractDetail(contract)}
-                      className="w-full text-left"
-                      aria-label={`${tl('viewDetails') || 'View details'}: ${contract.title}`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <span className="font-headline text-xs text-cream-surface font-bold block">
-                            {contract.title}
-                          </span>
-                          <span className="font-mono text-[9px] text-on-surface-variant">
-                            {contract.source} • {contract.expiresIn}
-                          </span>
-                        </div>
-                        <span className="font-mono text-[9px] text-gold-currency font-bold">
-                          P{contract.pulaReward}
-                        </span>
-                      </div>
-                      <p className="font-body text-[10px] text-on-surface-variant mb-2">
-                        {contract.description}
-                      </p>
-                    </button>
-                    <div className="mb-2">
-                      <div className="flex justify-between font-mono text-[9px] text-on-surface-variant mb-0.5">
-                        <span>
-                          {contract.current}/{contract.target} {contract.unit}
-                        </span>
-                        <span>{progressPct}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-surface-container-lowest overflow-hidden">
-                        <div
-                          className={`h-full transition-all ${
-                            isComplete ? 'bg-status-success' : 'bg-status-warning'
-                          }`}
-                          style={{ width: `${progressPct}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-[9px] text-primary font-bold">
-                        +{contract.xpReward} XP
-                      </span>
-                      {contract.claimed ? (
-                        <span className="px-3 py-1 bg-surface-container-high text-on-surface-variant font-mono text-[10px] uppercase font-bold">
-                          {tl('claimed')}
-                        </span>
-                      ) : isComplete ? (
-                        <button
-                          onClick={() => claimContract(contract.id)}
-                          className="px-3 py-1 bg-status-success text-wood-dark font-mono text-[10px] uppercase font-bold active:translate-y-0.5"
-                        >
-                          {tl('claimReward')}
-                        </button>
-                      ) : (
-                        <span className="font-mono text-[9px] text-on-surface-variant">
-                          {tl('inProgress')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {contracts.length === 0 && (
-                <div className="bg-wood-dark/80 p-4 border border-wood-border text-center">
-                  <span className="font-body text-xs text-on-surface-variant">
-                    {tl('talkToNpcs')}
-                  </span>
-                </div>
-              )}
+      {/* NPCs */}
+      <div className="relative z-10 px-4 py-4">
+        <h3 className="font-headline text-sm text-cream-surface uppercase mb-2">{tl('communityHub')}</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {npcs.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => openNpc(n.id)}
+              className="bg-wood-dark/85 p-3 border text-left transition-all active:scale-95 border-wood-border hover:border-primary/50"
+            >
+              <div className="font-headline text-xs text-cream-surface font-bold block truncate">{n.name}</div>
+              <div className="font-mono text-[9px] text-on-surface-variant block">{n.role}</div>
+              <div className="font-mono text-[9px] text-primary mt-1">
+                ★ {n.tier} · {n.reputation}
+              </div>
+            </button>
+          ))}
+          {npcs.length === 0 && !loading && (
+            <div className="col-span-2 bg-wood-dark/70 p-4 border border-wood-border text-center font-body text-xs text-on-surface-variant">
+              {tl('talkToNpcs') ?? 'The Kgotla is quiet. Come back soon.'}
             </div>
           )}
         </div>
       </div>
 
-      {/* NPC Dialogue Card — portrait sits on top, centered */}
-      {npc && !showContracts && (
-        <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
-          {/* Portrait above the dialog, face centered and visible */}
-          <div className="flex justify-center relative z-10 -mb-px">
-            <div
-              className="w-24 h-24 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center shadow-[2px_2px_0px_rgba(0,0,0,0.6)]"
-              style={{ imageRendering: 'pixelated' }}
-            >
-              <img
-                src={npc.avatar}
-                alt={npc.name}
-                className="w-full h-full object-cover object-top"
-                style={{ imageRendering: 'pixelated' }}
-                onError={(e) => {
-                  const img = e.target as HTMLImageElement;
-                  img.style.display = 'none';
-                  const fallback = img.nextElementSibling as HTMLElement | null;
-                  if (fallback) fallback.classList.remove('hidden');
-                }}
-              />
-              <span className="text-5xl hidden">{npc.fallback}</span>
-            </div>
+      {/* Community Projects — the capped Letsema Pula sink (02 §9, F7) */}
+      <div className="relative z-10 px-4 pb-4">
+        <h3 className="font-headline text-sm text-cream-surface uppercase mb-2">Community Projects</h3>
+        {contribution && (
+          <div className="bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[10px] text-on-surface-variant mb-2">
+            Given today: {contribution.contributedToday}/{contribution.dailyCap} Pula ·{' '}
+            {contribution.remainingToday} left
           </div>
+        )}
+        <div className="space-y-2">
+          {projects.map((p) => (
+            <div key={p.id} className="bg-wood-dark/95 p-3 border border-wood-border">
+              <div className="flex items-start justify-between mb-1">
+                <span className="font-headline text-xs text-cream-surface font-bold">{p.name}</span>
+                {p.completed && (
+                  <span className="font-mono text-[9px] text-status-success font-bold uppercase">Done</span>
+                )}
+              </div>
+              <p className="font-body text-[10px] text-on-surface-variant mb-2">{p.description}</p>
+              <div className="flex justify-between font-mono text-[9px] text-on-surface-variant mb-0.5">
+                <span>
+                  {p.currentContributions}/{p.requiredContributions} Pula
+                </span>
+                <span>{pct(p.currentContributions, p.requiredContributions)}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-surface-container-lowest overflow-hidden mb-2">
+                <div
+                  className="h-full bg-status-success transition-all"
+                  style={{ width: `${pct(p.currentContributions, p.requiredContributions)}%` }}
+                />
+              </div>
+              <p className="font-mono text-[9px] text-primary mb-2">Reward: {p.reward}</p>
+              <div className="flex gap-2">
+                <button
+                  disabled={donateBlocked}
+                  onClick={() => donate(p.id, 10)}
+                  className="flex-1 py-1.5 bg-primary-container text-on-primary-container font-mono text-[10px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+                >
+                  +10
+                </button>
+                <button
+                  disabled={donateBlocked}
+                  onClick={() => donate(p.id, 50)}
+                  className="flex-1 py-1.5 bg-primary-container text-on-primary-container font-mono text-[10px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+                >
+                  +50
+                </button>
+              </div>
+            </div>
+          ))}
+          {projects.length === 0 && !loading && (
+            <div className="bg-wood-dark/70 p-4 border border-wood-border text-center font-body text-xs text-on-surface-variant">
+              No community projects right now.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* NPC dialogue + quest */}
+      {selected && (
+        <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
           <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
             <div className="text-center mb-3">
-              <span className="font-headline text-sm text-cream-surface font-bold">{npc.name}</span>
-              <span className="font-mono text-[10px] text-primary uppercase block">{npc.role}</span>
+              <span className="font-headline text-sm text-cream-surface font-bold block">{selected.name}</span>
+              <span className="font-mono text-[10px] text-primary uppercase block">
+                {selected.role} · ★ {selected.tier}
+              </span>
             </div>
             <p className="font-body text-xs text-cream-surface mb-3 leading-relaxed text-center bg-surface-container-lowest/60 p-2.5 border border-wood-border/50">
-              &ldquo;{npc.dialogue}&rdquo;
+              &ldquo;{dialogue ?? selected.greeting}&rdquo;
             </p>
-
-            {npcContracts.length > 0 && (
-              <div className="mb-3">
-                <span className="font-mono text-[9px] text-on-surface-variant uppercase block mb-1.5">
-                  {tl('activeContracts')}
-                </span>
-                {npcContracts.map((c) => {
-                  const isComplete = c.current >= c.target;
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => openContractDetail(c)}
-                      className="w-full text-left bg-surface-container-lowest p-2.5 border border-wood-border mb-1.5 hover:border-primary/50 transition-all active:translate-y-0.5"
-                    >
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="font-headline text-[11px] text-primary font-bold">
-                          {c.title}
-                        </span>
-                        <span className="font-mono text-[9px] text-gold-currency font-bold">
-                          P{c.pulaReward}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[9px] text-on-surface-variant">
-                          {c.current}/{c.target} {c.unit}
-                        </span>
-                        {c.claimed ? (
-                          <span className="font-mono text-[9px] text-status-success font-bold uppercase">
-                            {tl('claimed')}
-                          </span>
-                        ) : isComplete ? (
-                          <span className="font-mono text-[9px] text-status-success font-bold uppercase">
-                            {tl('claimReward')} →
-                          </span>
-                        ) : (
-                          <span className="font-mono text-[9px] text-primary uppercase font-bold">
-                            {tl('viewDetails')} →
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
             <div className="flex gap-2">
-              {npcContracts.length > 0 && (
-                <button
-                  onClick={() => {
-                    setShowContracts(true);
-                    setSelectedNpc(null);
-                  }}
-                  className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
-                >
-                  {tl('viewContracts')}
-                </button>
-              )}
               <button
-                onClick={() => setSelectedNpc(null)}
+                disabled={busy}
+                onClick={() => completeQuest(selected.id)}
+                className="flex-1 py-2 bg-primary text-wood-dark font-mono text-xs uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+              >
+                Help (quest)
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedId(null);
+                  setDialogue(null);
+                }}
                 className="py-2 px-4 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
               >
                 {tl('leave')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Contract Detail Modal — full flow with accept/claim */}
-      {detailContract && (
-        <div
-          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setDetailContract(null)}
-        >
-          <div
-            className="w-full max-w-sm bg-wood-dark border-2 border-wood-border shadow-[4px_4px_0px_rgba(0,0,0,0.6)] animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* NPC portrait above the contract card */}
-            <div className="flex justify-center relative z-10 -mb-px pt-4">
-              <div
-                className="w-20 h-20 bg-surface-container-low border-2 border-wood-border overflow-hidden flex items-center justify-center"
-                style={{ imageRendering: 'pixelated' }}
-              >
-                <img
-                  src={detailNpc?.avatar ?? NPCS[0]?.avatar}
-                  alt={detailNpc?.name ?? 'NPC'}
-                  className="w-full h-full object-cover object-top"
-                  style={{ imageRendering: 'pixelated' }}
-                  onError={(e) => {
-                    const img = e.target as HTMLImageElement;
-                    img.style.display = 'none';
-                    const fallback = img.nextElementSibling as HTMLElement | null;
-                    if (fallback) fallback.classList.remove('hidden');
-                  }}
-                />
-                <span className="text-4xl hidden">{detailNpc?.fallback ?? '👤'}</span>
-              </div>
-            </div>
-            <div className="p-4">
-              <div className="text-center mb-3">
-                <span className="font-headline text-xs text-primary uppercase font-bold block">
-                  {detailNpc?.name ?? ''}
-                </span>
-                <span className="font-headline text-sm text-cream-surface font-bold block mt-1">
-                  {detailContract.title}
-                </span>
-              </div>
-              <p className="font-body text-xs text-cream-surface/90 mb-3 leading-relaxed text-center">
-                {detailContract.description}
-              </p>
-              <div className="bg-surface-container-lowest border border-wood-border p-3 mb-3">
-                <div className="flex justify-between font-mono text-[10px] mb-1">
-                  <span className="text-on-surface-variant">
-                    {detailContract.current}/{detailContract.target} {detailContract.unit}
-                  </span>
-                  <span className="text-on-surface-variant">
-                    {Math.round((detailContract.current / detailContract.target) * 100)}%
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-surface-container-high overflow-hidden mb-2">
-                  <div
-                    className={`h-full transition-all ${
-                      detailContract.current >= detailContract.target
-                        ? 'bg-status-success'
-                        : 'bg-status-warning'
-                    }`}
-                    style={{
-                      width: `${(detailContract.current / detailContract.target) * 100}%`,
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between font-mono text-[10px]">
-                  <span className="text-gold-currency font-bold">P{detailContract.pulaReward}</span>
-                  <span className="text-primary font-bold">+{detailContract.xpReward} XP</span>
-                  <span className="text-on-surface-variant">{detailContract.expiresIn}</span>
-                </div>
-              </div>
-              {detailContract.claimed ? (
-                <div className="text-center py-2 bg-surface-container-high font-mono text-xs text-on-surface-variant uppercase font-bold">
-                  {tl('claimed')}
-                </div>
-              ) : detailContract.current >= detailContract.target ? (
-                <button
-                  onClick={() => {
-                    claimContract(detailContract.id);
-                    showToast(tl('claimReward'));
-                    setDetailContract(null);
-                  }}
-                  className="w-full py-3 bg-status-success text-wood-dark font-headline text-sm uppercase font-bold active:translate-y-0.5"
-                >
-                  ✓ {tl('claimReward')}
-                </button>
-              ) : (
-                <div className="text-center py-2 bg-surface-container-high border border-wood-border">
-                  <span className="font-mono text-xs text-on-surface-variant uppercase">
-                    {tl('inProgress')} — {tl('deliverItemsHint') || 'deliver goods to claim'}
-                  </span>
-                </div>
-              )}
-              <button
-                onClick={() => setDetailContract(null)}
-                className="w-full mt-2 py-2 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
-              >
-                {tl('back') || 'Back'}
               </button>
             </div>
           </div>
@@ -488,12 +215,9 @@ export function KgotlaScreen() {
         </button>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
-          <div className="bg-status-success/90 text-wood-dark px-4 py-2 font-mono text-xs font-bold shadow-lg">
-            {toast}
-          </div>
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#210e0b]/70">
+          <p className="font-headline text-sm text-primary uppercase font-bold">{tl('kgotla')}…</p>
         </div>
       )}
     </div>

@@ -1,227 +1,134 @@
 /**
- * Virtual Goods Configuration
+ * The store — docs/MVP/02_Economy_And_Currencies.md §6.6.
  *
- * All purchasable items in the Molemisi store.
- * Organized by category with pricing in Pula (BWP).
+ * Three categories only:
+ *   - Top-up packs (Pula is transparent and 1:1)
+ *   - Guild subscription
+ *   - Boosts (THREE, not four — Fertility Shell is REMOVED, R8)
  *
- * Monetization Strategy (from PRD):
- * 1. Cosmetics — skins, decorations, themes
- * 2. Convenience — speed boosts, extra plots, storage
- * 3. Premium content — exclusive crops, buildings
- *
- * No pay-to-win. All items must be achievable through gameplay eventually.
+ * Cosmetics live in seed data so seasonal rotation is effectively infinite (F7).
+ * The `VirtualGood` shape is preserved so the existing payments service keeps
+ * working — only the contents are now spec-aligned.
  */
+
+import { BOOSTS, TOP_UP_PACKS, COSMETIC_PRICE_RANGE, GUILD_SUBSCRIPTION } from './economy';
+
+export type StoreCategory = 'currency' | 'subscription' | 'boost' | 'cosmetic';
 
 export interface VirtualGood {
   sku: string;
   name: string;
   description: string;
-  category: 'cosmetic' | 'convenience' | 'premium';
-  /** Price in Pula (BWP) */
+  category: StoreCategory;
   price: number;
-  /** Currency code */
-  currency: string;
-  /** Whether this item is consumable (one-time use) or permanent */
+  currency: 'BWP' | 'PULA';
   consumable: boolean;
-  /** Whether this item is currently available in the store */
   available: boolean;
-  /** Seasonal restriction — null means always available */
-  season?: 'spring' | 'summer' | 'autumn' | 'winter';
-  /** What the player gets — used by the entitlement system */
+  /** Restriction by Setswana chapter (04 §9.2). null = always available. */
+  chapter?: 'pula' | 'phane' | 'moriti' | 'letlhafula' | null;
   entitlement: VirtualEntitlement;
-  /** Display order in store */
   displayOrder: number;
 }
 
 export type VirtualEntitlement =
   | { type: 'currency'; amount: number }
-  | { type: 'decoration'; decorationId: string }
-  | { type: 'plot_slots'; count: number }
-  | { type: 'storage_slots'; count: number }
-  | { type: 'cosmetic_theme'; themeId: string }
-  | { type: 'speed_boost'; multiplier: number; durationHours: number }
-  | { type: 'premium_crop'; cropId: string }
-  | { type: 'premium_building'; buildingId: string };
+  | { type: 'subscription'; slug: string; days: number }
+  | { type: 'boost'; slug: string }
+  | { type: 'cosmetic'; cosmeticId: string };
+
+const TOP_UP_ENTITLEMENTS: Record<string, VirtualGood> = Object.fromEntries(
+  TOP_UP_PACKS.map((p, i) => [
+    p.slug,
+    {
+      sku: `topup_${p.slug}`,
+      name: `${p.name} Pack`,
+      description: `P${p.grantedPula} of Pula, credited on confirmation. The Co-op tax still applies when you spend it.`,
+      category: 'currency' as const,
+      price: p.priceBwp,
+      currency: 'BWP' as const,
+      consumable: true,
+      available: true,
+      entitlement: { type: 'currency', amount: p.grantedPula } as VirtualEntitlement,
+      displayOrder: 1 + i,
+    } satisfies VirtualGood,
+  ]),
+);
+
+const GUILD_ENTITLEMENT: VirtualGood = {
+  sku: 'subscription_guild',
+  name: 'Guild Subscription',
+  description:
+    'P49/month. Auto-Collector, +50% storage stacking, weekly Pula Stone, ad-free, cosmetics. Auto-Collector can never deliver a quest or donate — that control is load-bearing (I4).',
+  category: 'subscription',
+  price: GUILD_SUBSCRIPTION.priceBwp,
+  currency: 'BWP',
+  consumable: false,
+  available: true,
+  entitlement: { type: 'subscription', slug: GUILD_SUBSCRIPTION.slug, days: 30 },
+  displayOrder: 10,
+};
+
+/**
+ * RULING 2026-09-11 — boost effects are deferred from v1 (see docs/KNOWN_LIMITATIONS.md).
+ *
+ * Ownership is recorded on purchase, but NO endpoint applies any effect: no tank refill,
+ * no rain guarantee, no raid shield, no timer completion. Selling a boost that does
+ * nothing is worse than not selling it, so `available` is false. That single flag is
+ * load-bearing: `getGoodsByCategory()` and `GET /payments/store` both filter on it, so
+ * the boosts leave both storefronts at once and `purchase()` rejects them.
+ *
+ * The entries stay in the catalogue deliberately — R8/C10 is about what EXISTS, and
+ * `BOOST_SLUGS` is pinned by launch-readiness.spec.ts. Restoring them is one line.
+ */
+const BOOST_ENTITLEMENTS: VirtualGood[] = BOOSTS.map((b, i) => ({
+  sku: `boost_${b.slug}`,
+  name: b.name,
+  description: b.effect,
+  category: 'boost' as const,
+  price: b.pricePula,
+  currency: 'PULA' as const,
+  consumable: true,
+  available: false,
+  entitlement: { type: 'boost', slug: b.slug } as VirtualEntitlement,
+  displayOrder: 20 + i,
+}));
+
+/**
+ * F7 — cosmetics are the only truly unbounded Pula sink. Indicative prices
+ * P200–P2,000; seasonal rotation makes it effectively infinite. v1 ships a thin
+ * initial line; new ones are seeded by chapter.
+ */
+const COSMETIC_ENTITLEMENTS: VirtualGood[] = [
+  { sku: 'cos_hut_moriti', name: 'Moriti Hut Roof', description: 'A thatched roof in the dry-season ochre.', category: 'cosmetic', price: 600, currency: 'PULA', consumable: false, available: true, chapter: 'moriti', entitlement: { type: 'cosmetic', cosmeticId: 'hut_roof_moriti' }, displayOrder: 30 },
+  { sku: 'cos_hut_phane', name: 'Phane Hut Trim', description: 'Warm red trim, in the colours of the late rains.', category: 'cosmetic', price: 600, currency: 'PULA', consumable: false, available: true, chapter: 'phane', entitlement: { type: 'cosmetic', cosmeticId: 'hut_trim_phane' }, displayOrder: 31 },
+  { sku: 'cos_kraal_pattern_horizon', name: 'Horizon Kraal Pattern', description: 'Painted thorn branches in the evening colours.', category: 'cosmetic', price: 1200, currency: 'PULA', consumable: false, available: true, chapter: 'letlhafula', entitlement: { type: 'cosmetic', cosmeticId: 'kraal_pattern_horizon' }, displayOrder: 32 },
+  { sku: 'cos_mogolo_hat', name: 'Mogolo\'s Hat', description: 'A wide-brimmed hat for your fields. He wears one just like it.', category: 'cosmetic', price: 900, currency: 'PULA', consumable: false, available: true, chapter: 'pula', entitlement: { type: 'cosmetic', cosmeticId: 'mogolo_hat' }, displayOrder: 33 },
+  { sku: 'cos_scene_frame_open_bush', name: 'Open Bush Frame', description: 'A wooden border for your field.', category: 'cosmetic', price: 400, currency: 'PULA', consumable: false, available: true, chapter: null, entitlement: { type: 'cosmetic', cosmeticId: 'frame_open_bush' }, displayOrder: 34 },
+  { sku: 'cos_livestock_coat', name: 'Goat Coat', description: 'A ceremonial blanket for the goats. They do not care. You will.', category: 'cosmetic', price: 350, currency: 'PULA', consumable: false, available: true, chapter: null, entitlement: { type: 'cosmetic', cosmeticId: 'livestock_coat' }, displayOrder: 35 },
+];
 
 export const VIRTUAL_GOODS: VirtualGood[] = [
-  // ── Cosmetics ──────────────────────────────────────────────
-  {
-    sku: 'cosm_sunflower_deco',
-    name: 'Sunflower Decoration',
-    description: 'A cheerful sunflower patch for your farm.',
-    category: 'cosmetic',
-    price: 50,
-    currency: 'BWP',
-    consumable: false,
-    available: true,
-    entitlement: { type: 'decoration', decorationId: 'sunflower_patch' },
-    displayOrder: 1,
-  },
-  {
-    sku: 'cosm_wooden_fence',
-    name: 'Wooden Fence Set',
-    description: 'Rustic wooden fencing around your plots.',
-    category: 'cosmetic',
-    price: 75,
-    currency: 'BWP',
-    consumable: false,
-    available: true,
-    entitlement: { type: 'decoration', decorationId: 'wooden_fence' },
-    displayOrder: 2,
-  },
-  {
-    sku: 'cosm_rain_theme',
-    name: 'Rainy Day Theme',
-    description: 'A cozy rainy atmosphere for your farm.',
-    category: 'cosmetic',
-    price: 100,
-    currency: 'BWP',
-    consumable: false,
-    available: true,
-    entitlement: { type: 'cosmetic_theme', themeId: 'rainy_day' },
-    displayOrder: 3,
-  },
-  {
-    sku: 'cosm_harvest_theme',
-    name: 'Harvest Festival Theme',
-    description: 'Warm autumn colors for your farm.',
-    category: 'cosmetic',
-    price: 100,
-    currency: 'BWP',
-    consumable: false,
-    available: true,
-    season: 'autumn',
-    entitlement: { type: 'cosmetic_theme', themeId: 'harvest_festival' },
-    displayOrder: 4,
-  },
-
-  // ── Convenience ────────────────────────────────────────────
-  {
-    sku: 'conv_500_pula',
-    name: '500 Pula',
-    description: 'A little extra to help your farm grow.',
-    category: 'convenience',
-    price: 25,
-    currency: 'BWP',
-    consumable: true,
-    available: true,
-    entitlement: { type: 'currency', amount: 500 },
-    displayOrder: 10,
-  },
-  {
-    sku: 'conv_1500_pula',
-    name: '1,500 Pula',
-    description: 'A generous boost for your farm.',
-    category: 'convenience',
-    price: 60,
-    currency: 'BWP',
-    consumable: true,
-    available: true,
-    entitlement: { type: 'currency', amount: 1500 },
-    displayOrder: 11,
-  },
-  {
-    sku: 'conv_5000_pula',
-    name: '5,000 Pula',
-    description: 'A major investment in your agricultural future.',
-    category: 'convenience',
-    price: 150,
-    currency: 'BWP',
-    consumable: true,
-    available: true,
-    entitlement: { type: 'currency', amount: 5000 },
-    displayOrder: 12,
-  },
-  {
-    sku: 'conv_speed_boost_1h',
-    name: 'Growth Elixir (1h)',
-    description: 'Doubles crop growth speed for 1 hour.',
-    category: 'convenience',
-    price: 80,
-    currency: 'BWP',
-    consumable: true,
-    available: true,
-    entitlement: { type: 'speed_boost', multiplier: 2, durationHours: 1 },
-    displayOrder: 13,
-  },
-  {
-    sku: 'conv_extra_plot_3',
-    name: '3 Extra Plot Slots',
-    description: 'Expand your farm with 3 additional planting plots.',
-    category: 'convenience',
-    price: 200,
-    currency: 'BWP',
-    consumable: false,
-    available: true,
-    entitlement: { type: 'plot_slots', count: 3 },
-    displayOrder: 14,
-  },
-  {
-    sku: 'conv_extra_storage_20',
-    name: '20 Extra Storage Slots',
-    description: 'More room in your storage building.',
-    category: 'convenience',
-    price: 120,
-    currency: 'BWP',
-    consumable: false,
-    available: true,
-    entitlement: { type: 'storage_slots', count: 20 },
-    displayOrder: 15,
-  },
-
-  // ── Premium ────────────────────────────────────────────────
-  {
-    sku: 'prem_saffron_seed',
-    name: 'Saffron Seed Pack',
-    description: 'Rare saffron seeds — extremely valuable when harvested.',
-    category: 'premium',
-    price: 300,
-    currency: 'BWP',
-    consumable: true,
-    available: true,
-    entitlement: { type: 'premium_crop', cropId: 'saffron' },
-    displayOrder: 20,
-  },
-  {
-    sku: 'prem_greenhouse',
-    name: 'Greenhouse Blueprint',
-    description: 'Build a greenhouse that protects crops from weather.',
-    category: 'premium',
-    price: 500,
-    currency: 'BWP',
-    consumable: false,
-    available: true,
-    entitlement: { type: 'premium_building', buildingId: 'greenhouse' },
-    displayOrder: 21,
-  },
-  {
-    sku: 'prem_irrigation_system',
-    name: 'Irrigation System',
-    description: 'Automated watering — crops stay hydrated without manual watering.',
-    category: 'premium',
-    price: 400,
-    currency: 'BWP',
-    consumable: false,
-    available: true,
-    entitlement: { type: 'premium_building', buildingId: 'irrigation_system' },
-    displayOrder: 22,
-  },
+  ...Object.values(TOP_UP_ENTITLEMENTS),
+  GUILD_ENTITLEMENT,
+  ...BOOST_ENTITLEMENTS,
+  ...COSMETIC_ENTITLEMENTS,
 ];
 
 export function getVirtualGood(sku: string): VirtualGood | undefined {
   return VIRTUAL_GOODS.find((g) => g.sku === sku);
 }
 
-export function getAvailableGoods(
-  season?: 'spring' | 'summer' | 'autumn' | 'winter',
-): VirtualGood[] {
+export function getAvailableGoods(chapter?: string | null): VirtualGood[] {
   return VIRTUAL_GOODS.filter((g) => {
     if (!g.available) return false;
-    if (g.season && g.season !== season) return false;
+    if (g.chapter && g.chapter !== chapter) return false;
     return true;
   });
 }
 
-export function getGoodsByCategory(category: VirtualGood['category']): VirtualGood[] {
+export function getGoodsByCategory(category: StoreCategory): VirtualGood[] {
   return VIRTUAL_GOODS.filter((g) => g.category === category && g.available);
 }
+
+/** 02 §6.6 — R4 / C5. P500/player/day, enforced in Botswana time (UTC+2). */
+export { COSMETIC_PRICE_RANGE };
