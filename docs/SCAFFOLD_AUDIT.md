@@ -12,7 +12,7 @@ This file was the M1 scaffold checklist (2026-09-02). The scaffold is done. Use 
 ## Historical scaffold (complete)
 
 - pnpm + Turborepo, TypeScript, ESLint 9 flat config, Prettier
-- `apps/web`, `apps/game`, `apps/api`
+- `apps/web`, `apps/api` (the standalone Phaser prototype `apps/game` was deleted 2026-09-11)
 - Packages: shared, game-types, game-config, validation
 - Supabase config, 27 migrations, seed.sql
 - GitHub Actions: lint, typecheck, test, build

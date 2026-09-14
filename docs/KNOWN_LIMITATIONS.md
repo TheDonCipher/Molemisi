@@ -57,10 +57,10 @@ post-launch.** The inversion is a recorded, accepted state, not an open bug.
 
 ### Phaser is not the player client
 
-`/game` is a React screen switcher. Phaser runs only as a standalone Vite app on port 3002
-with Boot / Preload / FarmScene. Kgotla, Bushveld, and Market Phaser scenes and most
-`apps/game/src/ui` panels are unused. `apps/game` is a deletion candidate (see Recommended
-tasks in `DEVELOPMENT_STATE.md`).
+`/game` is a React screen switcher. The standalone Phaser prototype `apps/game` (Boot / Preload /
+FarmScene on port 3002, with Kgotla/Bushveld/Market scenes and `apps/game/src/ui` panels) was
+**deleted on 2026-09-11**. React `/game` is now the only client; the spec's "React only" intent
+(`01` D3) is satisfied.
 
 ### Token key split
 
@@ -155,9 +155,10 @@ Next.js has no `rewrites` for `/api`. Vite has no `server.proxy`. Online single-
 cannot reach the API unless `NEXT_PUBLIC_API_URL` is publicly reachable and CORS allows the
 preview origin.
 
-### Vite `allowedHosts` not set
+### Vite `allowedHosts` not set (removed)
 
-`apps/game/vite.config.ts` does not allow `*.monkeycode-ai.live`.
+This limitation referenced `apps/game/vite.config.ts`, which no longer exists — the Phaser
+prototype was deleted on 2026-09-11. Not applicable to the shipped React client.
 
 ### Dual Next config
 

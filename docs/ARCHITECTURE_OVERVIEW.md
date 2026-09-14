@@ -34,8 +34,8 @@ As-built. Design intent that differs is called out. **Last updated 2026-09-14.**
 ```
 
 Intended (ADRs 001–002): Next.js shell embeds Phaser. **Current:** React owns the
-playable UI; Phaser is a parallel prototype still on port 3002. See `DEVELOPMENT_STATE.md`
-Headline status — `apps/game` is a deletion candidate.
+playable UI; the parallel Phaser prototype `apps/game` was **deleted on 2026-09-11**, so React
+`/game` is the only client. See `DEVELOPMENT_STATE.md`.
 
 ## Trust boundaries
 
@@ -125,8 +125,8 @@ three boosts are `available: false`**). Real providers not wired.
 **Web (`apps/web`)** — App Router, Tailwind, `lib/gameState.tsx`, screens under
 `src/components/screens/`, PWA `public/manifest.json` + `public/sw.js`.
 
-**Game (`apps/game`)** — Vite 3002, Phaser 3, standalone. Assets from generated manifest.
-Not in the shippable path.
+**Game (`apps/game`)** — *removed 2026-09-11.* This was a Vite 3002 / Phaser 3 standalone
+prototype; the shippable client is React `/game` in `apps/web`.
 
 ## Infra (local)
 

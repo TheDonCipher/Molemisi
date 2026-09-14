@@ -32,8 +32,6 @@ module.exports = [
       '**/.turbo/**',
       '**/coverage/**',
       '**/.git/**',
-      // Generated — formatted by its generator, not Prettier
-      'apps/game/src/generated-assets.ts',
       // Supabase config / SQL
       'supabase/**',
     ],

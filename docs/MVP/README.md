@@ -72,7 +72,7 @@ It reads the crop table **as written in the spec** and asserts the dead-zone rul
 4. **Monthly promotional budget** for Export Contracts and the prize pool.
 5. **Real gateway pricing** from Orange Money and MyZaka — cash-in %, disbursement fixed + %. The withdrawal fee and the whole Exchange margin model rest on assumed figures. **Highest-value phone call available.**
 6. **Your actual monthly cost base** — `02 §8.5` has a composition; replace the indicative figures.
-7. **Delete `apps/game`** — a legacy Phaser app (Boot/Preload/FarmScene only; other scenes written but never registered). Now a recommended cleanup, not an open decision; see `DEVELOPMENT_STATE.md` recommended tasks.
+7. ~~Delete `apps/game`~~ — **done 2026-09-11.** The legacy Phaser app (Boot/Preload/FarmScene only) was removed; React `/game` is the only client. See `DEVELOPMENT_STATE.md`.
 
 Resolved 2026-09-07: Saffron → **Morula** as the top-of-ladder crop.
 

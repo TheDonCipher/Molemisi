@@ -31,14 +31,13 @@ Specs and the marketplace pivot (cash-out to mobile money, P2P Exchange) are cap
 ## Player path
 
 The playable client is the **Next.js React shell** at `/game`. It talks to the NestJS API over
-REST. Phaser (`apps/game`) is a standalone Vite client on port 3002 (Farm scene + demo mode). It
-is not mounted inside Next.js.
+REST. (The legacy standalone Phaser prototype `apps/game` was deleted on 2026-09-11; React `/game`
+is the only shipped client.)
 
 ```
 Browser
   -> Next.js :3000  (auth, React game UI, admin, dev, PWA)
   -> NestJS  :3001  (/api/v1, authoritative game logic)
-  -> Vite    :3002  (optional standalone Phaser client)
 
 Supabase PostgreSQL (linked remote project is the real target)
 ```

@@ -66,16 +66,16 @@ M16 Alpha                          [BLOCKED — see Headline status]
 Player browser
   -> Next.js :3000  React shell (landing, auth, /game, /admin, /dev, PWA)
        fetch http://localhost:3001/api/v1   (no reverse proxy — CORS via CORS_ORIGIN)
-  -> Vite    :3002  standalone Phaser (Boot -> Preload -> FarmScene)   [legacy / optional]
+  -> (legacy Phaser prototype `apps/game` deleted 2026-09-11; React `/game` on :3000 is the client)
        fetch http://localhost:3001/api/v1
   -> NestJS  :3001  modular monolith, prefix /api/v1
   -> Supabase PostgreSQL (service-role client in API; RLS as defense in depth)
 ```
 
-**The player-facing game UI is React**, not Phaser. `apps/web/src/app/game/page.tsx`
-switches between ten screens via `lib/gameState.tsx`. Phaser (`apps/game`) registers only
-Boot, Preload and FarmScene and is a parallel prototype; the `/game` route on port 3000 is
-React. There is **no Next.js rewrite/proxy** to the API (documented deviation).
+**The player-facing game UI is React** (`apps/web/src/app/game/page.tsx` switches between ten
+screens via `lib/gameState.tsx`). The legacy standalone Phaser prototype `apps/game` was deleted
+on 2026-09-11, so React `/game` is now the only client. There is **no Next.js rewrite/proxy** to
+the API (documented deviation).
 
 ---
 
@@ -85,7 +85,6 @@ React. There is **no Next.js rewrite/proxy** to the API (documented deviation).
 | --- | --- | --- | --- |
 | `apps/web` | `@molemisi/web` | 3000 | Next.js 14 App Router, Tailwind, PWA |
 | `apps/api` | `@molemisi/api` | 3001 | NestJS 10, Supabase Auth JWT |
-| `apps/game` | `@molemisi/game` | 3002 | Phaser 3 + Vite standalone client (legacy) |
 
 ## Shared packages
 
@@ -251,8 +250,8 @@ Promote an admin: `node scripts/create-admin.mjs`. Promote a dev: `node scripts/
 - Groups: 71 crops, 49 icons, 47 item-icons (seeds/crops/animal products/materials/tools/buildings),
   17 scene-props, 12 animals, 12 fx, 10 decor, 8 backgrounds, 7 buildings, 7 ground, 6 weather,
   6 ui-assets, 5 NPCs, 4 branding
-- `pnpm assets:sync` copies into `apps/web/public/assets` (and `apps/game/public/assets`);
-  the Phaser-typed manifest `apps/game/src/generated-assets.ts` is written by the same script
+- `pnpm assets:sync` copies into `apps/web/public/assets` only (the standalone Phaser prototype
+  `apps/game` was deleted on 2026-09-11, so the `generated-assets.ts` emit was removed)
 - PixelLab generator: `pnpm assets:generate` (`PIXELLAB_API_KEY`)
 
 Scene stitch backgrounds: farm, kgotla, bushveld, market. Branding lockups + OG card in
@@ -341,8 +340,9 @@ build on push+PR. No Supabase service, no deploy.
 ## Current objective
 
 Make the MVP deployable: push the 11 unpushed migrations + seed, then run the four gates
-and a scripted end-to-end walkthrough. Reconcile the nav with the four-screen model and
-delete the legacy `apps/game`. Track gaps in `KNOWN_LIMITATIONS.md`.
+and a scripted end-to-end walkthrough. Reconcile the nav with the four-screen model.
+(The legacy `apps/game` Phaser prototype was deleted on 2026-09-11.) Track gaps in
+`KNOWN_LIMITATIONS.md`.
 
 ## Recommended next tasks
 
@@ -351,5 +351,5 @@ delete the legacy `apps/game`. Track gaps in `KNOWN_LIMITATIONS.md`.
 2. Wire Next.js rewrites for `/api` → `:3001` (single-port / CORS-free preview).
 3. Restrict `PUT /config` to `AdminGuard`.
 4. Decide whether the Bushveld comparative + raids/boosts need a follow-up (both are ruled).
-5. Reconcile the 10-column footer nav with the four-screen model; delete `apps/game`.
+5. Reconcile the 10-column footer nav with the four-screen model. (The `apps/game` deletion is done.)
 6. Restore `db:seed` or remove the script.

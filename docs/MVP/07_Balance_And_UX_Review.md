@@ -344,7 +344,7 @@ This is where a game made by gamers usually loses non-gamers. Rules:
 | # | Finding | Resolution |
 |---|---|---|
 | G1 | `01 §3` says four screens; `apps/web` has **six** nav items including Inventory and Settings | Nav reduced to four + header icons (§7.2) |
-| G2 | `apps/game` is Phaser: `BushveldScene`, `KgotlaScene`, `MarketScene` exist but **only `FarmScene` is registered** in `main.ts` | Dead code. `01` D3 says React only — confirm and delete `apps/game`, or it will confuse every future contributor |
+| G2 | `apps/game` is Phaser: `BushveldScene`, `KgotlaScene`, `MarketScene` exist but **only `FarmScene` is registered** in `main.ts` | ✅ **Resolved 2026-09-11** — `apps/game` deleted (G2 closed). React `/game` is the only client, satisfying `01` D3 ("React only"). |
 | G3 | `02 §6.2` stack caps vs `03 §2` — consistent, but `Special` was listed in the old rubric and is correctly gone | No action |
 | G4 | Storage: 24 starting slots vs 11 crops + 11 seed types | Fine in practice (distinct *stacks*, not items), and tools freed 4 slots (F15) |
 | G5 | `04 §9.3` Mophane windows (Apr, Dec) fall in **different** chapters | Intentional and documented — the calendar is real, chapters are a frame |
@@ -358,7 +358,7 @@ This is where a game made by gamers usually loses non-gamers. Rules:
 2. **Your actual monthly cost base.** `02 §8.5` now has a composition; replace the indicative figures with real ones.
 3. **Morula as the Saffron replacement** — confirm it's the right plant for the top of the ladder.
 4. **The P2,000 withdrawal fee cap** — recommend removing it once real disbursement pricing is known.
-5. **Deleting `apps/game`** (G2).
+5. ~~Deleting `apps/game`~~ (G2) — **done 2026-09-11**.
 
 ---
 

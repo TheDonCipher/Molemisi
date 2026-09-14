@@ -540,6 +540,8 @@ animal_animals_atlas.png
 
 **NFR-ART-014**
 
+> Note (2026-09-11): the standalone Phaser client `apps/game` was deleted; its `public/assets/` tree below is illustrative of the source assets in `assets/`, which `scripts/sync-assets.mjs` now copies to `apps/web/public/assets/` only.
+
 ```
 apps/game/public/assets/
 ├── tiles/

@@ -42,12 +42,9 @@ function syncToWebApp() {
 
   const webFontDir = join(root, 'apps', 'web', 'public', 'fonts');
   mkdirSync(webFontDir, { recursive: true });
-  const gameFontDir = join(root, 'apps', 'game', 'public', 'fonts');
-  mkdirSync(gameFontDir, { recursive: true });
   for (const f of fontsToSync) {
     copyFileSync(join(outDir, f), join(webFontDir, f));
-    copyFileSync(join(outDir, f), join(gameFontDir, f));
-    console.log(`[font] Synced ${f} -> apps/web/public/fonts/ + apps/game/public/fonts/`);
+    console.log(`[font] Synced ${f} -> apps/web/public/fonts/`);
   }
 }
 

@@ -25,16 +25,16 @@ assets/                          <- SOURCE. PixelLab output lands here.
         |  pnpm assets:sync  (scripts/sync-assets.mjs)
         |  cpSync, recursive + force. Additive — never deletes.
         v
-apps/web/public/assets/          <- SERVED. Next.js maps this to /assets/...
-apps/game/public/assets/         <- SERVED. Standalone Phaser build.
+apps/web/public/assets/          <- SERVED. Next.js maps this to /assets/... (only sync target
+                                    since the standalone Phaser build `apps/game` was deleted 2026-09-11)
 ```
 
 `pnpm assets:sync` is auto-run by the `predev` and `prebuild` hooks, so a normal
 `pnpm dev` / `pnpm build` publishes the art. **If you add a PNG to `assets/` and
 the screen still shows the fallback, you skipped the sync.**
 
-Sync also emits `apps/game/src/generated-assets.ts` (a typed manifest, 261
-assets / 14 groups) derived from `assets/manifest.json`.
+Sync previously emitted a typed manifest (`apps/game/src/generated-assets.ts`); that emit was
+removed when `apps/game` was deleted on 2026-09-11 (see `scripts/sync-assets.mjs`).
 
 ### Regenerating (only if art is genuinely missing)
 

@@ -112,25 +112,6 @@ importers:
         specifier: ^5.5.0
         version: 5.9.3
 
-  apps/game:
-    dependencies:
-      '@molemisi/game-config':
-        specifier: workspace:*
-        version: link:../../packages/game-config
-      '@molemisi/game-types':
-        specifier: workspace:*
-        version: link:../../packages/game-types
-      phaser:
-        specifier: ^3.80.0
-        version: 3.90.0
-    devDependencies:
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
-      vite:
-        specifier: ^5.4.0
-        version: 5.4.21(@types/node@20.19.43)(terser@5.51.2)
-
   apps/web:
     dependencies:
       '@molemisi/game-config':

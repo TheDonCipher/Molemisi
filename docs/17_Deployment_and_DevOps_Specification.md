@@ -173,7 +173,7 @@ jobs:
 
 ### Asset Pipeline
 
-1. Assets stored in `apps/game/public/assets/`
+1. Assets stored in `assets/` (source) and synced to `apps/web/public/assets/` by `scripts/sync-assets.mjs` (the standalone Phaser build `apps/game` was deleted 2026-09-11)
 2. Built with game client (Vite)
 3. Served via Vercel CDN
 4. Cache-Control headers for performance
