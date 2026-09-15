@@ -1,8 +1,8 @@
 # ADR-001: Phaser for 2D Game Rendering
 
-**Status:** Accepted (partially realized)
+**Status:** Accepted (Phaser prototype deleted 2026-09-11; React `/game` is the client)
 **Date:** 2026-09-02
-**As-built (2026-09-06):** Phaser 3 is used in `apps/game` (Vite :3002). The playable product path is React `/game`, not Phaser-in-Next.
+**As-built (2026-09-06):** Phaser 3 was used in `apps/game` (Vite :3002). The playable product path is React `/game`, not Phaser-in-Next. **Superseded (2026-09-11):** the `apps/game` Phaser prototype was deleted; React `/game` is now the only client.
 
 ---
 
