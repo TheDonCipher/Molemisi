@@ -44,6 +44,17 @@ export function FarmScreen() {
 
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [showCropPicker, setShowCropPicker] = useState(false);
+  // Transient per-plot animation: which plot is mid-action and what kind, so we
+  // can play a short plant / water / harvest micro-animation. Cleared by timer.
+  const [celebrate, setCelebrate] = useState<{ id: number; kind: 'plant' | 'water' | 'harvest' } | null>(
+    null,
+  );
+  const triggerCelebrate = (id: number, kind: 'plant' | 'water' | 'harvest') => {
+    setCelebrate({ id, kind });
+    window.setTimeout(() => {
+      setCelebrate((cur) => (cur?.id === id && cur?.kind === kind ? null : cur));
+    }, 650);
+  };
   // Seed picker from inventory
   const availableSeeds = inventory
     .filter((i) => i.itemType?.endsWith('_seed') && i.quantity > 0)
@@ -73,6 +84,7 @@ export function FarmScreen() {
     if (selectedPlot) {
       // plantPlot reports its own outcome (Planted! / Plant Failed) once the
       // server responds — don't fire a premature success toast on top of it.
+      triggerCelebrate(selectedPlot.id, 'plant');
       plantPlot(selectedPlot.id, seed.name, seed.cost, seed.icon);
       setSelectedPlot(null);
       setShowCropPicker(false);
@@ -82,6 +94,7 @@ export function FarmScreen() {
   const handleHarvest = () => {
     if (selectedPlot) {
       // harvestPlot reports its own outcome (Harvest Complete / Harvest Failed).
+      triggerCelebrate(selectedPlot.id, 'harvest');
       harvestPlot(selectedPlot.id);
       setSelectedPlot(null);
     }
@@ -142,7 +155,7 @@ export function FarmScreen() {
                       : plot.stalled
                         ? 'border-sky-blue'
                         : 'border-wood-border hover:border-primary/50'
-                }`}
+                } ${celebrate?.id === plot.id ? `animate-${celebrate.kind}` : ''}`}
               >
                 <span className="text-3xl sm:text-4xl">{plot.icon}</span>
                 <span className="font-headline text-[10px] sm:text-xs text-cream-surface font-bold leading-tight">
@@ -215,6 +228,7 @@ export function FarmScreen() {
                 // that no longer exists on the server.
                 <button
                   onClick={() => {
+                    triggerCelebrate(selectedPlot.id, 'water');
                     refillWell();
                     setSelectedPlot(null);
                   }}
@@ -300,19 +314,27 @@ export function FarmScreen() {
         {/* No "water all" button: there is no per-plot action to batch. The 🚰
             below fills the one shared tank for the whole farm. */}
         <button
-          onClick={handleQuickHarvest}
-          className="w-10 h-10 bg-primary-container/90 text-on-primary-container border border-primary flex items-center justify-center shadow-md active:scale-95"
+          onClick={() => {
+            triggerCelebrate(0, 'harvest');
+            handleQuickHarvest();
+          }}
+          className={`w-10 h-10 bg-primary-container/90 text-on-primary-container border border-primary flex items-center justify-center shadow-md active:scale-95 ${
+            celebrate?.id === 0 ? 'animate-harvest' : ''
+          }`}
           title={tl('harvestAll')}
         >
           🌾
         </button>
         <button
           onClick={() => {
+            triggerCelebrate(0, 'water');
             // refillWell reports its own outcome (+N L for M Pula, or the
             // failure) — don't stack a second toast on top of it.
             refillWell();
           }}
-          className="w-10 h-10 bg-wood-dark/90 text-cream-surface border border-wood-border flex items-center justify-center shadow-md active:scale-95"
+          className={`w-10 h-10 bg-wood-dark/90 text-cream-surface border border-wood-border flex items-center justify-center shadow-md active:scale-95 ${
+            celebrate?.id === 0 && celebrate.kind === 'water' ? 'animate-water' : ''
+          }`}
           title={tl('pumpWell')}
         >
           🚰

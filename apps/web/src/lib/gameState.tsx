@@ -9,6 +9,7 @@ import React, {
   useCallback,
 } from 'react';
 import { resolveItemIcon, pixelItemIcon } from './pixelIcons';
+import { recordAction } from './playerActions';
 
 // ============================================================
 // API helper
@@ -885,6 +886,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           harvest: { yield: number; quality: string };
           inventoryAddition: { quantity: number };
         }>('POST', `/farms/${farmId}/plots/${plot.serverId}/harvest`, {});
+        recordAction('harvest');
         // No XP — D5 retired it. The reward is the crop itself; Pula comes from
         // selling it at market, which is the loop the economy is built on.
         showToast(
@@ -955,6 +957,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           cropType,
           seedId: seedEntry.id,
         });
+        recordAction('plant');
         showToast('Planted!', `Planted ${getCropName(cropType)}.`, '🌱', 'success');
         await refreshFarmData();
       } catch (err) {
@@ -982,6 +985,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     }
     if (harvested > 0) {
+      recordAction('harvest');
       showToast('Harvest Complete', `Harvested ${harvested} plots!`, '🌾', 'success');
       await refreshFarmData();
     } else {
@@ -1003,6 +1007,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         `/farms/${farmId}/water/refill`,
         {},
       );
+      recordAction('water');
       setWaterLevel(result.waterLevel);
       setHasTank(true);
       showToast(
@@ -1042,6 +1047,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           quantity: sellQty,
           quality: item.grade || 'normal',
         });
+        recordAction('sell');
         const earnings = result.transaction?.netProceeds ?? sellQty * item.unitValue;
         showToast('Sold!', `Sold ${sellQty}x ${item.name} for +${earnings} Pula after 5% Co-op tax.`, '💰', 'success');
         await refreshFarmData();
@@ -1067,6 +1073,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setBlueprints((prev) =>
         prev.map((b) => (b.id === blueprintId ? { ...b, status: 'built' as const } : b)),
       );
+      recordAction('build');
       showToast('Built!', `Completed ${bp.title}!`, '🔨', 'success');
     },
     [blueprints, pula, wood, stone, showToast],
@@ -1085,6 +1092,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           itemType,
           quantity: qty,
         });
+        recordAction('buy');
         showToast('Bought!', `Bought ${qty}x ${item.name}. -${total} Pula.`, '🛍️', 'success');
         await refreshFarmData();
       } catch (err) {
@@ -1126,6 +1134,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     }
     if (count > 0) {
+      recordAction('sell');
       showToast('Quick Sell', `Sold ${count} items for +${sold} Pula (incl. 5% Co-op tax).`, '💰', 'success');
       await refreshFarmData();
     } else {
@@ -1152,6 +1161,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return;
       }
       setEnergy((prev) => Math.min(maxEnergy, Math.max(0, prev - energyCost)));
+      recordAction('forage');
       const newLoot: LootItem = {
         id: Math.random().toString(36).substring(2, 9),
         text: rewardText,

@@ -65,8 +65,7 @@ CREATE TABLE IF NOT EXISTS public.crafting_jobs (
   slot_index INT NOT NULL,
   qty INT NOT NULL,
   started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  collected_at TIMESTAMPTZ,
-  UNIQUE (player_id, slot_index) WHERE collected_at IS NULL
+  collected_at TIMESTAMPTZ
 );
 
 -- ============================================

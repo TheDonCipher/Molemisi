@@ -8,8 +8,18 @@ import { useTranslation } from '../../lib/useTranslation';
 export function KgotlaScreen() {
   const { setActiveNav } = useGame();
   const { tl } = useTranslation();
-  const { npcs, projects, botho, journal, elder, contribution, loading, talk, completeQuest, donate } =
-    useKgotla();
+  const {
+    npcs,
+    projects,
+    botho,
+    journal,
+    elder,
+    contribution,
+    loading,
+    talk,
+    completeQuest,
+    donate,
+  } = useKgotla();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dialogue, setDialogue] = useState<string | null>(null);
@@ -67,15 +77,18 @@ export function KgotlaScreen() {
         </div>
       </div>
 
-      {/* Botho daily cap (legal control, I4) + Elder's guidance (reads real state) */}
-      <div className="relative z-10 px-4 space-y-2">
+      {/* Orientation — tells the player, up front, what they can do here. */}
+      <div className="relative z-10 px-4 pt-3">
+        <div className="bg-wood-dark/80 px-3 py-2 border border-wood-border font-body text-[11px] text-cream-surface/90 leading-snug">
+          {tl('kgotlaIntro')}
+        </div>
         {botho && (
-          <div className="bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[10px] text-on-surface-variant">
+          <div className="mt-2 bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[10px] text-on-surface-variant">
             Botho earned today: {botho.earnedToday}/{botho.dailyCap} · {botho.remainingToday} left
           </div>
         )}
         {elder && (
-          <div className="bg-primary-container/80 px-3 py-2 border border-primary">
+          <div className="mt-2 bg-primary-container/80 px-3 py-2 border border-primary">
             <div className="font-mono text-[9px] uppercase text-primary font-bold mb-0.5">
               Elder&apos;s guidance
             </div>
@@ -87,38 +100,46 @@ export function KgotlaScreen() {
         )}
       </div>
 
-      {/* NPCs */}
+      {/* 1) Speak with an elder */}
       <div className="relative z-10 px-4 py-4">
-        <h3 className="font-headline text-sm text-cream-surface uppercase mb-2">{tl('communityHub')}</h3>
+        <h3 className="font-headline text-sm text-cream-surface uppercase mb-1">{tl('speakWithElders')}</h3>
+        <p className="font-mono text-[9px] text-on-surface-variant mb-2">
+          {tl('communityHub')}
+        </p>
         <div className="grid grid-cols-2 gap-3">
           {npcs.map((n) => (
             <button
               key={n.id}
               onClick={() => openNpc(n.id)}
-              className="bg-wood-dark/85 p-3 border text-left transition-all active:scale-95 border-wood-border hover:border-primary/50"
+              className={`bg-wood-dark/85 p-3 border text-left transition-all active:scale-95 border-wood-border hover:border-primary/50 ${
+                selectedId === n.id ? 'ring-2 ring-primary/50' : ''
+              }`}
             >
               <div className="font-headline text-xs text-cream-surface font-bold block truncate">{n.name}</div>
               <div className="font-mono text-[9px] text-on-surface-variant block">{n.role}</div>
-              <div className="font-mono text-[9px] text-primary mt-1">
-                ★ {n.tier} · {n.reputation}
-              </div>
+              <div className="font-mono text-[9px] text-primary mt-1">★ {n.tier} · {n.reputation}</div>
             </button>
           ))}
           {npcs.length === 0 && !loading && (
             <div className="col-span-2 bg-wood-dark/70 p-4 border border-wood-border text-center font-body text-xs text-on-surface-variant">
-              {tl('talkToNpcs') ?? 'The Kgotla is quiet. Come back soon.'}
+              {tl('talkToNpcs')}
             </div>
           )}
         </div>
       </div>
 
-      {/* Community Projects — the capped Letsema Pula sink (02 §9, F7) */}
+      {/* 2) Support a community project */}
       <div className="relative z-10 px-4 pb-4">
-        <h3 className="font-headline text-sm text-cream-surface uppercase mb-2">Community Projects</h3>
+        <h3 className="font-headline text-sm text-cream-surface uppercase mb-2">{tl('supportProject')}</h3>
         {contribution && (
           <div className="bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[10px] text-on-surface-variant mb-2">
-            Given today: {contribution.contributedToday}/{contribution.dailyCap} Pula ·{' '}
+            {tl('pulaPerDay')}: {contribution.contributedToday}/{contribution.dailyCap} ·{' '}
             {contribution.remainingToday} left
+          </div>
+        )}
+        {donateBlocked && (
+          <div className="bg-surface-container-high/80 px-3 py-1.5 border border-wood-border mb-2 font-mono text-[10px] text-on-surface-variant">
+            {tl('dailyLimitReached')}
           </div>
         )}
         <div className="space-y-2">
@@ -150,14 +171,14 @@ export function KgotlaScreen() {
                   onClick={() => donate(p.id, 10)}
                   className="flex-1 py-1.5 bg-primary-container text-on-primary-container font-mono text-[10px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
                 >
-                  +10
+                  {tl('donatePula')} +10
                 </button>
                 <button
                   disabled={donateBlocked}
                   onClick={() => donate(p.id, 50)}
                   className="flex-1 py-1.5 bg-primary-container text-on-primary-container font-mono text-[10px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
                 >
-                  +50
+                  {tl('donatePula')} +50
                 </button>
               </div>
             </div>
@@ -170,7 +191,7 @@ export function KgotlaScreen() {
         </div>
       </div>
 
-      {/* NPC dialogue + quest */}
+      {/* NPC dialogue + two explicit actions */}
       {selected && (
         <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
           <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
@@ -183,20 +204,32 @@ export function KgotlaScreen() {
             <p className="font-body text-xs text-cream-surface mb-3 leading-relaxed text-center bg-surface-container-lowest/60 p-2.5 border border-wood-border/50">
               &ldquo;{dialogue ?? selected.greeting}&rdquo;
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
+              <button
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  const t = await talk(selected.id);
+                  setDialogue(t?.message ?? null);
+                  setBusy(false);
+                }}
+                className="w-full py-2 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+              >
+                {tl('askGuidance')}
+              </button>
               <button
                 disabled={busy}
                 onClick={() => completeQuest(selected.id)}
-                className="flex-1 py-2 bg-primary text-wood-dark font-mono text-xs uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+                className="w-full py-2 bg-primary text-wood-dark font-mono text-xs uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
               >
-                Help (quest)
+                {tl('takeQuest')}
               </button>
               <button
                 onClick={() => {
                   setSelectedId(null);
                   setDialogue(null);
                 }}
-                className="py-2 px-4 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
+                className="py-2 px-4 bg-wood-medium text-cream-surface font-mono text-xs uppercase border border-wood-border active:translate-y-0.5"
               >
                 {tl('leave')}
               </button>

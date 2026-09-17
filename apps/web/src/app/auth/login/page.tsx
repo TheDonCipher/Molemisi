@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { establishSession, fetchRole } from '../../../lib/auth';
+import { establishSession, fetchRole, API_BASE } from '../../../lib/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,7 +16,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

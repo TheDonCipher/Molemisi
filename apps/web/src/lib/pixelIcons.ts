@@ -34,6 +34,8 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
 
   // Animal products
   egg: 'product_egg',
+  // items.ts slug is `eggs` (plural) — the singular `egg` key above never matched.
+  eggs: 'product_egg',
   milk: 'product_milk',
   wool: 'product_wool',
 
@@ -74,11 +76,18 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
   morula_seed: 'seed_morula',
 
   // Tools
+  // items.ts slugs: `mogoma` = Hoe, `selepe` = Axe, `pickaxe` = Pickaxe.
+  // The map used generic names (`hoe`/`pickaxe`) that never matched those slugs,
+  // so the Hoe and Axe fell back to emoji. No axe sprite exists, so the Axe
+  // reuses the pickaxe art (same tools/equipment family) — accurate as possible
+  // until a dedicated axe asset is generated.
+  mogoma: 'tool_hoe',
   hoe: 'tool_hoe',
   watering_can: 'tool_watering_can',
   sickle: 'tool_sickle',
   basket: 'tool_basket',
   woven_basket: 'tool_basket',
+  selepe: 'tool_pickaxe',
   pickaxe: 'tool_pickaxe',
   stone_pickaxe: 'tool_pickaxe',
   canteen: 'tool_canteen',

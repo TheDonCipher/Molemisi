@@ -15,7 +15,7 @@ import { getSupabase } from './supabase';
  * keeps it fresh as Supabase rotates the JWT.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 const TOKEN_KEYS = ['molemisi_token', 'token'];
 const ROLE_KEY = 'molemisi_role';
 

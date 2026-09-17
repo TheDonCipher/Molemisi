@@ -717,6 +717,46 @@ export const PROVERBS: Proverb[] = [
   { setswana: 'Tsela e e telele e simolola ka kgato e le nngwe', english: 'A long road begins with a single step', confidence: 'medium' },
 ];
 
+/* ============================================================ Reactive proverbs (03 §7) */
+/**
+ * 03 §7 — the proverb should also RESPOND to what the player actually did, using
+ * the same rules-table idea as `ELDER_RULES`. An action maps to a `PROVERBS` index;
+ * `selectReactiveProverb` returns the matching line, or null when the action has no
+ * mapping. Mappings are provisional — the whole `PROVERBS` list is flagged
+ * low-confidence and still needs a native-speaker Setswana pass before shipping.
+ */
+export type PlayerActionKind =
+  | 'plant'
+  | 'harvest'
+  | 'water'
+  | 'forage'
+  | 'buy'
+  | 'sell'
+  | 'contribute'
+  | 'build'
+  | 'craft'
+  | 'rest';
+
+export const REACTIVE_PROVERBS: Partial<Record<PlayerActionKind, number>> = {
+  plant: 4, // a long road begins with a single step
+  harvest: 0, // a person is a person because of other people (reaping together)
+  water: 2, // rain is life
+  forage: 3, // rain falls, but there is no river (bushveld nature)
+  buy: 1, // a chief is a chief because of the people
+  sell: 1,
+  contribute: 0, // community
+  build: 4, // a beginning
+  craft: 4,
+  rest: 2, // rain is life (rest / renewal)
+};
+
+export function selectReactiveProverb(kind: PlayerActionKind | null | undefined): Proverb | null {
+  if (!kind) return null;
+  const idx = REACTIVE_PROVERBS[kind];
+  if (idx == null) return null;
+  return PROVERBS[idx] ?? null;
+}
+
 /**
  * 03 §7 — the Elder reads REAL player state, not a fixed dialogue tree.
  * Ordered: the first matching rule wins, so put the specific ones first.

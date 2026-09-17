@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useGame } from '../lib/gameState';
 import { useTranslation } from '../lib/useTranslation';
+import { MoreNavMenu } from './MoreNavMenu';
 
 const API_BASE = 'http://localhost:3001/api/v1';
 
@@ -27,17 +28,20 @@ export function HeaderNav() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showPanel, setShowPanel] = useState(false);
 
-  const NAV_TABS = [
+  // Hybrid nav (per 2026-09 ruling): 4 primary screens + a 'More' menu.
+  const PRIMARY_TABS = [
     { id: 'farm', label: tl('farm') },
     { id: 'kgotla', label: tl('kgotla') },
     { id: 'bushveld', label: tl('wild') },
     { id: 'market', label: tl('market') },
-    { id: 'store', label: tl('store') },
-    { id: 'wallet', label: tl('wallet') },
-    { id: 'journal', label: tl('journal') },
-    { id: 'crafting', label: tl('crafting') },
-    { id: 'inventory', label: tl('bag') },
-    { id: 'settings', label: tl('config') },
+  ];
+  const SECONDARY_TABS = [
+    { id: 'store', label: tl('store'), icon: 'shopping_cart', navTarget: 'Store' },
+    { id: 'wallet', label: tl('wallet'), icon: 'account_balance_wallet', navTarget: 'Wallet' },
+    { id: 'crafting', label: tl('crafting'), icon: 'handyman', navTarget: 'Crafting' },
+    { id: 'inventory', label: tl('bag'), icon: 'backpack', navTarget: 'Inventory' },
+    { id: 'journal', label: tl('journal'), icon: 'menu_book', navTarget: 'Journal' },
+    { id: 'settings', label: tl('config'), icon: 'settings', navTarget: 'Settings' },
   ];
 
   // Poll for unread count every 30s
@@ -150,7 +154,7 @@ export function HeaderNav() {
         {/* Nav tabs */}
         <nav className="flex-1 flex justify-center overflow-x-auto scrollbar-none">
           <div className="flex items-center gap-0.5">
-            {NAV_TABS.map((tab) => {
+            {PRIMARY_TABS.map((tab) => {
               const isActive =
                 activeNav.toLowerCase() === tab.id ||
                 (tab.id === 'bushveld' && activeNav.toLowerCase() === 'wild') ||
@@ -174,6 +178,7 @@ export function HeaderNav() {
                 </button>
               );
             })}
+            <MoreNavMenu items={SECONDARY_TABS} activeNav={activeNav} onSelect={(t) => setActiveNav(t)} variant="header" />
           </div>
         </nav>
 

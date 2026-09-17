@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { establishSession, fetchRole } from '../../../lib/auth';
+import { establishSession, fetchRole, API_BASE } from '../../../lib/auth';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -17,7 +17,7 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+      const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, displayName }),

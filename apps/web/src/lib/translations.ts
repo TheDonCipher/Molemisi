@@ -29,6 +29,7 @@ export const translations = {
   crafting: { en: 'Craft', tn: 'Botaki' },
   bag: { en: 'Bag', tn: 'Letlole' },
   config: { en: 'Config', tn: 'Peakanyo' },
+  more: { en: 'More', tn: 'Tse dingwe' },
   wallet: { en: 'Wallet', tn: 'Spiša' },
   journal: { en: 'Journal', tn: 'Tlaleho' },
   logout: { en: 'Log Out', tn: 'Tsoa' },
@@ -51,6 +52,11 @@ export const translations = {
     en: 'Mogolo says the bush keeps its secrets until you walk it. Forage the Bushveld to begin your journal.',
     tn: 'Mogolo o re naga e boloka diphiri tsa yone go fitlha o tsamaya mo go yone. Fula Bushveld go simolola tlaleho ya gago.',
   },
+
+  // ---- Field Journal proverb ----
+  proverb: { en: 'Proverb', tn: 'Sekao' },
+  basedOnRecent: { en: 'based on what you just did', tn: 'go ya ka se o sa tšwago go se dira' },
+  proverbReview: { en: 'needs native-speaker Setswana review', tn: 'e tlhoka tlhahlobo ya Setswana' },
 
   // ---- Farm Screen ----
   emptySoil: { en: 'Empty Soil', tn: 'Mobu e Se Naga' },
@@ -173,6 +179,24 @@ export const translations = {
     en: 'Talk to the NPCs to discover contracts!',
     tn: 'Boledišana le bašomi go hwetša dikgolwano!',
   },
+
+  // ---- Kgotla Screen (clarity pass) ----
+  kgotlaIntro: {
+    en: 'Three things to do here: speak with an elder, support a community project, or watch your Botho grow.',
+    tn: 'Dilo tše tharo tša go dira mo: bolela le mogolo, thekga projeke ya setšhaba, goba lebelela Botho ya gago go gola.',
+  },
+  speakWithElders: { en: 'Speak with an elder', tn: 'Bolela le mogolo' },
+  supportProject: { en: 'Support a community project', tn: 'Thekga projeke ya setšhaba' },
+  askGuidance: { en: 'Ask for guidance', tn: 'Kopa tataletšo' },
+  takeQuest: { en: 'Take their quest', tn: 'Amogela potšišo ya bona' },
+  questReward: { en: 'Reward', tn: 'Mputso' },
+  donatePula: { en: 'Donate', tn: 'Neela' },
+  donateTo: { en: 'Donate to', tn: 'Neela go' },
+  dailyLimitReached: {
+    en: 'Daily community limit reached — come back tomorrow.',
+    tn: 'Molao wa letšatši wa setšhaba o fihletše — boela gape hosasa.',
+  },
+  pulaPerDay: { en: 'Pula / day', tn: 'Pula / letšatši' },
 
   // ---- Settings Screen ----
   settings: { en: 'Settings', tn: 'Peakanyo' },

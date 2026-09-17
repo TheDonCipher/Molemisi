@@ -6,6 +6,8 @@ import { useKgotla } from '../../lib/kgotla';
 import { useTranslation } from '../../lib/useTranslation';
 import { useDiscoveries, DiscoveredFind } from '../../lib/discoveries';
 import { mogoloEntry } from '../../lib/journalVoice';
+import { getLastAction } from '../../lib/playerActions';
+import { PROVERBS, selectReactiveProverb, type Proverb } from '@molemisi/game-config';
 
 const RARITY_TONE: Record<string, string> = {
   common: 'border-wood-border text-on-surface-variant',
@@ -72,6 +74,27 @@ export function JournalScreen() {
   const { tl } = useTranslation();
   const discoveries = useDiscoveries();
 
+  // 03 §7 — Mogolo's proverb reacts to the player's most recent action. Falls
+  // back to a rotating daily line when nothing notable was done this session.
+  const firstProverb = PROVERBS[0] as Proverb;
+  const [proverb, setProverb] = useState<Proverb>(firstProverb);
+  const [showReactiveTag, setShowReactiveTag] = useState(false);
+
+  useEffect(() => {
+    const last = getLastAction();
+    const reactive = selectReactiveProverb(last?.kind);
+    if (reactive) {
+      setProverb(reactive);
+      setShowReactiveTag(true);
+    } else {
+      // Rotating daily proverb (04 §9.4): pick by day-of-year so it changes
+      // once per day without any server state.
+      const day = Math.floor(Date.now() / 86_400_000);
+      setProverb(PROVERBS[day % PROVERBS.length] as Proverb);
+      setShowReactiveTag(false);
+    }
+  }, []);
+
   useEffect(() => {
     reload();
   }, [reload]);
@@ -92,6 +115,25 @@ export function JournalScreen() {
           {tl('backToFarm')}
         </button>
       </div>
+
+      {/* Mogolo's proverb (03 §7) — reacts to the player's last action. */}
+      <section className="mb-6">
+        <div className="bg-wood-dark p-4 border border-wood-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-mono text-xs text-on-surface-variant uppercase">{tl('proverb')}</span>
+            {showReactiveTag && (
+              <span className="font-mono text-[9px] uppercase text-primary/80 px-1.5 py-0.5 border border-primary/30">
+                {tl('basedOnRecent')}
+              </span>
+            )}
+          </div>
+          <p className="font-body text-[13px] text-cream-surface italic leading-snug">{proverb.setswana}</p>
+          <p className="font-mono text-[10px] text-on-surface-variant mt-1 leading-snug">{proverb.english}</p>
+          {proverb.confidence === 'low' && (
+            <p className="font-mono text-[8px] text-on-surface-variant/70 mt-2">⚠ {tl('proverbReview')}</p>
+          )}
+        </div>
+      </section>
 
       {/* Restoration progress — the C18 restoration arc. */}
       <section className="mb-6">

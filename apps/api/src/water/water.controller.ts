@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, UseGuards, Inject, forwardRef } from '@nestjs/common';
 import { WaterService } from './water.service';
 import { FarmsService } from '../farms/farms.service';
 import { AuthGuard } from '../common/guards/auth.guard';
@@ -16,6 +16,10 @@ import { AuthenticatedUser } from '../common/guards/auth.guard';
 export class WaterController {
   constructor(
     private water: WaterService,
+    // forwardRef: WaterController lives in WaterModule, which imports FarmsModule
+    // lazily (see water.module.ts). The FarmsService token is resolved after the
+    // cycle settles, so the constructor injection must be wrapped too.
+    @Inject(forwardRef(() => FarmsService))
     private farmsService: FarmsService,
   ) {}
 

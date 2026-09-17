@@ -103,3 +103,64 @@
   user-select: none;
 }
 
+/* ============================================================
+   Farming activity micro-animations (CSS-only, no new assets)
+   Slight, tactile feedback for plant / water / harvest / forage /
+   buy / sell / build so the loop "feels" alive. Triggered by a
+   transient class on the relevant tile/button, cleared in JS.
+   ============================================================ */
+
+@keyframes farm-pop {
+  0%   { transform: scale(0.82); }
+  55%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes farm-water {
+  0%   { transform: scale(1); filter: brightness(1); }
+  40%  { transform: scale(1.04); filter: brightness(1.45) saturate(1.2); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes farm-harvest {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  35%  { transform: translateY(-10px) scale(1.18); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes farm-forage {
+  0%, 100% { transform: translateY(0); }
+  30%      { transform: translateY(-8px) rotate(-4deg); }
+  60%      { transform: translateY(-3px) rotate(3deg); }
+}
+
+@keyframes farm-coin {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25) rotate(-6deg); }
+  100% { transform: scale(1); }
+}
+
+@keyframes farm-build {
+  0%   { transform: translateY(10px) scale(0.9); opacity: 0.6; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.animate-plant   { animation: farm-pop 480ms ease-out; }
+.animate-water   { animation: farm-water 600ms ease-out; }
+.animate-harvest { animation: farm-harvest 560ms ease-out; }
+.animate-forage  { animation: farm-forage 520ms ease-in-out; }
+.animate-coin    { animation: farm-coin 420ms ease-out; }
+.animate-build   { animation: farm-build 520ms ease-out; }
+
+/* Respect players who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-plant,
+  .animate-water,
+  .animate-harvest,
+  .animate-forage,
+  .animate-coin,
+  .animate-build {
+    animation: none !important;
+  }
+}
+

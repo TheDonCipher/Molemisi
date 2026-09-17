@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import * as path from 'path';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
@@ -32,6 +33,14 @@ import { DatabaseModule } from './database/database.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      // Molemisi is a pnpm monorepo: `turbo dev` runs the API from apps/api, so
+      // the repo-root .env (the single source of truth for secrets) is NOT
+      // auto-loaded. Point at it explicitly, preferring a local apps/api/.env
+      // override if one ever exists.
+      envFilePath: [
+        path.resolve(__dirname, '../.env'),
+        path.resolve(__dirname, '../../../.env'),
+      ],
     }),
     DatabaseModule,
     HealthModule,
