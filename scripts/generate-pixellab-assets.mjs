@@ -62,6 +62,7 @@ const flags = {
   force: false,
   list: false,
   key: null,
+  id: null,
   groups: new Set(),
   skip: new Set(),
   sample: Infinity,
@@ -73,6 +74,7 @@ const GROUP_NAMES = [
   'animals',
   'buildings',
   'npcs',
+  'npc-heads',
   'decor',
   'ground',
   'backgrounds',
@@ -102,6 +104,9 @@ for (let i = 0; i < argv.length; i++) {
     case '--key':
       flags.key = next();
       break;
+    case '--id':
+      flags.id = next();
+      break;
     case '--group':
       for (const g of String(next() || '').split(',')) if (g.trim()) flags.groups.add(g.trim());
       break;
@@ -124,7 +129,7 @@ for (let i = 0; i < argv.length; i++) {
       process.exit(1);
   }
 }
-if (!flags.all && flags.groups.size === 0 && !flags.dryRun && !flags.list) {
+if (!flags.all && flags.groups.size === 0 && !flags.id && !flags.dryRun && !flags.list) {
   console.error('Nothing to do. Pass --all, --group <names>, --dry-run, or --list.\n');
   printHelp();
   process.exit(1);
@@ -260,12 +265,18 @@ const BUILDINGS = [
   ['pig_pen', 'pig pen with low wooden fence and mud patch'],
 ];
 
+// Canonical Kgotla NPCs — must match apps/api/src/kgotla/kgotla.service.ts exactly
+// (elder_neo, mama_naledi, oupa_kabelo, refilwe, thabo). The old set listed
+// market_vendor / bushveld_scout, which are NOT game NPCs (orphan art), and was
+// missing oupa_kabelo + thabo — so the quest-accept dialog had no portraits for
+// two of the five real elders. Aligned here so every Kgotla NPC has a consistent
+// 32x64 portrait in the shared Molemisi STYLE.
 const NPCS = [
-  ['elder_neo', 'wise elderly Setswana village elder, grey hair, patterned blanket over shoulder'],
-  ['mama_naledi', 'warm middle-aged Setswana woman market vendor, floral headwrap'],
-  ['refilwe', 'young Setswana woman herbalist holding a herb bundle'],
-  ['market_vendor', 'friendly Setswana man trader at a market stall, apron'],
-  ['bushveld_scout', 'young Setswana man scout with a satchel and walking stick'],
+  ['elder_neo', 'wise elderly Setswana village elder, grey hair, patterned blanket over shoulder, kind weathered face'],
+  ['mama_naledi', 'warm middle-aged Setswana woman, colourful floral headwrap, friendly welcoming stance'],
+  ['oupa_kabelo', 'elderly Setswana grandfather (oupa), weathered kind face, flat cap, holding a carved walking stick'],
+  ['refilwe', 'young Setswana woman herbalist, holding a bundle of bushveld herbs, gentle confident smile'],
+  ['thabo', 'young Setswana man community worker, neat short dark hair, bright patterned shirt, confident friendly welcoming smile'],
 ];
 
 const DECOR = [
@@ -595,6 +606,19 @@ for (const [npc, desc] of NPCS) {
     'pixen',
     `friendly ${desc}, full body front view portrait, centered, ${STYLE}`,
     { noBg: true },
+  );
+}
+
+// NPC head portraits (close-up busts that match the body sprites)
+for (const [npc, desc] of NPCS) {
+  add(
+    'npc-heads',
+    `${npc}_head`,
+    `sprites/npcs/${npc}_head.png`,
+    { w: 48, h: 48 },
+    'pixen',
+    `close-up head and shoulders portrait of a ${desc}, face clearly visible, centered, ${STYLE}`,
+    { noBg: true, seed: seedFor(npc) },
   );
 }
 
@@ -989,7 +1013,7 @@ async function genPixen(asset) {
     image_size: { width: asset.size.w, height: asset.size.h },
     outline: asset.opts.outline || 'single color outline',
     detail: asset.opts.detail || 'medium detail',
-    seed: seedFor(asset.id),
+    seed: asset.opts.seed || seedFor(asset.id),
     no_background: asset.opts.noBg !== false,
     enhance_prompt: false,
   };
@@ -1008,7 +1032,7 @@ async function genPixflux(asset) {
     image_size: { width: asset.size.w, height: asset.size.h },
     text_guidance_scale: 8,
     detail: 'highly detailed',
-    seed: seedFor(asset.id),
+    seed: asset.opts.seed || seedFor(asset.id),
   };
   const res = await request('/create-image-pixflux', body);
   if (!res?.image?.base64) throw new Error(`pixflux ${asset.id}: no image in response`);
@@ -1032,7 +1056,7 @@ async function genTileset(asset) {
     mode: 'standard',
     view: 'low top-down',
     enhance: false,
-    seed: seedFor(asset.id),
+    seed: asset.opts.seed || seedFor(asset.id),
   };
   const created = await request('/create-tileset', body);
   const jobId = created.background_job_id || created.id;
@@ -1086,7 +1110,7 @@ async function genUi(asset) {
     description: `${asset.prompt}. ${STYLE}`,
     image_size: { width: asset.size.w, height: asset.size.h },
     no_background: false,
-    seed: seedFor(asset.id),
+    seed: asset.opts.seed || seedFor(asset.id),
   };
   const created = await request('/create-ui-asset', body);
   const assetId = created.ui_asset_id;
@@ -1132,6 +1156,7 @@ function selectAssets() {
     list = list.filter((a) => flags.groups.has(a.group));
   }
   if (flags.skip.size > 0) list = list.filter((a) => !flags.skip.has(a.group));
+  if (flags.id) list = list.filter((a) => a.id === flags.id || a.id === `${flags.id}_head`);
   if (Number.isFinite(flags.sample)) {
     const seen = new Map();
     list = list.filter((a) => {
