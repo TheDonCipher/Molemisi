@@ -82,8 +82,16 @@ export function StoreScreen() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="font-mono text-xs text-gold-currency font-bold">
-            P{item.price.toLocaleString()}
+          <span
+            className={`font-mono text-xs font-bold ${
+              item.currency === 'BWP'
+                ? 'text-secondary'
+                : 'text-gold-currency'
+            }`}
+          >
+            {item.currency === 'BWP'
+              ? `💸 BWP ${item.price.toLocaleString()}`
+              : `P${item.price.toLocaleString()}`}
           </span>
           <button
             disabled={isBusy}

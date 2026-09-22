@@ -29,7 +29,10 @@ export const CreateFarmSchema = z.object({
 
 export const PlantCropSchema = z.object({
   cropType: z.string().min(1, 'Crop type is required'),
-  seedId: z.string().uuid('Invalid seed ID'),
+  // The web sends the inventory slug (e.g. "seed_sorghum_001"), not a UUID — the
+  // RPC derives the real seed from crop_type. Accept any non-empty identifier so a
+  // slug does not trip the validator into a 500 (08 §API shows a slug, not a uuid).
+  seedId: z.string().min(1, 'Invalid seed ID'),
 });
 
 export const WaterCropSchema = z.object({

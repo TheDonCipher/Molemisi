@@ -1,6 +1,6 @@
 # Molemisi Development State
 
-> Last updated: **2026-09-14**
+> Last updated: **2026-09-16**
 > Scope: as-built inventory of the repository. Design intent lives in `docs/MVP/` (the
 > post-pivot normative set) and `docs/01`–`docs/23` (the original design suite). This
 > file describes what the code and database actually do today.
@@ -9,23 +9,21 @@
 
 ## Headline status
 
-**MVP is code-complete and the four gates are green, but it is not deployable.** Three
-things stand between the current build and a shippable v1:
+**MVP is code-complete and the four gates are green. The database schema is now current**, so
+it is no longer blocked on migrations. Two design rulings and a small pending-push remain:
 
-1. **BLOCKER — 11 database migrations are unpushed** to the linked Supabase project
-   `nyapfgawanqvnkkjudxb`. Migrations `000000`–`000015` are applied; `000016`–`000021`
-   (wallet/ledger → inventory/crafting → water → Kgotla pillars → Bushveld → chapters →
-   monetisation → the `role` column) are not. Until they land, every `/admin` and `/dev`
-   route fails closed (the guards `select(… role)`), `/auth/me` reports everyone as
-   `player`, and none of P2–P9 can function. This must be pushed by the Princess — there
-   is no DB password or `SUPABASE_ACCESS_TOKEN` in this environment.
+1. **RESOLVED — the 11-migration deploy gap was pushed on 2026-09-14.** The linked Supabase
+   project `nyapfgawanqvnkkjudxb` is current (`supabase db push --dry-run` → "Remote database is
+   up to date"); `/admin`, `/dev` and P2–P9 all run at runtime. Two further corrective migrations
+   were added (cosmetic-id type fix; obsolete `plant_crop_transaction` overload drop) and are
+   pending push.
 2. **RULING — Bushveld comparative income** is answered by live telemetry, not a model
    (Princess Eugenia, 2026-09-11). The structural invariant is proven in code; the
    comparative inversion is recorded in `scripts/balance_verify.py` §8 and accepted.
 3. **RULING — wildlife raids and boost effects are deferred from v1** (2026-09-11). The
    Ancestral Ward, Pula Stone and Breath of the Land are withdrawn from the store.
 
-Quality gates (run 2026-09-14, clean):
+Quality gates (run 2026-09-16, clean; currency-clarity UI added since):
 
 | Gate | Result |
 | --- | --- |
@@ -42,7 +40,7 @@ Quality gates (run 2026-09-14, clean):
 M0  Product & Documentation        [COMPLETE]
 M1  Repository & Infrastructure    [COMPLETE]
 M2  Authentication & Persistent     [COMPLETE — Supabase Auth + profiles]
-M3  Phaser Rendering Foundation     [PARTIAL — standalone Farm only; not in Next.js]
+M3  Phaser Rendering Foundation     [REMOVED — standalone prototype deleted 2026-09-11; React /game is the client]
 M4  First Playable Vertical Slice   [COMPLETE — React /game client]
 M5  Time & Offline Simulation       [COMPLETE]
 M6  Farm Management                 [COMPLETE — API + React; water via Jojo tank]
@@ -55,7 +53,7 @@ M12 Seasons & World Events          [COMPLETE]
 M13 Mobile/PWA                      [PARTIAL — manifest + SW + iOS splash; no push]
 M14 Monetization & Payments         [PARTIAL — stub provider; boosts withdrawn]
 M15 Security / Analytics / Admin    [PARTIAL — admin + dev guards; analytics ingest only]
-M16 Alpha                          [BLOCKED — see Headline status]
+M16 Alpha                          [UNBLOCKED — schema pushed 2026-09-14; remaining: real payments + raids/boosts rulings]
 ```
 
 ---
@@ -121,8 +119,8 @@ Player logout is implemented in Settings (`supabase.auth.signOut` + token drop).
 
 `FarmScreen`, `KgotlaScreen`, `BushveldScreen`, `MarketScreen` (primary four), plus
 `StoreScreen`, `WalletScreen`, `CraftingScreen`, `InventoryScreen`, `JournalScreen`,
-`SettingsScreen`. Nav is a 10-column footer; the four-screen split is being reconciled
-(see `KNOWN_LIMITATIONS.md`).
+`SettingsScreen`. Nav is now **hybrid**: the four primary screens sit in the footer and the
+rest live in a header **More** menu, reconciling the four-screen model (see `KNOWN_LIMITATIONS.md`).
 
 ---
 
@@ -130,7 +128,7 @@ Player logout is implemented in Settings (`supabase.auth.signOut` + token drop).
 
 Auth is **Supabase Auth** (`verifyToken()` = `auth.getUser(token)`). `AuthGuard` blocks
 banned players except on `/admin/` URLs. Role tiers `profiles.role ∈ player|admin|dev`
-(migration `000021`, **unpushed**). `AdminGuard` = `is_admin` OR `role='admin'` (devs
+(migration `000021`, **pushed 2026-09-14**). `AdminGuard` = `is_admin` OR `role='admin'` (devs
 excluded); `DevGuard` = `role='dev'`. `JWT_SECRET` in `.env.example` is unused. There is
 **no refresh endpoint** and **no nested-JWT role claim** — `role` lives on `profiles`.
 
@@ -187,8 +185,8 @@ uses `AuthGuard`, so it currently needs a Bearer token.
 
 ## Database (`supabase/migrations`)
 
-**27 migration files. `000000`–`000015` are applied to the linked project; 11 are
-not** — this is the deploy blocker.
+**29 migration files. The 11-migration deploy gap (`000016`–`000120` + `000021`) was pushed on
+2026-09-14, so the linked project is current; 2 further corrective migrations are pending push.**
 
 | Migration | Summary |
 | --- | --- |
@@ -206,17 +204,19 @@ not** — this is the deploy blocker.
 | 000012 | Ban / warn columns |
 | 000014 | Notifications |
 | 000015 | `profiles.is_admin`, `is_admin()`, `set_admin()` |
-| **000016** ⛔ | **v1 wallet + ledger** |
-| **000017** ⛔ | **legacy currency mirror** |
-| **000018** ⛔ | **Pula floor** |
-| **000019** ⛔ | **P3 inventory + crafting** |
-| **000020** ⛔ | **plant transaction → player_inventory** |
-| **000040** ⛔ | **P4 growth + water (Jojo tank)** |
-| **000050** ⛔ | **P5 Kgotla pillars (Botho / Letsema)** |
-| **000100** ⛔ | **P6 Bushveld (Kagiso / scenes / hotspots / journal / sparkle)** |
-| **000110** ⛔ | **P8 chapters + almanac** |
-| **000120** ⛔ | **P9 monetisation (top-up / subscription / boosts / cosmetics)** |
-| **000021** ⛔ | **`profiles.role` column + tiers** |
+| 000016 ✅ pushed 2026-09-14 | **v1 wallet + ledger** |
+| 000017 ✅ pushed 2026-09-14 | **legacy currency mirror** |
+| 000018 ✅ pushed 2026-09-14 | **Pula floor** |
+| 000019 ✅ pushed 2026-09-14 | **P3 inventory + crafting** |
+| 000020 ✅ pushed 2026-09-14 | **plant transaction → player_inventory** |
+| 000040 ✅ pushed 2026-09-14 | **P4 growth + water (Jojo tank)** |
+| 000050 ✅ pushed 2026-09-14 | **P5 Kgotla pillars (Botho / Letsema)** |
+| 000100 ✅ pushed 2026-09-14 | **P6 Bushveld (Kagiso / scenes / hotspots / journal / sparkle)** |
+| 000110 ✅ pushed 2026-09-14 | **P8 chapters + almanac** |
+| 000120 ✅ pushed 2026-09-14 | **P9 monetisation (top-up / subscription / boosts / cosmetics)** |
+| 000021 ✅ pushed 2026-09-14 | **`profiles.role` column + tiers** |
+| 20260914000022 | fix `player_cosmetics.cosmetic_id` UUID → TEXT drift (pending push) |
+| 20260916000030 | drop 2 obsolete `plant_crop_transaction` overloads (pending push) |
 
 API uses the **service-role** client. RLS is defense in depth.
 
@@ -246,7 +246,7 @@ Promote an admin: `node scripts/create-admin.mjs`. Promote a dev: `node scripts/
 
 ## Assets
 
-- Source: `assets/` + `assets/manifest.json` (**261** entries, 14 groups)
+- Source: `assets/` + `assets/manifest.json` (**268** entries, 14 groups)
 - Groups: 71 crops, 49 icons, 47 item-icons (seeds/crops/animal products/materials/tools/buildings),
   17 scene-props, 12 animals, 12 fx, 10 decor, 8 backgrounds, 7 buildings, 7 ground, 6 weather,
   6 ui-assets, 5 NPCs, 4 branding
@@ -312,7 +312,7 @@ build on push+PR. No Supabase service, no deploy.
 | Area | Status |
 | --- | --- |
 | Register / login / logout / me | Done (Supabase Auth) |
-| Role tiers (player/admin/dev) | Code done; **blocked on migration 000021** |
+| Role tiers (player/admin/dev) | Done (migration `000021` pushed 2026-09-14) |
 | Wallet + ledger (Botswana-day caps) | Done (API) |
 | Farming loop + water (Jojo tank) | Done |
 | Buildings / livestock | Done |
@@ -339,17 +339,17 @@ build on push+PR. No Supabase service, no deploy.
 
 ## Current objective
 
-Make the MVP deployable: push the 11 unpushed migrations + seed, then run the four gates
-and a scripted end-to-end walkthrough. Reconcile the nav with the four-screen model.
-(The legacy `apps/game` Phaser prototype was deleted on 2026-09-11.) Track gaps in
-`KNOWN_LIMITATIONS.md`.
+The MVP is now schema-current and runtime-functional. Remaining work: wire real-money payments
+(PSP), decide wildlife raids + boost effects (ruled deferred from v1), and complete the P10 manual
+checks (PWA install on iOS, throttled-3G smoke, end-to-end walkthrough). The hybrid nav and
+`apps/game` deletion are done. Track gaps in `KNOWN_LIMITATIONS.md`.
 
 ## Recommended next tasks
 
-1. **`supabase db push` (000016 → 000021) + seed**, then confirm the schema probes — the only
-   hard blocker.
+1. Push the 2 pending corrective migrations (`20260914000022`, `20260916000030`) + seed — the only
+   remaining schema delta.
 2. Wire Next.js rewrites for `/api` → `:3001` (single-port / CORS-free preview).
 3. Restrict `PUT /config` to `AdminGuard`.
 4. Decide whether the Bushveld comparative + raids/boosts need a follow-up (both are ruled).
-5. Reconcile the 10-column footer nav with the four-screen model. (The `apps/game` deletion is done.)
+5. Reconcile the footer nav — DONE (hybrid 4-primary + More). (The `apps/game` deletion is done.)
 6. Restore `db:seed` or remove the script.

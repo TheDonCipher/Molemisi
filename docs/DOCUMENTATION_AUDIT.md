@@ -29,13 +29,13 @@ confusion in this repo, so read top to bottom:
 
 ## Living / as-built documents
 
-| Document | Status (2026-09-14) |
+| Document | Status (2026-09-16) |
 | --- | --- |
 | README.md | Current — overview, quick start, monorepo, status banner |
 | DEVELOPMENT_STATE.md | Current — full as-built inventory |
 | DEVELOPMENT_SETUP.md | Current — local setup; add `supabase db push` for the linked project |
 | ARCHITECTURE_OVERVIEW.md | Current — as-built topology + module map |
-| KNOWN_LIMITATIONS.md | Current — gaps, debt, **the 11-migration blocker**, deferred rulings |
+| KNOWN_LIMITATIONS.md | Current — gaps, debt, migration blocker resolved 2026-09-14, deferred rulings |
 | MVP_COMPLETENESS_AUDIT.md | Current — gate results + the open rulings |
 | SCAFFOLD_AUDIT.md | Historical pointer (M1 scaffold); minor count updates |
 | DOCUMENTATION_AUDIT.md | This file |
@@ -72,7 +72,7 @@ the repo and the `docs/MVP/` set win.
 | 04 Phaser rendering | Target renderer | Standalone Farm only; see DEVELOPMENT_STATE |
 | 05 Art direction | Art bible | PixelLab assets + stitch backgrounds exist |
 | 06 Economy | Balance | Config + market tables (numbers now live in `MVP/02`) |
-| 07 Database | Schema | 27 migrations (was 16); extra tables beyond first draft |
+| 07 Database | Schema | 29 migrations (was 16); extra tables beyond first draft |
 | 08 API | Endpoint design | Prefix `/api/v1` matches; many paths differ (see DEVELOPMENT_STATE) |
 | 09 Simulation | Offline sim | Implemented in `SimulationService` |
 | 10 Payments | Monetization | Stub provider only; boosts withdrawn |
@@ -102,11 +102,11 @@ live payment providers (008), fully data-driven content (009).
 3. **Redis** — Specs list Redis. Not in the stack.
 4. **Rate limits** — Spec 08: 100/min global, per-route limits. Code: 60/min flat.
 5. **Versions** — Old docs say `0.1.0` / 16 migrations / 13 SKUs. Code: `game-config`
-   `GAME_VERSION = 1.0.0-mvp`, **27 migrations**, store SKUs minus the 3 withdrawn boosts.
+   `GAME_VERSION = 1.0.0-mvp`, **29 migrations**, store SKUs minus the 3 withdrawn boosts.
 6. **Admin auth** — Spec: admin JWT role. Code: `profiles.is_admin` boolean **and** `role='admin'`.
 7. **Env files** — Spec: `.env.development`. Repo: `.env.example` → `.env.local`.
 8. **API modules path** — Agent guide shows `apps/api/src/modules/`. Code: feature folders.
-9. **Phaser port** — Spec 17 put the game at `:3000/game`. That URL is React; Phaser is `:3002`.
+9. **Phaser port** — Spec 17 put the game at `:3000/game`. That URL is React; the standalone Phaser prototype (`:3002`) was deleted 2026-09-11.
 10. **db:seed** — README historically documented it; script target missing.
 
 ---
@@ -129,7 +129,7 @@ live payment providers (008), fully data-driven content (009).
 - ADRs: 12
 - Screen DESIGN.md: 5 (`docs/Screens/`)
 - API Jest suites: 18 (209 tests)
-- Supabase migrations: **27** (16 applied, **11 unpushed — blocker**)
+- Supabase migrations: **29** (all pushed 2026-09-14; 2 corrective migrations pending push)
 
 ---
 
@@ -137,5 +137,4 @@ live payment providers (008), fully data-driven content (009).
 
 The design suite is still useful as a product bible and the `docs/MVP/` set is the build
 authority. Start at `DEVELOPMENT_STATE.md` and `KNOWN_LIMITATIONS.md`, then open a spec for
-intended behavior. The repo is code-complete for v1 but **not deployable** until the 11 unpushed
-migrations land.
+intended behavior. The repo is code-complete for v1; the schema is current (the 11-migration gap was pushed 2026-09-14), so it is **deployable** pending real-money payments.

@@ -98,7 +98,7 @@ export class PaymentsService {
 
     // Check for duplicate
     const existing = await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('payments')
       .select('*')
       .eq('idempotency_key', idempotencyKey)
@@ -111,7 +111,7 @@ export class PaymentsService {
 
     // Create pending payment record
     const { data: paymentRecord, error: insertError } = await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('payments')
       .insert({
         player_id: playerId,
@@ -146,7 +146,7 @@ export class PaymentsService {
 
       // Update the payment record with provider info
       await this.supabase
-        .getClient()
+        .getAdminClient()
         .from('payments')
         .update({
           provider_payment_id: providerResponse.providerPaymentId,
@@ -169,7 +169,7 @@ export class PaymentsService {
     } catch (error) {
       // Mark payment as failed
       await this.supabase
-        .getClient()
+        .getAdminClient()
         .from('payments')
         .update({ status: 'FAILED' })
         .eq('id', paymentRecord.id);
@@ -208,7 +208,7 @@ export class PaymentsService {
 
     // Find the payment record
     const { data: payment, error } = await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('payments')
       .select('*')
       .eq('provider_payment_id', webhookPayload.providerPaymentId)
@@ -228,7 +228,7 @@ export class PaymentsService {
       // The status predicate now lives inside the UPDATE, so Postgres decides who
       // wins and the loser gets zero rows back.
       const { data: claimed, error: claimErr } = await this.supabase
-        .getClient()
+        .getAdminClient()
         .from('payments')
         .update({ status: 'COMPLETED', completed_at: new Date().toISOString() })
         .eq('id', payment.id)
@@ -261,13 +261,13 @@ export class PaymentsService {
       );
     } else if (webhookPayload.status === 'FAILED') {
       await this.supabase
-        .getClient()
+        .getAdminClient()
         .from('payments')
         .update({ status: 'FAILED' })
         .eq('id', payment.id);
     } else if (webhookPayload.status === 'REFUNDED') {
       await this.supabase
-        .getClient()
+        .getAdminClient()
         .from('payments')
         .update({ status: 'REFUNDED' })
         .eq('id', payment.id);
@@ -281,7 +281,7 @@ export class PaymentsService {
    */
   async getPaymentHistory(playerId: string): Promise<PaymentRecord[]> {
     const { data, error } = await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('payments')
       .select('*')
       .eq('player_id', playerId)
@@ -301,7 +301,7 @@ export class PaymentsService {
    */
   async refundPayment(playerId: string, paymentId: string, reason: string): Promise<PaymentRecord> {
     const { data: payment, error } = await this.supabase
-      .getClient()
+      .getAdminClient()
       .from('payments')
       .select('*')
       .eq('id', paymentId)
@@ -325,7 +325,7 @@ export class PaymentsService {
 
     if (result.success) {
       await this.supabase
-        .getClient()
+        .getAdminClient()
         .from('payments')
         .update({ status: result.status })
         .eq('id', payment.id);

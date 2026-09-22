@@ -106,12 +106,20 @@ describe('Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects invalid seed UUID', () => {
+    it('rejects empty seedId (slug is allowed, not just a uuid)', () => {
       const result = PlantCropSchema.safeParse({
         cropType: 'sorghum',
-        seedId: 'not-a-uuid',
+        seedId: '',
       });
       expect(result.success).toBe(false);
+    });
+
+    it('accepts a slug seedId, not only a uuid', () => {
+      const result = PlantCropSchema.safeParse({
+        cropType: 'sorghum',
+        seedId: 'seed_sorghum_001',
+      });
+      expect(result.success).toBe(true);
     });
 
     it('rejects missing seedId', () => {

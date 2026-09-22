@@ -182,13 +182,13 @@ export const translations = {
 
   // ---- Kgotla Screen (clarity pass) ----
   kgotlaIntro: {
-    en: 'Three things to do here: speak with an elder, support a community project, or watch your Botho grow.',
-    tn: 'Dilo tše tharo tša go dira mo: bolela le mogolo, thekga projeke ya setšhaba, goba lebelela Botho ya gago go gola.',
+    en: 'Here the village gathers: hear a council member’s counsel, help decide a community project, and watch your Botho grow.',
+    tn: 'Mona motse o kopana: utlwa tlhalo ya leloko la kgotla, thusa go rulaganya projeke ya setšhaba, le go lebelela Botho ya gago go gola.',
   },
-  speakWithElders: { en: 'Speak with an elder', tn: 'Bolela le mogolo' },
-  supportProject: { en: 'Support a community project', tn: 'Thekga projeke ya setšhaba' },
-  askGuidance: { en: 'Ask for guidance', tn: 'Kopa tataletšo' },
-  takeQuest: { en: 'Take their quest', tn: 'Amogela potšišo ya bona' },
+  speakWithElders: { en: 'The Council', tn: 'Lekgotla' },
+  supportProject: { en: 'The village decides', tn: 'Motse o rulaganya' },
+  askGuidance: { en: 'Seek counsel', tn: 'Kopa tlhalo' },
+  takeQuest: { en: 'Undertake their charge', tn: 'Amogela tiro ya bona' },
   questReward: { en: 'Reward', tn: 'Mputso' },
   donatePula: { en: 'Donate', tn: 'Neela' },
   donateTo: { en: 'Donate to', tn: 'Neela go' },
@@ -197,6 +197,20 @@ export const translations = {
     tn: 'Molao wa letšatši wa setšhaba o fihletše — boela gape hosasa.',
   },
   pulaPerDay: { en: 'Pula / day', tn: 'Pula / letšatši' },
+  // Council-chamber framing (Kgotla redesign, 2026-09-16)
+  kgotlaSubtitle: {
+    en: 'Where the village gathers to talk — and decides together.',
+    tn: 'Moo motse o kopaneng go bolela le go rulaganya mmogo.',
+  },
+  inDeliberation: { en: 'In deliberation', tn: 'Mo tirisanong' },
+  councilHint: {
+    en: 'Choose a council member to hear their counsel.',
+    tn: 'Kgetha setho sa kgotla go kwa tlhalo ya sona.',
+  },
+  villageDecidesHint: {
+    en: 'The council weighs each project — your Pula tips the scale.',
+    tn: 'Lekgotla le lekola projeke nngwe le nngwe — Pula ya gago e sekametša.',
+  },
 
   // ---- Settings Screen ----
   settings: { en: 'Settings', tn: 'Peakanyo' },

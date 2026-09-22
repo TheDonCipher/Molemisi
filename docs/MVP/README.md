@@ -1,8 +1,7 @@
 # Molemisi — MVP Specification
 
-**Status:** implementation complete (code); **not yet deployable** — the linked Supabase
-project is 11 migrations behind (see `DEVELOPMENT_STATE.md`). **Last consolidated:**
-2026-09-07; status confirmed 2026-09-14.
+**Status:** implementation complete (code); **deployable** — the schema is current (the 11-migration gap was pushed 2026-09-14; see `DEVELOPMENT_STATE.md`). **Last consolidated:**
+2026-09-07; status confirmed 2026-09-16.
 **Owner of this folder:** Princess Eugenia. **Consolidated by:** Belvedere.
 
 ---

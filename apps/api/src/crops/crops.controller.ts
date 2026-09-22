@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, BadRequestException } from '@nestjs/common';
 import { CropsService } from './crops.service';
 import { FarmsService } from '../farms/farms.service';
 import { AuthGuard } from '../common/guards/auth.guard';
@@ -32,7 +32,13 @@ export class CropsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     await this.farmsService.verifyFarmOwnership(farmId, user.id);
-    const input = PlantCropSchema.parse(body) as PlantCropInput;
+    const parsed = PlantCropSchema.safeParse(body);
+    if (!parsed.success) {
+      // A validation failure is a client error, never a 500. Surface the first
+      // issue so the player (and the web) gets a clean 400 instead of a stack trace.
+      throw new BadRequestException(parsed.error.issues[0]?.message ?? 'Invalid plant request');
+    }
+    const input = parsed.data;
     const result = await this.cropsService.plantCrop(
       farmId,
       plotId,

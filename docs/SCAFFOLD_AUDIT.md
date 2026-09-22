@@ -14,7 +14,7 @@ This file was the M1 scaffold checklist (2026-09-02). The scaffold is done. Use 
 - pnpm + Turborepo, TypeScript, ESLint 9 flat config, Prettier
 - `apps/web`, `apps/api` (the standalone Phaser prototype `apps/game` was deleted 2026-09-11)
 - Packages: shared, game-types, game-config, validation
-- Supabase config, 27 migrations, seed.sql
+- Supabase config, 29 migrations, seed.sql
 - GitHub Actions: lint, typecheck, test, build
 
 Those boxes stay checked. They are no longer the interesting status.
@@ -31,7 +31,7 @@ Implemented beyond the original vertical slice:
 - Kgotla, Bushveld, world events, notifications
 - Admin UI + `AdminGuard` + `is_admin`
 - PWA manifest + service worker
-- PixelLab asset pipeline (261 manifest entries)
+- PixelLab asset pipeline (268 manifest entries)
 - Stub payments + store SKUs (the three boosts are withdrawn)
 - In-memory rate limit and HTTP audit logger
 
@@ -41,7 +41,7 @@ Implemented beyond the original vertical slice:
 
 | Scaffold / spec assumption | As built |
 | --- | --- |
-| Phaser in Next.js | React `/game`; Phaser standalone on 3002 |
+| Phaser in Next.js | React `/game`; the standalone Phaser prototype (3002) was deleted 2026-09-11 |
 | Placeholder rectangles | Pixel assets in `assets/` |
 | No rate limit | 60/min in-memory |
 | No PWA | Custom SW |
@@ -70,4 +70,4 @@ Implemented beyond the original vertical slice:
 
 ## Conclusion
 
-Scaffold complete. Product is **code-complete for MVP** but **not yet deployable** — the linked Supabase project is 11 migrations behind. Remaining work is the migration push, the Phaser/React split cleanup, payments, audio, and the gaps in `KNOWN_LIMITATIONS.md`.
+Scaffold complete. Product is **code-complete for MVP** and the schema is current (the 11-migration gap was pushed 2026-09-14) — **deployable** pending real-money payments. Remaining work: the Phaser/React split cleanup (done — `apps/game` deleted 2026-09-11), payments, audio, and the gaps in `KNOWN_LIMITATIONS.md`.

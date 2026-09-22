@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { apiFetch, useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
+import { CurrencyGuideSection } from '../CurrencyGuide';
 
 interface WalletSnapshot {
   pula: number;
@@ -207,6 +208,10 @@ export function WalletScreen() {
               </div>
             )}
           </section>
+
+          {/* Beginner currency reference — explains every economy and that
+              Kagiso is a meter, not money (02 §6; Bushveld model). */}
+          <CurrencyGuideSection />
 
           {/* v1 closed-loop note — be honest that hard currency / withdrawal
               is not part of the snapshot (02 §6: Pula must not imply a Pula↔Madi rate). */}

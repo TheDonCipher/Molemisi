@@ -122,7 +122,7 @@ spacing:
   gutter-desktop: 1.5rem
 ---
 
-> Implementation (2026-09-06): React `FarmScreen` at `/game` is the live farm HUD. Phaser `FarmScene` is standalone on :3002.
+> Implementation (2026-09-06, refreshed 2026-09-16): React `FarmScreen` at `/game` is the live farm HUD. The standalone Phaser `FarmScene` (`:3002`) was deleted 2026-09-11; React `/game` is the only client.
 
 ## Brand & Style
 

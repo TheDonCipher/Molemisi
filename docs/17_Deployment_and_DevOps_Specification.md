@@ -4,7 +4,7 @@
 > Version: 1.0.0
 > Status: Design spec (target)
 > Last Updated: 2026-09-02
-> Implementation: 2026-09-06 — Local stack is **pnpm** + `pnpm supabase:*` + `pnpm dev` (ports 3000/3001/3002). Phaser standalone is :3002, not :3000/game. Redis is not running. No staging/production deploy. CI: `.github/workflows/ci.yml`.
+> Implementation: 2026-09-06 — Local stack is **pnpm** + `pnpm supabase:*` + `pnpm dev` (ports 3000/3001). The standalone Phaser prototype (`:3002`) was deleted 2026-09-11; React `/game` is the only client. Redis is not running. No staging/production deploy. CI: `.github/workflows/ci.yml`.
 
 ---
 
@@ -31,7 +31,7 @@ pnpm supabase:start
 # Run migrations (+ seed.sql)
 pnpm supabase:reset
 
-# Start development servers (web 3000, api 3001, game 3002)
+# Start development servers (web 3000, api 3001)
 pnpm dev
 ```
 
@@ -44,7 +44,7 @@ Canonical walkthrough: `docs/DEVELOPMENT_SETUP.md`.
 | Next.js Web     | http://localhost:3000      | 3000  |
 | NestJS API      | http://localhost:3001      | 3001  |
 | React game      | http://localhost:3000/game | 3000  |
-| Phaser (Vite)   | http://localhost:3002      | 3002  |
+| Phaser (Vite)   | deleted 2026-09-11      | 3002  |
 | Supabase Studio | http://localhost:54323     | 54323 |
 | Redis           | not used locally           | —     |
 

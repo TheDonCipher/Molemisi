@@ -78,9 +78,9 @@ Applies `supabase/migrations/*` and `supabase/seed/seed.sql`.
 
 > **Deploying to the linked remote project:** the local flow (`supabase:start` +
 > `supabase:reset`) targets a Docker instance. The production-shaped target
-> `nyapfgawanqvnkkjudxb` is **11 migrations behind** — push them with
-> `supabase db push` (after `supabase link`) and then `supabase db` seed, or run the SQL in
-> `supabase/migrations/` + `seed/seed.sql` by hand. See `DEVELOPMENT_STATE.md` Headline status.
+> `nyapfgawanqvnkkjudxb` is **schema-current** — the 11-migration gap was pushed on 2026-09-14
+> (`supabase db push --dry-run` reports "Remote database is up to date"). Two corrective migrations
+> remain unpushed. See `DEVELOPMENT_STATE.md` Headline status.
 
 ### 6. Dev servers
 
@@ -88,13 +88,13 @@ Applies `supabase/migrations/*` and `supabase/seed/seed.sql`.
 pnpm dev
 ```
 
-`predev` runs `pnpm assets:sync`. Turborepo starts web (3000), api (3001), game (3002).
+`predev` runs `pnpm assets:sync`. Turborepo starts web (3000) and api (3001).
 
 | Service | URL |
 | --- | --- |
 | Web | http://localhost:3000 |
 | Game (React) | http://localhost:3000/game |
-| Phaser standalone | http://localhost:3002 |
+| Phaser standalone | deleted 2026-09-11 |
 | API health | http://localhost:3001/api/v1/health |
 | Admin | http://localhost:3000/admin/login |
 | Studio | http://localhost:54323 |
@@ -220,4 +220,4 @@ There is no `/api` proxy. Set `CORS_ORIGIN` and `NEXT_PUBLIC_API_URL` to the hos
 
 ### Game shows demo plots
 
-No JWT in `localStorage` (`token` / `molemisi_token`), or API down. Register/login first. Phaser demo is the 4-plot FarmScene fallback.
+No JWT in `localStorage` (`token` / `molemisi_token`), or API down. Register/login first; the React `/game` client needs a valid session.

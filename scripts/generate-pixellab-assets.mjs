@@ -604,7 +604,7 @@ for (const [npc, desc] of NPCS) {
     `sprites/npcs/${npc}.png`,
     { w: 32, h: 64 },
     'pixen',
-    `friendly ${desc}, full body front view portrait, centered, ${STYLE}`,
+    `${desc}, full body character sprite, standing front view facing camera, head to toe, entire figure visible from head to feet, arms at sides, centered, ${STYLE}`,
     { noBg: true },
   );
 }

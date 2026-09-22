@@ -1,22 +1,19 @@
 # Known Limitations
 
-As-built gaps and debt as of **2026-09-14**. Supersedes the 2026-09-06 version. See
+As-built gaps and debt as of **2026-09-16**. Supersedes the 2026-09-14 version. See
 `DEVELOPMENT_STATE.md` for the live inventory.
 
 ---
 
-## Hard blocker
+## Hard blocker — RESOLVED
 
-### 11 migrations are unpushed to the linked Supabase project
+### Migrations are pushed (resolved 2026-09-14)
 
-Migrations `000000`–`000015` are applied to `nyapfgawanqvnkkjudxb`; `000016`–`000021`
-(wallet/ledger, legacy-currency mirror, Pula floor, inventory/crafting, plant→inventory,
-Jojo-tank water, Kgotla pillars, Bushveld, chapters/almanac, monetisation, and the `role`
-column) are **not**. Effect: `AdminGuard`/`DevGuard` `select(… role)` → PostgREST error →
-fail closed → every `/admin` and `/dev` route returns 403, and `/auth/me` reports everyone
-as `player`. No wallet, inventory, crafting, Bushveld, chapter or store table exists, so none
-of P2–P9 can run at runtime. Fix is `supabase db push` + seed, run by the Princess (no
-DB password / access token in this environment).
+The 11-migration deploy gap (`000016`–`000120` + `000021`) was pushed to `nyapfgawanqvnkkjudxb`;
+`supabase db push --dry-run` reports "Remote database is up to date". `/admin`, `/dev` and P2–P9
+now run at runtime and `/auth/me` resolves roles correctly. Two **pending** corrective migrations
+remain (`20260914000022` cosmetic-id type fix; `20260916000030` obsolete overload drop) and are
+not yet pushed, but they are non-blocking bug-fixes.
 
 ---
 
@@ -92,11 +89,11 @@ No Phaser sound, Howler, or audio assets. Settings BGM/SFX sliders only write Re
 `translations.ts` covers UI copy. Content (crop names, NPC dialogue) is English in
 config/services.
 
-### Nav is 10 columns, spec wants 4 primaries
+### Nav is hybrid (resolved)
 
-`MobileFooterNav` / `HeaderNav` list Farm, Kgotla, Bushveld, Market, Store, Wallet,
-Crafting, Inventory, Journal, Settings. `01 §3` / `07 §7.2` want 4 primary screens with
-Inventory + Settings in the header. Reconciliation pending.
+`HeaderNav` shows the 4 primary screens (Farm, Kgotla, Bushveld, Market) in the footer and the
+rest (Store, Wallet, Crafting, Inventory, Journal, Settings) in a header **More** menu. This
+reconciles the four-screen model (`01 §3` / `07 §7.2`); Inventory + Settings live in the header.
 
 ---
 

@@ -754,36 +754,75 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         // Fetch inventory for THIS farm
         try {
+          // The API returns { data: { items: InventoryItemView[] } } (unwrapped by
+          // apiFetch). InventoryItemView uses `slug`/`category`, NOT the old
+          // `itemType`/`itemCategory` keys. Reading the wrong key made this always
+          // resolve to [] and fall back to DEMO_INVENTORY — so bought seeds never
+          // appeared and the plant picker ran off phantom demo seeds.
           const inv = await apiFetch<{
-            inventory: Array<{
-              id: string;
-              itemType: string;
-              itemCategory: string;
+            items?: Array<{
+              slug: string;
+              name?: string;
+              setswana?: string;
+              category?: string;
               quantity: number;
-              quality: string;
+              baseValue?: number;
+              use?: string | null;
+              sprite?: string | null;
+              isTool?: boolean;
             }>;
+            inventory?: unknown[];
           }>('GET', `/farms/${fd.farm.id}/inventory`);
 
-          const mappedInventory = (inv.inventory || []).map((item) => {
-            const isSeed = item.itemType.endsWith('_seed');
-            const cropType = item.itemType.replace('_seed', '');
+          const rawItems: Array<{
+            slug: string;
+            name?: string;
+            setswana?: string;
+            category?: string;
+            quantity: number;
+            baseValue?: number;
+            use?: string | null;
+            sprite?: string | null;
+            isTool?: boolean;
+          }> = (inv.items ?? (inv as { inventory?: unknown[] }).inventory ?? []) as Array<{
+            slug: string;
+            name?: string;
+            setswana?: string;
+            category?: string;
+            quantity: number;
+            baseValue?: number;
+            use?: string | null;
+            sprite?: string | null;
+            isTool?: boolean;
+          }>;
+          const mappedInventory = rawItems.map((item) => {
+            const slug = item.slug;
+            const isSeed = slug.endsWith('_seed');
+            const cropType = slug.replace('_seed', '');
             return {
-              id: item.id,
-              name: isSeed ? `${getCropName(cropType)} Seeds` : getCropName(item.itemType),
-              category: CATEGORY_MAP[item.itemCategory] || 'crops',
-              icon: isSeed ? '🌱' : getCropIcon(item.itemType),
-              image: resolveItemIcon(item.itemType),
+              id: slug,
+              name: item.name || (isSeed ? `${getCropName(cropType)} Seeds` : getCropName(slug)),
+              category: item.isTool
+                ? 'tools'
+                : (CATEGORY_MAP[item.category ?? ''] || (isSeed ? 'seed' : 'crops')),
+              icon: isSeed ? '🌱' : getCropIcon(slug),
+              image: item.sprite || resolveItemIcon(slug),
               quantity: item.quantity,
-              unitValue: 10,
-              grade: item.quality || 'Normal',
-              description: isSeed
-                ? `Plant ${getCropName(cropType)} seeds.`
-                : `Harvested ${getCropName(item.itemType)}.`,
-              itemType: item.itemType,
+              unitValue: item.baseValue ?? 10,
+              grade: 'Normal',
+              description:
+                item.use ||
+                (isSeed
+                  ? `Plant ${getCropName(cropType)} seeds.`
+                  : `Harvested ${getCropName(slug)}.`),
+              itemType: slug,
             };
           });
 
-          setInventory(mappedInventory.length > 0 ? mappedInventory : DEMO_INVENTORY);
+          // Show the REAL inventory. Only fall back to demo if the fetch itself
+          // failed — an empty inventory (a player who owns nothing yet) must read
+          // as empty so the plant picker cannot offer seeds they do not have.
+          setInventory(mappedInventory);
 
           // Update granary counts
           let eggs = 0;
@@ -802,7 +841,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           setGranaryMaize(maiz);
           setGranaryCowpeas(cowp);
         } catch {
-          // Use demo inventory
+          // Fetch failed — degrade gracefully to demo inventory so the UI still
+          // renders, but do NOT mask a successful empty result as demo.
+          setInventory(DEMO_INVENTORY);
         }
       }
 
@@ -1085,8 +1126,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const total = item.price * qty;
 
       try {
-        // Map seed name to itemType for API
-        const itemType = item.id.replace('seed-', '') + '_seed';
+        // `item.itemType` is the canonical server key (e.g. "sorghum_seed"). The old
+        // derivation `item.id.replace('seed-','') + '_seed'` double-appended "_seed"
+        // (item.id is already "seed-sorghum_seed") → "sorghum_seed_seed" → no price
+        // row → 400 "Item not available for purchase". Use the canonical type directly.
+        const itemType = item.itemType ?? item.id;
         await apiFetch('POST', '/market/buy', {
           farmId,
           itemType,

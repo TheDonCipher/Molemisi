@@ -8,7 +8,7 @@ As-built. Design intent that differs is called out. **Last updated 2026-09-14.**
 ┌──────────────────────────────────────────────────────────────────────┐
 │ CLIENT                                                                │
 │                                                                       │
-│  Next.js :3000 (player path)            Vite Phaser :3002 (legacy)     │
+│  Next.js :3000 (player path)            React /game (only client)        │
 │  • / auth, landing, PWA                 • Boot / Preload / FarmScene    │
 │  • /game React screens (10)             • Demo mode if no token          │
 │  • /admin dashboard                     • Other scenes unregistered      │
@@ -48,7 +48,7 @@ playable UI; the parallel Phaser prototype `apps/game` was **deleted on 2026-09-
 ## Data flow
 
 ```
-Tap/click in React (or Phaser FarmScene)
+Tap/click in React (/game screens)
   -> fetch POST/GET /api/v1/...
   -> AuthGuard (Supabase getUser) + ownership checks
   -> service (WalletService is the only writer of Pula)
@@ -108,7 +108,7 @@ Runtime overrides: `game_config` table + `/config` API.
 1. `POST /auth/register` or `/auth/login` → Supabase session access token
 2. Client stores JWT in localStorage (`molemisi_token` + `token`)
 3. `Authorization: Bearer`
-4. `profiles.role` (`player|admin|dev`, migration `000021` **unpushed**) drives `AdminGuard`
+4. `profiles.role` (`player|admin|dev`, migration `000021` **pushed 2026-09-14**) drives `AdminGuard`
    / `DevGuard`; `profiles.is_admin` is the legacy boolean. `AuthGuard` blocks banned
    players except on `/admin/` URLs.
 

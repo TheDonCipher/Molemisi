@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useGame } from '../lib/gameState';
 import { useTranslation } from '../lib/useTranslation';
 import { MoreNavMenu } from './MoreNavMenu';
+import { CurrencyGuideModal } from './CurrencyGuide';
 
 const API_BASE = 'http://localhost:3001/api/v1';
 
@@ -27,6 +28,7 @@ export function HeaderNav() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showPanel, setShowPanel] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   // Hybrid nav (per 2026-09 ruling): 4 primary screens + a 'More' menu.
   const PRIMARY_TABS = [
@@ -141,7 +143,7 @@ export function HeaderNav() {
           </span>
         </div>
 
-        {/* Pula chip */}
+        {/* Pula chip + currency guide */}
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1 bg-wood-dark px-2 py-1 border border-wood-border">
             <span className="text-[10px]">💰</span>
@@ -149,6 +151,15 @@ export function HeaderNav() {
               {pula.toLocaleString()}
             </span>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowGuide(true)}
+            aria-label="Currency guide"
+            title="Currency guide"
+            className="w-7 h-7 bg-wood-dark border border-wood-border flex items-center justify-center text-[11px] font-mono text-on-surface-variant hover:text-primary hover:border-primary/50 transition-colors shrink-0"
+          >
+            ?
+          </button>
         </div>
 
         {/* Nav tabs */}
@@ -267,6 +278,7 @@ export function HeaderNav() {
           )}
         </div>
       </div>
+      <CurrencyGuideModal open={showGuide} onClose={() => setShowGuide(false)} />
     </header>
   );
 }

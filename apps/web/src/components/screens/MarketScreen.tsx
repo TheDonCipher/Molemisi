@@ -126,6 +126,16 @@ export function MarketScreen() {
     details?: React.ReactNode;
     fn: () => void;
   }>({ open: false, title: '', message: '', fn: () => {} });
+  /**
+   * The two-column product view (Princess Eugenia's request): clicking a product
+   * row opens a side-by-side detail — identity on the left, actions + fee on the
+   * right. `null` means the list is showing.
+   */
+  const [detail, setDetail] = React.useState<
+    | { kind: 'buy'; item: MarketItem }
+    | { kind: 'sell'; item: InventoryItem }
+    | null
+  >(null);
 
   const buyables = [...marketItems].sort((a: MarketItem, b: MarketItem) =>
     a.name.localeCompare(b.name),
@@ -292,7 +302,7 @@ export function MarketScreen() {
           ))}
         </div>
 
-        {/* Buy Mode */}
+        {/* Buy Mode — rows are clickable; tapping a seed opens the two-column detail. */}
         {mode === 'buy' && (
           <div className="flex flex-col gap-2">
             {buyables.length === 0 && (
@@ -300,61 +310,36 @@ export function MarketScreen() {
                 {tl('noSeedsAvailable')}
               </div>
             )}
-            {buyables.map((item: MarketItem) => {
-              const canAfford = pula >= item.price;
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 border-2 border-wood-border bg-wood-dark/90 px-3.5 py-3"
-                >
-                  <PixelIcon itemType={item.itemType} emoji={item.icon} size={32} />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
-                      {item.name}
-                      {item.badge && (
-                        <span className="ml-2 align-middle text-[11px] font-mono font-bold uppercase text-status-success">
-                          {item.trend === 'up' ? '▲' : item.trend === 'down' ? '▼' : ''} {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <div className="font-mono text-[13px] font-bold text-gold-currency">
-                      P{item.price}
-                      {item.basePrice !== undefined && item.basePrice !== item.price && (
-                        <span className="ml-1 text-cream-surface/50 line-through">P{item.basePrice}</span>
-                      )}
-                    </div>
+            {buyables.map((item: MarketItem) => (
+              <button
+                key={item.id}
+                onClick={() => setDetail({ kind: 'buy', item })}
+                className="flex w-full items-center gap-3 border-2 border-wood-border bg-wood-dark/90 px-3.5 py-3 text-left active:translate-y-0.5"
+              >
+                <PixelIcon itemType={item.itemType} emoji={item.icon} size={32} />
+                <div className="flex-1 min-w-0">
+                  <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
+                    {item.name}
+                    {item.badge && (
+                      <span className="ml-2 align-middle text-[11px] font-mono font-bold uppercase text-status-success">
+                        {item.trend === 'up' ? '▲' : item.trend === 'down' ? '▼' : ''} {item.badge}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex gap-1.5">
-                    <button
-                      disabled={!canAfford}
-                      onClick={() => handleBuy(item, 1)}
-                      className={`px-3.5 py-2 font-headline text-[13px] font-bold active:translate-y-0.5 ${
-                        canAfford
-                          ? 'bg-primary text-wood-dark'
-                          : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
-                      }`}
-                    >
-                      x1
-                    </button>
-                    <button
-                      disabled={!canAfford}
-                      onClick={() => handleBuy(item, 5)}
-                      className={`px-3.5 py-2 font-headline text-[13px] font-bold active:translate-y-0.5 ${
-                        canAfford
-                          ? 'bg-primary text-wood-dark'
-                          : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
-                      }`}
-                    >
-                      x5
-                    </button>
+                  <div className="font-mono text-[13px] font-bold text-gold-currency">
+                    P{item.price}
+                    {item.basePrice !== undefined && item.basePrice !== item.price && (
+                      <span className="ml-1 text-cream-surface/50 line-through">P{item.basePrice}</span>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+                <span className="font-headline text-[20px] text-cream-surface/50">›</span>
+              </button>
+            ))}
           </div>
         )}
 
-        {/* Sell Mode */}
+        {/* Sell Mode — rows are clickable; tapping a good opens the two-column detail. */}
         {mode === 'sell' && (
           <div className="flex flex-col gap-2">
             {sellables.length === 0 && (
@@ -362,56 +347,25 @@ export function MarketScreen() {
                 {tl('nothingToSell')}
               </div>
             )}
-            {sellables.map((item: InventoryItem) => {
-              const qty = item.quantity;
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 border-2 border-wood-border bg-wood-dark/90 px-3.5 py-3"
-                >
-                  <PixelIcon itemType={item.itemType} emoji={item.icon} size={32} />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
-                      {item.name}
-                    </div>
-                    {/* The live price is quoted on the confirm sheet, not here — the
-                        client has no honest per-row price for goods (only seeds), and
-                        showing a stale one is worse than showing none (01 §4). */}
-                    <div className="font-mono text-xs text-cream-surface/75">
-                      ×{qty} · {tl('tapToSell')}
-                    </div>
+            {sellables.map((item: InventoryItem) => (
+              <button
+                key={item.id}
+                onClick={() => setDetail({ kind: 'sell', item })}
+                disabled={item.quantity < 1}
+                className="flex w-full items-center gap-3 border-2 border-wood-border bg-wood-dark/90 px-3.5 py-3 text-left active:translate-y-0.5 disabled:opacity-50"
+              >
+                <PixelIcon itemType={item.itemType} emoji={item.icon} size={32} />
+                <div className="flex-1 min-w-0">
+                  <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
+                    {item.name}
                   </div>
-                  <div className="flex gap-1.5">
-                    <button
-                      disabled={qty < 1}
-                      onClick={() => {
-                        void handleSell(item, 1);
-                      }}
-                      className={`px-3.5 py-2 font-headline text-[13px] font-bold active:translate-y-0.5 ${
-                        qty >= 1
-                          ? 'bg-status-success text-wood-dark'
-                          : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
-                      }`}
-                    >
-                      +1
-                    </button>
-                    <button
-                      disabled={qty < 1}
-                      onClick={() => {
-                        void handleSell(item, qty);
-                      }}
-                      className={`px-3.5 py-2 font-headline text-[13px] font-bold uppercase active:translate-y-0.5 ${
-                        qty >= 1
-                          ? 'bg-status-success text-wood-dark'
-                          : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
-                      }`}
-                    >
-                      {tl('sellAll')}
-                    </button>
+                  <div className="font-mono text-xs text-cream-surface/75">
+                    ×{item.quantity} · {tl('tapToSell')}
                   </div>
                 </div>
-              );
-            })}
+                <span className="font-headline text-[20px] text-cream-surface/50">›</span>
+              </button>
+            ))}
           </div>
         )}
 
@@ -425,7 +379,7 @@ export function MarketScreen() {
           </button>
         </div>
 
-        {/* Confirmation Dialog */}
+        {/* Confirmation Dialog (used by Quick-Sell-All and the Buy/Sell actions) */}
         <ConfirmModal
           open={confirmState.open}
           title={confirmState.title}
@@ -436,6 +390,212 @@ export function MarketScreen() {
           confirmLabel={tl('confirm')}
           cancelLabel={tl('cancel')}
         />
+
+        {/* Two-column product detail — opens when a product row is clicked. */}
+        {detail && (
+          <ProductDetail
+            detail={detail}
+            pula={pula}
+            onClose={() => setDetail(null)}
+            onBuy={handleBuy}
+            onSell={handleSell}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The side-by-side product view requested by the Princess: clicking a product in
+ * the list opens this. LEFT column = who/what the item is (icon, name, description,
+ * stock). RIGHT column = the action (quantity stepper + price, or the Co-op fee
+ * breakdown + Sell buttons). The fee is shown *before* the Sell button (01 §4),
+ * pulled from the same server quote the sale uses (07 §7.5).
+ */
+function ProductDetail({
+  detail,
+  pula,
+  onClose,
+  onBuy,
+  onSell,
+}: {
+  detail: { kind: 'buy'; item: MarketItem } | { kind: 'sell'; item: InventoryItem };
+  pula: number;
+  onClose: () => void;
+  onBuy: (item: MarketItem, qty: number) => void;
+  onSell: (item: InventoryItem, qty: number) => void;
+}) {
+  const { tl } = useTranslation();
+  const [qty, setQty] = React.useState(1);
+  const [quote, setQuote] = React.useState<SaleQuote | null>(null);
+
+  const buyItem = detail.kind === 'buy' ? detail.item : null;
+  const sellItem = detail.kind === 'sell' ? detail.item : null;
+
+  // For a good, pre-fetch the per-unit quote so the Co-op fee shows before the
+  // button. (The actual sale re-quotes server-side; this is the preview.)
+  React.useEffect(() => {
+    if (!sellItem) return;
+    const itemType = sellItem.itemType || sellItem.name.toLowerCase().replace(/\s+/g, '_');
+    let cancelled = false;
+    apiFetch<SaleQuote>(
+      'GET',
+      `/market/quote?itemType=${encodeURIComponent(itemType)}&quantity=1`,
+    )
+      .then((q) => {
+        if (!cancelled) setQuote(q);
+      })
+      .catch(() => {
+        if (!cancelled) setQuote(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sellItem]);
+
+  const maxQty = buyItem
+    ? Math.max(1, Math.floor(pula / Math.max(1, buyItem.price)))
+    : sellItem
+      ? Math.max(1, sellItem.quantity || 0)
+      : 1;
+  const clampedQty = Math.min(Math.max(1, qty), maxQty);
+  const total = buyItem ? buyItem.price * clampedQty : 0;
+  const canAfford = pula >= total;
+
+  return (
+    <div
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md border-2 border-wood-border bg-wood-dark p-4 shadow-[4px_4px_0px_rgba(0,0,0,0.6)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Title */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="font-headline text-[16px] font-bold text-cream-surface pr-2">
+            {buyItem ? buyItem.name : sellItem?.name}
+          </div>
+          <button
+            onClick={onClose}
+            className="shrink-0 border-2 border-wood-border bg-surface-container-high px-2.5 py-1 font-mono text-xs font-bold text-cream-surface active:translate-y-0.5"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* TWO COLUMNS, SIDE BY SIDE */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* LEFT — identity */}
+          <div className="flex flex-col items-center text-center">
+            <PixelIcon
+              itemType={buyItem?.itemType ?? sellItem?.itemType ?? ''}
+              emoji={buyItem?.icon ?? sellItem?.icon ?? ''}
+              size={56}
+            />
+            <div className="mt-2 font-body text-[12px] leading-snug text-cream-surface/75 px-1">
+              {buyItem ? buyItem.description : sellItem?.description}
+            </div>
+            {sellItem && (
+              <div className="mt-2 font-mono text-[12px] text-cream-surface/80">
+                In stock: ×{sellItem.quantity}
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT — action */}
+          <div className="flex flex-col gap-2.5">
+            {buyItem ? (
+              <>
+                <div className="font-mono text-sm font-bold text-gold-currency">
+                  P{buyItem.price} each
+                </div>
+                <div className="flex items-center justify-between border-2 border-wood-border bg-wood-dark/60 px-2 py-1">
+                  <button
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    className="px-3 py-1 font-headline text-base font-bold text-cream-surface active:translate-y-0.5"
+                  >
+                    −
+                  </button>
+                  <span className="font-mono text-sm text-cream-surface">{clampedQty}</span>
+                  <button
+                    onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
+                    className="px-3 py-1 font-headline text-base font-bold text-cream-surface active:translate-y-0.5"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="font-body text-xs text-cream-surface/70">Total</span>
+                  <span className="font-bold text-gold-currency text-[15px]">P{total}</span>
+                </div>
+                <button
+                  disabled={!canAfford}
+                  onClick={() => {
+                    onBuy(buyItem, clampedQty);
+                    onClose();
+                  }}
+                  className={`py-2.5 font-headline text-[13px] font-bold uppercase active:translate-y-0.5 ${
+                    canAfford
+                      ? 'bg-primary text-wood-dark'
+                      : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
+                  }`}
+                >
+                  {tl('buySeeds')}
+                </button>
+                {!canAfford && (
+                  <div className="font-mono text-[11px] text-red-400">Not enough Pula</div>
+                )}
+              </>
+            ) : sellItem ? (
+              <>
+                {quote ? (
+                  <div className="font-mono text-[12px] leading-relaxed">
+                    <QuoteRow label={tl('priceToday')} value={`P ${quote.pricePerUnit}`} />
+                    <QuoteRow label={tl('gross')} value={`P ${quote.gross.toFixed(2)}`} />
+                    <QuoteRow
+                      label={`${tl('coopTax')} (5%)`}
+                      value={`−P ${quote.tax.toFixed(2)}`}
+                      tone="muted"
+                    />
+                    <div className="my-1 border-t border-wood-border" />
+                    <QuoteRow
+                      label={tl('youReceive')}
+                      value={`P ${quote.netProceeds.toFixed(2)}`}
+                      strong
+                    />
+                  </div>
+                ) : (
+                  <div className="font-body text-[12px] text-cream-surface/60">
+                    {tl('priceUnavailable')}
+                  </div>
+                )}
+                <button
+                  disabled={(sellItem.quantity || 0) < 1}
+                  onClick={() => {
+                    onSell(sellItem, 1);
+                    onClose();
+                  }}
+                  className="py-2.5 bg-status-success text-wood-dark font-headline text-[13px] font-bold uppercase active:translate-y-0.5 disabled:opacity-50"
+                >
+                  Sell 1
+                </button>
+                <button
+                  disabled={(sellItem.quantity || 0) < 1}
+                  onClick={() => {
+                    onSell(sellItem, sellItem.quantity);
+                    onClose();
+                  }}
+                  className="py-2.5 bg-status-success text-wood-dark font-headline text-[13px] font-bold uppercase active:translate-y-0.5 disabled:opacity-50"
+                >
+                  {tl('sellAll')} (×{sellItem.quantity})
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1387,7 +1387,7 @@
       "h": 64
     },
     "kind": "pixen",
-    "prompt": "friendly wise elderly Setswana village elder, grey hair, patterned blanket over shoulder, kind weathered face, full body front view portrait, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+    "prompt": "wise elderly Setswana village elder, grey hair, patterned blanket over shoulder, kind weathered face, full body character sprite, standing front view facing camera, head to toe, entire figure visible from head to feet, arms at sides, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
   "pig_pen_lvl1": {
     "group": "buildings",
@@ -1407,7 +1407,7 @@
       "h": 64
     },
     "kind": "pixen",
-    "prompt": "friendly warm middle-aged Setswana woman, colourful floral headwrap, friendly welcoming stance, full body front view portrait, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+    "prompt": "warm middle-aged Setswana woman, colourful floral headwrap, friendly welcoming stance, full body character sprite, standing front view facing camera, head to toe, entire figure visible from head to feet, arms at sides, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
   "refilwe": {
     "group": "npcs",
@@ -1417,7 +1417,7 @@
       "h": 64
     },
     "kind": "pixen",
-    "prompt": "friendly young Setswana woman herbalist, holding a bundle of bushveld herbs, gentle confident smile, full body front view portrait, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+    "prompt": "young Setswana woman herbalist, holding a bundle of bushveld herbs, gentle confident smile, full body character sprite, standing front view facing camera, head to toe, entire figure visible from head to feet, arms at sides, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
   "market_vendor": {
     "group": "npcs",
@@ -2617,7 +2617,7 @@
       "h": 64
     },
     "kind": "pixen",
-    "prompt": "friendly young Setswana man community worker, neat short dark hair, bright patterned shirt, confident friendly welcoming smile, full body front view portrait, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+    "prompt": "young Setswana man community worker, neat short dark hair, bright patterned shirt, confident friendly welcoming smile, full body character sprite, standing front view facing camera, head to toe, entire figure visible from head to feet, arms at sides, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
   "oupa_kabelo": {
     "group": "npcs",
@@ -2627,7 +2627,7 @@
       "h": 64
     },
     "kind": "pixen",
-    "prompt": "friendly elderly Setswana grandfather (oupa), weathered kind face, flat cap, holding a carved walking stick, full body front view portrait, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+    "prompt": "elderly Setswana grandfather (oupa), weathered kind face, flat cap, holding a carved walking stick, full body character sprite, standing front view facing camera, head to toe, entire figure visible from head to feet, arms at sides, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
   "mama_naledi_head": {
     "group": "npc-heads",

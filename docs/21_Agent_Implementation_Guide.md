@@ -29,12 +29,6 @@ molemisi/
 │   │       ├── app/            # App Router (page.tsx routes)
 │   │       ├── components/     # Header, footer, screens/
 │   │       └── lib/            # api.ts, gameState.tsx
-│   ├── game/                   # Phaser 3 + Vite :3002 (standalone)
-│   │   └── src/
-│   │       ├── scenes/         # Boot, Preload, Farm registered
-│   │       ├── objects/        # PlotObject
-│   │       ├── services/       # ApiClient
-│   │       └── ui/             # Panels (mostly unregistered)
 │   └── api/                    # NestJS — feature folders under src/
 │       └── src/
 │           ├── auth/, farms/, crops/, ...

@@ -1,15 +1,15 @@
 # Molemisi — MVP Completeness Audit
 
-**Date:** 2026-09-11 · **Arbiter:** `docs/MVP/06_Verification_Rubric.md` (wins on "is it done?") · **Auditor:** Belvedere
+**Date:** 2026-09-11 (refreshed 2026-09-16) · **Arbiter:** `docs/MVP/06_Verification_Rubric.md` (wins on "is it done?") · **Auditor:** Belvedere
 **Scope:** everything `docs/MVP/01`–`06` requires for v1, checked against the actual code *and* the actual database.
 
 ---
 
 ## Verdict
 
-**The code is MVP-complete. The deployment is not.**
+**The code is MVP-complete and the schema is deployed; the deployment is no longer blocked by migrations.**
 
-One hard blocker and a short list of genuine gaps. The Bushveld comparative gate is resolved by ruling (live telemetry), so the only thing between the build and a deploy is the migration push. The engineering is in better shape than the ship.
+One hard blocker (the migration push) and a short list of genuine gaps. The Bushveld comparative gate is resolved by ruling (live telemetry), and the migration push landed on 2026-09-14, so the build is schema-current. The remaining gaps are real-money payments, wildlife raids, and boost effects (the last two ruled deferred from v1).
 
 **Gates re-run today (all green):**
 
@@ -22,9 +22,9 @@ One hard blocker and a short list of genuine gaps. The Bushveld comparative gate
 
 ---
 
-## 1. BLOCKER — the linked database is 11 migrations behind (verified live)
+## 1. BLOCKER — RESOLVED: the linked database is schema-current (migrations pushed 2026-09-14)
 
-There are **27 migration files**; `000000`–`000015` are applied to the linked project
+There are **29 migration files**; `000000`–`000015` are applied to the linked project
 `nyapfgawanqvnkkjudxb`, and **11 are not**:
 
 | Unpushed migration | Phase |
@@ -41,26 +41,20 @@ There are **27 migration files**; `000000`–`000015` are applied to the linked 
 | `000120` P9 monetisation (top-up / subscription / boosts / cosmetics) | P9 |
 | `000021` `profiles.role` + tiers | roles |
 
-Read-only probe against the linked project:
+> **RESOLVED 2026-09-14** — the `supabase db push` described below was applied; the linked project is now current (`supabase db push --dry-run` reports "Remote database is up to date"). The original probe below predates that push and its 404s are no longer accurate — live probes since confirm `plant_crop_transaction`, `player_inventory` and `item_definitions` exist, and `player_wallets`, `chapters`, `player_boosts` and `profiles.role` were created by the same push. Retained as a historical record of the pre-launch blocker.
 
-| Probe | Result | Meaning |
+Read-only probe against the linked project (pre-push, 2026-09-06):
+
+| Probe | Result (then) | Meaning (then → now) |
 |---|---|---|
 | `profiles.is_admin` (migration `000015`) | HTTP **200** | applied |
-| `player_wallets` (`000016`) | HTTP **404** `PGRST205` | **absent** |
-| `item_definitions` (`000019`) | HTTP **404** `PGRST205` | **absent** |
-| `chapters` (`000110`) | HTTP **404** `PGRST205` | **absent** |
-| `player_boosts` (`000120`) | HTTP **404** `PGRST205` | **absent** |
-| `profiles.role` (`000021`) | HTTP **400** `42703` "column profiles.role does not exist" | **absent** |
+| `player_wallets` (`000016`) | HTTP **404** `PGRST205` | **absent → now applied** |
+| `item_definitions` (`000019`) | HTTP **404** `PGRST205` | **absent → now applied** |
+| `chapters` (`000110`) | HTTP **404** `PGRST205` | **absent → now applied** |
+| `player_boosts` (`000120`) | HTTP **404** `PGRST205` | **absent → now applied** |
+| `profiles.role` (`000021`) | HTTP **400** `42703` "column profiles.role does not exist" | **absent → now applied** |
 
-The live schema stops at the **P0/P1 boundary**: scaffold tables (`profiles`, `farms`, `farm_plots`, `game_config`, `market_prices`, `livestock`, `buildings`, `notifications`) exist; **everything from P2 (wallet) through P9 (monetisation) plus the role column has never been pushed.**
-
-**Why this blocks the MVP:**
-
-- `AdminGuard` and `DevGuard` both `select(... role)`. PostgREST errors → both guards **fail closed** → **every `/admin` and `/dev` route returns 403.**
-- `GET /auth/me` (`AuthService.getRole`) selects `role` with no error check → `data` is null → **everyone, including admins, is reported as `role: 'player'`, `isAdmin: false`.** The Settings "Dev Tools" link never appears; role-aware UI is dead.
-- No wallet, inventory, crafting, bushveld, chapter or store table exists → **none of P2–P9 can function at runtime.**
-
-**Fix (one step):** push migrations to the linked project — `supabase db push` (applies `000016`→`000021`) — then seed (`supabase/seed/seed.sql` + the config seed). Re-run the probes above to confirm. Nothing else in this report can be validated end-to-end until this is done.
+The live schema **now spans P0 through P9** (and the `role` column): the 2026-09-14 push applied `000016`→`000120` plus `000021`, so `player_wallets`, inventory/crafting, Kgotla, Bushveld, chapters/almanac, monetisation and `profiles.role` all exist. Admin/Dev guards, `/auth/me` role resolution, and P2–P9 runtime all function.
 
 > Note: no local Supabase is running (`:54321` refuses). Both `apps/api/.env` and `apps/web/.env.local` point at the linked remote project, so this is the environment the app actually targets.
 
@@ -97,7 +91,7 @@ The live schema stops at the **P0/P1 boundary**: scaffold tables (`profiles`, `f
 | 2 | **Boost effects** (`05 §P9`) | **Not wired.** Pula Stone / Ancestral Ward / Breath of the Land are catalogued and (weekly) granted, but there is **no endpoint that applies an effect** — no tank refill / rain guarantee, no shield, no timer completion. |
 | 3 | **P10 manual items** | Open: on-device PWA install (Android **and** iOS), throttled-3G smoke test, production-config confirmation, scripted end-to-end walkthrough in one sitting. |
 | 4 | **`apps/game` deletion** (`07` G2, `01` D3) | ✅ **Done 2026-09-11.** Legacy Phaser prototype removed (418 files); `pnpm-workspace.yaml` now excludes it, `scripts/sync-assets.mjs` + `scripts/build-font.mjs` no longer emit into it, and `eslint.config.js` dropped the `generated-assets.ts` ignore. React `/game` is the only client. |
-| 5 | **Four-screen navigation** (`01 §3`, `07 §7.2`, G1) | Footer is now **10 columns** (Farm, Kgotla, Bushveld, Market, Store, Wallet, Crafting, Inventory, Journal, Settings). Spec wants **4 primary** (Farm · Kgotla · Bushveld · Market) + Inventory/Settings in the header. |
+| 5 | **Four-screen navigation** (`01 §3`, `07 §7.2`, G1) | ✅ **Resolved** — footer is now 4 primary screens (Farm · Kgotla · Bushveld · Market) + a header **More** menu (Store, Wallet, Crafting, Inventory, Journal, Settings). |
 | 6 | **"Never surprise the player with a cost"** (`01 §4`, `07 §7.5`) | ✅ **Fixed 2026-09-11.** New `GET /market/quote?itemType=&quantity=` returns the authoritative Price / Gross / Tax / You-receive (it calls the same `computeSale` as `sellItem`; a spec asserts the quote and the sale agree to the cent). `MarketScreen` renders all four lines in the confirm sheet and drops the misleading client-side `P{unitValue} each`. |
 | 7 | **Reactive proverb** (`03 §7`) | `PROVERBS` config exists; **no endpoint serves it** and the "responds to what you did" extension is unbuilt. Cosmetic. |
 | 8 | **Next.js `/api/*` rewrite** (`05 §P0`) | Not done — the browser calls `:3001` cross-port with CORS (`CORS_ORIGIN`). Documented as a **deliberate deviation** in `README` + `KNOWN_LIMITATIONS`; still blocks single-port preview. |
@@ -139,8 +133,8 @@ The live schema stops at the **P0/P1 boundary**: scaffold tables (`profiles`, `f
 
 To call the MVP complete:
 
-1. **Push migrations `000016`–`000021` to the linked project and seed.** *(the blocker — nothing else runs without it)*
+1. **Migrations `000016`–`000021` pushed + seeded (done 2026-09-14).** The only remaining schema delta is two non-blocking corrective migrations.
 2. **Bushveld comparative gate — RULED (telemetry).** The structural half is proven in code; the comparative inversion is recorded and accepted, to be confirmed by live income telemetry post-launch (ruling 2026-09-11).
 3. **Do the four P10 manual checks.**
 4. **Decide whether wildlife raids + boost effects are in v1 or formally deferred** — right now they are specified-but-absent, which is the worst of both worlds (the Ward is sold and protects nothing).
-5. **Small UX / cleanup:** `apps/game` deletion is **done** (2026-09-11); the remaining item is to reconcile the footer nav with the four-screen model. *(The sell-sheet tax transparency is done.)*
+5. **Small UX / cleanup:** `apps/game` deletion is **done** (2026-09-11); the footer nav is **reconciled** (hybrid 4-primary + More). The currency-clarity UI (`?` guide + Wallet section) and Kgotla NPC head-portraits are added. *(The sell-sheet tax transparency is done.)*

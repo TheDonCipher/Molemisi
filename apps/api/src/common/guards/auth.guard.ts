@@ -10,6 +10,13 @@ import { SupabaseService } from '../../database/supabase.service';
 export interface AuthenticatedUser {
   id: string;
   email: string;
+  /**
+   * Alias of `id`. Several consumers (payments, audit log, rate-limit key) read
+   * `user.sub`; Supabase's `getUser` payload does not include a `sub` field, so we
+   * mirror `id` here. Without this, `user.sub` was `undefined` → 500s on /payments
+   * and `user=anonymous` in every audit row.
+   */
+  sub?: string;
 }
 
 @Injectable()
@@ -46,8 +53,10 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    // Attach user to request for downstream use
-    request.user = user;
+    // Attach user to request for downstream use. Mirror `id` into `sub` so consumers
+    // that expect a JWT-style `sub` (payments controller, audit/rate-limit interceptors)
+    // get a real value instead of `undefined`.
+    request.user = { ...user, sub: user.id };
     return true;
   }
 
