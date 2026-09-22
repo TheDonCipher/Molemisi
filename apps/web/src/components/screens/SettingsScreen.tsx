@@ -3,6 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
+import {
+  getNotifPrefs,
+  requestNotificationPermission,
+  setNotifPrefs,
+  type NotifPrefs,
+} from '../../lib/notifications';
 import { supabaseLogout, getStoredRole } from '../../lib/auth';
 
 export function SettingsScreen() {
@@ -19,6 +25,26 @@ export function SettingsScreen() {
   const { tl } = useTranslation();
   const [role, setRole] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [notifPrefs, setNotifPrefsState] = useState<NotifPrefs>({
+    cropsReady: true,
+    animalsHungry: true,
+  });
+  // SSR-safe: read localStorage after mount, or hydration mismatches on the
+  // checkboxes when a saved pref differs from the default.
+  const [permissionGranted, setPermissionGranted] = useState(false);
+
+  useEffect(() => {
+    setNotifPrefsState(getNotifPrefs());
+    setPermissionGranted(
+      typeof window !== 'undefined' &&
+        'Notification' in window &&
+        Notification.permission === 'granted',
+    );
+  }, []);
+
+  const setNotifPrefsLocal = (prefs: Partial<NotifPrefs>) => {
+    setNotifPrefsState(setNotifPrefs(prefs));
+  };
 
   useEffect(() => {
     setRole(getStoredRole());
@@ -108,6 +134,43 @@ export function SettingsScreen() {
           >
             {tl('setswana')}
           </button>
+        </div>
+      </section>
+
+      {/* Notifications (03 §12) — in-app now; server push needs VAPID later */}
+      <section className="mb-6">
+        <h2 className="font-headline text-xs text-on-surface-variant uppercase tracking-wider mb-3 font-bold">
+          {tl('notifications')}
+        </h2>
+        <div className="bg-wood-dark p-4 border border-wood-border space-y-3">
+          {!permissionGranted && (
+            <button
+              onClick={async () =>
+                setPermissionGranted((await requestNotificationPermission()) === 'granted')
+              }
+              className="w-full py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
+            >
+              {tl('enableNotifs')}
+            </button>
+          )}
+          <label className="flex items-center justify-between font-mono text-xs text-cream-surface">
+            <span>{tl('notifCropsReady')}</span>
+            <input
+              type="checkbox"
+              checked={notifPrefs.cropsReady}
+              onChange={(e) => setNotifPrefsLocal({ cropsReady: e.target.checked })}
+              className="accent-primary-container w-4 h-4 cursor-pointer"
+            />
+          </label>
+          <label className="flex items-center justify-between font-mono text-xs text-cream-surface">
+            <span>{tl('notifAnimals')}</span>
+            <input
+              type="checkbox"
+              checked={notifPrefs.animalsHungry}
+              onChange={(e) => setNotifPrefsLocal({ animalsHungry: e.target.checked })}
+              className="accent-primary-container w-4 h-4 cursor-pointer"
+            />
+          </label>
         </div>
       </section>
 

@@ -103,13 +103,13 @@ function CouncilSeat({
       >
         <NpcPortrait id={id} name={name} size={size} />
       </div>
-      <span className="mt-1.5 font-headline text-[11px] text-cream-surface font-bold leading-tight block max-w-[7rem] truncate">
+      <span className="mt-1.5 font-headline text-xs text-cream-surface font-bold leading-tight block max-w-[7rem] truncate">
         {name}
       </span>
-      <span className="font-mono text-[8px] text-on-surface-variant block max-w-[7rem] truncate">
+      <span className="font-mono text-[10px] text-cream-surface/90 block max-w-[7rem] truncate">
         {role}
       </span>
-      <span className="font-mono text-[8px] text-primary mt-0.5 block">★ {tier}</span>
+      <span className="font-mono text-[10px] text-primary mt-0.5 block">★ {tier}</span>
     </button>
   );
 }
@@ -175,7 +175,7 @@ export function KgotlaScreen() {
           <h1 className="font-headline text-lg text-cream-surface uppercase tracking-wide">
             {tl('kgotla')}
           </h1>
-          <p className="font-mono text-[9px] text-primary uppercase mt-0.5">
+          <p className="font-mono text-[10px] text-primary uppercase mt-0.5">
             {tl('kgotlaSubtitle')}
           </p>
         </div>
@@ -187,7 +187,7 @@ export function KgotlaScreen() {
           <span className="text-lg">🤝</span>
           <div>
             <span className="font-headline text-xs text-primary uppercase font-bold block">Botho</span>
-            <span className="font-mono text-[10px] text-gold-currency font-bold">
+            <span className="font-mono text-[11px] text-gold-currency font-bold">
               {botho ? botho.current : '—'}
               {botho?.next
                 ? ` → ${botho.next.label ?? botho.next.value} (${botho.next.remaining})`
@@ -199,7 +199,7 @@ export function KgotlaScreen() {
         </div>
         <div className="flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
           <span className="text-sm">📖</span>
-          <span className="font-mono text-[10px] text-on-surface-variant font-bold">
+          <span className="font-mono text-[11px] text-cream-surface/90 font-bold">
             {journal ? `${journal.pagesComplete}/${journal.totalPages}` : '—'} pages
           </span>
         </div>
@@ -207,22 +207,22 @@ export function KgotlaScreen() {
 
       {/* Orientation — tells the player, up front, what the Kgotla is for. */}
       <div className="relative z-10 px-4 pt-2">
-        <div className="bg-wood-dark/80 px-3 py-2 border border-wood-border font-body text-[11px] text-cream-surface/90 leading-snug">
+        <div className="bg-wood-dark/80 px-3 py-2 border border-wood-border font-body text-xs text-cream-surface/90 leading-snug">
           {tl('kgotlaIntro')}
         </div>
         {botho && (
-          <div className="mt-2 bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[10px] text-on-surface-variant">
+          <div className="mt-2 bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[11px] text-cream-surface/90">
             Botho earned today: {botho.earnedToday}/{botho.dailyCap} · {botho.remainingToday} left
           </div>
         )}
         {elder && (
           <div className="mt-2 bg-primary-container/80 px-3 py-2 border border-primary">
-            <div className="font-mono text-[9px] uppercase text-primary font-bold mb-0.5">
+            <div className="font-mono text-[10px] uppercase text-primary font-bold mb-0.5">
               Elder&apos;s guidance
             </div>
             <p className="font-body text-[12px] text-on-primary-container leading-snug">{elder.english}</p>
             {elder.setswana && (
-              <p className="font-body text-[11px] text-on-primary-container/70 mt-0.5">{elder.setswana}</p>
+              <p className="font-body text-xs text-on-primary-container/85 mt-0.5">{elder.setswana}</p>
             )}
           </div>
         )}
@@ -235,10 +235,10 @@ export function KgotlaScreen() {
         <h2 className="font-headline text-sm text-cream-surface uppercase mb-1">
           {tl('speakWithElders')}
         </h2>
-        <p className="font-mono text-[9px] text-on-surface-variant mb-3">{tl('communityHub')}</p>
+        <p className="font-mono text-[10px] text-cream-surface/90 mb-3">{tl('communityHub')}</p>
 
         {npcs.length === 0 && !loading && (
-          <div className="bg-wood-dark/70 p-4 border border-wood-border text-center font-body text-xs text-on-surface-variant">
+          <div className="bg-wood-dark/70 p-4 border border-wood-border text-center font-body text-xs text-cream-surface/90">
             {tl('talkToNpcs')}
           </div>
         )}
@@ -262,28 +262,28 @@ export function KgotlaScreen() {
         </div>
 
         {!selected && npcs.length > 0 && !loading && (
-          <p className="mt-3 bg-wood-dark/60 px-3 py-2 border border-wood-border font-mono text-[10px] text-on-surface-variant text-center">
+          <p className="mt-3 bg-wood-dark/60 px-3 py-2 border border-wood-border font-mono text-[11px] text-cream-surface/90 text-center">
             {tl('councilHint')}
           </p>
         )}
       </section>
 
       {/* 2) THE VILLAGE DECIDES — support a community project. */}
-      <section className="relative z-10 px-4 pb-4">
+      <section className="relative z-10 px-4 pb-4 max-w-md mx-auto">
         <h2 className="font-headline text-sm text-cream-surface uppercase mb-1">
           {tl('supportProject')}
         </h2>
-        <p className="font-mono text-[9px] text-on-surface-variant mb-2">
+        <p className="font-mono text-[10px] text-cream-surface/90 mb-2">
           {tl('villageDecidesHint')}
         </p>
         {contribution && (
-          <div className="bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[10px] text-on-surface-variant mb-2">
+          <div className="bg-wood-dark/80 px-3 py-1.5 border border-wood-border font-mono text-[11px] text-cream-surface/90 mb-2">
             {tl('pulaPerDay')}: {contribution.contributedToday}/{contribution.dailyCap} ·{' '}
             {contribution.remainingToday} left
           </div>
         )}
         {donateBlocked && (
-          <div className="bg-surface-container-high/80 px-3 py-1.5 border border-wood-border mb-2 font-mono text-[10px] text-on-surface-variant">
+          <div className="bg-surface-container-high/80 px-3 py-1.5 border border-wood-border mb-2 font-mono text-[11px] text-cream-surface/90">
             {tl('dailyLimitReached')}
           </div>
         )}
@@ -293,10 +293,10 @@ export function KgotlaScreen() {
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="font-headline text-xs text-cream-surface font-bold truncate">{p.name}</span>
                 {p.completed && (
-                  <span className="font-mono text-[9px] text-status-success font-bold uppercase shrink-0">Done</span>
+                  <span className="font-mono text-[10px] text-status-success font-bold uppercase shrink-0">Done</span>
                 )}
               </div>
-              <p className="font-body text-[9px] text-on-surface-variant mb-1 truncate">{p.description}</p>
+              <p className="font-body text-[10px] text-cream-surface/90 mb-1 truncate">{p.description}</p>
               <div className="flex items-center gap-2 mb-1.5">
                 <div className="flex-1 h-1.5 bg-surface-container-lowest overflow-hidden">
                   <div
@@ -304,24 +304,24 @@ export function KgotlaScreen() {
                     style={{ width: `${pct(p.currentContributions, p.requiredContributions)}%` }}
                   />
                 </div>
-                <span className="font-mono text-[9px] text-on-surface-variant shrink-0">
+                <span className="font-mono text-[10px] text-cream-surface/90 shrink-0">
                   {p.currentContributions}/{p.requiredContributions}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-[9px] text-primary truncate">Reward: {p.reward}</span>
+                <span className="font-mono text-[10px] text-primary truncate">Reward: {p.reward}</span>
                 <div className="flex gap-1.5 shrink-0">
                   <button
                     disabled={donateBlocked}
                     onClick={() => donate(p.id, 10)}
-                    className="px-2 py-1 bg-primary-container text-on-primary-container font-mono text-[9px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+                    className="px-2 py-1 bg-primary-container text-on-primary-container font-mono text-[10px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
                   >
                     +10
                   </button>
                   <button
                     disabled={donateBlocked}
                     onClick={() => donate(p.id, 50)}
-                    className="px-2 py-1 bg-primary-container text-on-primary-container font-mono text-[9px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+                    className="px-2 py-1 bg-primary-container text-on-primary-container font-mono text-[10px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
                   >
                     +50
                   </button>
@@ -330,7 +330,7 @@ export function KgotlaScreen() {
             </div>
           ))}
           {projects.length === 0 && !loading && (
-            <div className="bg-wood-dark/70 p-4 border border-wood-border text-center font-body text-xs text-on-surface-variant">
+            <div className="bg-wood-dark/70 p-4 border border-wood-border text-center font-body text-xs text-cream-surface/90">
               No community projects right now.
             </div>
           )}
@@ -376,7 +376,7 @@ export function KgotlaScreen() {
             {/* Words column */}
             <div className="flex-1 flex flex-col min-h-0 p-4 md:p-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="px-2 py-0.5 bg-gold-currency text-wood-dark font-mono text-[8px] uppercase font-bold">
+                <span className="px-2 py-0.5 bg-gold-currency text-wood-dark font-mono text-[10px] uppercase font-bold">
                   {tl('inDeliberation')}
                 </span>
                 <button
@@ -392,7 +392,7 @@ export function KgotlaScreen() {
               <span className="font-headline text-base text-cream-surface font-bold block">
                 {selected.name}
               </span>
-              <span className="font-mono text-[10px] text-primary uppercase block mb-3">
+              <span className="font-mono text-[11px] text-primary uppercase block mb-3">
                 {selected.role} · ★ {selected.tier}
               </span>
 
@@ -409,7 +409,7 @@ export function KgotlaScreen() {
                     setDialogue(t?.message ?? null);
                     setBusy(false);
                   }}
-                  className="w-full py-2 bg-surface-container-high text-on-surface-variant font-mono text-xs uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+                  className="w-full py-2 bg-surface-container-high text-cream-surface/90 font-mono text-xs uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
                 >
                   {tl('askGuidance')}
                 </button>

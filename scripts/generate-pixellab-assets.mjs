@@ -371,14 +371,14 @@ const ICON_DEFS = {
 const BIG_BACKGROUNDS = [
   [
     'market_portrait',
-    'traditional Botswana village open-air market seen from a player standing in the square, woven baskets filled with grain and produce on wooden display tables, thatched shade structures, colorful cloth canopies strung overhead, red earth ground, acacia trees at the edges, warm late-afternoon light, bustling but cozy, empty center area for UI overlay',
+    'a lively Botswana village open-air market seen from the viewpoint of a player standing in the square: rows of wooden market stalls with colorful striped cloth canopies overhead, display tables piled with woven baskets of maize, sorghum, groundnuts and vegetables, sacks of grain, hanging bunches of produce, a wooden pushcart, thatched shade shelters, red-earth ground, acacia trees at the edges, warm late-afternoon light, bustling but cozy, empty central ground area for UI overlay',
   ],
 ];
 
 const BACKGROUNDS = [
   [
     'farm_day',
-    'serene Botswana farm scene, clear blue sky, distant hills, red-earth field with green crops, acacia tree, warm morning light',
+    'a cozy Botswana farmstead in the morning: a round thatched rondavel farmhouse with a wooden door, a timber barn and grain store, a fenced crop field with neat rows of green maize and sorghum, a windmill water pump beside a water tank, a small cattle kraal with two cows and a goat, wooden fence posts and wire, a red-earth path leading to the homestead, scattered acacia trees, distant low rolling hills, clear blue sky, warm golden morning light, wide establishing shot, empty sky at the top for UI overlay',
   ],
   ['farm_sunset', 'same farm at golden sunset, orange and pink sky, long soft shadows'],
   ['farm_night', 'same farm at night, deep blue starry sky, warm light from a farmhouse window'],
@@ -401,6 +401,7 @@ const WEATHER_FX = [
   ['lightning', 'yellow lightning bolt'],
   ['wind_swirl', 'swirling wind streak'],
   ['rain_cloud', 'grey rain cloud with falling rain'],
+  ['dust_drought', 'swirling ochre dust cloud with dry parched wind streaks'],
 ];
 
 const PARTICLES = [
@@ -495,6 +496,7 @@ const ITEM_ICONS = [
   ['building_pig_pen', 'pig pen with low wooden fence and mud patch'],
   ['building_borehole', 'modern deep borehole water pump with metal pipe'],
   ['building_greenhouse', 'small glass greenhouse with plants inside'],
+  ['building_fence', 'rustic wooden farm fence section with two posts and wire, Botswana farm boundary'],
 ];
 
 for (const [id, desc] of ITEM_ICONS) {
@@ -570,6 +572,15 @@ for (const [animal, desc] of ANIMALS) {
     { w: 64, h: 48 },
     'pixen',
     `happy farm ${desc}, standing side view facing right with a small smile and floating heart above, ${STYLE}`,
+    { noBg: true },
+  );
+  add(
+    'animals',
+    `${animal}_sick`,
+    `sprites/animals/${animal}/sick.png`,
+    { w: 64, h: 48 },
+    'pixen',
+    `sick weak farm ${desc}, standing side view facing right, drooping head, dull tired eyes, small sweat drop, ${STYLE}`,
     { noBg: true },
   );
   add(
@@ -810,6 +821,15 @@ add(
   { w: 400, h: 160 },
   'pixen',
   'wide horizontal game banner emblem, a golden sorghum sprig in the center flanked by two small acacia trees with a rising amber sun above red-earth field strips along the bottom, warm terracotta amber cream palette, transparent background, no text, no letters',
+  { noBg: true, detail: 'medium detail' },
+);
+add(
+  'branding',
+  'welcome_sunrise',
+  'branding/welcome_sunrise.png',
+  { w: 128, h: 128 },
+  'pixen',
+  `small pixel art sunrise over a tiny Botswana farmstead, thatched rondavel hut and acacia tree silhouettes, golden sun half-risen with warm rays, centered with transparent background, ${STYLE}`,
   { noBg: true, detail: 'medium detail' },
 );
 

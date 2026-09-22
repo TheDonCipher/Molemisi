@@ -19,15 +19,44 @@ self.addEventListener('install', (event) => {
 // Activate event - clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
+    (async () => {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name)));
+      await self.clients.claim();
+    })()
+  );
+});
+
+// Push event — 03 §12. The server-side web-push sender (VAPID) is not built
+// yet; this handler is the receiver it will target when it is.
+self.addEventListener('push', (event) => {
+  let payload = { title: 'Molemisi', body: 'Something happened on your farm.' };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch (_) {
+    // Plain-text payloads still deserve a readable body.
+    if (event.data) payload.body = event.data.text();
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
     })
   );
-  self.clients.claim();
+});
+
+// Notification click - focus the app (or open it)
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const client = clientList.find((c) => c.url.includes('/game'));
+      if (client) return client.focus();
+      return self.clients.openWindow('/game');
+    })()
+  );
 });
 
 // Fetch event - network first, fallback to cache

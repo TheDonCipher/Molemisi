@@ -15,6 +15,18 @@ import { PlotView, toPlotViews } from '../crops/plot-view';
  * Jojo tank for the whole farm (see `GET /water`). The old `crop.hydration`
  * field was a leftover of the retired per-plot watering action.
  */
+/** Welcome-back summary (09 §9): what the offline simulation did while away. */
+export interface SimulationSummary {
+  awayMinutes: number;
+  cropsReady: number;
+  livestockProducts: number;
+  buildingsCompleted: number;
+  buildingsMaintenance: number;
+  seasonChanged: boolean;
+  newSeason: string | null;
+  weather: string | null;
+}
+
 export interface FarmWithPlots {
   farm: {
     id: string;
@@ -28,6 +40,8 @@ export interface FarmWithPlots {
     lastSimulatedAt: string;
   };
   plots: PlotView[];
+  /** Non-null only when the player was away ≥30 min AND the sim has news to report. */
+  simulation: SimulationSummary | null;
 }
 
 @Injectable()
@@ -43,12 +57,36 @@ export class FarmsService {
     // Run simulation to advance time-dependent systems
     const { data: farmForSim } = await adminClient
       .from('farms')
-      .select('id')
+      .select('id, last_simulated_at')
       .eq('user_id', userId)
       .single();
 
+    // Away-time is measured BEFORE the simulation stamps last_simulated_at.
+    // The summary (09 §9 welcome-back) is only surfaced when the player was
+    // gone ≥30 min AND something reportable happened — a 30-second relog or
+    // a quiet night must not pop a sheet.
+    let simulation: SimulationSummary | null = null;
     if (farmForSim) {
-      await this.simulationService.simulateFarm(farmForSim.id);
+      const lastSim = farmForSim.last_simulated_at
+        ? new Date(farmForSim.last_simulated_at as string).getTime()
+        : Date.now();
+      const awayMinutes = (Date.now() - lastSim) / 60000;
+      const sim = await this.simulationService.simulateFarm(farmForSim.id);
+      const hasNews =
+        sim.cropsReady + sim.livestockProducts + sim.buildingsCompleted + sim.buildingsMaintenance >
+          0 || sim.seasonChanged;
+      if (awayMinutes >= 30 && hasNews) {
+        simulation = {
+          awayMinutes: Math.round(awayMinutes),
+          cropsReady: sim.cropsReady,
+          livestockProducts: sim.livestockProducts,
+          buildingsCompleted: sim.buildingsCompleted,
+          buildingsMaintenance: sim.buildingsMaintenance,
+          seasonChanged: sim.seasonChanged,
+          newSeason: sim.newSeason,
+          weather: sim.weather?.type ?? null,
+        };
+      }
     }
 
     // Get farm (fresh read after simulation)
@@ -86,6 +124,7 @@ export class FarmsService {
         lastSimulatedAt: farm.last_simulated_at || new Date().toISOString(),
       },
       plots: toPlotViews((plots ?? []) as Array<Record<string, unknown>>),
+      simulation,
     };
   }
 

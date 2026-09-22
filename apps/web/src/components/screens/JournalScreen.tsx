@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useGame } from '../../lib/gameState';
+import { apiFetch, useGame } from '../../lib/gameState';
 import { useKgotla } from '../../lib/kgotla';
 import { useTranslation } from '../../lib/useTranslation';
 import { useDiscoveries, DiscoveredFind } from '../../lib/discoveries';
@@ -68,11 +68,70 @@ function DiscoveryEntry({ find }: { find: DiscoveredFind }) {
   );
 }
 
+/**
+ * An accepted contract, shaped for the Journal's quest rows.
+ * Mirrors `ActiveContract` in apps/api/src/contracts/contracts.service.ts — the
+ * Journal used to render a hardcoded DEMO_QUESTS list, so its "Quests" section
+ * was fiction (I7: the server owns contract state).
+ */
+interface JournalContract {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  current: number;
+  target: number;
+  done: boolean;
+}
+
+interface ActiveContractView {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  requirements: Array<{ itemType: string; quantity: number; current: number }>;
+  completed: boolean;
+}
+
 export function JournalScreen() {
-  const { quests, setActiveNav } = useGame();
+  const { farmId, setActiveNav } = useGame();
   const { journal, reload } = useKgotla();
   const { tl } = useTranslation();
   const discoveries = useDiscoveries();
+  const [contracts, setContracts] = useState<JournalContract[]>([]);
+
+  // Real accepted contracts — one progress number per contract (summed over its
+  // requirements), so the row can still read "14/20" without inventing anything.
+  useEffect(() => {
+    if (!farmId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const active = await apiFetch<ActiveContractView[]>(
+          'GET',
+          `/farms/${farmId}/contracts/active`,
+        );
+        if (cancelled || !Array.isArray(active)) return;
+        setContracts(
+          active.map((c) => ({
+            id: c.id,
+            title: c.name,
+            description: c.description,
+            icon: '📜',
+            current: c.requirements.reduce((sum, r) => sum + r.current, 0),
+            target: c.requirements.reduce((sum, r) => sum + r.quantity, 0),
+            done: c.completed,
+          })),
+        );
+      } catch {
+        // Leave the section empty rather than filling it with sample contracts.
+        if (!cancelled) setContracts([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [farmId]);
 
   // 03 §7 — Mogolo's proverb reacts to the player's most recent action. Falls
   // back to a rotating daily line when nothing notable was done this session.
@@ -184,7 +243,7 @@ export function JournalScreen() {
         <h2 className="font-headline text-xs text-on-surface-variant uppercase tracking-wider mb-3 font-bold">
           {tl('quests') || 'Quests'}
         </h2>
-        {quests.length === 0 ? (
+        {contracts.length === 0 ? (
           <div className="bg-wood-dark p-6 border border-wood-border text-center">
             <span className="text-2xl">📖</span>
             <p className="font-mono text-[10px] text-on-surface-variant mt-2">
@@ -193,8 +252,8 @@ export function JournalScreen() {
           </div>
         ) : (
           <div className="bg-wood-dark border border-wood-border divide-y divide-wood-border/50">
-            {quests.map((q) => {
-              const done = q.claimed;
+            {contracts.map((q) => {
+              const done = q.done;
               const complete = q.current >= q.target;
               return (
                 <div key={q.id} className="px-3 py-2.5">

@@ -22,7 +22,7 @@ export function BushveldScreen() {
 
   const bgSrc = active?.restorationAssetKey
     ? `/assets/${active.restorationAssetKey}`
-    : '/assets/backgrounds/bushveld_scene.png';
+    : '/assets/tiles/sky/bushveld_savanna.png';
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
@@ -35,7 +35,7 @@ export function BushveldScreen() {
           src={bgSrc}
           onError={(e) => {
             const img = e.target as HTMLImageElement;
-            img.src = '/assets/backgrounds/bushveld_scene.png';
+            img.src = '/assets/tiles/sky/bushveld_savanna.png';
             img.onerror = null;
           }}
         />

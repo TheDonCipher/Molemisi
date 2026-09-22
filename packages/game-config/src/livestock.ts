@@ -6,6 +6,12 @@
  * set, so an animal is available as soon as the player can pay its
  * `purchaseCost` and has the required building. The `getUnlockedAnimals(level)`
  * helper that filtered on a level is gone too.
+ *
+ * `buildingRequired` is 'kraal' for every animal — the v1 building list (D8)
+ * has ONE livestock building. The legacy per-animal pens (coop, goat_pen,
+ * paddock, pig_pen) alias to kraal in `getBuildingConfig`, but
+ * `livestock.service` queries the buildings table by raw `building_type`, so
+ * keeping a legacy id here made every animal unpurchasable.
  */
 
 export interface AnimalConfig {
@@ -41,7 +47,7 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     hungerDecayRate: 0.15,
     healthDecayRate: 0.1,
     happinessDecayRate: 0.05,
-    buildingRequired: 'coop',
+    buildingRequired: 'kraal',
     spriteSheet: 'animal_chicken.png',
   },
   goat: {
@@ -58,7 +64,7 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     hungerDecayRate: 0.12,
     healthDecayRate: 0.08,
     happinessDecayRate: 0.04,
-    buildingRequired: 'goat_pen',
+    buildingRequired: 'kraal',
     spriteSheet: 'animal_goat.png',
   },
   cow: {
@@ -75,7 +81,7 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     hungerDecayRate: 0.1,
     healthDecayRate: 0.06,
     happinessDecayRate: 0.03,
-    buildingRequired: 'paddock',
+    buildingRequired: 'kraal',
     spriteSheet: 'animal_cow.png',
   },
   pig: {
@@ -92,7 +98,7 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     hungerDecayRate: 0.13,
     healthDecayRate: 0.07,
     happinessDecayRate: 0.04,
-    buildingRequired: 'pig_pen',
+    buildingRequired: 'kraal',
     spriteSheet: 'animal_pig.png',
   },
 };

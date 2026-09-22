@@ -306,7 +306,7 @@ export function MarketScreen() {
         {mode === 'buy' && (
           <div className="flex flex-col gap-2">
             {buyables.length === 0 && (
-              <div className="py-8 text-center font-body text-sm text-cream-surface/60">
+              <div className="py-8 text-center font-body text-sm text-cream-surface/75">
                 {tl('noSeedsAvailable')}
               </div>
             )}
@@ -321,7 +321,7 @@ export function MarketScreen() {
                   <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
                     {item.name}
                     {item.badge && (
-                      <span className="ml-2 align-middle text-[11px] font-mono font-bold uppercase text-status-success">
+                      <span className="ml-2 align-middle text-xs font-mono font-bold uppercase text-status-success">
                         {item.trend === 'up' ? '▲' : item.trend === 'down' ? '▼' : ''} {item.badge}
                       </span>
                     )}
@@ -343,7 +343,7 @@ export function MarketScreen() {
         {mode === 'sell' && (
           <div className="flex flex-col gap-2">
             {sellables.length === 0 && (
-              <div className="py-8 text-center font-body text-sm text-cream-surface/60">
+              <div className="py-8 text-center font-body text-sm text-cream-surface/75">
                 {tl('nothingToSell')}
               </div>
             )}
@@ -540,13 +540,13 @@ function ProductDetail({
                   className={`py-2.5 font-headline text-[13px] font-bold uppercase active:translate-y-0.5 ${
                     canAfford
                       ? 'bg-primary text-wood-dark'
-                      : 'bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed'
+                      : 'bg-surface-container-high text-cream-surface/70 cursor-not-allowed'
                   }`}
                 >
                   {tl('buySeeds')}
                 </button>
                 {!canAfford && (
-                  <div className="font-mono text-[11px] text-red-400">Not enough Pula</div>
+                  <div className="font-mono text-xs text-red-400">Not enough Pula</div>
                 )}
               </>
             ) : sellItem ? (
@@ -568,7 +568,7 @@ function ProductDetail({
                     />
                   </div>
                 ) : (
-                  <div className="font-body text-[12px] text-cream-surface/60">
+                  <div className="font-body text-[12px] text-cream-surface/75">
                     {tl('priceUnavailable')}
                   </div>
                 )}

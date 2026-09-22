@@ -7,7 +7,7 @@ import {
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import { InventoryService } from '../inventory/inventory.service';
-import { getBuildingConfig } from '@molemisi/game-config';
+import { getBuildingConfig, type BuildCost } from '@molemisi/game-config';
 
 interface BuildingRow {
   id: string;
@@ -45,6 +45,12 @@ export class BuildingsService {
       capacity: number;
       wear: number;
       constructionEndsAt: string | null;
+      /** Tiers this line actually has (D8 — only Storage and Workshop grow). */
+      maxTier: number;
+      /** Cost of the NEXT tier, or null when maxed. Saves the client mirroring config. */
+      nextUpgradeCost: BuildCost | null;
+      /** Minutes the next tier takes, or null when maxed. */
+      nextUpgradeTime: number | null;
     }>
   > {
     const adminClient = this.supabaseService.getAdminClient();
@@ -58,15 +64,23 @@ export class BuildingsService {
       throw new Error('Failed to fetch buildings');
     }
 
-    return (buildings ?? []).map((b: Record<string, unknown>) => ({
-      id: b.id as string,
-      buildingType: b.building_type as string,
-      level: b.level as number,
-      state: b.state as string,
-      capacity: b.capacity as number,
-      wear: b.wear as number,
-      constructionEndsAt: b.construction_ends_at as string | null,
-    }));
+    return (buildings ?? []).map((b: Record<string, unknown>) => {
+      const buildingType = b.building_type as string;
+      const level = b.level as number;
+      const config = getBuildingConfig(buildingType);
+      return {
+        id: b.id as string,
+        buildingType,
+        level,
+        state: b.state as string,
+        capacity: b.capacity as number,
+        wear: b.wear as number,
+        constructionEndsAt: b.construction_ends_at as string | null,
+        maxTier: config?.maxTier ?? 1,
+        nextUpgradeCost: config?.upgradeCosts[level - 1] ?? null,
+        nextUpgradeTime: config?.upgradeTimes[level - 1] ?? null,
+      };
+    });
   }
 
   async constructBuilding(
@@ -102,7 +116,19 @@ export class BuildingsService {
     // there is no window where two concurrent builds both pass an affordability
     // check that only one of them can actually satisfy.
     const cost = config.baseCost.currency;
+    const materialNeeds = this.buildCostMaterials(config.baseCost);
     await this.wallet.spendPula(userId, cost, 'building_construction');
+
+    // Crafted materials are part of the price (03 §3.5) — Poleto, Thapo and
+    // Setena exist mainly as building inputs. Charging only Pula made the build
+    // sheet quote a cost the server never actually took.
+    try {
+      await this.consumeMaterials(userId, farmId, materialNeeds);
+    } catch (err) {
+      // Nothing was built, so the Pula must go back.
+      await this.wallet.credit(userId, 'pula', cost, 'refund');
+      throw err;
+    }
 
     // Create building
     const constructionEndsAt = new Date(
@@ -130,6 +156,7 @@ export class BuildingsService {
       // back rather than charge for a building that does not exist. The ledger
       // keeps both rows, which is what we want: it shows the attempt.
       await this.wallet.credit(userId, 'pula', cost, 'refund');
+      await this.returnMaterials(userId, farmId, materialNeeds);
       throw new Error('Failed to create building');
     }
 
@@ -186,11 +213,20 @@ export class BuildingsService {
     const upgradeCostPula = upgradeCost.currency;
     await this.wallet.spendPula(userId, upgradeCostPula, 'storage_upgrade');
 
+    // Tier-ups take crafted material too (C22 — the Workshop's two upgrades).
+    const upgradeMaterials = this.buildCostMaterials(upgradeCost);
+    try {
+      await this.consumeMaterials(userId, farmId, upgradeMaterials);
+    } catch (err) {
+      await this.wallet.credit(userId, 'pula', upgradeCostPula, 'refund');
+      throw err;
+    }
+
     // Update building
     const upgradeTime = config.upgradeTimes[buildingRow.level - 1] ?? 0;
     const constructionEndsAt = new Date(Date.now() + upgradeTime * 60 * 1000).toISOString();
 
-    await adminClient
+    const { error: upgradeError } = await adminClient
       .from('buildings')
       .update({
         level: buildingRow.level + 1,
@@ -199,6 +235,12 @@ export class BuildingsService {
       })
       .eq('id', buildingId);
 
+    if (upgradeError) {
+      await this.wallet.credit(userId, 'pula', upgradeCostPula, 'refund');
+      await this.returnMaterials(userId, farmId, upgradeMaterials);
+      throw new Error('Failed to upgrade building');
+    }
+
     // Ledger row is written by wallet_apply().
 
     return {
@@ -206,6 +248,31 @@ export class BuildingsService {
       newLevel: buildingRow.level + 1,
       state: 'CONSTRUCTION',
     };
+  }
+
+  /**
+   * The crafted-material part of a BuildCost, as inventory needs. `currency` is
+   * Pula and is charged through the wallet instead, so it is filtered out here.
+   */
+  private buildCostMaterials(cost: BuildCost): MaterialNeed[] {
+    return (['poleto', 'thapo', 'setena'] as const)
+      .filter((slug) => (cost[slug] ?? 0) > 0)
+      .map((slug) => ({ slug, qty: cost[slug] as number }));
+  }
+
+  /** Give materials back after a later step failed (never a partial loss). */
+  private async returnMaterials(
+    playerId: string,
+    farmId: string,
+    needs: MaterialNeed[],
+  ): Promise<void> {
+    for (const need of needs) {
+      try {
+        await this.inventory.addItem(playerId, farmId, need.slug, need.qty);
+      } catch {
+        // Best-effort refund; the ledger already records the original charge.
+      }
+    }
   }
 
   /**
@@ -411,10 +478,14 @@ export class BuildingsService {
       throw new BadRequestException('No Storage building — construct one before upgrading');
     }
 
-    return this.applyUpgrade(building as unknown as BuildingRow, userId);
+    return this.applyUpgrade(building as unknown as BuildingRow, farmId, userId);
   }
 
-  private async applyUpgrade(buildingRow: BuildingRow, userId: string): Promise<{ id: string; newLevel: number; state: string }> {
+  private async applyUpgrade(
+    buildingRow: BuildingRow,
+    farmId: string,
+    userId: string,
+  ): Promise<{ id: string; newLevel: number; state: string }> {
     const adminClient = this.supabaseService.getAdminClient();
     const config = getBuildingConfig(buildingRow.building_type);
     if (!config) {
@@ -435,10 +506,18 @@ export class BuildingsService {
     const upgradeCostPula = upgradeCost.currency;
     await this.wallet.spendPula(userId, upgradeCostPula, 'storage_upgrade');
 
+    const upgradeMaterials = this.buildCostMaterials(upgradeCost);
+    try {
+      await this.consumeMaterials(userId, farmId, upgradeMaterials);
+    } catch (err) {
+      await this.wallet.credit(userId, 'pula', upgradeCostPula, 'refund');
+      throw err;
+    }
+
     const upgradeTime = config.upgradeTimes[buildingRow.level - 1] ?? 0;
     const constructionEndsAt = new Date(Date.now() + upgradeTime * 60 * 1000).toISOString();
 
-    await adminClient
+    const { error: upgradeError } = await adminClient
       .from('buildings')
       .update({
         level: buildingRow.level + 1,
@@ -446,6 +525,12 @@ export class BuildingsService {
         construction_ends_at: constructionEndsAt,
       })
       .eq('id', buildingRow.id);
+
+    if (upgradeError) {
+      await this.wallet.credit(userId, 'pula', upgradeCostPula, 'refund');
+      await this.returnMaterials(userId, farmId, upgradeMaterials);
+      throw new Error('Failed to upgrade building');
+    }
 
     return { id: buildingRow.id, newLevel: buildingRow.level + 1, state: 'CONSTRUCTION' };
   }

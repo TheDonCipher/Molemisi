@@ -1617,7 +1617,7 @@
       "h": 300
     },
     "kind": "pixflux",
-    "prompt": "serene Botswana farm scene, clear blue sky, distant hills, red-earth field with green crops, acacia tree, warm morning light"
+    "prompt": "a cozy Botswana farmstead in the morning: a round thatched rondavel farmhouse with a wooden door, a timber barn and grain store, a fenced crop field with neat rows of green maize and sorghum, a windmill water pump beside a water tank, a small cattle kraal with two cows and a goat, wooden fence posts and wire, a red-earth path leading to the homestead, scattered acacia trees, distant low rolling hills, clear blue sky, warm golden morning light, wide establishing shot, empty sky at the top for UI overlay"
   },
   "farm_sunset": {
     "group": "backgrounds",
@@ -2407,7 +2407,7 @@
       "h": 400
     },
     "kind": "pixflux",
-    "prompt": "traditional Botswana village open-air market seen from a player standing in the square, woven baskets filled with grain and produce on wooden display tables, thatched shade structures, colorful cloth canopies strung overhead, red earth ground, acacia trees at the edges, warm late-afternoon light, bustling but cozy, empty center area for UI overlay"
+    "prompt": "a lively Botswana village open-air market seen from the viewpoint of a player standing in the square: rows of wooden market stalls with colorful striped cloth canopies overhead, display tables piled with woven baskets of maize, sorghum, groundnuts and vegetables, sacks of grain, hanging bunches of produce, a wooden pushcart, thatched shade shelters, red-earth ground, acacia trees at the edges, warm late-afternoon light, bustling but cozy, empty central ground area for UI overlay"
   },
   "tool_hoe": {
     "group": "item-icons",
@@ -2678,5 +2678,75 @@
     },
     "kind": "pixen",
     "prompt": "close-up head and shoulders portrait of a young Setswana man community worker, neat short dark hair, bright patterned shirt, confident friendly welcoming smile, face clearly visible, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "dust_drought": {
+    "group": "weather",
+    "file": "weather/dust_drought.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "swirling ochre dust cloud with dry parched wind streaks, centered with transparent background, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "welcome_sunrise": {
+    "group": "branding",
+    "file": "branding/welcome_sunrise.png",
+    "size": {
+      "w": 128,
+      "h": 128
+    },
+    "kind": "pixen",
+    "prompt": "small pixel art sunrise over a tiny Botswana farmstead, thatched rondavel hut and acacia tree silhouettes, golden sun half-risen with warm rays, centered with transparent background, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "chicken_sick": {
+    "group": "animals",
+    "file": "sprites/animals/chicken/sick.png",
+    "size": {
+      "w": 64,
+      "h": 48
+    },
+    "kind": "pixen",
+    "prompt": "sick weak farm plump laying hen with red comb, standing side view facing right, drooping head, dull tired eyes, small sweat drop, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "goat_sick": {
+    "group": "animals",
+    "file": "sprites/animals/goat/sick.png",
+    "size": {
+      "w": 64,
+      "h": 48
+    },
+    "kind": "pixen",
+    "prompt": "sick weak farm short-horned goat with floppy ears, standing side view facing right, drooping head, dull tired eyes, small sweat drop, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cow_sick": {
+    "group": "animals",
+    "file": "sprites/animals/cow/sick.png",
+    "size": {
+      "w": 64,
+      "h": 48
+    },
+    "kind": "pixen",
+    "prompt": "sick weak farm dairy cow, tan with dark patches, gentle face, standing side view facing right, drooping head, dull tired eyes, small sweat drop, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "pig_sick": {
+    "group": "animals",
+    "file": "sprites/animals/pig/sick.png",
+    "size": {
+      "w": 64,
+      "h": 48
+    },
+    "kind": "pixen",
+    "prompt": "sick weak farm round pink pig with a curly tail, standing side view facing right, drooping head, dull tired eyes, small sweat drop, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "building_fence": {
+    "group": "item-icons",
+    "file": "ui/items/building_fence.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "rustic wooden farm fence section with two posts and wire, Botswana farm boundary, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
   }
 }

@@ -7,8 +7,10 @@ import React, {
   useEffect,
   ReactNode,
   useCallback,
+  useRef,
 } from 'react';
 import { resolveItemIcon, pixelItemIcon } from './pixelIcons';
+import { notifyIfEnabled, registerServiceWorker } from './notifications';
 import { recordAction } from './playerActions';
 
 // ============================================================
@@ -83,6 +85,8 @@ export interface Plot {
   canPlant: boolean;
   serverId?: string;
   cropType?: string;
+  /** Total growing hours for the planted crop — the basis of the ready-in ETA. */
+  growthHours?: number;
 }
 
 export interface InventoryItem {
@@ -99,20 +103,6 @@ export interface InventoryItem {
   itemType?: string;
 }
 
-export interface Blueprint {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: string;
-  /** Pixel-art icon URL (PixelLab) — falls back to emoji `icon` when null. */
-  image?: string | null;
-  costPula: number;
-  costWood: number;
-  costStone: number;
-  status: 'ready' | 'locked' | 'built';
-  benefitText: string;
-}
-
 export interface LootItem {
   id: string;
   text: string;
@@ -120,21 +110,6 @@ export interface LootItem {
   rewardPula?: number;
   icon: string;
   timestamp: string;
-}
-
-export interface Quest {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  icon: string;
-  current: number;
-  target: number;
-  unit: string;
-  rewardText: string;
-  pulaReward: number;
-  repReward: number;
-  claimed: boolean;
 }
 
 export interface MarketItem {
@@ -296,206 +271,92 @@ function mapServerPlotToUI(slotIndex: number, serverPlot: ServerPlot): Plot {
     canPlant: !hasCrop,
     serverId: serverPlot.id,
     cropType: crop?.type,
+    growthHours: crop?.growthHours ?? 0,
   };
 }
 
 // ============================================================
-// Demo mock data (used when no token / API unavailable)
-// ============================================================
-
-const DEMO_PLOTS: Plot[] = Array.from({ length: 12 }, (_, i) => ({
-  id: i + 1,
-  label: `PLOT ${i + 1}`,
-  state: i === 0 ? 'READY' : i === 3 ? 'THIRSTY' : i < 4 ? 'GROWING' : 'TILLED',
-  cropName: i === 0 ? 'Sorghum' : i === 1 ? 'Sweet Maize' : i === 2 ? 'Cowpeas' : 'Empty Soil',
-  stage: i === 0 ? 'READY' : i < 4 ? `${i * 25}%` : 'TILLED',
-  stageProgress: i === 0 ? 100 : i < 4 ? i * 25 : 0,
-  stalled: i === 3, // one stalled plot so the dry-tank state is visible offline
-  icon: i === 0 ? '🌾' : i === 1 ? '🌽' : i === 2 ? '🫘' : '🌱',
-  yieldInfo:
-    i === 0 ? 'Ready!' : i === 3 ? 'Tank is dry' : i < 4 ? 'Growing' : 'Tap to Plant',
-  canHarvest: i === 0,
-  canPlant: i >= 4,
-}));
-
-const DEMO_INVENTORY: InventoryItem[] = [
-  {
-    id: 'inv-1',
-    name: 'Sorghum Seeds',
-    category: 'seed',
-    icon: '🌾',
-    image: resolveItemIcon('sorghum_seed'),
-    quantity: 10,
-    unitValue: 10,
-    grade: 'Normal',
-    description: 'Staple grain seeds.',
-    itemType: 'sorghum_seed',
-  },
-  {
-    id: 'inv-2',
-    name: 'Maize Seeds',
-    category: 'seed',
-    icon: '🌽',
-    image: resolveItemIcon('maize_seed'),
-    quantity: 5,
-    unitValue: 8,
-    grade: 'Normal',
-    description: 'Sweet corn seeds.',
-    itemType: 'maize_seed',
-  },
-  {
-    id: 'inv-3',
-    name: 'Sorghum',
-    category: 'crops',
-    icon: '🌾',
-    image: resolveItemIcon('sorghum'),
-    quantity: 8,
-    unitValue: 10,
-    grade: 'Normal',
-    description: 'Harvested sorghum grain.',
-    itemType: 'sorghum',
-  },
-  {
-    id: 'inv-4',
-    name: 'Acacia Wood',
-    category: 'materials',
-    icon: '🪵',
-    image: resolveItemIcon('acacia_wood'),
-    quantity: 20,
-    unitValue: 4,
-    grade: 'Seasoned',
-    description: 'Hardwood timber.',
-    itemType: 'acacia_wood',
-  },
-];
-
-const DEMO_MARKET_ITEMS: MarketItem[] = [
-  {
-    id: 'seed-sorghum',
-    name: 'Sorghum Seeds',
-    category: 'Cereal Crop',
-    icon: '🌾',
-    image: pixelItemIcon('sorghum_seed'),
-    itemType: 'sorghum_seed',
-    price: 15,
-    description: 'Staple drought-resistant grain.',
-    badge: 'Popular',
-  },
-  {
-    id: 'seed-maize',
-    name: 'White Maize Seeds',
-    category: 'Staple Grain',
-    icon: '🌽',
-    image: pixelItemIcon('maize_seed'),
-    itemType: 'maize_seed',
-    price: 12,
-    description: 'High yield sweet corn.',
-  },
-  {
-    id: 'seed-cowpea',
-    name: 'Cowpea Seeds',
-    category: 'Legume',
-    icon: '🫘',
-    image: pixelItemIcon('cowpeas_seed'),
-    itemType: 'cowpeas_seed',
-    price: 18,
-    description: 'Nitrogen-fixing pulse.',
-  },
-  {
-    id: 'seed-groundnut',
-    name: 'Groundnut Seeds',
-    category: 'Cash Crop',
-    icon: '🥜',
-    image: pixelItemIcon('groundnuts_seed'),
-    itemType: 'groundnuts_seed',
-    price: 20,
-    description: 'Valuable root crop.',
-  },
-  {
-    id: 'seed-tomato',
-    name: 'Heritage Tomato',
-    category: 'Specialty',
-    icon: '🍅',
-    image: pixelItemIcon('tomatoes_seed'),
-    itemType: 'tomatoes_seed',
-    price: 25,
-    description: 'Heirloom variety.',
-  },
-];
-
-const DEMO_QUESTS: Quest[] = [
-  {
-    id: 'q1',
-    title: 'Grain for the Granary',
-    category: 'Priority',
-    description: 'Deliver 20 Sorghum bundles.',
-    icon: '🌾',
-    current: 14,
-    target: 20,
-    unit: 'Sorghum',
-    rewardText: '+100 Pula',
-    pulaReward: 100,
-    repReward: 50,
-    claimed: false,
-  },
-  {
-    id: 'q2',
-    title: 'Shelter the Flock',
-    category: 'Building',
-    description: 'Construct a chicken coop.',
-    icon: '🏠',
-    current: 1,
-    target: 3,
-    unit: 'Timber',
-    rewardText: '+200 Pula',
-    pulaReward: 200,
-    repReward: 40,
-    claimed: false,
-  },
-];
-
-const DEMO_BLUEPRINTS: Blueprint[] = [
-  {
-    id: 'coop',
-    title: 'Chicken Coop',
-    subtitle: 'Houses up to 6 hens',
-    icon: '🏠',
-    image: pixelItemIcon('coop'),
-    costPula: 200,
-    costWood: 20,
-    costStone: 10,
-    status: 'ready',
-    benefitText: 'Enables daily egg collection',
-  },
-  {
-    id: 'goat-kraal',
-    title: 'Goat Kraal',
-    subtitle: 'Shelter for milch goats',
-    icon: '🐐',
-    image: pixelItemIcon('goat_pen'),
-    costPula: 450,
-    costWood: 40,
-    costStone: 25,
-    status: 'ready',
-    benefitText: 'Unlocks goat dairy',
-  },
-  {
-    id: 'borehole',
-    title: 'Deep Borehole Well',
-    subtitle: 'Expands water to 300L',
-    icon: '💧',
-    image: pixelItemIcon('borehole'),
-    costPula: 350,
-    costWood: 0,
-    costStone: 15,
-    status: 'ready',
-    benefitText: '+150L water reserve',
-  },
-];
-
+// Server-only data.
+//
+// There is no demo farm any more. Every number the UI shows comes from the
+// API, or the UI shows nothing — a plausible-looking fake plot grid is worse
+// than an empty one, because the player acts on it and the server never heard
+// (I7: the server is the only authority on state and balance).
 // ============================================================
 // Context
 // ============================================================
+
+/**
+ * What the offline simulation did while the player was away (09 §9).
+ * Surfaced by the Farm screen as the welcome-back sheet, once per session.
+ */
+export interface WelcomeBackSummary {
+  awayMinutes: number;
+  cropsReady: number;
+  livestockProducts: number;
+  buildingsCompleted: number;
+  buildingsMaintenance: number;
+  seasonChanged: boolean;
+  newSeason: string | null;
+  weather: string | null;
+}
+
+/** A farm animal as returned by GET /farms/:id/livestock (03 §5). */
+export interface FarmAnimal {
+  id: string;
+  animalType: string;
+  name: string | null;
+  /** 0–1 fullness; decays over time. Low hunger stalls production. */
+  hunger: number;
+  health: number;
+  happiness: number;
+  productReady: boolean;
+  isSick: boolean;
+}
+
+/** One purchasable animal type from GET /farms/:id/livestock/available. */
+export interface AvailableAnimal {
+  id: string;
+  name: string;
+  description: string;
+  purchaseCost: number;
+  productType: string;
+  productQuantity: number;
+  productionCycleHours: number;
+  buildingRequired: string;
+  owned: boolean;
+  count: number;
+}
+
+/** A placed building as returned by GET /farms/:id/buildings (09 §8). */
+export interface FarmBuilding {
+  id: string;
+  buildingType: string;
+  level: number;
+  /** CONSTRUCTION | ACTIVE | MAINTENANCE_NEEDED | DISABLED */
+  state: string;
+  capacity: number;
+  /** 0–1; 1.0 flips the building to MAINTENANCE_NEEDED. */
+  wear: number;
+  constructionEndsAt: string | null;
+  /** Tiers this line has (only Storage and Workshop grow past 1). */
+  maxTier: number;
+  /** Cost of the NEXT tier from the server config, or null when maxed. */
+  nextUpgradeCost: { currency: number; poleto?: number; thapo?: number; setena?: number } | null;
+  /** Minutes the next tier takes, or null when maxed. */
+  nextUpgradeTime: number | null;
+}
+
+/** One purchasable building from GET /farms/:id/buildings/available. */
+export interface AvailableBuilding {
+  id: string;
+  name: string;
+  description: string;
+  cost: { currency: number; poleto?: number; thapo?: number; setena?: number };
+  constructionTime: number;
+  capacity: number;
+  owned: boolean;
+}
 
 export interface GameState {
   pula: number;
@@ -504,9 +365,9 @@ export interface GameState {
    * Re-fetch farm + wallet state from the server.
    *
    * Any screen that spends or receives value must call this rather than mutating
-   * `pula` locally — the server is the only authority on a balance (I7). Several
-   * older actions (`constructBlueprint`, `buyMarketItem`) still decrement locally
-   * and drift; new code must not repeat that mistake.
+   * `pula` locally — the server is the only authority on a balance (I7).
+   * `buyMarketItem` still decrements locally and drifts; new code must not
+   * repeat that mistake.
    */
   refresh: () => Promise<void>;
   /** Litres currently in the shared Jojo tank — a farm-wide resource, not per-plot. */
@@ -519,16 +380,15 @@ export interface GameState {
   daylight: string;
   season: string;
   currentDay: number;
-  soilFertility: number;
-  reputation: number;
-  maxReputation: number;
+  /** Current farm weather (clear|cloudy|rain|storm|drought). Rain/storm refill the tank (03 §1.2). */
+  weather: string;
+  /** Non-null once per session when the offline simulation had something to report (09 §9). */
+  welcomeBack: WelcomeBackSummary | null;
+  dismissWelcomeBack: () => void;
   activeNav: string;
   setActiveNav: (nav: string) => void;
   farmId: string | null;
   loading: boolean;
-
-  wood: number;
-  stone: number;
   granaryEggs: number;
   granarySorghum: number;
   granaryMaize: number;
@@ -540,14 +400,20 @@ export interface GameState {
   quickHarvestAll: () => void;
   /** Fill the Jojo tank. Costs Pula and tops up the whole farm at once. */
   refillWell: () => void;
-  collectEggs: () => void;
+  livestock: FarmAnimal[];
+  feedAnimal: (animalId: string) => void;
+  petAnimal: (animalId: string) => void;
+  collectAnimalProduct: (animalId: string) => void;
+  purchaseAnimal: (animalType: string) => void;
+  buildings: FarmBuilding[];
+  constructBuilding: (buildingType: string) => void;
+  maintainBuilding: (buildingId: string) => void;
+  upgradeBuilding: (buildingId: string) => void;
 
   inventory: InventoryItem[];
   selectedItem: InventoryItem | null;
   setSelectedItem: (item: InventoryItem | null) => void;
   sellInventoryItem: (item: InventoryItem, qty?: number) => void;
-  blueprints: Blueprint[];
-  constructBlueprint: (blueprintId: string) => void;
 
   forageBushveld: (
     type: string,
@@ -564,9 +430,6 @@ export interface GameState {
 
   activeNpc: string;
   setActiveNpc: (npc: string) => void;
-  quests: Quest[];
-  acceptQuest: (questId: string) => void;
-  claimQuest: (questId: string) => void;
 
   marketItems: MarketItem[];
   /** Live prices by itemType — the same numbers the server will charge. */
@@ -611,29 +474,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [hasTank, setHasTank] = useState(false);
   const [season, setSeason] = useState('Spring');
   const [currentDay, setCurrentDay] = useState(1);
-  const [soilFertility] = useState(92);
-  const [reputation, setReputation] = useState(0);
-  const maxReputation = 1000;
+  const [weather, setWeather] = useState('clear');
+  const [welcomeBack, setWelcomeBack] = useState<WelcomeBackSummary | null>(null);
+  // Once-per-session latch: refreshFarmData runs on every poll/action, but the
+  // welcome-back sheet must appear only on the first load that carries news.
+  const welcomeBackShownRef = useRef(false);
   const [activeNav, setActiveNav] = useState('Farm');
 
   // --- Inventory state ---
-  const [wood, setWood] = useState(0);
-  const [stone, setStone] = useState(0);
   const [granaryEggs, setGranaryEggs] = useState(0);
   const [granarySorghum, setGranarySorghum] = useState(0);
   const [granaryMaize, setGranaryMaize] = useState(0);
   const [granaryCowpeas, setGranaryCowpeas] = useState(0);
 
-  const [plots, setPlots] = useState<Plot[]>(DEMO_PLOTS);
-  const [inventory, setInventory] = useState<InventoryItem[]>(DEMO_INVENTORY);
+  const [livestock, setLivestock] = useState<FarmAnimal[]>([]);
+  const [buildings, setBuildings] = useState<FarmBuilding[]>([]);
+  const [plots, setPlots] = useState<Plot[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-  const [blueprints, setBlueprints] = useState<Blueprint[]>(DEMO_BLUEPRINTS);
   const [lootFeed, setLootFeed] = useState<LootItem[]>([]);
   const [activeToolSlot, setActiveToolSlot] = useState(1);
 
   const [activeNpc, setActiveNpc] = useState('Elder Neo');
-  const [quests, setQuests] = useState<Quest[]>(DEMO_QUESTS);
-  const [marketItems, setMarketItems] = useState<MarketItem[]>(DEMO_MARKET_ITEMS);
+  const [marketItems, setMarketItems] = useState<MarketItem[]>([]);
   const [marketPrices, setMarketPrices] = useState<Record<string, MarketPriceView>>({});
   const [marketEvents, setMarketEvents] = useState<MarketEventView[]>([]);
 
@@ -656,6 +519,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const clearToast = useCallback(() => setToast(null), []);
+
+  const dismissWelcomeBack = useCallback(() => setWelcomeBack(null), []);
 
   useEffect(() => {
     if (!toast) return;
@@ -704,6 +569,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             currentDay: number;
           };
           plots: ServerPlot[];
+          simulation?: WelcomeBackSummary | null;
         }>('GET', '/farms/current'),
         apiFetch<MarketPriceView[]>('GET', '/market/prices').catch(() => null),
         apiFetch<MarketEventView[]>('GET', '/market/events').catch(() => []),
@@ -728,6 +594,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setFarmId(fd.farm.id);
         setSeason(fd.farm.season || 'Spring');
         setCurrentDay(fd.farm.currentDay || 1);
+        setWeather(fd.farm.weather || 'clear');
+
+        // Welcome-back sheet (09 §9): the server ran the offline simulation
+        // and attached a summary — show it once per session, not per refresh.
+        if (fd.simulation && !welcomeBackShownRef.current) {
+          welcomeBackShownRef.current = true;
+          setWelcomeBack(fd.simulation);
+        }
 
         // Map plots
         const uiPlots = fd.plots.map((sp) => mapServerPlotToUI(sp.slotIndex, sp));
@@ -752,13 +626,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
           setWaterLevel(0);
         }
 
+        // Livestock — same second round as the tank: it needs the farm id.
+        try {
+          const animals = await apiFetch<FarmAnimal[]>('GET', `/farms/${fd.farm.id}/livestock`);
+          setLivestock(Array.isArray(animals) ? animals : []);
+        } catch {
+          setLivestock([]);
+        }
+
+        // Buildings — same second round again (farm id).
+        try {
+          const list = await apiFetch<FarmBuilding[]>('GET', `/farms/${fd.farm.id}/buildings`);
+          setBuildings(Array.isArray(list) ? list : []);
+        } catch {
+          setBuildings([]);
+        }
+
         // Fetch inventory for THIS farm
         try {
           // The API returns { data: { items: InventoryItemView[] } } (unwrapped by
           // apiFetch). InventoryItemView uses `slug`/`category`, NOT the old
-          // `itemType`/`itemCategory` keys. Reading the wrong key made this always
-          // resolve to [] and fall back to DEMO_INVENTORY — so bought seeds never
-          // appeared and the plant picker ran off phantom demo seeds.
+          // `itemType`/`itemCategory` keys — reading the wrong key silently
+          // resolved to [] and the plant picker ran on phantom stock.
           const inv = await apiFetch<{
             items?: Array<{
               slug: string;
@@ -841,9 +730,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           setGranaryMaize(maiz);
           setGranaryCowpeas(cowp);
         } catch {
-          // Fetch failed — degrade gracefully to demo inventory so the UI still
-          // renders, but do NOT mask a successful empty result as demo.
-          setInventory(DEMO_INVENTORY);
+          // Fetch failed — show an empty granary rather than demo stock the
+          // player does not own. Never invent inventory.
+          setInventory([]);
         }
       }
 
@@ -888,13 +777,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setMarketEvents(eventsData.value);
       }
     } catch (err) {
-      // The player is now sitting on the DEMO_* sample farm with no live data.
-      // That is a real state, not just a console line — surface it so they know
-      // their actions aren't being saved and we never silently lie about success.
-      console.warn('[Game] API unavailable, using demo data', err);
+      // Nothing was loaded, so the farm, granary and shop are all empty. That is
+      // a real state, not just a console line — surface it so the player knows
+      // their actions aren't being saved, instead of acting on stale numbers.
+      console.warn('[Game] API unavailable — showing an empty farm', err);
+      setPlots([]);
+      setInventory([]);
+      setLivestock([]);
+      setBuildings([]);
+      setMarketItems([]);
       showToast(
-        'Offline — Demo Mode',
-        'Could not reach the server. Showing sample data — your actions are not being saved.',
+        'Offline',
+        'Could not reach the server. Your farm is read-only until the connection returns.',
         '⚠️',
         'warning',
       );
@@ -905,8 +799,56 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Load on mount
   useEffect(() => {
+    // Best-effort: the SW is the receiver for future server push (03 §12).
+    void registerServiceWorker();
     refreshFarmData();
   }, [refreshFarmData]);
+
+  // ============================================================
+  // In-app notifications (03 §12) — the two moments that matter between
+  // refreshes: a crop becoming ready, an animal going hungry/sick. Baseline is
+  // the first observed state, so a returning player is not spammed by history.
+  // ============================================================
+
+  const notifSigRef = useRef<{ crops: string; animals: string }>({
+    crops: '__init__',
+    animals: '__init__',
+  });
+  useEffect(() => {
+    const cropSig = plots
+      .map((p) => (p.canHarvest ? String(p.id) : ''))
+      .filter(Boolean)
+      .join(',');
+    const animalSig = livestock
+      .map((a) => (a.hunger < 0.3 || a.isSick ? a.id : ''))
+      .filter(Boolean)
+      .join(',');
+    const prev = notifSigRef.current;
+
+    // First observation is the baseline — never notify about history.
+    if (prev.crops !== cropSig) {
+      if (prev.crops !== '__init__') {
+        const newlyReady = plots.filter(
+          (p) => p.canHarvest && !prev.crops.split(',').includes(String(p.id)),
+        ).length;
+        if (newlyReady > 0) {
+          notifyIfEnabled('cropsReady', 'Molemisi', `${newlyReady} crop(s) ready to harvest 🌾`);
+        }
+      }
+      notifSigRef.current.crops = cropSig || '__seen__';
+    }
+    if (prev.animals !== animalSig) {
+      if (prev.animals !== '__init__') {
+        const newlyHungry = livestock.filter(
+          (a) => (a.hunger < 0.3 || a.isSick) && !prev.animals.split(',').includes(a.id),
+        ).length;
+        if (newlyHungry > 0) {
+          notifyIfEnabled('animalsHungry', 'Molemisi', `${newlyHungry} animal(s) need attention 🐔`);
+        }
+      }
+      notifSigRef.current.animals = animalSig || '__seen__';
+    }
+  }, [plots, livestock]);
 
   // ============================================================
   // Plot actions (real API)
@@ -1064,10 +1006,162 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [farmId, showToast, refreshFarmData]);
 
-  const collectEggs = useCallback(() => {
-    setGranaryEggs((prev) => prev + 2);
-    showToast('Eggs Gathered', 'Gathered 2 fresh eggs.', '🥚', 'success');
-  }, [showToast]);
+  // ============================================================
+  // Livestock (03 §5) — the real server loop. The old collectEggs mock
+  // (setGranaryEggs(+2), no server call) is gone: eggs enter the granary
+  // only via collectAnimalProduct → inventory.
+  // ============================================================
+
+  const refreshLivestock = useCallback(async () => {
+    if (!farmId) return;
+    try {
+      const animals = await apiFetch<FarmAnimal[]>('GET', `/farms/${farmId}/livestock`);
+      setLivestock(Array.isArray(animals) ? animals : []);
+    } catch {
+      // Quiet: the kraal keeps showing the last known state.
+    }
+  }, [farmId]);
+
+  const feedAnimal = useCallback(
+    async (animalId: string) => {
+      if (!farmId) return;
+      try {
+        const result = await apiFetch<{ hunger: number; feedUsed: number; feedItemType: string }>(
+          'POST',
+          `/farms/${farmId}/livestock/${animalId}/feed`,
+          {},
+        );
+        showToast('Fed', `Ate ${result.feedUsed}× ${result.feedItemType}.`, '🍽️', 'success');
+        // Feed comes out of the granary — re-read inventory + purse too.
+        await refreshFarmData();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Could not feed.';
+        showToast('Feeding Failed', msg, '⚠️', 'error');
+      }
+    },
+    [farmId, showToast, refreshFarmData],
+  );
+
+  const petAnimal = useCallback(
+    async (animalId: string) => {
+      if (!farmId) return;
+      try {
+        await apiFetch('POST', `/farms/${farmId}/livestock/${animalId}/pet`, {});
+        showToast('Pet', '+Happiness', '💛', 'success');
+        await refreshLivestock();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Could not pet.';
+        showToast('Pet Failed', msg, '⚠️', 'error');
+      }
+    },
+    [farmId, showToast, refreshLivestock],
+  );
+
+  const collectAnimalProduct = useCallback(
+    async (animalId: string) => {
+      if (!farmId) return;
+      try {
+        const result = await apiFetch<{ productType: string; quantity: number }>(
+          'POST',
+          `/farms/${farmId}/livestock/${animalId}/collect`,
+          {},
+        );
+        showToast('Collected', `+${result.quantity}× ${result.productType}`, '🧺', 'success');
+        await refreshFarmData();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Nothing to collect.';
+        showToast('Collect Failed', msg, '⚠️', 'error');
+      }
+    },
+    [farmId, showToast, refreshFarmData],
+  );
+
+  const purchaseAnimal = useCallback(
+    async (animalType: string) => {
+      if (!farmId) return;
+      try {
+        await apiFetch('POST', `/farms/${farmId}/livestock/purchase`, { animalType });
+        showToast('New Arrival', `The ${animalType} joined your kraal!`, '🐾', 'success');
+        await refreshFarmData();
+      } catch (err) {
+        // The server explains: missing building, full pen, or short on Pula.
+        const msg = err instanceof Error ? err.message : 'Could not buy.';
+        showToast('Purchase Failed', msg, '⚠️', 'error');
+      }
+    },
+    [farmId, showToast, refreshFarmData],
+  );
+
+  // ============================================================
+  // Buildings (09 §8) — construct + maintain. The server owns cost,
+  // construction timers and the wear → MAINTENANCE_NEEDED → DISABLED arc.
+  // ============================================================
+
+  const constructBuilding = useCallback(
+    async (buildingType: string) => {
+      if (!farmId) return;
+      try {
+        await apiFetch('POST', `/farms/${farmId}/buildings/construct`, { buildingType });
+        showToast('Construction Started', `Your ${buildingType.replace(/_/g, ' ')} is going up.`, '🏗️', 'success');
+        await refreshFarmData();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Could not build.';
+        showToast('Build Failed', msg, '⚠️', 'error');
+      }
+    },
+    [farmId, showToast, refreshFarmData],
+  );
+
+  const maintainBuilding = useCallback(
+    async (buildingId: string) => {
+      if (!farmId) return;
+      try {
+        const result = await apiFetch<{
+          pulaSpent: number;
+          materialsConsumed: Array<{ slug: string; qty: number }>;
+        }>('POST', `/farms/${farmId}/buildings/${buildingId}/maintain`, {});
+        const mats = result.materialsConsumed?.map((m) => `${m.qty}× ${m.slug}`).join(' + ');
+        showToast(
+          'Repaired',
+          `Spent ${result.pulaSpent} Pula${mats ? ` + ${mats}` : ''}.`,
+          '🔧',
+          'success',
+        );
+        await refreshFarmData();
+      } catch (err) {
+        // Server says what's missing: Pula, or the crafted material (03 §3.5).
+        const msg = err instanceof Error ? err.message : 'Could not repair.';
+        showToast('Repair Failed', msg, '⚠️', 'error');
+      }
+    },
+    [farmId, showToast, refreshFarmData],
+  );
+
+  /**
+   * Promote a building one tier (C22 — the Workshop's 2nd/3rd crafting slot,
+   * Storage's Basket → Shed → Storehouse). Cost comes from the server
+   * (`nextUpgradeCost` on the building row), so the client never quotes a
+   * number the server won't charge.
+   */
+  const upgradeBuilding = useCallback(
+    async (buildingId: string) => {
+      if (!farmId) return;
+      try {
+        const result = await apiFetch<{ newLevel: number }>(
+          'POST',
+          `/farms/${farmId}/buildings/${buildingId}/upgrade`,
+          {},
+        );
+        showToast('Upgrade Started', `Now building tier ${result.newLevel}.`, '🏗️', 'success');
+        await refreshFarmData();
+      } catch (err) {
+        // Server explains: maxed, not ACTIVE, or short on Pula/material.
+        const msg = err instanceof Error ? err.message : 'Could not upgrade.';
+        showToast('Upgrade Failed', msg, '⚠️', 'error');
+      }
+    },
+    [farmId, showToast, refreshFarmData],
+  );
 
   // ============================================================
   // Market actions (real API)
@@ -1098,26 +1192,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     },
     [farmId, showToast, refreshFarmData],
-  );
-
-  const constructBlueprint = useCallback(
-    (blueprintId: string) => {
-      const bp = blueprints.find((b) => b.id === blueprintId);
-      if (!bp) return;
-      if (pula < bp.costPula || wood < bp.costWood || stone < bp.costStone) {
-        showToast('Missing Materials', 'Need more Pula, Wood, or Stone.', '🔨', 'error');
-        return;
-      }
-      setPula((prev) => prev - bp.costPula);
-      setWood((prev) => prev - bp.costWood);
-      setStone((prev) => prev - bp.costStone);
-      setBlueprints((prev) =>
-        prev.map((b) => (b.id === blueprintId ? { ...b, status: 'built' as const } : b)),
-      );
-      recordAction('build');
-      showToast('Built!', `Completed ${bp.title}!`, '🔨', 'success');
-    },
-    [blueprints, pula, wood, stone, showToast],
   );
 
   const buyMarketItem = useCallback(
@@ -1243,30 +1317,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   // ============================================================
-  // Kgotla (client-side for now)
-  // ============================================================
-
-  const acceptQuest = useCallback(
-    (questId: string) => {
-      const q = quests.find((x) => x.id === questId);
-      if (q) showToast('Accepted', `Contract: ${q.title}`, '📜', 'info');
-    },
-    [quests, showToast],
-  );
-
-  const claimQuest = useCallback(
-    (questId: string) => {
-      const q = quests.find((x) => x.id === questId);
-      if (!q || q.claimed) return;
-      setPula((prev) => prev + q.pulaReward);
-      setReputation((prev) => Math.min(maxReputation, prev + q.repReward));
-      setQuests((prev) => prev.map((x) => (x.id === questId ? { ...x, claimed: true } : x)));
-      showToast('Quest Done', `+${q.pulaReward} Pula +${q.repReward} Rep`, '🏛️', 'success');
-    },
-    [quests, maxReputation, showToast],
-  );
-
-  // ============================================================
   // Render
   // ============================================================
 
@@ -1286,17 +1336,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         daylight,
         season: seasonDisplay,
         currentDay,
-        soilFertility,
-        reputation,
-        maxReputation,
+        weather,
+        welcomeBack,
+        dismissWelcomeBack,
         activeNav,
         setActiveNav,
         farmId,
         loading,
         refresh: refreshFarmData,
 
-        wood,
-        stone,
         granaryEggs,
         granarySorghum,
         granaryMaize,
@@ -1307,14 +1355,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
         plantPlot,
         quickHarvestAll,
         refillWell,
-        collectEggs,
+        livestock,
+        feedAnimal,
+        petAnimal,
+        collectAnimalProduct,
+        purchaseAnimal,
+        buildings,
+        constructBuilding,
+        maintainBuilding,
+        upgradeBuilding,
 
         inventory,
         selectedItem,
         setSelectedItem,
         sellInventoryItem,
-        blueprints,
-        constructBlueprint,
 
         forageBushveld,
         lootFeed,
@@ -1323,9 +1377,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         activeNpc,
         setActiveNpc,
-        quests,
-        acceptQuest,
-        claimQuest,
 
         marketItems,
         buyMarketItem,
