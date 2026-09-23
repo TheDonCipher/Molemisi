@@ -12,7 +12,13 @@
  * paddock, pig_pen) alias to kraal in `getBuildingConfig`, but
  * `livestock.service` queries the buildings table by raw `building_type`, so
  * keeping a legacy id here made every animal unpurchasable.
+ *
+ * G3 — there is no `baseProductPrice` on the animal anymore. The price of
+ * record for a product is the ItemDef's `baseValue` (see `productValuePula`),
+ * so an animal and its item can never drift into two prices again.
  */
+
+import { ITEMS } from './items';
 
 export interface AnimalConfig {
   id: string;
@@ -23,7 +29,6 @@ export interface AnimalConfig {
   productionCycleHours: number;
   productType: string;
   productQuantity: number;
-  baseProductPrice: number;
   purchaseCost: number;
   hungerDecayRate: number;
   healthDecayRate: number;
@@ -42,7 +47,6 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     productionCycleHours: 12,
     productType: 'egg',
     productQuantity: 2,
-    baseProductPrice: 5,
     purchaseCost: 50,
     hungerDecayRate: 0.15,
     healthDecayRate: 0.1,
@@ -59,7 +63,6 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     productionCycleHours: 24,
     productType: 'goat_milk',
     productQuantity: 1,
-    baseProductPrice: 15,
     purchaseCost: 150,
     hungerDecayRate: 0.12,
     healthDecayRate: 0.08,
@@ -76,7 +79,6 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     productionCycleHours: 24,
     productType: 'cow_milk',
     productQuantity: 3,
-    baseProductPrice: 15,
     purchaseCost: 400,
     hungerDecayRate: 0.1,
     healthDecayRate: 0.06,
@@ -93,7 +95,6 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     productionCycleHours: 48,
     productType: 'truffle',
     productQuantity: 1,
-    baseProductPrice: 50,
     purchaseCost: 300,
     hungerDecayRate: 0.13,
     healthDecayRate: 0.07,
@@ -105,4 +106,35 @@ export const ANIMALS: Record<string, AnimalConfig> = {
 
 export function getAnimalConfig(animalType: string): AnimalConfig | undefined {
   return ANIMALS[animalType];
+}
+
+/**
+ * Livestock productType -> inventory item slug (02 §6.2). The bridge is
+ * explicit because the two tables name things differently ('egg' vs 'eggs').
+ * It lives here — with the animals — so adding a product means touching one
+ * file, and so the item's price of record (ItemDef.baseValue) is always one
+ * lookup away. Every productType MUST have an entry; a missing one is a
+ * config error the spec suite fails on.
+ */
+export const PRODUCT_ITEM: Record<string, string> = {
+  egg: 'eggs',
+  goat_milk: 'milk',
+  cow_milk: 'milk',
+  truffle: 'truffle',
+};
+
+/** The inventory item an animal's product lands in. */
+export function productItemSlug(animal: AnimalConfig): string | undefined {
+  return PRODUCT_ITEM[animal.productType];
+}
+
+/**
+ * The price of record for one unit of the animal's product — the ItemDef's
+ * baseValue (G3). Returns null when the product maps to no item, which the
+ * tests treat as a config error.
+ */
+export function productValuePula(animal: AnimalConfig): number | null {
+  const slug = productItemSlug(animal);
+  const def = slug ? ITEMS[slug] : undefined;
+  return def ? def.baseValue : null;
 }

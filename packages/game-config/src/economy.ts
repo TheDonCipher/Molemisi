@@ -6,6 +6,8 @@
  * Nothing in application code may hardcode a number that appears here.
  */
 
+import { BUILDINGS } from './buildings';
+
 /* ------------------------------------------------------------------ Market */
 /** 02 §4.1 — the Co-op's tax. Applied server-side on every sale. */
 export const COOP_TAX_RATE = 0.05;
@@ -46,19 +48,24 @@ export const WATER = {
 } as const;
 
 /* ------------------------------------------------------------------ Storage */
-/** D9 / 02 §6.5 — the only tiered building line in v1. */
+/**
+ * D9 / 02 §6.5 — the only tiered building line in v1.
+ * G8: the upgrade COST is not here. It lives once in
+ * `BUILDINGS.storage.upgradeCosts` (charged by buildings.service as
+ * 'storage_upgrade'); read it via `storageUpgradeCost(tier)`. The old
+ * `upgradeCostPula` field duplicated it with stale values (P1,200/P6,000).
+ */
 export interface StorageTier {
   tier: number;
   name: string;
   setswana: string;
   slotCap: number;
   listingSlots: number;
-  upgradeCostPula: number | null;
 }
 export const STORAGE_TIERS: StorageTier[] = [
-  { tier: 1, name: 'Storage Basket', setswana: 'Seroto', slotCap: 24, listingSlots: 5, upgradeCostPula: null },
-  { tier: 2, name: 'Storage Shed', setswana: 'Shedi', slotCap: 48, listingSlots: 10, upgradeCostPula: 1200 },
-  { tier: 3, name: 'Storehouse', setswana: 'Ntlo ya Polokelo', slotCap: 96, listingSlots: 20, upgradeCostPula: 6000 },
+  { tier: 1, name: 'Storage Basket', setswana: 'Seroto', slotCap: 24, listingSlots: 5 },
+  { tier: 2, name: 'Storage Shed', setswana: 'Shedi', slotCap: 48, listingSlots: 10 },
+  { tier: 3, name: 'Storehouse', setswana: 'Ntlo ya Polokelo', slotCap: 96, listingSlots: 20 },
 ];
 /** R7 / C8 — Guild +50% STACKS on tier (24→36, 48→72, 96→144). */
 export const GUILD_STORAGE_MULTIPLIER = 1.5;
@@ -66,6 +73,19 @@ export const GUILD_STORAGE_MULTIPLIER = 1.5;
 export function effectiveSlotCap(tier: number, isGuildSubscriber: boolean): number {
   const t = STORAGE_TIERS.find((x) => x.tier === tier) ?? STORAGE_TIERS[0]!;
   return Math.floor(t.slotCap * (isGuildSubscriber ? GUILD_STORAGE_MULTIPLIER : 1));
+}
+
+/**
+ * G8 — the Pula cost to upgrade TO `tier`, read from the single source
+ * (`BUILDINGS.storage.upgradeCosts`). Null for the starter tier and for the
+ * top tier (nothing further to buy).
+ */
+export function storageUpgradeCost(tier: number): number | null {
+  if (tier <= 1) return null;
+  // `storage` is a required v1 building (D8/D9); absence is a config error.
+  const storage = BUILDINGS['storage'];
+  if (!storage) return null;
+  return storage.upgradeCosts[tier - 2]?.currency ?? null;
 }
 
 /* ------------------------------------------------------------------ Land */

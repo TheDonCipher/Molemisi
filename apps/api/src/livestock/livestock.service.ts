@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
-import { getAnimalConfig } from '@molemisi/game-config';
+import { InventoryService } from '../inventory/inventory.service';
+import { getAnimalConfig, PRODUCT_ITEM } from '@molemisi/game-config';
 
 interface LivestockRow {
   id: string;
@@ -28,6 +29,7 @@ export class LivestockService {
   constructor(
     private supabaseService: SupabaseService,
     private wallet: WalletService,
+    private inventory: InventoryService,
   ) {}
 
   async listLivestock(farmId: string): Promise<
@@ -227,6 +229,17 @@ export class LivestockService {
       throw new BadRequestException('No product ready to collect');
     }
 
+    // G4 — grant FIRST, through the canonical player_inventory store (stack and
+    // storage slot caps enforced in one place). If storage is full this throws
+    // and the animal stays product_ready, so the player can free a slot and
+    // collect again; nothing is silently dropped.
+    const itemSlug = PRODUCT_ITEM[config.productType];
+    if (!itemSlug) {
+      throw new BadRequestException(`No inventory item for product '${config.productType}'`);
+    }
+    const playerId = await this.inventory.resolvePlayerId(farmId);
+    await this.inventory.addItem(playerId, farmId, itemSlug, config.productQuantity);
+
     const now = new Date().toISOString();
 
     // Reset product timer
@@ -238,32 +251,6 @@ export class LivestockService {
         updated_at: now,
       })
       .eq('id', animalId);
-
-    // Add product to inventory
-    const { data: existingItem } = await adminClient
-      .from('inventory')
-      .select('*')
-      .eq('farm_id', farmId)
-      .eq('item_type', config.productType)
-      .single();
-
-    if (existingItem) {
-      await adminClient
-        .from('inventory')
-        .update({
-          quantity: existingItem.quantity + config.productQuantity,
-          updated_at: now,
-        })
-        .eq('id', existingItem.id);
-    } else {
-      await adminClient.from('inventory').insert({
-        farm_id: farmId,
-        item_type: config.productType,
-        item_category: 'product',
-        quantity: config.productQuantity,
-        quality: 'normal',
-      });
-    }
 
     // Record ledger entry
     await adminClient.from('game_ledger_entries').insert({

@@ -32,6 +32,8 @@ import {
   STORAGE_TIERS,
   GUILD_STORAGE_MULTIPLIER,
   effectiveSlotCap,
+  storageUpgradeCost,
+  BUILDINGS,
   LAND_LADDER,
   LAND_LADDER_TOTAL,
   STARTING_PLOTS,
@@ -243,6 +245,18 @@ describe('Economy — 02 §6', () => {
 
   it('D9: storage tiers are 24 / 48 / 96', () => {
     expect(STORAGE_TIERS.map((t) => t.slotCap)).toEqual([24, 48, 96]);
+  });
+
+  it('G8: storage upgrade cost has ONE source — BUILDINGS.storage.upgradeCosts', () => {
+    // The stale STORAGE_TIERS.upgradeCostPula (P1,200/P6,000) is deleted; this
+    // pins the derivation so a second copy of the number can never return.
+    const storage = BUILDINGS['storage'];
+    expect(storage).toBeDefined();
+    expect(storageUpgradeCost(1)).toBeNull();
+    expect(storageUpgradeCost(2)).toBe(storage!.upgradeCosts[0]!.currency);
+    expect(storageUpgradeCost(3)).toBe(storage!.upgradeCosts[1]!.currency);
+    expect(storageUpgradeCost(2)).toBe(2500);
+    expect(storageUpgradeCost(3)).toBe(12000);
   });
 
   it('R7: the Guild +50% stacks on tier', () => {

@@ -7,6 +7,7 @@
 
 export * from './crops';
 export * from './items';
+export * from './itemRelations';
 export * from './crafting';
 export * from './economy';
 export * from './chapters';

@@ -34,11 +34,17 @@ export interface ItemDef {
   baseValue: number;
   /** One-line statement of what it is FOR (03 §2.1). */
   use: string;
+  /**
+   * Elder-voiced lore line (docs/MOLEMISI_Field_Journal_Narrative_Voice_v1).
+   * Optional, collapsed content on the Item Detail card — no mechanics talk,
+   * no prices, no counts. Voice matches the crop descriptions and Mogolo's journal.
+   */
+  lore: string;
   isTool: boolean;
   sprite: string;
 }
 
-const seed = (id: string, setswana: string, value: number): ItemDef => ({
+const seed = (id: string, setswana: string, value: number): Omit<ItemDef, 'lore'> => ({
   slug: `${id}_seed`,
   setswana: `Peo ya ${setswana}`,
   name: `${setswana} Seed`,
@@ -50,7 +56,7 @@ const seed = (id: string, setswana: string, value: number): ItemDef => ({
   sprite: `ui/items/seed_${id}.png`,
 });
 
-const crop = (id: string, name: string, setswana: string, value: number): ItemDef => ({
+const crop = (id: string, name: string, setswana: string, value: number): Omit<ItemDef, 'lore'> => ({
   slug: id,
   setswana,
   name,
@@ -62,7 +68,7 @@ const crop = (id: string, name: string, setswana: string, value: number): ItemDe
   sprite: `ui/items/product_${id}.png`,
 });
 
-export const ITEMS: Record<string, ItemDef> = {
+const RAW_ITEMS: Record<string, Omit<ItemDef, 'lore'>> = {
   /* ---------------- Crops (02 §6.2) ---------------- */
   ...Object.fromEntries(
     (
@@ -108,7 +114,7 @@ export const ITEMS: Record<string, ItemDef> = {
     name: 'Eggs',
     category: 'DIPHOLOGOLO',
     maxStack: 30,
-    baseValue: 3,
+    baseValue: 5,
     use: 'Go rekisa kgotsa go baka. Sell, or bake into bread.',
     isTool: false,
     sprite: 'ui/items/product_egg.png',
@@ -119,10 +125,24 @@ export const ITEMS: Record<string, ItemDef> = {
     name: 'Milk',
     category: 'DIPHOLOGOLO',
     maxStack: 30,
-    baseValue: 5,
+    baseValue: 15,
     use: 'Go rekisa. Sell at the Co-op.',
     isTool: false,
     sprite: 'ui/items/product_milk.png',
+  },
+  // G3 — eggs/milk prices ARE the AnimalConfig prices of record (P5/P15); the
+  // duplicated AnimalConfig.baseProductPrice is deleted so this stays the only
+  // source. G2 — the pig's truffle finally exists (P50/48 h as always intended).
+  truffle: {
+    slug: 'truffle',
+    setswana: 'Truffle ya Naga',
+    name: 'Truffle',
+    category: 'DIPHOLOGOLO',
+    maxStack: 30,
+    baseValue: 50,
+    use: 'Go rekisa. Sell at the Co-op — chefs pay well for it.',
+    isTool: false,
+    sprite: 'ui/items/product_truffle.png',
   },
   manure: {
     slug: 'manure',
@@ -307,6 +327,74 @@ export const ITEMS: Record<string, ItemDef> = {
     sprite: 'ui/items/tool_pickaxe.png',
   },
 };
+
+/* ---------------------------------------------------------------------------
+ * Lore — one elder-voiced line per item, keyed by slug.
+ *
+ * Content is data: every line lives here, not in a component. Voice rules from
+ * docs/MOLEMISI_Field_Journal_Narrative_Voice_v1 — Botswana-rooted, spoken by
+ * someone who has farmed this land, and NEVER about mechanics, prices or counts.
+ * itemRelations.spec.ts asserts every item carries one.
+ * ------------------------------------------------------------------------- */
+const ITEM_LORE: Record<string, string> = {
+  /* Crops */
+  sorghum: 'Mabele fed this land before anyone thought to count a harvest. Mogolo says a field of sorghum is a promise kept.',
+  millet: 'Lebelebele asks little and gives even when the rains fail. The old people planted it where nothing else would stand.',
+  maize: 'Mmidi came from far away and made itself at home. A cob that fills the hand is worth the wait.',
+  cowpeas: 'Dinawa feed the soil while they feed the pot. A wise field is never without them.',
+  tomatoes: 'Tamati ripens all at once, like news in a small village. Carry it gently — it bruises like pride.',
+  watermelon: 'A legapu cooled in the shade is the bushveld’s own answer to a hard afternoon.',
+  groundnuts: 'Manoko hide their harvest underground. You only learn what you grew when you dig.',
+  sesame: 'Sesame is small, but the traders count it like coins. Small things, kept well, add up.',
+  pepper: 'Pepere bites back, and the cook loves it for that. A little heat wakes the whole pot.',
+  herbs: 'The old remedies grow quietly along the fence lines. The bush keeps a pharmacy for those who ask politely.',
+  morula: 'The morula belongs to no one until the fruit falls — and then it belongs to everyone. Even the elephants know.',
+
+  /* Seeds */
+  sorghum_seed: 'A handful of mabele seed is a whole field waiting to happen. Keep it dry and it will keep you.',
+  millet_seed: 'Lebelebele seed is patient. It waits out the dry season the way the old people do — without complaint.',
+  maize_seed: 'Plant mmidi when the rain promises, not when it arrives. Mogolo trusts the thunder more than the cloud.',
+  cowpeas_seed: 'Dinawa seed costs little and forgives much. Good seed for a learning hand.',
+  tomatoes_seed: 'Tamati seed is greedy for sun and water both. Give generously and it fills the basket.',
+  watermelon_seed: 'Every legapu seed carries a whole sweet water inside its promise.',
+  groundnuts_seed: 'Bury manoko shallow and walk away. They do their best work unseen.',
+  sesame_seed: 'Sesame is sown thin and threshed gently. Some harvests are won with the fingertips, not the arms.',
+  pepper_seed: 'Pepere seed sleeps late. Do not dig it up to check — Mogolo tried that once.',
+  herbs_seed: 'Seed of the healing plants is sown with respect, or not at all.',
+  morula_seed: 'A morula seed is a gift to someone not yet born. Plant it anyway.',
+
+  /* Livestock products */
+  eggs: 'A warm egg in the morning means the kraal is content. Mogolo counts eggs the way others count blessings.',
+  milk: 'Mashi left to sit becomes maas, and maas keeps when milk cannot. The cow gives; patience decides.',
+  manure: 'Manyoro is not waste. It is next year’s harvest wearing rough clothes.',
+  truffle: 'The pig smells what the eye cannot see. A truffle is the bush keeping a secret for the patient.',
+
+  /* Bushveld materials */
+  wood: 'Dry dikgong from a deadfall, taken without hurting a living tree. The bush provides for those who look down.',
+  stone: 'The granite here is older than any story. It does not mind becoming a wall.',
+  clay: 'The riverbank gives up letsopa where the water bends. Good clay remembers the river in every brick.',
+  palm_fiber: 'Mokolwane twists into rope the way small words twist into news — strand by strand.',
+  thatch: 'Lotlhaka from the reeds keeps a roof cool in the dry months and tight in the wet. Cut it cleanly; it grows back.',
+  phane: 'Phane come with the rains and leave without saying goodbye. A worm season is a good year.',
+
+  /* Crafted */
+  poleto: 'A straight poleto is sawn twice — once with the eye, once with the blade.',
+  thapo: 'Thapo holds the kraal together. Rope, like trust, is made by twisting many small fibres.',
+  setena: 'A setena is river clay taught to hold a shape. Fire finishes the lesson.',
+  bupi: 'Bupi is grain that has been persuaded. Between two stones, it gives up its secret.',
+  borotho: 'Borotho fresh from the fire gathers people the way shade gathers cattle at noon.',
+
+  /* Tools */
+  mogoma: 'The mogoma is the first tool taken up and the last one put down. The handle learns the hand.',
+  selepe: 'Selepe cuts what is dead so the living can grow. Sharpen it before the work, not during it.',
+  watering_can: 'A nkgo ya metsi carries the river to the root, one careful pour at a time.',
+  pickaxe: 'The piki argues with granite and usually wins. Stubbornness, aimed well, is a virtue.',
+};
+
+/** The catalogue: raw facts plus the lore line for that slug. */
+export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
+  Object.entries(RAW_ITEMS).map(([key, def]) => [key, { ...def, lore: ITEM_LORE[key] ?? '' }]),
+);
 
 export const TOOL_SLUGS = Object.values(ITEMS)
   .filter((i) => i.isTool)

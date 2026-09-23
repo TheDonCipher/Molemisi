@@ -3,9 +3,10 @@ import { ContractsController } from './contracts.controller';
 import { ContractsService } from './contracts.service';
 import { DatabaseModule } from '../database/database.module';
 import { FarmsModule } from '../farms/farms.module';
+import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
-  imports: [DatabaseModule, FarmsModule],
+  imports: [DatabaseModule, FarmsModule, InventoryModule],
   controllers: [ContractsController],
   providers: [ContractsService],
   exports: [ContractsService],

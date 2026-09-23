@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { InventoryService } from '../inventory/inventory.service';
 
 export interface Contract {
   id: string;
@@ -32,7 +33,10 @@ export interface ActiveContract {
 
 @Injectable()
 export class ContractsService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private inventory: InventoryService,
+  ) {}
 
   // Pre-defined contracts
   private readonly CONTRACTS: Contract[] = [
@@ -61,7 +65,7 @@ export class ContractsService {
       name: 'Egg Collection',
       description: 'Gather 10 eggs from your chickens.',
       category: 'local',
-      requirements: [{ itemType: 'egg', quantity: 10 }],
+      requirements: [{ itemType: 'eggs', quantity: 10 }],
       rewards: { currency: 80 },
       difficulty: 'easy',
       timeLimitHours: 36,
@@ -83,9 +87,9 @@ export class ContractsService {
     {
       id: 'contract_flour_5',
       name: 'Mill Order',
-      description: 'Process and deliver 5 flour to the market.',
+      description: 'Process and deliver 5 bupi (sorghum flour) to the market.',
       category: 'commercial',
-      requirements: [{ itemType: 'flour', quantity: 5 }],
+      requirements: [{ itemType: 'bupi', quantity: 5 }],
       rewards: { currency: 200 },
       difficulty: 'medium',
       timeLimitHours: 48,
@@ -121,6 +125,11 @@ export class ContractsService {
 
     if (!active) return [];
 
+    // G4 — progress reads the canonical player_inventory store, not the legacy
+    // farm-scoped `inventory` table (which post-cutover no longer receives
+    // livestock products and never received anything else).
+    const playerId = await this.inventory.resolvePlayerId(farmId);
+
     return await Promise.all(
       (active ?? []).map(async (a: Record<string, unknown>) => {
         const contract = this.CONTRACTS.find((c) => c.id === (a.contract_id as string));
@@ -128,20 +137,11 @@ export class ContractsService {
 
         // Check progress for each requirement
         const requirements = await Promise.all(
-          contract.requirements.map(async (req) => {
-            const { data: item } = await adminClient
-              .from('inventory')
-              .select('quantity')
-              .eq('farm_id', farmId)
-              .eq('item_type', req.itemType)
-              .single();
-
-            return {
-              itemType: req.itemType,
-              quantity: req.quantity,
-              current: (item?.quantity as number) || 0,
-            };
-          }),
+          contract.requirements.map(async (req) => ({
+            itemType: req.itemType,
+            quantity: req.quantity,
+            current: await this.inventory.countOwned(playerId, req.itemType),
+          })),
         );
 
         // Check if expired
@@ -257,16 +257,10 @@ export class ContractsService {
       throw new BadRequestException('Contract definition not found');
     }
 
-    // Check if all requirements met
+    // Check if all requirements met (G4: canonical store)
+    const playerId = await this.inventory.resolvePlayerId(farmId);
     for (const req of contract.requirements) {
-      const { data: item } = await adminClient
-        .from('inventory')
-        .select('quantity')
-        .eq('farm_id', farmId)
-        .eq('item_type', req.itemType)
-        .single();
-
-      const current = (item?.quantity as number) || 0;
+      const current = await this.inventory.countOwned(playerId, req.itemType);
       if (current < req.quantity) {
         throw new BadRequestException(
           `Insufficient ${req.itemType}: need ${req.quantity}, have ${current}`,
@@ -276,24 +270,7 @@ export class ContractsService {
 
     // Deduct required items
     for (const req of contract.requirements) {
-      const { data: item } = await adminClient
-        .from('inventory')
-        .select('*')
-        .eq('farm_id', farmId)
-        .eq('item_type', req.itemType)
-        .single();
-
-      if (item) {
-        const newQty = (item.quantity as number) - req.quantity;
-        if (newQty <= 0) {
-          await adminClient.from('inventory').delete().eq('id', item.id);
-        } else {
-          await adminClient
-            .from('inventory')
-            .update({ quantity: newQty, updated_at: new Date().toISOString() })
-            .eq('id', item.id);
-        }
-      }
+      await this.inventory.removeItem(playerId, req.itemType, req.quantity);
     }
 
     // Add rewards — currency only (D5/C12: no XP, no levels).
