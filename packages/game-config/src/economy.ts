@@ -84,6 +84,15 @@ export const STARTING_PLOTS = 4;
 export const MAX_PLOTS = 20;
 export const LAND_LADDER_TOTAL = 37200;
 
+/**
+ * The next rung of the land ladder above `currentPlots`, or null when maxed.
+ * A rung is bought as a BATCH: paying `costPula` grants every plot up to
+ * `plots` (e.g. a 6-plot farm pays 6,000 and jumps to 12).
+ */
+export function nextLandTier(currentPlots: number): LandTier | null {
+  return LAND_LADDER.find((t) => t.plots > currentPlots) ?? null;
+}
+
 /* ------------------------------------------------------------------ Botho */
 /** 02 §6.4 — the three pillars have no levels and no XP. */
 export const BOTHO_THRESHOLDS = {

@@ -153,6 +153,11 @@
 - Items can be sold at market
 - Currency is earned and spent
 - Offline progression works
+- [x] Offline behaviour (2026-09-22 ruling): "works offline" means the app
+  Shell is Installable and cached via `sw.js`, but progress needs the server —
+  an unreachable API renders an empty farm with an "Offline — read-only" toast,
+  never demo state. Client-side simulation is intentionally absent (per I7 the
+  server is the only authority on state); true offline play is deferred
 
 ### Technical Risks
 
@@ -298,7 +303,8 @@
 ### Features
 
 - [x] PWA service worker — custom `sw.js`, not next-pwa
-- [ ] Offline support — SW skips `/api/`; no client sim
+- [ ] Offline support — restated 2026-09-22: shell + cached assets work offline,
+  live state does not (see note under "Done"). No client sim by design (I7).
 - [ ] Push notifications
 - [x] Settings page — volume sliders inert (no audio)
 - [x] Profile management — `GET /profile`; limited UI
@@ -319,7 +325,8 @@
 ### Acceptance Criteria
 
 - App can be installed on mobile
-- Game works offline (limited)
+- Offline: installable + cached shell; farm state requires connection and
+  renders empty (read-only) when unreachable — demo data was removed 2026-09-22
 - Push notifications for crop ready
 - All production chains work
 - Performance targets met

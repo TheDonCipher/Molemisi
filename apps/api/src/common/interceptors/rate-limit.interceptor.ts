@@ -33,6 +33,14 @@ export class RateLimitInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
+    // Idempotent reads are cheap and fire constantly from the game shell (every
+    // screen mount, every 30s notification poll). Rate-limit only the mutating
+    // requests, or a single client's load burst trips the limiter and rejects
+    // all the read endpoints at once.
+    const method = (request.method ?? 'GET').toString().toUpperCase();
+    if (method === 'GET' || method === 'HEAD') {
+      return next.handle();
+    }
     const clientId = this.getClientId(request);
     const now = Date.now();
     const windowStart = now - this.windowMs;

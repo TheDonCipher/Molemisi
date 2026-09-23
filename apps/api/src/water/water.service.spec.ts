@@ -332,7 +332,7 @@ describe('WaterService', () => {
 
     const result = await svc.advanceFarmGrowth('farm-1', NOW);
 
-    expect(result).toEqual({ cropsAdvanced: 0, cropsReady: 0, waterConsumed: 0 });
+    expect(result).toEqual({ cropsAdvanced: 0, cropsReady: 0, cropsStalled: 0, waterConsumed: 0 });
     expect(updatesTo(calls, 'crop_instances')).toHaveLength(0);
   });
 

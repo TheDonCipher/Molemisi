@@ -33,6 +33,7 @@ export type LedgerSource =
   | 'crafting_fee'
   | 'water_refill'
   | 'land_purchase'
+  | 'botho_catchup'
   | 'storage_upgrade'
   | 'building_construction'
   | 'building_maintenance'

@@ -142,6 +142,11 @@ export const translations = {
   enableNotifs: { en: 'Enable notifications', tn: 'Dira ditsebiso' },
   notifCropsReady: { en: 'Crop ready to harvest', tn: 'Dirolwe di modume' },
   notifAnimals: { en: 'Animal needs attention', tn: 'Phologolo e tlhoka tlhoko' },
+  buyPlot: { en: '🏡 Buy Plots', tn: '🏡 Reka Masimo' },
+  wbCatchUp: {
+    en: '+{n} Botho from the community',
+    tn: '+{n} Botho go tswa mo setšhabeng',
+  },
   wellPumpedDesc: {
     en: 'Extracted 15L from bedrock aquifer.',
     tn: 'Go ntšhitse 15L mo meyeng ya mobu.',

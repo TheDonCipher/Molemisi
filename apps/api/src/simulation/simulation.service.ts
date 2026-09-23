@@ -55,6 +55,8 @@ export interface SimulationResult {
   cropsAdvanced: number;
   cropsWithered: number;
   cropsReady: number;
+  /** Crops that wanted to grow but drank nothing (F17 water-squeeze telemetry). */
+  cropsStalled: number;
   livestockSimulated: number;
   livestockFed: number;
   livestockProducts: number;
@@ -117,6 +119,7 @@ export class SimulationService {
       cropsAdvanced: 0,
       cropsWithered: 0,
       cropsReady: 0,
+      cropsStalled: 0,
       livestockSimulated: 0,
       livestockFed: 0,
       livestockProducts: 0,
@@ -156,6 +159,7 @@ export class SimulationService {
     result.cropsSimulated = growth.cropsAdvanced;
     result.cropsAdvanced = growth.cropsAdvanced;
     result.cropsReady = growth.cropsReady;
+    result.cropsStalled = growth.cropsStalled;
     result.cropsWithered = 0;
 
     // Get all livestock
@@ -451,6 +455,7 @@ export class SimulationService {
       cropsAdvanced: 0,
       cropsWithered: 0,
       cropsReady: 0,
+      cropsStalled: 0,
       livestockSimulated: 0,
       livestockFed: 0,
       livestockProducts: 0,

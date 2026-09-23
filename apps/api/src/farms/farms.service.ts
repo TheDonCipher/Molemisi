@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { SimulationService } from '../simulation/simulation.service';
+import { WalletService } from '../wallet/wallet.service';
 import { PlotView, toPlotViews } from '../crops/plot-view';
+import { BOTHO_DAILY_CAP, nextLandTier, type LandTier } from '@molemisi/game-config';
 
 /**
  * GET /farms/current payload.
@@ -25,6 +27,8 @@ export interface SimulationSummary {
   seasonChanged: boolean;
   newSeason: string | null;
   weather: string | null;
+  /** Botho credited for missed days (03 §9.4 catch-up) — 0 when none. */
+  bothoCatchUp: number;
 }
 
 export interface FarmWithPlots {
@@ -42,6 +46,8 @@ export interface FarmWithPlots {
   plots: PlotView[];
   /** Non-null only when the player was away ≥30 min AND the sim has news to report. */
   simulation: SimulationSummary | null;
+  /** The next land-ladder rung (C15), or null when the farm is at 20 plots. */
+  nextLand: { plots: number; costPula: number } | null;
 }
 
 @Injectable()
@@ -49,6 +55,7 @@ export class FarmsService {
   constructor(
     private supabaseService: SupabaseService,
     private simulationService: SimulationService,
+    private wallet: WalletService,
   ) {}
 
   async getFarmForUser(userId: string): Promise<FarmWithPlots> {
@@ -72,9 +79,26 @@ export class FarmsService {
         : Date.now();
       const awayMinutes = (Date.now() - lastSim) / 60000;
       const sim = await this.simulationService.simulateFarm(farmForSim.id);
+
+      // 03 §9.4 — Botho catch-up (ruled 2026-09-22): the daily cap governs
+      // *earning*, so absence shouldn't erase community standing. Missed days
+      // credit 25% of the daily cap each, at most 3 days, still through
+      // creditBothoCapped so today's legal cap (I4) is never bypassed.
+      let bothoCatchUp = 0;
+      const missedDays = Math.min(3, Math.floor(awayMinutes / 1440));
+      if (missedDays > 0) {
+        bothoCatchUp = await this.wallet.creditBothoCapped(
+          userId,
+          Math.round(BOTHO_DAILY_CAP * 0.25 * missedDays),
+          'botho_catchup',
+        );
+      }
+
       const hasNews =
         sim.cropsReady + sim.livestockProducts + sim.buildingsCompleted + sim.buildingsMaintenance >
-          0 || sim.seasonChanged;
+          0 ||
+        sim.seasonChanged ||
+        bothoCatchUp > 0;
       if (awayMinutes >= 30 && hasNews) {
         simulation = {
           awayMinutes: Math.round(awayMinutes),
@@ -85,6 +109,7 @@ export class FarmsService {
           seasonChanged: sim.seasonChanged,
           newSeason: sim.newSeason,
           weather: sim.weather?.type ?? null,
+          bothoCatchUp,
         };
       }
     }
@@ -111,6 +136,9 @@ export class FarmsService {
       throw new Error('Failed to fetch plots');
     }
 
+    // C15 — the next land-ladder rung, quoted from the fresh farm read.
+    const nextLandTierInfo: LandTier | null = nextLandTier(farm.plot_count as number);
+
     return {
       farm: {
         id: farm.id,
@@ -125,6 +153,84 @@ export class FarmsService {
       },
       plots: toPlotViews((plots ?? []) as Array<Record<string, unknown>>),
       simulation,
+      nextLand: nextLandTierInfo
+        ? { plots: nextLandTierInfo.plots, costPula: nextLandTierInfo.costPula ?? 0 }
+        : null,
+    };
+  }
+
+  /**
+   * C15 — the land ladder. A rung is bought as a BATCH from the F17-raised
+   * tiers in game-config (4→8: P1,200 · 8→12: P6,000 · 12→20: P30,000), so the
+   * shipped build and the balance model share one copy of the numbers.
+   *
+   * Each purchased plot is a real `farm_plots` row, exactly like registration
+   * creates them; `farms.plot_count` stays the capacity truth.
+   */
+  async purchasePlot(userId: string): Promise<{
+    plotCount: number;
+    tierCost: number;
+    nextLand: { plots: number; costPula: number } | null;
+  }> {
+    const adminClient = this.supabaseService.getAdminClient();
+
+    const { data: farm } = await adminClient
+      .from('farms')
+      .select('id, user_id, plot_count')
+      .eq('user_id', userId)
+      .single();
+
+    if (!farm) {
+      throw new NotFoundException('Farm not found');
+    }
+    if ((farm.user_id as string) !== userId) {
+      throw new ForbiddenException('You do not own this farm');
+    }
+
+    const currentPlots = farm.plot_count as number;
+    const tier = nextLandTier(currentPlots);
+    if (!tier || tier.costPula == null) {
+      throw new NotFoundException('The farm is already at its maximum of 20 plots');
+    }
+
+    // Atomic check-and-debit (05 §P2) — the only sanctioned Pula movement.
+    await this.wallet.spendPula(userId, tier.costPula, 'land_purchase');
+
+    const newPlots = Array.from({ length: tier.plots - currentPlots }, (_, i) => ({
+      farm_id: farm.id as string,
+      slot_index: currentPlots + i,
+      state: 'EMPTY' as const,
+    }));
+    const { error: plotsError } = await adminClient.from('farm_plots').insert(newPlots);
+
+    if (plotsError) {
+      // Nothing exists to keep the money for — refund and surface the failure.
+      await this.wallet.credit(userId, 'pula', tier.costPula, 'refund');
+      throw new Error('Failed to create the new plots');
+    }
+
+    const { error: updateError } = await adminClient
+      .from('farms')
+      .update({ plot_count: tier.plots })
+      .eq('id', farm.id as string);
+
+    if (updateError) {
+      // Roll the whole rung back — plots AND money — rather than leave a farm
+      // whose count disagrees with its rows.
+      await adminClient
+        .from('farm_plots')
+        .delete()
+        .eq('farm_id', farm.id as string)
+        .gte('slot_index', currentPlots);
+      await this.wallet.credit(userId, 'pula', tier.costPula, 'refund');
+      throw new Error('Failed to update the farm');
+    }
+
+    const next = nextLandTier(tier.plots);
+    return {
+      plotCount: tier.plots,
+      tierCost: tier.costPula ?? 0,
+      nextLand: next ? { plots: next.plots, costPula: next.costPula ?? 0 } : null,
     };
   }
 

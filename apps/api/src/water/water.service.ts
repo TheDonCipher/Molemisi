@@ -20,6 +20,7 @@ export interface RefillResult {
 export interface GrowthAdvanceResult {
   cropsAdvanced: number;
   cropsReady: number;
+  cropsStalled: number;
   waterConsumed: number;
 }
 
@@ -52,13 +53,13 @@ export class WaterService {
       .select('weather_state, last_simulated_at')
       .eq('id', farmId)
       .single();
-    if (!farm) return { cropsAdvanced: 0, cropsReady: 0, waterConsumed: 0 };
+    if (!farm) return { cropsAdvanced: 0, cropsReady: 0, cropsStalled: 0, waterConsumed: 0 };
 
     const lastSim = farm.last_simulated_at ? new Date(farm.last_simulated_at).getTime() : nowMs;
     const elapsedHours = Math.min((nowMs - lastSim) / 3_600_000, MAX_OFFLINE_HOURS);
     // Sub-second ticks (e.g. back-to-back reads) do nothing — avoids churn.
     if (elapsedHours < 1 / 3600) {
-      return { cropsAdvanced: 0, cropsReady: 0, waterConsumed: 0 };
+      return { cropsAdvanced: 0, cropsReady: 0, cropsStalled: 0, waterConsumed: 0 };
     }
 
     // Jojo tank — the single shared water source for the whole farm.
@@ -109,6 +110,7 @@ export class WaterService {
     let waterConsumed = 0;
     let cropsAdvanced = 0;
     let cropsReady = 0;
+    let cropsStalled = 0;
 
     if (growing.length > 0) {
       // Shared tank: each crop's water demand over the interval vs the water on hand.
@@ -149,6 +151,10 @@ export class WaterService {
         const stage = Math.min(3, Math.floor((newProgress / d.cfg.growthHours) * 3 + 1e-9));
         const newState = ready ? 'READY' : newProgress > 0 ? 'GROWING' : 'PLANTED';
         if (advancedHours > 1e-9) cropsAdvanced++;
+        // Telemetry for the Moriti water-squeeze playtest (ruled 2026-09-22):
+        // a crop that wanted to grow but drank nothing is a stall, whether the
+        // tank was fully dry or just rationed thin.
+        if (!ready && d.cropElapsed > 1e-9 && advancedHours <= 1e-9) cropsStalled++;
 
         await admin
           .from('crop_instances')
@@ -181,7 +187,7 @@ export class WaterService {
         .eq('id', tankId);
     }
 
-    return { cropsAdvanced, cropsReady, waterConsumed };
+    return { cropsAdvanced, cropsReady, cropsStalled, waterConsumed };
   }
 
   /** Read the tank's current level/capacity/state for the UI. */

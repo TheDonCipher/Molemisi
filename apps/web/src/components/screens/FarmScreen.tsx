@@ -297,6 +297,8 @@ export function FarmScreen() {
     constructBuilding,
     maintainBuilding,
     upgradeBuilding,
+    nextLand,
+    buyPlot,
     farmId,
     waterLevel,
     maxWater,
@@ -515,6 +517,11 @@ export function FarmScreen() {
         emoji: '🔧',
         text: tl('wbMaintenance').replace('{n}', String(welcomeBack.buildingsMaintenance)),
       });
+    if (welcomeBack.bothoCatchUp > 0)
+      wbRows.push({
+        emoji: '🤝',
+        text: tl('wbCatchUp').replace('{n}', String(welcomeBack.bothoCatchUp)),
+      });
     if (welcomeBack.seasonChanged && welcomeBack.newSeason)
       wbRows.push({
         emoji: '🍂',
@@ -523,7 +530,7 @@ export function FarmScreen() {
   }
 
   return (
-    <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
+    <div className="relative w-full flex flex-col overflow-hidden select-none h-[calc(100dvh_-_7.5rem)] md:h-[calc(100dvh_-_5rem)]">
       {/* Background — the gradient overlay below is also the fallback backdrop
           if the sprite is missing; no third-party URL is trusted here. */}
       <div className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-0 bg-wood-dark">
@@ -538,28 +545,52 @@ export function FarmScreen() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
-      {/* Top HUD */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-3 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
-          <span className="font-mono text-xs text-primary font-bold">☀ Day {currentDay}</span>
-          <span className="text-wood-border">•</span>
-          <span className="font-mono text-xs text-gold-currency font-bold">
-            P {pula.toLocaleString()}
-          </span>
+      {/* Top HUD — pinned inside the screen (D): day + currency, the granary
+          counts (B, moved up out of the bottom band) and the sky. */}
+      <div className="relative z-10 flex-none flex flex-col gap-2 px-3 py-2 md:flex-row md:items-center md:justify-between">
+        {/* md:contents dissolves this row so all three chips share one line on
+            wide screens while staying two tidy rows on a phone. */}
+        <div className="flex items-center justify-between gap-2 md:contents">
+          <div className="md:order-1 flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border">
+            <span className="font-mono text-xs text-primary font-bold">☀ Day {currentDay}</span>
+            <span className="text-wood-border">•</span>
+            <span className="font-mono text-xs text-gold-currency font-bold">
+              P {pula.toLocaleString()}
+            </span>
+          </div>
+          <div
+            className="md:order-3 flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border"
+            title={raining ? tl('rainFillsTank') : tl(weatherView.labelKey)}
+          >
+            <WeatherGlyph weather={weather} />
+            <span className="font-mono text-[11px] text-sky-blue">
+              {tl(weatherView.labelKey)} • {season}
+            </span>
+          </div>
         </div>
-        <div
-          className="flex items-center gap-2 bg-wood-dark/90 px-3 py-1.5 border border-wood-border"
-          title={raining ? tl('rainFillsTank') : tl(weatherView.labelKey)}
+
+        {/* Granary — tap to open the Inventory (was a floating pill) */}
+        <button
+          onClick={() => setActiveNav('Inventory')}
+          aria-label={tl('granary')}
+          title={tl('granary')}
+          className="md:order-2 w-full md:w-auto flex items-center justify-between md:justify-start gap-3 bg-wood-dark/90 px-3 py-1.5 border border-wood-border active:scale-[0.99]"
         >
-          <WeatherGlyph weather={weather} />
-          <span className="font-mono text-[11px] text-sky-blue">
-            {tl(weatherView.labelKey)} • {season}
+          <span className="font-mono text-[11px] text-cream-surface/90 uppercase">
+            {tl('granary')}
           </span>
-        </div>
+          <span className="flex items-center gap-3">
+            <span className="font-mono text-xs text-cream-surface">🌾 {granarySorghum}</span>
+            <span className="font-mono text-xs text-cream-surface">🌽 {granaryMaize}</span>
+            <span className="font-mono text-xs text-cream-surface">🥚 {granaryEggs}</span>
+          </span>
+        </button>
       </div>
 
-      {/* Main farm world */}
-      <div className="relative z-10 flex-1 flex justify-center px-4 py-6 bg-black/25 overflow-y-auto">
+      {/* Farm world — the bounded, scrollable middle of the shell (D).
+          On lg+ the plots keep the left column and the livestock/buildings
+          slide into a rail beside them (E). */}
+      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto bg-black/25">
         {/* Weather FX: the sky state the sim rolled, visible over the scene */}
         {WEATHER_FX_SPRITE[weather] && (
           <img
@@ -573,424 +604,427 @@ export function FarmScreen() {
             }}
           />
         )}
-        <div className="w-full max-w-2xl my-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {plots.map((plot) => (
-              <button
-                key={plot.id}
-                onClick={() => handlePlotTap(plot)}
-                className={`relative aspect-square bg-wood-dark/80 border-2 p-3 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
-                  selectedPlot?.id === plot.id
-                    ? 'border-primary ring-2 ring-primary/50 shadow-lg'
-                    : plot.canHarvest
-                      ? 'border-gold-currency animate-pulse'
-                      : plot.stalled
-                        ? 'border-sky-blue'
-                        : 'border-wood-border hover:border-primary/50'
-                } ${celebrate?.id === plot.id ? `animate-${celebrate.kind}` : ''}`}
-              >
-                <CropSprite
-                  cropType={plot.cropType}
-                  stageProgress={plot.stageProgress}
-                  emoji={plot.icon}
-                  size={44}
-                />
-                <span className="font-headline text-[11px] sm:text-xs text-cream-surface font-bold leading-tight">
-                  {plot.cropName}
-                </span>
-                {plot.canHarvest && (
-                  <span className="font-mono text-[10px] text-gold-currency font-bold tracking-wider animate-bounce">
-                    {tl('ready')}
-                  </span>
-                )}
-                {plot.stalled && (
-                  // Not a water level — a stall. The crop stopped because the
-                  // tank is empty, and the only fix is the shared tank.
-                  <span className="font-mono text-[10px] text-sky-blue font-bold">💧 DRY</span>
-                )}
-                {plot.state === 'TILLED' && (
-                  <span className="font-mono text-[10px] text-secondary">{tl('emptySoil')}</span>
-                )}
-                {plot.state === 'GROWING' && (
-                  <div className="w-full h-2 bg-surface-container-high overflow-hidden">
-                    <div
-                      className={`h-full transition-all ${
-                        plot.stalled ? 'bg-sky-blue/50' : 'bg-status-success'
-                      }`}
-                      style={{ width: `${plot.stageProgress}%` }}
-                    />
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Kraal — livestock strip (03 §5). Simple loop: tap an animal, act. */}
-          <div className="mt-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-mono text-[11px] text-cream-surface/90 uppercase">
-                {tl('livestock')}
-              </span>
-              {livestock.some((a) => a.productReady) && (
-                <span className="font-mono text-[10px] text-gold-currency">{tl('ready')}</span>
-              )}
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {livestock.map((animal) => (
+        <div className="mx-auto w-full max-w-2xl lg:max-w-5xl px-4 py-5 lg:flex lg:items-start lg:gap-4">
+          {/* Left column — the plots and the land ladder */}
+          <div className="lg:flex-1 lg:min-w-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {plots.map((plot) => (
                 <button
-                  key={animal.id}
-                  onClick={() => setSelectedAnimalId(animal.id)}
-                  aria-label={
-                    animal.name ?? tl(ANIMAL_NAME_KEY[animal.animalType] ?? 'animalChicken')
-                  }
-                  className={`relative flex-shrink-0 w-20 p-1.5 border flex flex-col items-center gap-1 transition-all active:scale-95 ${
-                    animal.productReady
-                      ? 'bg-gold-currency/20 border-gold-currency animate-pulse'
-                      : animal.isSick || animal.hunger < 0.3
-                        ? 'bg-error-container/40 border-status-danger'
-                        : 'bg-wood-dark/80 border-wood-border'
-                  }`}
+                  key={plot.id}
+                  onClick={() => handlePlotTap(plot)}
+                  className={`relative aspect-square bg-wood-dark/80 border-2 p-3 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
+                    selectedPlot?.id === plot.id
+                      ? 'border-primary ring-2 ring-primary/50 shadow-lg'
+                      : plot.canHarvest
+                        ? 'border-gold-currency animate-pulse'
+                        : plot.stalled
+                          ? 'border-sky-blue'
+                          : 'border-wood-border hover:border-primary/50'
+                  } ${celebrate?.id === plot.id ? `animate-${celebrate.kind}` : ''}`}
                 >
-                  <AnimalSprite type={animal.animalType} mood={animalMood(animal)} size={40} />
-                  <span className="font-mono text-[10px] text-cream-surface truncate w-full text-center">
-                    {animal.name ?? tl(ANIMAL_NAME_KEY[animal.animalType] ?? 'animalChicken')}
+                  <CropSprite
+                    cropType={plot.cropType}
+                    stageProgress={plot.stageProgress}
+                    emoji={plot.icon}
+                    size={44}
+                  />
+                  <span className="font-headline text-[11px] sm:text-xs text-cream-surface font-bold leading-tight">
+                    {plot.cropName}
                   </span>
-                  {/* Hunger micro-bar — fullness, not emptiness */}
-                  <div className="w-full h-1 bg-surface-container-lowest overflow-hidden">
-                    <div
-                      className={`h-full ${animal.hunger > 0.3 ? 'bg-status-success' : 'bg-status-danger'}`}
-                      style={{ width: `${Math.round(animal.hunger * 100)}%` }}
-                    />
-                  </div>
-                  {animal.productReady && (
-                    <span className="absolute -top-1 -right-1 text-xs" aria-hidden>
-                      {ANIMAL_PRODUCT[animal.animalType] ?? '🧺'}
+                  {plot.canHarvest && (
+                    <span className="font-mono text-[10px] text-gold-currency font-bold tracking-wider animate-bounce">
+                      {tl('ready')}
                     </span>
+                  )}
+                  {plot.stalled && (
+                    // Not a water level — a stall. The crop stopped because the
+                    // tank is empty, and the only fix is the shared tank.
+                    <span className="font-mono text-[10px] text-sky-blue font-bold">💧 DRY</span>
+                  )}
+                  {plot.state === 'TILLED' && (
+                    <span className="font-mono text-[10px] text-secondary">{tl('emptySoil')}</span>
+                  )}
+                  {plot.state === 'GROWING' && (
+                    <div className="w-full h-2 bg-surface-container-high overflow-hidden">
+                      <div
+                        className={`h-full transition-all ${
+                          plot.stalled ? 'bg-sky-blue/50' : 'bg-status-success'
+                        }`}
+                        style={{ width: `${plot.stageProgress}%` }}
+                      />
+                    </div>
                   )}
                 </button>
               ))}
-              <button
-                onClick={openBuySheet}
-                aria-label={tl('buyAnimal')}
-                className="flex-shrink-0 w-20 p-1.5 border border-dashed border-wood-border flex flex-col items-center justify-center gap-1 text-cream-surface/90 active:scale-95"
-              >
-                <span className="text-lg">＋</span>
-                <span className="font-mono text-[10px]">{tl('buyAnimal')}</span>
-              </button>
             </div>
-            {livestock.length === 0 && (
-              <p className="font-mono text-[10px] text-cream-surface/90 mt-1">
-                {tl('noLivestock')}
-              </p>
+
+            {/* Land ladder (C15) — the next rung, quoted from the server row */}
+            {nextLand && (
+              <button
+                onClick={buyPlot}
+                disabled={nextLand.costPula > pula}
+                aria-label={tl('buyPlot')}
+                className="mt-3 w-full py-2.5 border border-dashed border-gold-currency/60 bg-gold-currency/10 text-gold-currency font-mono text-xs font-bold uppercase active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                ＋ {tl('buyPlot')} → {nextLand.plots} · P{nextLand.costPula.toLocaleString()}
+              </button>
             )}
           </div>
 
-          {/* Buildings — construction timers, wear, maintenance (09 §8) */}
-          <div className="mt-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-mono text-[11px] text-cream-surface/90 uppercase">
-                {tl('buildings')}
-              </span>
-              {buildings.some(
-                (b) => b.state === 'MAINTENANCE_NEEDED' || b.state === 'DISABLED',
-              ) && (
-                <span className="font-mono text-[10px] text-status-warning">
-                  {tl('stateMaintenance')}
+          {/* Right rail (E) — livestock + buildings sit beside the plots on lg+ */}
+          <div className="mt-3 lg:mt-0 lg:w-80 lg:flex-none lg:sticky lg:top-0">
+            {/* Kraal — livestock strip (03 §5). Simple loop: tap an animal, act. */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono text-[11px] text-cream-surface/90 uppercase">
+                  {tl('livestock')}
                 </span>
-              )}
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {buildings.map((b) => {
-                const stateText = buildingStateText(b);
-                return (
+                {livestock.some((a) => a.productReady) && (
+                  <span className="font-mono text-[10px] text-gold-currency">{tl('ready')}</span>
+                )}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {livestock.map((animal) => (
                   <button
-                    key={b.id}
-                    onClick={() => setSelectedBuildingId(b.id)}
-                    aria-label={tl(BUILDING_NAME_KEY[b.buildingType] ?? 'buildingStorage')}
+                    key={animal.id}
+                    onClick={() => setSelectedAnimalId(animal.id)}
+                    aria-label={
+                      animal.name ?? tl(ANIMAL_NAME_KEY[animal.animalType] ?? 'animalChicken')
+                    }
                     className={`relative flex-shrink-0 w-20 p-1.5 border flex flex-col items-center gap-1 transition-all active:scale-95 ${
-                      b.state === 'CONSTRUCTION'
-                        ? 'bg-surface-container-high/60 border-status-info'
-                        : b.state === 'DISABLED'
+                      animal.productReady
+                        ? 'bg-gold-currency/20 border-gold-currency animate-pulse'
+                        : animal.isSick || animal.hunger < 0.3
                           ? 'bg-error-container/40 border-status-danger'
-                          : b.state === 'MAINTENANCE_NEEDED'
-                            ? 'bg-status-warning/10 border-status-warning'
-                            : 'bg-wood-dark/80 border-wood-border'
+                          : 'bg-wood-dark/80 border-wood-border'
                     }`}
                   >
-                    <BuildingIcon type={b.buildingType} size={32} />
+                    <AnimalSprite type={animal.animalType} mood={animalMood(animal)} size={40} />
                     <span className="font-mono text-[10px] text-cream-surface truncate w-full text-center">
-                      {tl(BUILDING_NAME_KEY[b.buildingType] ?? 'buildingStorage')}
+                      {animal.name ?? tl(ANIMAL_NAME_KEY[animal.animalType] ?? 'animalChicken')}
                     </span>
-                    {b.state === 'CONSTRUCTION' ? (
-                      <span className="font-mono text-[10px] text-status-info">{stateText}</span>
-                    ) : (
-                      <div className="w-full h-1 bg-surface-container-lowest overflow-hidden">
-                        <div
-                          className={`h-full ${b.wear < 0.7 ? 'bg-status-success' : 'bg-status-warning'}`}
-                          style={{ width: `${Math.round((1 - b.wear) * 100)}%` }}
-                        />
-                      </div>
+                    {/* Hunger micro-bar — fullness, not emptiness */}
+                    <div className="w-full h-1 bg-surface-container-lowest overflow-hidden">
+                      <div
+                        className={`h-full ${animal.hunger > 0.3 ? 'bg-status-success' : 'bg-status-danger'}`}
+                        style={{ width: `${Math.round(animal.hunger * 100)}%` }}
+                      />
+                    </div>
+                    {animal.productReady && (
+                      <span className="absolute -top-1 -right-1 text-xs" aria-hidden>
+                        {ANIMAL_PRODUCT[animal.animalType] ?? '🧺'}
+                      </span>
                     )}
                   </button>
-                );
-              })}
-              <button
-                onClick={openBuildSheet}
-                aria-label={tl('build')}
-                className="flex-shrink-0 w-20 p-1.5 border border-dashed border-wood-border flex flex-col items-center justify-center gap-1 text-cream-surface/90 active:scale-95"
-              >
-                <span className="text-lg">＋</span>
-                <span className="font-mono text-[10px]">{tl('build')}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Contextual Action Panel */}
-      {selectedPlot && !showCropPicker && (
-        <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
-          <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{selectedPlot.icon}</span>
-                <div>
-                  <span className="font-headline text-sm text-cream-surface font-bold">
-                    {selectedPlot.cropName}
-                  </span>
-                  <span className="font-mono text-[11px] text-cream-surface/90 block">
-                    {selectedPlot.label} • {selectedPlot.stage}
-                  </span>
-                </div>
+                ))}
+                <button
+                  onClick={openBuySheet}
+                  aria-label={tl('buyAnimal')}
+                  className="flex-shrink-0 w-20 p-1.5 border border-dashed border-wood-border flex flex-col items-center justify-center gap-1 text-cream-surface/90 active:scale-95"
+                >
+                  <span className="text-lg">＋</span>
+                  <span className="font-mono text-[10px]">{tl('buyAnimal')}</span>
+                </button>
               </div>
-              <button
-                onClick={() => setSelectedPlotId(null)}
-                aria-label="Close"
-                className="text-cream-surface/90 hover:text-cream-surface text-xs"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="flex gap-2">
-              {selectedPlot.canPlant && (
-                <button
-                  onClick={() => setShowCropPicker(true)}
-                  className="flex-1 py-2 bg-secondary-container text-on-secondary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
-                >
-                  {tl('plant')}
-                </button>
-              )}
-              {selectedPlot.stalled && (
-                // Points at the real fix instead of offering a per-plot action
-                // that no longer exists on the server.
-                <button
-                  onClick={() => {
-                    triggerCelebrate(selectedPlot.id, 'water');
-                    refillWell();
-                    setSelectedPlotId(null);
-                  }}
-                  className="flex-1 py-2 bg-sky-deep text-cream-surface font-mono text-xs uppercase font-bold active:translate-y-0.5"
-                >
-                  {tl('pumpWell')}
-                </button>
-              )}
-              {selectedPlot.canHarvest && (
-                <button
-                  onClick={handleHarvest}
-                  className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
-                >
-                  {tl('harvest')}
-                </button>
+              {livestock.length === 0 && (
+                <p className="font-mono text-[10px] text-cream-surface/90 mt-1">
+                  {tl('noLivestock')}
+                </p>
               )}
             </div>
 
-            {selectedPlot.state === 'GROWING' && (
-              <div className="mt-3">
-                <div className="flex justify-between font-mono text-[11px] text-cream-surface/90 mb-1">
-                  <span>
-                    {tl('growth')}
-                    {/* Tank-gated pace, not a promise (03 §1.2) — hence "~". */}
-                    {(() => {
-                      const eta = readyInText(selectedPlot, tl('readyIn'));
-                      return eta ? ` • ${eta}` : '';
-                    })()}
+            {/* Buildings — construction timers, wear, maintenance (09 §8) */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono text-[11px] text-cream-surface/90 uppercase">
+                  {tl('buildings')}
+                </span>
+                {buildings.some(
+                  (b) => b.state === 'MAINTENANCE_NEEDED' || b.state === 'DISABLED',
+                ) && (
+                  <span className="font-mono text-[10px] text-status-warning">
+                    {tl('stateMaintenance')}
                   </span>
-                  <span>{selectedPlot.stageProgress}%</span>
-                </div>
-                <div className="w-full h-2 bg-surface-container-lowest overflow-hidden">
-                  <div
-                    className="h-full bg-status-success transition-all"
-                    style={{ width: `${selectedPlot.stageProgress}%` }}
-                  />
-                </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Crop Picker */}
-      {selectedPlot && showCropPicker && (
-        <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-md mx-auto animate-slide-up">
-          <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-headline text-sm text-primary uppercase font-bold">
-                {tl('plantOn')} {selectedPlot.label}
-              </span>
-              <button
-                onClick={() => setShowCropPicker(false)}
-                aria-label="Close"
-                className="text-cream-surface/90 hover:text-cream-surface text-xs"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-1.5 max-h-48 overflow-y-auto">
-              {availableSeeds.length === 0 ? (
-                // No seeds in inventory — route the player to the Market
-                // instead of listing seeds they don't own.
-                <button
-                  onClick={() => {
-                    setShowCropPicker(false);
-                    setSelectedPlotId(null);
-                    setActiveNav('Market');
-                  }}
-                  className="w-full flex items-center justify-between p-2.5 bg-surface-container-high hover:bg-wood-medium border border-wood-border transition-colors"
-                >
-                  <div className="text-left">
-                    <span className="font-headline text-xs text-cream-surface font-bold block">
-                      {tl('noSeeds')}
-                    </span>
-                    <span className="font-mono text-[10px] text-cream-surface/90">
-                      {tl('noSeedsDesc')}
-                    </span>
-                  </div>
-                  <span className="font-mono text-xs text-primary font-bold">
-                    {tl('buySeeds')} →
-                  </span>
-                </button>
-              ) : (
-                availableSeeds.map((seed) => {
-                  const unaffordable = seed.cost > pula;
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {buildings.map((b) => {
+                  const stateText = buildingStateText(b);
                   return (
                     <button
-                      key={seed.itemType}
-                      disabled={unaffordable}
-                      onClick={() => handlePlant(seed)}
-                      className={`w-full flex items-center justify-between p-2.5 border transition-colors ${
-                        unaffordable
-                          ? 'bg-surface-container-high/50 border-wood-border opacity-50 cursor-not-allowed'
-                          : 'bg-surface-container-high hover:bg-wood-medium border-wood-border'
+                      key={b.id}
+                      onClick={() => setSelectedBuildingId(b.id)}
+                      aria-label={tl(BUILDING_NAME_KEY[b.buildingType] ?? 'buildingStorage')}
+                      className={`relative flex-shrink-0 w-20 p-1.5 border flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                        b.state === 'CONSTRUCTION'
+                          ? 'bg-surface-container-high/60 border-status-info'
+                          : b.state === 'DISABLED'
+                            ? 'bg-error-container/40 border-status-danger'
+                            : b.state === 'MAINTENANCE_NEEDED'
+                              ? 'bg-status-warning/10 border-status-warning'
+                              : 'bg-wood-dark/80 border-wood-border'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <PixelIcon itemType={seed.itemType} emoji={seed.icon} size={24} />
-                        <div className="text-left">
-                          <span className="font-headline text-xs text-cream-surface font-bold block">
-                            {seed.name}
-                          </span>
-                          <span className="font-mono text-[10px] text-cream-surface/90">
-                            {seed.trait} (x{seed.quantity}){' '}
-                            {isSeedInSeason(seed.itemType.replace(/_seed$/, '') as CropId) ? (
-                              <span className="text-status-success">{tl('seasonal')}</span>
-                            ) : (
-                              <span className="text-status-warning">{tl('offSeason')}</span>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                      <span
-                        className={`font-mono text-xs font-bold ${
-                          unaffordable ? 'text-status-danger' : 'text-gold-currency'
-                        }`}
-                      >
-                        {seed.cost} P
+                      <BuildingIcon type={b.buildingType} size={32} />
+                      <span className="font-mono text-[10px] text-cream-surface truncate w-full text-center">
+                        {tl(BUILDING_NAME_KEY[b.buildingType] ?? 'buildingStorage')}
                       </span>
+                      {b.state === 'CONSTRUCTION' ? (
+                        <span className="font-mono text-[10px] text-status-info">{stateText}</span>
+                      ) : (
+                        <div className="w-full h-1 bg-surface-container-lowest overflow-hidden">
+                          <div
+                            className={`h-full ${b.wear < 0.7 ? 'bg-status-success' : 'bg-status-warning'}`}
+                            style={{ width: `${Math.round((1 - b.wear) * 100)}%` }}
+                          />
+                        </div>
+                      )}
                     </button>
                   );
-                })
-              )}
+                })}
+                <button
+                  onClick={openBuildSheet}
+                  aria-label={tl('build')}
+                  className="flex-shrink-0 w-20 p-1.5 border border-dashed border-wood-border flex flex-col items-center justify-center gap-1 text-cream-surface/90 active:scale-95"
+                >
+                  <span className="text-lg">＋</span>
+                  <span className="font-mono text-[10px]">{tl('build')}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Quick Actions */}
-      <div className="fixed bottom-20 md:bottom-4 left-4 z-20 flex flex-col gap-2">
-        {/* No "water all" button: there is no per-plot action to batch. The
-            water gauge itself is the refill control for the shared tank. */}
-        <button
-          onClick={() => {
-            triggerCelebrate(0, 'harvest');
-            handleQuickHarvest();
-          }}
-          disabled={readyCount === 0}
-          aria-label={tl('harvestAll')}
-          className={`relative w-10 h-10 bg-primary-container/90 text-on-primary-container border border-primary flex items-center justify-center shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${
-            celebrate?.id === 0 && celebrate.kind === 'harvest' ? 'animate-harvest' : ''
-          }`}
-          title={tl('harvestAll')}
-        >
-          🌾
-          {readyCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 bg-gold-currency text-wood-dark font-mono text-[10px] font-bold flex items-center justify-center">
-              {readyCount}
-            </span>
-          )}
-        </button>
       </div>
 
-      {/* Water gauge — tappable: refills the one shared tank (see refillWell) */}
-      <div className="fixed bottom-20 md:bottom-4 right-4 z-20">
-        <button
-          onClick={() => {
-            triggerCelebrate(-1, 'water');
-            // refillWell reports its own outcome (+N L for M Pula, or the
-            // failure) — don't stack a second toast on top of it.
-            refillWell();
-          }}
-          disabled={!hasTank || waterLevel >= maxWater}
-          aria-label={tl('pumpWell')}
-          title={
-            hasTank ? (waterLevel >= maxWater ? tl('tankFull') : tl('pumpWell')) : tl('noTank')
-          }
-          className={`bg-wood-dark/90 px-3 py-2 border border-wood-border shadow-md active:scale-95 disabled:cursor-not-allowed ${
-            celebrate?.id === -1 && celebrate.kind === 'water' ? 'animate-water' : ''
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-sm">💧</span>
-            <div className="w-16 h-2 bg-surface-container-lowest overflow-hidden">
-              <div
-                className={`h-full transition-all ${
-                  hasTank ? 'bg-sky-blue' : 'bg-status-error/60'
-                }`}
-                style={{ width: `${hasTank ? waterPercent : 0}%` }}
-              />
+      {/* Docked action bar (A) — one strip at column width, replacing the three
+          floating pills. The plot action panel and the seed picker take over
+          this same slot instead of overlaying it (C). */}
+      <div className="relative z-20 flex-none border-t border-wood-border bg-wood-dark/85 px-3 py-2">
+        {selectedPlot && showCropPicker ? (
+          <div className="mx-auto w-full max-w-2xl lg:max-w-5xl">
+            <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] animate-slide-up">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-headline text-sm text-primary uppercase font-bold">
+                  {tl('plantOn')} {selectedPlot.label}
+                </span>
+                <button
+                  onClick={() => setShowCropPicker(false)}
+                  aria-label="Close"
+                  className="text-cream-surface/90 hover:text-cream-surface text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {availableSeeds.length === 0 ? (
+                  // No seeds in inventory — route the player to the Market
+                  // instead of listing seeds they don't own.
+                  <button
+                    onClick={() => {
+                      setShowCropPicker(false);
+                      setSelectedPlotId(null);
+                      setActiveNav('Market');
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 bg-surface-container-high hover:bg-wood-medium border border-wood-border transition-colors"
+                  >
+                    <div className="text-left">
+                      <span className="font-headline text-xs text-cream-surface font-bold block">
+                        {tl('noSeeds')}
+                      </span>
+                      <span className="font-mono text-[10px] text-cream-surface/90">
+                        {tl('noSeedsDesc')}
+                      </span>
+                    </div>
+                    <span className="font-mono text-xs text-primary font-bold">
+                      {tl('buySeeds')} →
+                    </span>
+                  </button>
+                ) : (
+                  availableSeeds.map((seed) => {
+                    const unaffordable = seed.cost > pula;
+                    return (
+                      <button
+                        key={seed.itemType}
+                        disabled={unaffordable}
+                        onClick={() => handlePlant(seed)}
+                        className={`w-full flex items-center justify-between p-2.5 border transition-colors ${
+                          unaffordable
+                            ? 'bg-surface-container-high/50 border-wood-border opacity-50 cursor-not-allowed'
+                            : 'bg-surface-container-high hover:bg-wood-medium border-wood-border'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <PixelIcon itemType={seed.itemType} emoji={seed.icon} size={24} />
+                          <div className="text-left">
+                            <span className="font-headline text-xs text-cream-surface font-bold block">
+                              {seed.name}
+                            </span>
+                            <span className="font-mono text-[10px] text-cream-surface/90">
+                              {seed.trait} (x{seed.quantity}){' '}
+                              {isSeedInSeason(seed.itemType.replace(/_seed$/, '') as CropId) ? (
+                                <span className="text-status-success">{tl('seasonal')}</span>
+                              ) : (
+                                <span className="text-status-warning">{tl('offSeason')}</span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        <span
+                          className={`font-mono text-xs font-bold ${
+                            unaffordable ? 'text-status-danger' : 'text-gold-currency'
+                          }`}
+                        >
+                          {seed.cost} P
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
-            <span
-              className={`font-mono text-[11px] font-bold ${
-                hasTank ? 'text-sky-blue' : 'text-status-error'
+          </div>
+        ) : selectedPlot ? (
+          <div className="mx-auto w-full max-w-2xl lg:max-w-5xl">
+            <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] animate-slide-up">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{selectedPlot.icon}</span>
+                  <div>
+                    <span className="font-headline text-sm text-cream-surface font-bold">
+                      {selectedPlot.cropName}
+                    </span>
+                    <span className="font-mono text-[11px] text-cream-surface/90 block">
+                      {selectedPlot.label} • {selectedPlot.stage}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedPlotId(null)}
+                  aria-label="Close"
+                  className="text-cream-surface/90 hover:text-cream-surface text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="flex gap-2">
+                {selectedPlot.canPlant && (
+                  <button
+                    onClick={() => setShowCropPicker(true)}
+                    className="flex-1 py-2 bg-secondary-container text-on-secondary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
+                  >
+                    {tl('plant')}
+                  </button>
+                )}
+                {selectedPlot.stalled && (
+                  // Points at the real fix instead of offering a per-plot action
+                  // that no longer exists on the server.
+                  <button
+                    onClick={() => {
+                      triggerCelebrate(selectedPlot.id, 'water');
+                      refillWell();
+                      setSelectedPlotId(null);
+                    }}
+                    className="flex-1 py-2 bg-sky-deep text-cream-surface font-mono text-xs uppercase font-bold active:translate-y-0.5"
+                  >
+                    {tl('pumpWell')}
+                  </button>
+                )}
+                {selectedPlot.canHarvest && (
+                  <button
+                    onClick={handleHarvest}
+                    className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-xs uppercase font-bold active:translate-y-0.5"
+                  >
+                    {tl('harvest')}
+                  </button>
+                )}
+              </div>
+
+              {selectedPlot.state === 'GROWING' && (
+                <div className="mt-3">
+                  <div className="flex justify-between font-mono text-[11px] text-cream-surface/90 mb-1">
+                    <span>
+                      {tl('growth')}
+                      {/* Tank-gated pace, not a promise (03 §1.2) — hence "~". */}
+                      {(() => {
+                        const eta = readyInText(selectedPlot, tl('readyIn'));
+                        return eta ? ` • ${eta}` : '';
+                      })()}
+                    </span>
+                    <span>{selectedPlot.stageProgress}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-surface-container-lowest overflow-hidden">
+                    <div
+                      className="h-full bg-status-success transition-all"
+                      style={{ width: `${selectedPlot.stageProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-2xl lg:max-w-5xl flex items-stretch gap-2">
+            {/* Water gauge — tappable: refills the one shared tank (see refillWell) */}
+            <button
+              onClick={() => {
+                triggerCelebrate(-1, 'water');
+                // refillWell reports its own outcome (+N L for M Pula, or the
+                // failure) — don't stack a second toast on top of it.
+                refillWell();
+              }}
+              disabled={!hasTank || waterLevel >= maxWater}
+              aria-label={tl('pumpWell')}
+              title={
+                hasTank ? (waterLevel >= maxWater ? tl('tankFull') : tl('pumpWell')) : tl('noTank')
+              }
+              className={`flex-1 min-w-0 flex items-center gap-2 bg-wood-dark border border-wood-border px-3 py-2 shadow-md active:scale-[0.99] disabled:cursor-not-allowed ${
+                celebrate?.id === -1 && celebrate.kind === 'water' ? 'animate-water' : ''
               }`}
             >
-              {hasTank ? `${waterLevel}L` : tl('noTank')}
-            </span>
-          </div>
-        </button>
-      </div>
+              <span className="text-sm leading-none">💧</span>
+              <div className="flex-1 h-2.5 bg-surface-container-lowest overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    hasTank ? 'bg-sky-blue' : 'bg-status-error/60'
+                  }`}
+                  style={{ width: `${hasTank ? waterPercent : 0}%` }}
+                />
+              </div>
+              <span
+                className={`font-mono text-xs font-bold ${
+                  hasTank ? 'text-sky-blue' : 'text-status-error'
+                }`}
+              >
+                {hasTank ? `${waterLevel}L` : tl('noTank')}
+              </span>
+            </button>
 
-      {/* Granary Quick View */}
-      <button
-        onClick={() => setActiveNav('Inventory')}
-        aria-label={tl('granary')}
-        className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-20 bg-wood-dark/90 px-4 py-2 border border-wood-border shadow-md flex items-center gap-3 active:scale-95"
-      >
-        <span className="font-mono text-[11px] text-cream-surface/90">{tl('granary')}</span>
-        <span className="font-mono text-[11px] text-cream-surface">🌾 {granarySorghum}</span>
-        <span className="font-mono text-[11px] text-cream-surface">🌽 {granaryMaize}</span>
-        <span className="font-mono text-[11px] text-cream-surface">🥚 {granaryEggs}</span>
-      </button>
+            {/* Harvest all — there is deliberately no "water all": the tank is
+                shared, so the gauge above *is* the batch control. */}
+            <button
+              onClick={() => {
+                triggerCelebrate(0, 'harvest');
+                handleQuickHarvest();
+              }}
+              disabled={readyCount === 0}
+              aria-label={tl('harvestAll')}
+              title={tl('harvestAll')}
+              className={`relative flex-none flex items-center gap-2 bg-primary-container text-on-primary-container border border-primary px-3 sm:px-4 py-2 font-mono text-xs uppercase font-bold shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${
+                celebrate?.id === 0 && celebrate.kind === 'harvest' ? 'animate-harvest' : ''
+              }`}
+            >
+              <span className="text-base leading-none">🌾</span>
+              <span className="whitespace-nowrap">{tl('harvestAll')}</span>
+              {readyCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 bg-gold-currency text-wood-dark font-mono text-[10px] font-bold flex items-center justify-center">
+                  {readyCount}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Animal action sheet — Feed / Pet / Collect */}
       {selectedAnimal && !showBuyAnimals && (

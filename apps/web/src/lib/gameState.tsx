@@ -299,6 +299,8 @@ export interface WelcomeBackSummary {
   seasonChanged: boolean;
   newSeason: string | null;
   weather: string | null;
+  /** Botho credited for whole missed days (03 §9.4 catch-up) — 0 when none. */
+  bothoCatchUp: number;
 }
 
 /** A farm animal as returned by GET /farms/:id/livestock (03 §5). */
@@ -385,6 +387,10 @@ export interface GameState {
   /** Non-null once per session when the offline simulation had something to report (09 §9). */
   welcomeBack: WelcomeBackSummary | null;
   dismissWelcomeBack: () => void;
+  /** The next land-ladder rung (C15), or null when maxed. */
+  nextLand: { plots: number; costPula: number } | null;
+  /** Buy the next land-ladder rung (batched tier; the server grants the plots). */
+  buyPlot: () => void;
   activeNav: string;
   setActiveNav: (nav: string) => void;
   farmId: string | null;
@@ -476,6 +482,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [currentDay, setCurrentDay] = useState(1);
   const [weather, setWeather] = useState('clear');
   const [welcomeBack, setWelcomeBack] = useState<WelcomeBackSummary | null>(null);
+  const [nextLand, setNextLand] = useState<{ plots: number; costPula: number } | null>(null);
   // Once-per-session latch: refreshFarmData runs on every poll/action, but the
   // welcome-back sheet must appear only on the first load that carries news.
   const welcomeBackShownRef = useRef(false);
@@ -570,6 +577,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           };
           plots: ServerPlot[];
           simulation?: WelcomeBackSummary | null;
+          nextLand?: { plots: number; costPula: number } | null;
         }>('GET', '/farms/current'),
         apiFetch<MarketPriceView[]>('GET', '/market/prices').catch(() => null),
         apiFetch<MarketEventView[]>('GET', '/market/events').catch(() => []),
@@ -595,6 +603,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setSeason(fd.farm.season || 'Spring');
         setCurrentDay(fd.farm.currentDay || 1);
         setWeather(fd.farm.weather || 'clear');
+        // C15 — the next land rung, quoted from the server row, never recomputed.
+        setNextLand(fd.nextLand ?? null);
 
         // Welcome-back sheet (09 §9): the server ran the offline simulation
         // and attached a summary — show it once per session, not per refresh.
@@ -1163,6 +1173,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [farmId, showToast, refreshFarmData],
   );
 
+  /**
+   * C15 — buy the next land-ladder rung as a batch (4→8 →12 →20). The server
+   * resolves the rung and grants the plots; the client passes no number at all.
+   */
+  const buyPlot = useCallback(async () => {
+    if (!farmId) return;
+    try {
+      const result = await apiFetch<{ plotCount: number; tierCost: number }>(
+        'POST',
+        '/farms/current/plots/purchase',
+        {},
+      );
+      showToast(
+        'Land Expanded',
+        `The farm now holds ${result.plotCount} plots — ${result.tierCost} Pula.`,
+        '🏡',
+        'success',
+      );
+      await refreshFarmData();
+    } catch (err) {
+      // Server explains: maxed out, or short on Pula.
+      const msg = err instanceof Error ? err.message : 'Could not buy the plots.';
+      showToast('Land Failed', msg, '⚠️', 'error');
+    }
+  }, [farmId, showToast, refreshFarmData]);
+
   // ============================================================
   // Market actions (real API)
   // ============================================================
@@ -1364,6 +1400,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         constructBuilding,
         maintainBuilding,
         upgradeBuilding,
+        nextLand,
+        buyPlot,
 
         inventory,
         selectedItem,
