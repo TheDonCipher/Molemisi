@@ -11,7 +11,7 @@ import {
   AvailableBuilding,
 } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
-import { isSeedInSeason, type CropId } from '@molemisi/game-config';
+import { isSeedInSeason, getCropConfig, type CropId } from '@molemisi/game-config';
 import { PixelIcon } from '@/components/PixelIcon';
 
 const SEED_OPTIONS = [
@@ -211,11 +211,11 @@ function BuildingIcon({ type, size }: { type: string; size: number }) {
  * Growth-stage art for a plot.
  *
  * `assets/sprites/crops/<crop>/stage_N.png` exists for every crop, but the
- * counts differ (herbs has 3, maize 5, watermelon 6), so the ideal index is
+ * counts differ (every crop has 5 stages except watermelon, which has 6), so the ideal index is
  * clamped and then *stepped down* on a load error. When even stage_0 is missing
  * the emoji the server sent is the honest fallback.
  *
- * The bucket is progress/20 rather than the server's cosmetic `growthStage`, so
+ * Art walks the crop's own sprite stages (CropConfig.spriteStages) by progress, not the server's cosmetic `growthStage`, so
  * art follows the same hour-based number the progress bar shows.
  */
 function CropSprite({
@@ -229,7 +229,8 @@ function CropSprite({
   emoji: string;
   size?: number;
 }) {
-  const maxIndex = Math.min(4, Math.floor(stageProgress / 20));
+  const stages = getCropConfig(cropType ?? '')?.spriteStages ?? 5;
+  const maxIndex = Math.min(stages - 1, Math.floor((stageProgress * stages) / 100));
   // How many stages to walk down after failures; reset when the crop or its
   // growth bucket changes (a new planting must start from the ideal sprite).
   const [step, setStep] = useState(0);

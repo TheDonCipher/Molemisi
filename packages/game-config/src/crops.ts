@@ -52,6 +52,13 @@ export interface CropConfig {
   waterPerHour: number;
   thirst: ThirstRating;
   spriteSheet: string;
+  /**
+   * Number of growth-stage sprite files on disk for this crop:
+   * `stage_0.png` … `stage_{spriteStages-1}.png`. Drives `CropSprite` so art
+   * follows each crop's real stage count instead of a hardcoded 5. Every crop
+   * has 5 except watermelon (6 — its `stage_5` is the final swelling).
+   */
+  spriteStages: number;
   seedSprite: string;
   productSprite: string;
   /**
@@ -75,6 +82,7 @@ export interface CropConfig {
 export const CROPS: Record<CropId, CropConfig> = {
   sorghum: {
     id: 'sorghum',
+    spriteStages: 5,
     name: 'Sorghum',
     setswana: 'Mabele',
     description: 'The grain that carries a household through the dry months. Asks almost nothing of the tank.',
@@ -91,6 +99,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   millet: {
     id: 'millet',
+    spriteStages: 5,
     name: 'Millet',
     setswana: 'Lebelebele',
     description: 'Quick, hardy, and out of the ground before anything else. The beginner\'s friend.',
@@ -107,6 +116,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   maize: {
     id: 'maize',
+    spriteStages: 5,
     name: 'Maize',
     setswana: 'Mmidi',
     description: 'A heavy feeder. Big yields, but it will drink the tank dry if you let it.',
@@ -123,6 +133,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   cowpeas: {
     id: 'cowpeas',
+    spriteStages: 5,
     name: 'Cowpeas',
     setswana: 'Dinawa',
     description: 'A modest drinker that gives the soil something back. Quietly reliable.',
@@ -139,6 +150,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   tomatoes: {
     id: 'tomatoes',
+    spriteStages: 5,
     name: 'Tomatoes',
     setswana: 'Tamati',
     description: 'The best of the one-day crops, if you can keep up with its thirst.',
@@ -155,6 +167,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   watermelon: {
     id: 'watermelon',
+    spriteStages: 6,
     name: 'Watermelon',
     setswana: 'Legapu',
     description: 'Two days, and a tank and a half. Plant it in the rains or not at all.',
@@ -171,6 +184,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   groundnuts: {
     id: 'groundnuts',
+    spriteStages: 5,
     name: 'Groundnuts',
     setswana: 'Manoko',
     description: 'Two days under the soil, and it barely drinks. The dry season\'s backbone.',
@@ -187,6 +201,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   sesame: {
     id: 'sesame',
+    spriteStages: 5,
     name: 'Sesame',
     setswana: 'Sesame',
     description: 'Patient, sparing with water, and worth the wait when the price is up.',
@@ -203,6 +218,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   pepper: {
     id: 'pepper',
+    spriteStages: 5,
     name: 'Pepper',
     setswana: 'Pepere',
     description: 'Two days of heat and water for a crop that pays like nothing else in Phane.',
@@ -219,6 +235,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   herbs: {
     id: 'herbs',
+    spriteStages: 5,
     name: 'Herbs',
     setswana: 'Ditlhare tsa Setso',
     description: 'Traditional medicine, gathered leaf by leaf. Slow, and never cheap.',
@@ -235,6 +252,7 @@ export const CROPS: Record<CropId, CropConfig> = {
   },
   morula: {
     id: 'morula',
+    spriteStages: 5,
     name: 'Morula',
     setswana: 'Morula',
     description:
