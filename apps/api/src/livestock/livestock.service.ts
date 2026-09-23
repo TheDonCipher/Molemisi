@@ -7,7 +7,7 @@ import {
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import { InventoryService } from '../inventory/inventory.service';
-import { getAnimalConfig, PRODUCT_ITEM } from '@molemisi/game-config';
+import { getAnimalConfig, PRODUCT_ITEM, MANURE_PER_COLLECT } from '@molemisi/game-config';
 
 interface LivestockRow {
   id: string;
@@ -202,7 +202,7 @@ export class LivestockService {
     farmId: string,
     userId: string,
     animalId: string,
-  ): Promise<{ productType: string; quantity: number; xpGained: number }> {
+  ): Promise<{ productType: string; quantity: number; xpGained: number; byproduct: { slug: string; quantity: number } }> {
     const adminClient = this.supabaseService.getAdminClient();
 
     await this.verifyFarmOwnership(farmId, userId);
@@ -238,7 +238,14 @@ export class LivestockService {
       throw new BadRequestException(`No inventory item for product '${config.productType}'`);
     }
     const playerId = await this.inventory.resolvePlayerId(farmId);
-    await this.inventory.addItem(playerId, farmId, itemSlug, config.productQuantity);
+    // G1 — the muck-out: every collect also brings manure (03 §5). Product and
+    // byproduct are granted in ONE combined slot check, so a store that cannot
+    // take both fails the whole collect (nothing duplicated on retry, nothing
+    // dropped — G4's invariant, extended to the byproduct).
+    await this.inventory.addItems(playerId, farmId, [
+      { slug: itemSlug, qty: config.productQuantity },
+      { slug: 'manure', qty: MANURE_PER_COLLECT },
+    ]);
 
     const now = new Date().toISOString();
 
@@ -266,6 +273,7 @@ export class LivestockService {
       productType: config.productType,
       quantity: config.productQuantity,
       xpGained: 8,
+      byproduct: { slug: 'manure', quantity: MANURE_PER_COLLECT },
     };
   }
 

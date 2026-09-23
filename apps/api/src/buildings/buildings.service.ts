@@ -255,7 +255,8 @@ export class BuildingsService {
    * Pula and is charged through the wallet instead, so it is filtered out here.
    */
   private buildCostMaterials(cost: BuildCost): MaterialNeed[] {
-    return (['poleto', 'thapo', 'setena'] as const)
+    // G6 — thatch joined the BuildCost columns (storage upgrades, the kraal).
+    return (['poleto', 'thapo', 'setena', 'thatch'] as const)
       .filter((slug) => (cost[slug] ?? 0) > 0)
       .map((slug) => ({ slug, qty: cost[slug] as number }));
   }
@@ -282,9 +283,9 @@ export class BuildingsService {
    * number (02 §6) — with `maintenanceMaterials.currency` added on top, and
    * doubled for a building allowed to rot all the way into DISABLED.
    *
-   * The materials are the whole point of the system (03 §3.5): Poleto, Thapo
-   * and Setena exist mainly as building inputs, and without a recurring sink
-   * they are dead content within weeks.
+   * The materials are the whole point of the system (03 §3.5): Poleto, Thapo,
+   * Setena and (G6) Thatch exist mainly as building inputs, and without a
+   * recurring sink they are dead content within weeks.
    */
   private maintenanceQuote(
     config: NonNullable<ReturnType<typeof getBuildingConfig>>,

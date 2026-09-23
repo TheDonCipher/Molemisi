@@ -42,6 +42,7 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
   // Materials
   wood: 'material_wood',
   acacia_wood: 'material_wood',
+  hardwood: 'material_wood',
   stone: 'material_stone',
   granite_stone: 'material_stone',
   reeds: 'material_reeds',

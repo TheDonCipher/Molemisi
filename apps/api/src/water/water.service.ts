@@ -129,6 +129,11 @@ export class WaterService {
           cropElapsed,
           demand: cfg.waterPerHour * cropElapsed,
           prevProgress: Number(row.growth_progress_hours ?? 0),
+          // G1 — fertilizer state rides along from the same SELECT (*).
+          fertilizerActive: row.fertilizer_active === true,
+          fertilizerBonus: Number(row.fertilizer_bonus ?? 0),
+          fertilizedUntilStage:
+            row.fertilized_until_stage == null ? null : Number(row.fertilized_until_stage),
         };
       });
       const totalDemand = demands.reduce((s, d) => s + d.demand, 0);
@@ -146,7 +151,31 @@ export class WaterService {
 
       for (const d of demands) {
         const advancedHours = factor * d.cropElapsed;
-        const newProgress = d.prevProgress + advancedHours;
+
+        // G1 (01 §Fertilization) — an active dose adds `bonus` to the progress it
+        // is eligible for, only inside its stage window. The window was computed
+        // at apply time: `fertilized_until_stage` = the stage the dose was applied
+        // in + stages − 1, expressed as bands of growthHours / 3. The dose retires
+        // the moment an interval runs past its window.
+        let bonusHours = 0;
+        let fertilizerSpent = false;
+        if (d.fertilizerActive) {
+          const until = d.fertilizedUntilStage;
+          const stageBefore = Math.min(
+            3,
+            Math.floor((d.prevProgress / d.cfg.growthHours) * 3 + 1e-9),
+          );
+          if (until == null || stageBefore > until) {
+            fertilizerSpent = true; // window already closed — retire the flag lazily
+          } else {
+            const windowEnd = ((until + 1) / 3) * d.cfg.growthHours;
+            const eligible = Math.min(advancedHours, Math.max(0, windowEnd - d.prevProgress));
+            bonusHours = d.fertilizerBonus * eligible;
+            fertilizerSpent = advancedHours > eligible + 1e-9; // ran past the window
+          }
+        }
+
+        const newProgress = d.prevProgress + advancedHours + bonusHours;
         const ready = newProgress >= d.cfg.growthHours;
         const stage = Math.min(3, Math.floor((newProgress / d.cfg.growthHours) * 3 + 1e-9));
         const newState = ready ? 'READY' : newProgress > 0 ? 'GROWING' : 'PLANTED';
@@ -165,6 +194,7 @@ export class WaterService {
             // hydration is display-only now: 1.0 if it drank this tick, 0 if the tank
             // was dry. It no longer gates growth.
             hydration: factor > 0 ? 1.0 : 0.0,
+            ...(d.fertilizerActive ? { fertilizer_active: !fertilizerSpent } : {}),
             updated_at: now.toISOString(),
           })
           .eq('id', d.id);

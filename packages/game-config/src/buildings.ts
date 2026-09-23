@@ -23,6 +23,8 @@ export interface BuildCost {
   poleto?: number;
   thapo?: number;
   setena?: number;
+  /** G6 — thatch is a building input (storage upgrades, the kraal), not a dead-end. */
+  thatch?: number;
 }
 
 export interface BuildingConfig {
@@ -60,7 +62,14 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     baseCost: { currency: 0 },
     // Not fixed in 02 §6.5 (which gives slot caps and land costs only). Chosen to sit
     // far below the land ladder so storage never competes with land for Pula.
-    upgradeCosts: [{ currency: 2500 }, { currency: 12000 }],
+    // G6 — thatch: the shed and storehouse are thatch-roofed, which is what turns
+    // foraged reeds into a recurring building sink (03 §3.5 "re-ratching thatch").
+    // `storageUpgradeCost` still reports the Pula line only; the materials are
+    // charged by buildings.service alongside it, exactly like the Workshop's.
+    upgradeCosts: [
+      { currency: 2500, thatch: 6 },
+      { currency: 12000, thatch: 12 },
+    ],
     upgradeTimes: [240, 480],
     constructionTime: 0,
     capacity: 24,
@@ -98,7 +107,8 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     setswana: 'Lesaka',
     description: 'A thorn-branch enclosure. Keeps the livestock in and the jackals out.',
     unlock: null,
-    baseCost: { currency: 1200, poleto: 6, thapo: 2 },
+    // G6 — a kraal roof is re-thatched as often as its poles are reset.
+    baseCost: { currency: 1200, poleto: 6, thapo: 2, thatch: 4 },
     upgradeCosts: [],
     upgradeTimes: [],
     constructionTime: 240,

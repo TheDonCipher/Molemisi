@@ -25,6 +25,8 @@ describe('CropsService', () => {
   const mockInventoryService = {
     resolvePlayerId: jest.fn().mockResolvedValue('user-1'),
     addItem: jest.fn().mockResolvedValue({ added: 0, overflow: 0 }),
+    // G1 — fertilize consumes one manure through the canonical store.
+    removeItem: jest.fn().mockResolvedValue(undefined),
   };
 
   // P4: the tank gates growth, so every read path advances the farm first.
@@ -333,6 +335,99 @@ describe('CropsService', () => {
   // ========================================
   // Quality Calculation
   // ========================================
+  describe('fertilizePlot (G1 — 01 §Fertilization)', () => {
+    const plantedPlot = (over: Record<string, unknown> = {}) => ({
+      id: 'p1',
+      farm_id: 'f1',
+      state: 'GROWING',
+      slot_index: 0,
+      crop_instances: {
+        id: 'c1',
+        crop_type: 'sorghum',
+        growth_stage: 0,
+        growth_progress_hours: 0,
+        fertilizer_active: false,
+        ...over,
+      },
+    });
+
+    it('consumes one manure and arms the stage-bounded bonus', async () => {
+      const { client, calls } = makeFakeSupabase([
+        { data: plantedPlot(), error: null }, // loadPlot
+        { data: null, error: null }, // the arming update
+      ]);
+      mockSupabaseService.getAdminClient.mockReturnValue(client);
+
+      const res = await service.fertilizePlot('f1', 'p1', 'manure');
+
+      expect(mockInventoryService.removeItem).toHaveBeenCalledWith('user-1', 'manure', 1);
+      const arm = calls.find((c) => c.method === 'update' && c.table === 'crop_instances');
+      if (!arm) throw new Error('no crop_instances update written');
+      expect(arm.args[0]).toMatchObject({
+        fertilizer_active: true,
+        fertilizer_bonus: 0.2,
+        fertilized_until_stage: 0,
+      });
+      expect(res).toEqual({
+        plotId: 'p1',
+        fertilizerType: 'manure',
+        item: 'manure',
+        bonus: 0.2,
+        untilStage: 0,
+      });
+    });
+
+    it('rejects a fertilizer type that has no item yet, before touching the database', async () => {
+      const { client, calls } = makeFakeSupabase([]);
+      mockSupabaseService.getAdminClient.mockReturnValue(client);
+
+      await expect(service.fertilizePlot('f1', 'p1', 'compost')).rejects.toThrow(
+        'not available',
+      );
+      expect(calls).toHaveLength(0);
+      expect(mockInventoryService.removeItem).not.toHaveBeenCalled();
+    });
+
+    it('rejects a plot with no crop', async () => {
+      const { client } = makeFakeSupabase([
+        { data: { id: 'p1', farm_id: 'f1', state: 'EMPTY', crop_instances: null }, error: null },
+      ]);
+      mockSupabaseService.getAdminClient.mockReturnValue(client);
+
+      await expect(service.fertilizePlot('f1', 'p1', 'manure')).rejects.toThrow(
+        'Plot has no crop to fertilize',
+      );
+      expect(mockInventoryService.removeItem).not.toHaveBeenCalled();
+    });
+
+    it('rejects a plot that is already fertilized — one dose at a time', async () => {
+      const { client } = makeFakeSupabase([
+        {
+          data: plantedPlot({ fertilizer_active: true, fertilizer_bonus: 0.2 }),
+          error: null,
+        },
+      ]);
+      mockSupabaseService.getAdminClient.mockReturnValue(client);
+
+      await expect(service.fertilizePlot('f1', 'p1', 'manure')).rejects.toThrow(
+        'already fertilized',
+      );
+      expect(mockInventoryService.removeItem).not.toHaveBeenCalled();
+    });
+
+    it('refuses to fertilize a crop that is already ready to harvest', async () => {
+      const { client } = makeFakeSupabase([
+        { data: plantedPlot({ growth_stage: 3, growth_progress_hours: 18 }), error: null },
+      ]);
+      mockSupabaseService.getAdminClient.mockReturnValue(client);
+
+      await expect(service.fertilizePlot('f1', 'p1', 'manure')).rejects.toThrow(
+        'ready to harvest',
+      );
+      expect(mockInventoryService.removeItem).not.toHaveBeenCalled();
+    });
+  });
+
   describe('Quality Calculation', () => {
     it('health 1.0 → excellent quality', async () => {
       // We can verify this by testing the harvest result quality

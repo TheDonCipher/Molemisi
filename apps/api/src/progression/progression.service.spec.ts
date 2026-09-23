@@ -21,7 +21,8 @@ import {
  *  - `GET /progression` carries no level and no XP anywhere (D5/C12).
  *  - The Elder's line CHANGES when tank / weather / season change — it is read
  *    from real state, not a dialogue tree (03 §7).
- *  - Deep Bushveld reports `coming_soon` at Botho >= 300 rather than a 403.
+ *  - An unlocked scene with content (Deep Bushveld since G5) reports `hasContent`,
+ *    never a 403; an empty one would report `coming_soon` instead (05 §P5).
  */
 describe('ProgressionService — P5', () => {
   let service: ProgressionService;
@@ -172,14 +173,15 @@ describe('ProgressionService — P5', () => {
   // Journal
   // ==================================================================
   describe('journalProgress', () => {
-    it('counts only scenes that actually have something to find', async () => {
+    it('counts a page per scene that has something to find (G5 — all four now do)', async () => {
       const { totalPages } = await service.journalProgress('user-1');
 
-      // Deep Bushveld ships with zero hotspots (04 §11), so it is not a page —
-      // otherwise every player would read "1 of 4 complete" before doing anything.
+      // The count is always derived from config, never hard-coded. Before G5,
+      // Deep Bushveld had zero hotspots and was deliberately not a page (04 §11);
+      // the scene shipped with content, so every scene counts now.
       const withFinds = SCENES.filter((s) => findsForScene(s.slug).length > 0);
       expect(totalPages).toBe(withFinds.length);
-      expect(totalPages).toBeLessThan(SCENES.length);
+      expect(withFinds).toHaveLength(SCENES.length);
     });
 
     it('completes a page only when every distinct find in it is discovered', async () => {
@@ -372,15 +374,16 @@ describe('ProgressionService — P5', () => {
       });
     });
 
-    it('unlocks at 300 Botho and says coming_soon rather than 403 (05 §P5)', async () => {
+    it('unlocks at 300 Botho and reports its content (G5 — hotspots shipped)', async () => {
       mockWalletService.getBotho.mockResolvedValueOnce(BOTHO_THRESHOLDS.DEEP_BUSHVELD);
 
-      // It is unlocked, but ships with no hotspots — so the client is told to
-      // show "coming soon". A 403 would tell the player nothing.
+      // Before G5 this scene had no hotspots and the client was told
+      // "coming soon". The hotspots shipped, so `hasContent` is now true —
+      // and a 403 would still be wrong (05 §P5).
       await expect(deepBushveld()).resolves.toMatchObject({
         unlocked: true,
-        comingSoon: true,
-        hasContent: false,
+        comingSoon: false,
+        hasContent: true,
       });
     });
 

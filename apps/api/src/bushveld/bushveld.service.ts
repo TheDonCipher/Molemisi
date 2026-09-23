@@ -369,7 +369,8 @@ export class BushveldService {
 
   /**
    * Daily Sparkle: lazily ensure one row exists for `now`'s date, choosing from
-   * all configured hotspots (Deep Bushveld has none, so it is excluded naturally).
+   * all configured hotspots — every scene with content participates, Deep
+   * Bushveld included (G5).
    * The per-date PK guarantees exactly one sparkle per day (04 §8). No cron needed.
    */
   private async todaySparkle(now: Date): Promise<string | null> {

@@ -106,9 +106,9 @@ Show it as **six pips** at the top of the scene, filling visibly. Do not hide it
 | Open Bush | Naga e Bulegileng | From the start | Yes |
 | Riverbank | Fa Nokeng | From the start | Yes |
 | Rocky Outcrop | Matlapa a Kwa Godimo | From the start | Yes |
-| Deep Bushveld | Botho jwa Naga | Botho ≥ 300 | **No.** Row exists, zero Hotspots, client shows "coming soon" |
+| Deep Bushveld | Botho jwa Naga | Botho ≥ 300 | Yes — four Hotspots (G5, shipped 2026-09-23); background art still pending |
 
-Deep Bushveld's gate is a threshold check on the scene row itself — no separate progression system. Its content ships post-MVP (see `01 §7`).
+Deep Bushveld's gate is a threshold check on the scene row itself — no separate progression system. Content shipped 2026-09-23 (batch 2, G5): four hotspots including `hardwood`; the scene's background art is still pending.
 
 **Riverbank is the economic heart of the Bushveld.** Clay and palm fiber feed Setena and Thapo, and Thapo is the best profit-per-slot-minute in the craft chain (`02 §6.3`). Its two material tells should therefore be generous relative to their cost, and its Kagiso budget is the one players will argue about.
 
@@ -385,4 +385,4 @@ The client never supplies quantity, rarity or reward. Ever.
 
 Every scene, hotspot, loot table, cost, badge and journal line lives in **config and seed**, not code (principle 6 in `01 §4`). Adding a find must not require a deploy of application logic.
 
-Seed requirements for v1: three scenes, 5–8 hotspots each, all journal lines, one seasonal hotspot with `active_months = [4, 12]`, Deep Bushveld's row present with zero hotspots.
+Seed requirements for v1: three scenes, 5–8 hotspots each, all journal lines, one seasonal hotspot with `active_months = [4, 12]`, Deep Bushveld's row present (four hotspots since batch 2 — G5).

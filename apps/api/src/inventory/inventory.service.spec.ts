@@ -101,6 +101,77 @@ describe('InventoryService — storage slot cap (02 §6.5, R7)', () => {
   });
 });
 
+describe('InventoryService.addItems — one combined slot check (G1/G4)', () => {
+  it('refuses BOTH grants before any write when the new types together exceed the cap', async () => {
+    // Pre-check: wood and stone both missing -> 2 fresh types; 23 used + 2 > 24.
+    const usedFull: FakeResult = {
+      data: Array.from({ length: 23 }, () => ({ item_definitions: { is_tool: false } })),
+      error: null,
+    };
+    const { service } = buildService([
+      DEF, // wood itemDefId (pre-check)
+      NO_ROW, // wood not held
+      DEF, // stone itemDefId
+      NO_ROW, // stone not held
+      usedFull, // getUsedSlots -> 23
+      { data: { level: 1 }, error: null }, // storage tier 1 -> cap 24
+      { data: { user_id: 'u1' }, error: null }, // farms (cap lookup)
+      { data: { subscription_status: null }, error: null }, // wallet (Guild check)
+    ]);
+
+    await expect(
+      service.addItems('p1', 'f1', [
+        { slug: 'wood', qty: 2 },
+        { slug: 'stone', qty: 2 },
+      ]),
+    ).rejects.toThrow('Storage is full');
+  });
+
+  it('grants every entry when the combined types fit', async () => {
+    const fiveUsed: FakeResult = {
+      data: Array.from({ length: 5 }, () => ({ item_definitions: { is_tool: false } })),
+      error: null,
+    };
+    const level1: FakeResult = { data: { level: 1 }, error: null };
+    const farm: FakeResult = { data: { user_id: 'u1' }, error: null };
+    const wallet: FakeResult = { data: { subscription_status: null }, error: null };
+    const write: FakeResult = { data: null, error: null };
+    const { service } = buildService([
+      // addItems pre-check: sorghum held, wood missing -> 1 fresh type.
+      DEF,
+      { data: { id: 'r1' }, error: null }, // sorghum row exists
+      DEF,
+      NO_ROW, // wood missing
+      fiveUsed,
+      level1,
+      farm,
+      wallet,
+      // addItem(sorghum): itemDefId -> existing -> update
+      DEF,
+      { data: { id: 'r1', quantity: 5 }, error: null },
+      write,
+      // addItem(wood): itemDefId -> existing -> slot re-check -> insert
+      DEF,
+      NO_ROW,
+      fiveUsed,
+      level1,
+      farm,
+      wallet,
+      write,
+    ]);
+
+    const res = await service.addItems('p1', 'f1', [
+      { slug: 'sorghum', qty: 10 },
+      { slug: 'wood', qty: 2 },
+    ]);
+
+    expect(res).toEqual([
+      { added: 10, overflow: 0 },
+      { added: 2, overflow: 0 },
+    ]);
+  });
+});
+
 describe('InventoryService — tools are equipment, not storage (F15)', () => {
   it('owns a tool once and never consumes a storage slot', async () => {
     const { service, from } = buildService([

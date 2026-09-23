@@ -94,7 +94,7 @@ const fmtCost = (c) => {
   if (!c) return '—';
   const parts = [];
   if (c.currency) parts.push(`P${c.currency}`);
-  for (const m of ['poleto', 'thapo', 'setena']) if (c[m]) parts.push(`${c[m]} ${m}`);
+  for (const m of ['poleto', 'thapo', 'setena', 'thatch']) if (c[m]) parts.push(`${c[m]} ${m}`);
   return parts.join(' + ') || '—';
 };
 for (const b of Object.values(BUILDINGS)) {

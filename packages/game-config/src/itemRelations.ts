@@ -64,6 +64,15 @@ export function sourcesForItem(slug: string): ItemSource[] {
     }
   }
 
+  // G1 — manure is not any one animal's "product": it is the byproduct of every
+  // animal's muck-out (03 §5 — "produce eggs, milk and manure"), granted alongside
+  // the product on every collect.
+  if (slug === 'manure') {
+    for (const animal of Object.values(ANIMALS)) {
+      sources.push({ kind: 'raise', animalId: animal.id });
+    }
+  }
+
   // Bushveld materials come from hotspots. Seasonal loot carries its real months
   // (04 §9.3); everyday loot is never tagged seasonal.
   for (const hotspot of ALL_HOTSPOTS) {

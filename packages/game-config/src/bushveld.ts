@@ -406,6 +406,30 @@ const RIVERBANK: HotspotDef[] = [
     ],
   },
   {
+    // G7 — wood's second home. Every plank used to come from Open Bush alone;
+    // the river lays its own deadfall along the bank after the floods.
+    id: 'rv_driftwood',
+    scene: 'riverbank',
+    tell: 'Driftwood on the bank',
+    x: 10,
+    y: 70,
+    sprite: 'sprites/hotspots/open_bush_deadfall.png',
+    kagisoCost: 1,
+    loot: [
+      {
+        item: 'wood',
+        discovery: 'driftwood',
+        name: 'Wood',
+        setswana: 'Dikgong',
+        rarity: 'common',
+        weight: 8,
+        qty: { min: 2, max: 4 },
+        journal:
+          'The river gives back what the bank gives up in the floods. Pale, dry driftwood — good dikgong that never hurt a living tree.',
+      },
+    ],
+  },
+  {
     id: 'rv_ripple',
     scene: 'riverbank',
     tell: 'A ripple near the bank',
@@ -653,9 +677,110 @@ const ROCKY: HotspotDef[] = [
 
 export const HOTSPOTS: HotspotDef[] = [...OPEN_BUSH, ...RIVERBANK, ...ROCKY];
 
-/* Deep Bushveld ships with ZERO hotspots — the row exists, the client shows
- * "coming soon" (04 §5). Its content is post-MVP. */
-export const DEEP_BUSHVELD_HOTSPOTS: HotspotDef[] = [];
+/* Deep Bushveld — G5 (2026-09-23). This was zero hotspots ("ships post-MVP",
+ * 04 §5); the scene now ships content the moment Botho 300 opens it, and
+ * `hardwood` — the densest, most valuable timber in the game — grows nowhere
+ * else. Scene background art is still pending (restorationAssets stays empty);
+ * hotspots reuse existing sprites until it lands. */
+export const DEEP_BUSHVELD_HOTSPOTS: HotspotDef[] = [
+  {
+    id: 'db_deadfall',
+    scene: 'deep_bushveld',
+    tell: 'A great deadfall',
+    x: 24,
+    y: 62,
+    sprite: 'sprites/hotspots/open_bush_deadfall.png',
+    kagisoCost: 1,
+    loot: [
+      {
+        item: 'wood',
+        discovery: 'deep_wood',
+        name: 'Wood',
+        setswana: 'Dikgong',
+        rarity: 'common',
+        weight: 8,
+        qty: { min: 2, max: 4 },
+        journal:
+          'The old trees fall where they stood. Mogolo says the deep wood keeps its own weather — you hear the silence before you hear anything else.',
+      },
+      {
+        item: 'hardwood',
+        discovery: 'dikgong_tse_diropa',
+        name: 'Hardwood',
+        setswana: 'Dikgong tse Diropa',
+        rarity: 'uncommon',
+        weight: 6,
+        qty: { min: 1, max: 3 },
+        journal:
+          'This is the wood that outlives the house built from it. Dense, dark, slow — the deep bush does not hurry, and neither did the tree.',
+      },
+    ],
+  },
+  {
+    id: 'db_heartwood',
+    scene: 'deep_bushveld',
+    tell: 'An ancient heartwood stump',
+    x: 60,
+    y: 40,
+    sprite: 'sprites/hotspots/open_bush_deadfall.png',
+    kagisoCost: 1,
+    loot: [
+      {
+        item: 'hardwood',
+        discovery: 'Diropa',
+        name: 'Hardwood',
+        setswana: 'Dikgong tse Diropa',
+        rarity: 'common',
+        weight: 10,
+        qty: { min: 1, max: 3 },
+        journal:
+          'A stump thick with rings, older than the fence lines. Mogolo rests a hand on it and says some things are simply still here, waiting for you to notice.',
+      },
+    ],
+  },
+  {
+    id: 'db_kopje',
+    scene: 'deep_bushveld',
+    tell: 'A weathered kopje',
+    x: 36,
+    y: 72,
+    sprite: 'sprites/hotspots/rocky_outcrop_glint.png',
+    kagisoCost: 1,
+    loot: [
+      {
+        item: 'stone',
+        discovery: 'deep_granite',
+        name: 'Stone',
+        setswana: 'Matlapa',
+        rarity: 'common',
+        weight: 10,
+        qty: { min: 2, max: 4 },
+        journal:
+          'Older than the stories told about it. The deep kopje has watched more seasons than any elder has years.',
+      },
+    ],
+  },
+  {
+    id: 'db_spoor',
+    scene: 'deep_bushveld',
+    tell: 'A spoor in the dust',
+    x: 78,
+    y: 58,
+    sprite: 'sprites/hotspots/open_bush_tracks.png',
+    kagisoCost: 2,
+    loot: [
+      {
+        discovery: 'deep_spoor',
+        name: 'Leopard Spoor',
+        setswana: 'Ditoto tsa Tau',
+        rarity: 'rare',
+        weight: 3,
+        journal:
+          'A track pressed deep into the dust, still soft at the edges. Whatever made it is close, and it already knows you are here.',
+      },
+    ],
+  },
+];
 
 export function hotspotsForScene(scene: SceneSlug): HotspotDef[] {
   if (scene === 'deep_bushveld') return DEEP_BUSHVELD_HOTSPOTS;

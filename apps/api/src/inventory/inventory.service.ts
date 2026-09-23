@@ -205,6 +205,56 @@ export class InventoryService {
     return { added: toAdd, overflow: qty - toAdd };
   }
 
+  /**
+   * Add several entries under ONE combined slot-cap check (G1/G4).
+   *
+   * `addItem` remains the single writer; this front-loads the distinct-types
+   * pre-check so a multi-item grant (livestock collect = product + manure)
+   * fails *before any write* when the new types together exceed the cap —
+   * instead of landing the product and having the byproduct throw afterwards,
+   * which would duplicate the product on retry.
+   */
+  async addItems(
+    playerId: string,
+    farmId: string,
+    entries: { slug: string; qty: number }[],
+  ): Promise<AddResult[]> {
+    if (entries.length === 0) return [];
+
+    // Unknown slug fails before any write, same as addItem.
+    for (const e of entries) {
+      if (!getItemDef(e.slug)) throw new BadRequestException(`Unknown item: ${e.slug}`);
+    }
+
+    // Distinct non-tool types this grant would create for the first time.
+    const fresh: string[] = [];
+    for (const slug of [...new Set(entries.map((e) => e.slug))]) {
+      const def = getItemDef(slug);
+      if (def?.isTool) continue;
+      const { data } = await this.client()
+        .from('player_inventory')
+        .select('id')
+        .eq('player_id', playerId)
+        .eq('item_def_id', await this.itemDefId(slug))
+        .single();
+      if (!data) fresh.push(slug);
+    }
+
+    if (fresh.length > 0) {
+      const used = await this.getUsedSlots(playerId);
+      const cap = await this.getStorageCap(farmId);
+      if (used + fresh.length > cap) {
+        throw new BadRequestException('Storage is full — upgrade your storage or free a slot.');
+      }
+    }
+
+    const results: AddResult[] = [];
+    for (const e of entries) {
+      results.push(await this.addItem(playerId, farmId, e.slug, e.qty));
+    }
+    return results;
+  }
+
   /** Remove items; throws if the player does not hold enough. */
   async removeItem(playerId: string, slug: string, qty: number): Promise<void> {
     const itemDefId = await this.itemDefId(slug);

@@ -107,11 +107,15 @@ interface RecipeDef {
 `InventoryService` (P3). A *slot* is one distinct non-tool item type; the slot
 cap comes from the Storage building tier × Guild multiplier. `addItem` returns
 `{ added, overflow }` — overflow is reported, never silently dropped. `removeItem`
-deletes the row at zero. Livestock collection grants through `addItem` BEFORE
-the animal's timer resets, so a full store loses nothing (G4 — migration
-`20260923000031` backfilled the legacy rows, merging goat/cow milk into
-`milk`). Contracts check and deduct here too. The legacy `inventory` table
-holds nothing anymore and can be dropped in a later migration.
+deletes the row at zero. Livestock collection grants the product AND its manure
+byproduct through one `addItems` call — a single combined slot check — BEFORE
+the animal's timer resets, so a full store loses nothing and no retry can
+duplicate anything (G4/G1 — migration `20260923000031` backfilled the legacy
+rows, merging goat/cow milk into `milk`). Fertilize consumes `manure` here too
+and arms `crop_instances.fertilizer_active` / `fertilizer_bonus` /
+`fertilized_until_stage` (migration `20260923000034`). Contracts check and
+deduct here too. The legacy `inventory` table holds nothing anymore and can be
+dropped in a later migration.
 
 ## 3. Item identity rules
 
@@ -133,7 +137,7 @@ holds nothing anymore and can be dropped in a later migration.
 
 ## 4. Complete item catalogue
 
-Catalogue size: **41 items** (4 tools are equipment, not stored).
+Catalogue size: **42 items** (4 tools are equipment, not stored).
 
 ### DIPEO (11)
 
@@ -174,17 +178,18 @@ Catalogue size: **41 items** (4 tools are equipment, not stored).
 | `eggs` | Mae | Eggs | 30 | P5 | sell | Raise chicken | — | — |
 | `milk` | Mashi | Milk | 30 | P15 | sell | Raise goat<br>Raise cow | — | — |
 | `truffle` | Truffle ya Naga | Truffle | 30 | P50 | sell | Raise pig | — | — |
-| `manure` | Manyoro | Manure | 30 | P1 | sell | — *(see §13)* | — | — |
+| `manure` | Manyoro | Manure | 30 | P1 | sell | Raise chicken<br>Raise goat<br>Raise cow<br>Raise pig | — | — |
 
-### DITSHIMOLOGO TSA NAGENG (6)
+### DITSHIMOLOGO TSA NAGENG (7)
 
 | Slug | Setswana | English | Stack | Value | Intent | Sources | Used to make | Needed by |
 |---|---|---|---|---|---|---|---|---|
-| `wood` | Dikgong | Wood | 50 | P2 | craft | Forage open_bush/ob_deadfall<br>Forage open_bush/ob_setlhare_sa_phane | poleto | — |
-| `stone` | Matlapa | Stone | 50 | P3 | craft | Forage rocky_outcrop/ro_glint | setena | — |
+| `wood` | Dikgong | Wood | 50 | P2 | craft | Forage open_bush/ob_deadfall<br>Forage open_bush/ob_setlhare_sa_phane<br>Forage riverbank/rv_driftwood<br>Forage deep_bushveld/db_deadfall | poleto | — |
+| `hardwood` | Dikgong tse Diropa | Hardwood | 50 | P8 | craft | Forage deep_bushveld/db_deadfall<br>Forage deep_bushveld/db_heartwood | — | — |
+| `stone` | Matlapa | Stone | 50 | P3 | craft | Forage rocky_outcrop/ro_glint<br>Forage deep_bushveld/db_kopje | setena | — |
 | `clay` | Letsopa | Clay | 50 | P3 | craft | Forage riverbank/rv_clay | setena | — |
 | `palm_fiber` | Mokolwane | Palm Fiber | 50 | P4 | craft | Forage riverbank/rv_palm | thapo | — |
-| `thatch` | Lotlhaka | Thatch / Reeds | 50 | P3 | craft | Forage riverbank/rv_reeds | — | — |
+| `thatch` | Lotlhaka | Thatch / Reeds | 50 | P3 | craft | Forage riverbank/rv_reeds | — | storage (upgrade)<br>kraal (construction) |
 | `phane` | Phane | Mophane Worms | 50 | P10 | craft | Forage open_bush/ob_setlhare_sa_phane [Moranang & Sedimonthole] | — | — |
 
 ### DITSALO (3)
@@ -247,6 +252,7 @@ one-liner (03 §2.1); `lore` is the soul.
 | `truffle` | Go rekisa. Sell at the Co-op — chefs pay well for it. | The pig smells what the eye cannot see. A truffle is the bush keeping a secret for the patient. |
 | `manure` | Go nonotsha tshimo. Enriches the soil for planting. | Manyoro is not waste. It is next year’s harvest wearing rough clothes. |
 | `wood` | Go dira Poleto. For planks. | Dry dikgong from a deadfall, taken without hurting a living tree. The bush provides for those who look down. |
+| `hardwood` | Go rekisa. Dense deep-bush timber — the Co-op pays well. | Heartwood does not hurry. A tree stood a hundred seasons to carry this weight, and the grain remembers every dry year it survived. |
 | `stone` | Go dira Setena. For bricks — two clay, or clay and stone (F8). | The granite here is older than any story. It does not mind becoming a wall. |
 | `clay` | Go dira Setena. For bricks. | The riverbank gives up letsopa where the water bends. Good clay remembers the river in every brick. |
 | `palm_fiber` | Go dira Thapo. For rope. | Mokolwane twists into rope the way small words twist into news — strand by strand. |
@@ -275,7 +281,8 @@ Every item enters through exactly one of five source kinds (§2.2):
    (04 §1). Material finds yield 2–4 per gather; rarity weights shift with
    Kagiso, so scarcity is a decision, not a dice roll.
 4. **raise** — livestock products (§8), via the one explicit `productType →
-   slug` bridge.
+   slug` bridge, plus the `manure` byproduct every animal hands over at
+   collect (G1).
 5. **craft** — the five recipes (§6).
 
 ## 6. Crafting system
@@ -339,16 +346,16 @@ profit-per-slot-hour in the chain; Bupi from millet is a thin margin by design
 
 | Building | Setswana | Build | Upgrades | Maintenance (per 90d) |
 |---|---|---|---|---|
-| Storage | Polokelo | — | P2500 → P12000 | — (+P0) |
+| Storage | Polokelo | — | P2500 + 6 thatch → P12000 + 12 thatch | — (+P0) |
 | Jojo Tank | Tanka ya Metsi | P800 + 4 setena | — | 2 setena (+P60) |
-| Kraal | Lesaka | P1200 + 6 poleto + 2 thapo | — | 2 thapo (+P90) |
+| Kraal | Lesaka | P1200 + 6 poleto + 2 thapo + 4 thatch | — | 2 thapo (+P90) |
 | Farm Boundary | Legora | P1500 + 8 poleto + 3 thapo | — | 3 poleto (+P90) |
 | Workshop | Lefelo la Tiro | P600 + 4 poleto | P3000 + 6 poleto + 4 setena → P9000 + 10 poleto + 8 setena | — (+P45) |
 
 Total material sink if everything is built and upgraded: **34 poleto ·
-5 thapo · 18 setena**, plus a rolling **3 poleto + 2 thapo + 2 setena every
-90 days** of maintenance. That recurring demand is what keeps bushveld
-gathering relevant after the build-out is done.
+5 thapo · 18 setena · 22 thatch**, plus a rolling **3 poleto + 2 thapo + 2
+setena every 90 days** of maintenance. That recurring demand is what keeps
+bushveld gathering relevant after the build-out is done.
 
 Legacy ids (`well`, `barn`, `coop`, `goat_pen`, `paddock`, `pig_pen`, `mill`)
 alias to the v1 buildings so old database rows still resolve
@@ -389,6 +396,7 @@ Finds marked with qty are **materials** (land in inventory); finds marked ◈ ar
 | rv_clay | riverbank | clay · common · w10 · 2-4 | — | — |
 | rv_palm | riverbank | palm_fiber · common · w10 · 2-4 | — | — |
 | rv_reeds | riverbank | thatch · common · w10 · 2-4 | — | — |
+| rv_driftwood | riverbank | wood · common · w8 · 2-4 | — | — |
 | rv_ripple | riverbank | ◈ Catfish (common) | — | — |
 | rv_ripple_bright | riverbank | ◈ Kingfisher (uncommon)<br>◈ Otter (rare) | — | — |
 | rv_mud_tracks | riverbank | ◈ Waterbuck (uncommon)<br>◈ Heron (uncommon)<br>◈ Crocodile (rare) | — | — |
@@ -399,18 +407,25 @@ Finds marked with qty are **materials** (land in inventory); finds marked ◈ ar
 | ro_leopard | rocky_outcrop | ◈ Leopard (rare) | — | — |
 | ro_perch | rocky_outcrop | ◈ Raptor (uncommon) | — | — |
 | ro_aloe | rocky_outcrop | ◈ Aloe (common) | — | — |
+| db_deadfall | deep_bushveld | wood · common · w8 · 2-4<br>hardwood · uncommon · w6 · 1-3 | — | — |
+| db_heartwood | deep_bushveld | hardwood · common · w10 · 1-3 | — | — |
+| db_kopje | deep_bushveld | stone · common · w10 · 2-4 | — | — |
+| db_spoor | deep_bushveld | ◈ Leopard Spoor (rare) | — | — |
 
 ## 10. Storage model
 
 - Tier 1 Storage Basket (Seroto): 24 slots, 5 market listings, upgrade — (starter tier); Guild → 36 slots
-- Tier 2 Storage Shed (Shedi): 48 slots, 10 market listings, upgrade P2500; Guild → 72 slots
-- Tier 3 Storehouse (Ntlo ya Polokelo): 96 slots, 20 market listings, upgrade P12000; Guild → 144 slots
+- Tier 2 Storage Shed (Shedi): 48 slots, 10 market listings, upgrade P2500 + 6 thatch; Guild → 72 slots
+- Tier 3 Storehouse (Ntlo ya Polokelo): 96 slots, 20 market listings, upgrade P12000 + 12 thatch; Guild → 144 slots
 
 Upgrade costs derive from `BUILDINGS.storage.upgradeCosts` via
 `storageUpgradeCost(tier)` — the same number `buildings.service` charges for
 `storage_upgrade` (G8; the stale `STORAGE_TIERS.upgradeCostPula` duplicate that
 said P1,200/P6,000 is deleted, and the seeded `storage_tiers` rows are
-corrected by migration `20260923000031`).
+corrected by migration `20260923000031`). The material half (6/12 thatch, G6)
+rides the same cost object and is charged through `buildCostMaterials`
+alongside the Workshop's poleto/setena; `storageUpgradeCost()` reports the
+Pula line only.
 
 A slot is one **distinct non-tool item type**; quantity within a slot is bounded
 by the item's `maxStack` (§3). The Guild +50% bonus (`GUILD_STORAGE_MULTIPLIER =
@@ -456,23 +471,32 @@ Runtime (enforced by services):
 10. Tools never occupy slots; storage cap = tier × Guild multiplier.
 11. Money: Co-op tax 5% on every NPC sale; crafting fees ledgered as
     `crafting_fee`.
+12. Fertilize consumes `FERTILIZERS[type].item` through `InventoryService`,
+    arms one stage-bounded dose per plot (`fertilized_until_stage`), and the
+    dose dies with the crop instance at harvest; a livestock collect grants
+    product + manure in ONE combined slot check, so a full store fails the
+    whole collect (G1/G4).
 
 ## 13. Observations & open gaps
 
-Found while generating this reference — recorded, not silently patched. Gaps
-2, 3, 4 and 8 from the first pass were fixed on 2026-09-23 (see *Resolved*
-below); four remain open:
+Found while generating this reference — recorded, not silently patched. All
+eight gaps from the first pass are now fixed: batch 1 on 2026-09-23 (*Resolved
+(batch 1)* below) and batch 2 the same day (*Resolved (batch 2)*). What
+remains are follow-ups, not config gaps:
 
-1. **`manure` has no acquisition source.** No crop, animal, hotspot, or recipe
-   produces it; only starters/grants could create it. Its `use` promises
-   "enriches the soil" but no consumer exists either.
-2. **`DEEP_BUSHVELD_HOTSPOTS` is empty** — the scene unlocks at Botho ≥ 300
-   with no content yet.
-3. **`thatch` is a dead-end material** — foraged, sellable, but feeds no recipe
-   and no building (its `use` promises roof work). Natural hook for a future
-   storage/hut upgrade path.
-4. **All wood comes from Open Bush.** Two hotspots, same scene — a deliberate
-   scarcity or an oversight worth confirming.
+### Open notes after batch 2
+
+1. **The fertilize action has no Farm-screen button yet.** `POST
+   /farms/:farmId/plots/:plotId/fertilize` is live and tested; the web button
+   (and a chooser for future compost/super_fertilizer doses) is not.
+2. **Deep Bushveld art is pending.** The scene unlocks with four hotspots
+   (G5), but its background/restoration sprites are still empty — hotspots
+   reuse Open Bush/Rocky art, and `hardwood` reuses the wood icon until the
+   manifest gains one.
+3. **`hardwood`'s Setswana name (`Dikgong tse Diropa`) awaits a native-speaker
+   review**, like any hand-translation.
+4. **`compost` / `super_fertilizer` are reserved in `FERTILIZERS` but have no
+   items** — the endpoint rejects them until their items ship (01 §Fertilization).
 
 ### Resolved 2026-09-23 (batch 1)
 
@@ -493,6 +517,35 @@ below); four remain open:
   (stale P1,200/P6,000) is deleted; `storageUpgradeCost(tier)` derives from
   `BUILDINGS.storage.upgradeCosts` (P2,500/P12,000) — the number actually
   charged — and the migration corrects the seeded `storage_tiers` rows.
+
+### Resolved 2026-09-23 (batch 2)
+
+- **`manure` has a source AND a consumer** (was gap 1): every livestock
+  collect grants `MANURE_PER_COLLECT` alongside the product through one
+  combined `InventoryService.addItems` slot check (03 §5 — "produce eggs,
+  milk and manure"), and `POST .../plots/:plotId/fertilize` consumes it to arm
+  `FERTILIZERS.manure` (+20%, one stage, windowed by
+  `fertilized_until_stage`). `advanceFarmGrowth` honors the bonus only inside
+  that window; the dose dies with the crop instance at harvest.
+- **Deep Bushveld has content** (was gap 2): four hotspots (`db_deadfall`,
+  `db_heartwood`, `db_kopje`, `db_spoor`) and the new `hardwood` item (P8,
+  found nowhere else); `hotspotsForScene('deep_bushveld')` is no longer empty,
+  `hasContent` flips the scene out of `coming_soon`, and the Field Journal
+  counts four scene pages. `docs/MVP/04_Bushveld.md` §5/§12 amended.
+- **`thatch` is no longer a dead-end** (was gap 3): it joined `BuildCost` —
+  storage upgrades consume 6/12, the kraal's construction 4 — charged through
+  the same `buildCostMaterials` path as poleto/thapo/setena, and the Farm
+  screen's upgrade sheet renders it (G6).
+- **Wood no longer comes only from Open Bush** (was gap 4): the riverbank's
+  `rv_driftwood` (cost 1, 2–4 wood) is wood's second scene, and the Deep
+  Bushveld's `db_deadfall` a third (G7).
+
+Migration `20260923000034_batch2_deep_bushveld_fertilizer.sql` adds the
+`hardwood` item row, the `crop_instances.fertilized_until_stage` column, and
+the five new `bushveld_hotspots` rows. One combined-row defect was fixed en
+route: the parallel Heritage-Tree edit left two template literals mangled in
+`buildings.service.ts` (and a missing `isBuildingAutomated` import in
+`farms.service.ts`), repaired here so the API compiles.
 
 ---
 

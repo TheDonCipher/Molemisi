@@ -468,7 +468,7 @@ export function FarmScreen() {
   // server row (`nextUpgradeCost`), so the button never quotes a wrong number.
   const selUpgrade = selectedBuilding?.nextUpgradeCost ?? null;
   const selUpgradeMats = selUpgrade
-    ? (['poleto', 'thapo', 'setena'] as const)
+    ? (['poleto', 'thapo', 'setena', 'thatch'] as const)
         .filter((m) => (selUpgrade[m] ?? 0) > 0)
         .map((m) => ({ slug: m, qty: selUpgrade[m] as number }))
     : [];

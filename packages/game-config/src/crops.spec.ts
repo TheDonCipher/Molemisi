@@ -34,6 +34,8 @@ import {
   effectiveSlotCap,
   storageUpgradeCost,
   BUILDINGS,
+  FERTILIZERS,
+  MANURE_PER_COLLECT,
   LAND_LADDER,
   LAND_LADDER_TOTAL,
   STARTING_PLOTS,
@@ -259,6 +261,31 @@ describe('Economy — 02 §6', () => {
     expect(storageUpgradeCost(3)).toBe(12000);
   });
 
+  it('G6: thatch is a building input — storage upgrades and the kraal', () => {
+    // The foraged reed was a dead-end; it now feeds the two thatch-roofed
+    // structures (03 §3.5 "re-ratching thatch"). The Pula line is untouched —
+    // G8 still single-sources the price.
+    const storage = BUILDINGS['storage'];
+    expect(storage!.upgradeCosts[0]!.thatch).toBe(6);
+    expect(storage!.upgradeCosts[1]!.thatch).toBe(12);
+    const kraal = BUILDINGS['kraal'];
+    expect(kraal!.baseCost.thatch).toBe(4);
+    expect(storageUpgradeCost(2)).toBe(2500);
+    expect(storageUpgradeCost(3)).toBe(12000);
+  });
+
+  it('G1: manure has a source (byproduct) and a consumer (fertilizer config)', () => {
+    // 03 §5: animals "produce eggs, milk and manure" — every collect grants one.
+    expect(MANURE_PER_COLLECT).toBeGreaterThanOrEqual(1);
+    // 01 §Fertilization: manure is +20% for a single stage, consumed as an item.
+    const manure = FERTILIZERS['manure'];
+    expect(manure).toBeDefined();
+    expect(manure!.item).toBe('manure');
+    expect(ITEMS[manure!.item]).toBeDefined();
+    expect(manure!.bonus).toBe(0.2);
+    expect(manure!.stages).toBe(1);
+  });
+
   it('R7: the Guild +50% stacks on tier', () => {
     expect(GUILD_STORAGE_MULTIPLIER).toBe(1.5);
     expect(effectiveSlotCap(1, false)).toBe(24);
@@ -383,7 +410,20 @@ describe('Bushveld — 04 §4.2', () => {
     expect(playable).toHaveLength(3);
     const deep = SCENES.find((s) => s.slug === 'deep_bushveld')!;
     expect(deep.unlock).toEqual({ bothoGte: BOTHO_THRESHOLDS.DEEP_BUSHVELD });
-    expect(hotspotsForScene('deep_bushveld')).toHaveLength(0);
+    // G5 — the scene ships with real content now (this asserted zero hotspots).
+    const deepHs = hotspotsForScene('deep_bushveld');
+    expect(deepHs).toHaveLength(4);
+    expect(deepHs.some((h) => h.kagisoCost === 1)).toBe(true);
+    expect(deepHs.some((h) => h.kagisoCost === 2)).toBe(true);
+    // hardwood is the scene's signature find (G5).
+    expect(deepHs.flatMap((h) => h.loot).some((l) => l.item === 'hardwood')).toBe(true);
+  });
+
+  it('G7: the riverbank has its own wood — rv_driftwood drops wood', () => {
+    const drift = hotspotsForScene('riverbank').find((h) => h.id === 'rv_driftwood');
+    expect(drift).toBeDefined();
+    expect(drift!.kagisoCost).toBe(1);
+    expect(drift!.loot.some((l) => l.item === 'wood')).toBe(true);
   });
 
   it('every playable scene has both a cost-1 and a cost-2 hotspot', () => {

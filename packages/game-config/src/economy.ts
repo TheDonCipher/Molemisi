@@ -132,6 +132,32 @@ export const BOTHO_DAILY_CAP = 50;
 /** Letsema: Botho >= 500 AND not used in 7 days. */
 export const LETSEMA_COOLDOWN_DAYS = 7;
 
+/* ------------------------------------------------------------- Fertilizer (G1) */
+/**
+ * 01 §Fertilization — a fertilizer is an inventory item consumed at apply time.
+ * `bonus` is the fraction of eligible growth progress it adds (manure: +20%),
+ * and `stages` is how many growth stages it covers (01: manure/compost one
+ * stage, super two). The server enforces the window via
+ * `crop_instances.fertilized_until_stage`; the Farm-screen button that exposes
+ * `POST /plots/:id/fertilize` to players is still to ship — only `manure` has
+ * an item in v1, so the other two types stay reserved.
+ */
+export interface FertilizerDef {
+  /** Inventory item consumed on apply. */
+  item: string;
+  /** Fraction of eligible progress added while active. */
+  bonus: number;
+  /** Growth stages the dose covers. */
+  stages: number;
+}
+
+export const FERTILIZERS: Record<string, FertilizerDef> = {
+  manure: { item: 'manure', bonus: 0.2, stages: 1 },
+  // Reserved — they need their own items first (docs/01 table):
+  // compost: { item: 'compost', bonus: 0.1, stages: 1 },
+  // super_fertilizer: { item: 'super_fertilizer', bonus: 0.3, stages: 2 },
+};
+
 /**
  * 02 §9 — community-project contribution is capped per day, deliberately, so the
  * thing the design pays best for cannot be multiplied by grinding. The spec fixes

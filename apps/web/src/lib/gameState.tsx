@@ -344,7 +344,7 @@ export interface FarmBuilding {
   /** Tiers this line has (only Storage and Workshop grow past 1). */
   maxTier: number;
   /** Cost of the NEXT tier from the server config, or null when maxed. */
-  nextUpgradeCost: { currency: number; poleto?: number; thapo?: number; setena?: number } | null;
+  nextUpgradeCost: { currency: number; poleto?: number; thapo?: number; setena?: number; thatch?: number } | null;
   /** Minutes the next tier takes, or null when maxed. */
   nextUpgradeTime: number | null;
 }

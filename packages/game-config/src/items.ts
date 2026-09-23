@@ -168,6 +168,21 @@ const RAW_ITEMS: Record<string, Omit<ItemDef, 'lore'>> = {
     isTool: false,
     sprite: 'ui/items/material_wood.png',
   },
+  // G5 — the Deep Bushveld's signature find (Botho ≥ 300). No recipe or
+  // building consumes it yet; like phane it is a sellable material whose value
+  // rewards the late-game scene only it grows in.
+  hardwood: {
+    slug: 'hardwood',
+    setswana: 'Dikgong tse Diropa',
+    name: 'Hardwood',
+    category: 'DITSHIMOLOGO TSA NAGENG',
+    maxStack: 50,
+    baseValue: 8,
+    use: 'Go rekisa. Dense deep-bush timber — the Co-op pays well.',
+    isTool: false,
+    // No dedicated art yet — reuses the wood icon until the manifest gains one.
+    sprite: 'ui/items/material_wood.png',
+  },
   stone: {
     slug: 'stone',
     setswana: 'Matlapa',
@@ -371,6 +386,7 @@ const ITEM_LORE: Record<string, string> = {
 
   /* Bushveld materials */
   wood: 'Dry dikgong from a deadfall, taken without hurting a living tree. The bush provides for those who look down.',
+  hardwood: 'Heartwood does not hurry. A tree stood a hundred seasons to carry this weight, and the grain remembers every dry year it survived.',
   stone: 'The granite here is older than any story. It does not mind becoming a wall.',
   clay: 'The riverbank gives up letsopa where the water bends. Good clay remembers the river in every brick.',
   palm_fiber: 'Mokolwane twists into rope the way small words twist into news — strand by strand.',

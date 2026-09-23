@@ -7,6 +7,8 @@
 import {
   ANIMALS,
   CHAPTERS,
+  DEEP_BUSHVELD_HOTSPOTS,
+  HOTSPOTS,
   ITEMS,
   PRODUCT_ITEM,
   RECIPES,
@@ -59,6 +61,12 @@ describe('sourcesForItem', () => {
     expect(sourcesForItem('truffle')).toEqual([{ kind: 'raise', animalId: 'pig' }]);
   });
 
+  it('G1: manure comes from every animal — the byproduct of a collect (03 §5)', () => {
+    const raised = sourcesForItem('manure').filter((s) => s.kind === 'raise');
+    // Not one animal's product — every animal's muck-out.
+    expect(raised).toHaveLength(Object.keys(ANIMALS).length);
+  });
+
   it('G2/G3: every animal product maps to a real item whose baseValue IS the price of record', () => {
     // AnimalConfig.baseProductPrice is deleted — this pins the single source
     // so the two-price disagreement (eggs 3 vs 5, milk 5 vs 15) cannot return.
@@ -79,10 +87,32 @@ describe('sourcesForItem', () => {
     expect(wood.length).toBeGreaterThanOrEqual(2); // both deadfall hotspots drop it
     for (const s of wood) {
       if (s.kind !== 'forage') throw new Error('wood should only be foraged');
-      expect(s.scene).toBe('open_bush');
+      // G5/G7 — wood grows in Open Bush, on the riverbank, and (batch 2) in the
+      // Deep Bushveld's deadfall.
+      expect(['open_bush', 'riverbank', 'deep_bushveld']).toContain(s.scene);
       expect(s.tell.length).toBeGreaterThan(0);
       expect(s.months).toBeUndefined(); // everyday wood is never tagged seasonal
     }
+  });
+
+  it('G7/G5: wood has two scenes; hardwood grows only in the Deep Bushveld', () => {
+    const woodScenes = sourcesForItem('wood')
+      .filter((s) => s.kind === 'forage')
+      .map((s) => (s as { scene: string }).scene);
+    expect(woodScenes).toContain('open_bush');
+    expect(woodScenes).toContain('riverbank');
+
+    expect(ITEMS['hardwood']).toBeDefined();
+    const hardwoodScenes = sourcesForItem('hardwood')
+      .filter((s) => s.kind === 'forage')
+      .map((s) => (s as { scene: string }).scene);
+    expect(hardwoodScenes.length).toBeGreaterThan(0);
+    expect(hardwoodScenes.every((sc) => sc === 'deep_bushveld')).toBe(true);
+    // None of the three base scenes may drop it.
+    expect(HOTSPOTS.some((h) => h.loot.some((l) => l.item === 'hardwood'))).toBe(false);
+    expect(DEEP_BUSHVELD_HOTSPOTS.some((h) => h.loot.some((l) => l.item === 'hardwood'))).toBe(
+      true,
+    );
   });
 
   it('seasonal loot carries its real-calendar months (phane: Moranang & Sedimonthole)', () => {
@@ -151,8 +181,16 @@ describe('buildingsUsingItem', () => {
     expect(kraal?.uses).toContain('maintenance');
   });
 
-  it('raw materials are not building costs', () => {
+  it('G6: thatch is a building input; the other raw materials are not', () => {
+    // Thatch joined the costs (storage upgrades + the kraal's build), which is
+    // what makes foraged reeds demand rather than a dead-end.
+    const storage = buildingsUsingItem('thatch').find((u) => u.building.id === 'storage');
+    expect(storage?.uses).toContain('upgrade');
+    const kraal = buildingsUsingItem('thatch').find((u) => u.building.id === 'kraal');
+    expect(kraal?.uses).toContain('construction');
+    // Everything else raw stays out of the build sheet.
     expect(buildingsUsingItem('wood')).toEqual([]);
+    expect(buildingsUsingItem('clay')).toEqual([]);
     expect(buildingsUsingItem('no_such_item')).toEqual([]);
   });
 });

@@ -4,7 +4,7 @@ import { FarmsService } from '../farms/farms.service';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../common/guards/auth.guard';
-import { PlantCropSchema, PlantCropInput } from '@molemisi/validation';
+import { PlantCropSchema, PlantCropInput, FertilizeCropSchema } from '@molemisi/validation';
 
 @Controller('farms/:farmId/plots')
 @UseGuards(AuthGuard)
@@ -45,6 +45,28 @@ export class CropsController {
       user.id,
       input.cropType,
       input.seedId,
+    );
+    return { success: true, data: result };
+  }
+
+  @Post(':plotId/fertilize')
+  async fertilizePlot(
+    @Param('farmId') farmId: string,
+    @Param('plotId') plotId: string,
+    @Body() body: unknown,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    await this.farmsService.verifyFarmOwnership(farmId, user.id);
+    const parsed = FertilizeCropSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(
+        parsed.error.issues[0]?.message ?? 'Invalid fertilize request',
+      );
+    }
+    const result = await this.cropsService.fertilizePlot(
+      farmId,
+      plotId,
+      parsed.data.fertilizerType,
     );
     return { success: true, data: result };
   }

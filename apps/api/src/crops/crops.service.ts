@@ -5,6 +5,7 @@ import { WaterService } from '../water/water.service';
 import { WalletService } from '../wallet/wallet.service';
 import {
   BOTHO_THRESHOLDS,
+  FERTILIZERS,
   LETSEMA_COOLDOWN_DAYS,
   getCropConfig,
 } from '@molemisi/game-config';
@@ -46,6 +47,14 @@ export interface LetsemaResult {
   plotsHarvested: number;
   harvests: HarvestResult[];
   nextAvailableAt: string;
+}
+
+export interface FertilizeResult {
+  plotId: string;
+  fertilizerType: string;
+  item: string;
+  bonus: number;
+  untilStage: number;
 }
 
 // (PlotView / CropOnPlot are declared in ./plot-view, alongside toPlotViews.)
@@ -109,6 +118,68 @@ export class CropsService {
       },
       xpGained: 0,
     };
+  }
+
+  // ==================================================================
+  // Fertilize (G1 — 01 §Fertilization)
+  // ==================================================================
+
+  /**
+   * Apply one dose of fertilizer to a planted plot: consume the item, arm the
+   * stage-bounded bonus. One active dose per plot; the window is computed here
+   * (stage bands of growthHours / 3) and enforced by `advanceFarmGrowth`. The
+   * dose dies with the crop instance at harvest.
+   */
+  async fertilizePlot(
+    farmId: string,
+    plotId: string,
+    fertilizerType: string,
+  ): Promise<FertilizeResult> {
+    const cfg = FERTILIZERS[fertilizerType];
+    if (!cfg) {
+      throw new BadRequestException(`Fertilizer '${fertilizerType}' is not available`);
+    }
+
+    const plot = await this.loadPlot(farmId, plotId);
+    const instances = plot.crop_instances;
+    const crop = (
+      Array.isArray(instances) ? instances[0] : instances
+    ) as Record<string, unknown> | undefined;
+    if (!crop) throw new BadRequestException('Plot has no crop to fertilize');
+    if (crop.fertilizer_active === true) {
+      throw new BadRequestException('Plot is already fertilized');
+    }
+
+    const cropConfig = getCropConfig(crop.crop_type as string);
+    const progress = Number(crop.growth_progress_hours ?? 0);
+    if (cropConfig && progress >= cropConfig.growthHours) {
+      throw new BadRequestException('Crop is ready to harvest');
+    }
+
+    const playerId = await this.inventory.resolvePlayerId(farmId);
+
+    // Consume first (the balance check), arm second; if the write fails the item
+    // goes back rather than vanishing (never a partial loss — 03 §3.4).
+    await this.inventory.removeItem(playerId, cfg.item, 1);
+    const stage = Math.min(3, Number(crop.growth_stage ?? 0));
+    const untilStage = Math.min(3, stage + cfg.stages - 1);
+    try {
+      await this.supabaseService
+        .getAdminClient()
+        .from('crop_instances')
+        .update({
+          fertilizer_active: true,
+          fertilizer_bonus: cfg.bonus,
+          fertilized_until_stage: untilStage,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', crop.id as string);
+    } catch (err) {
+      await this.inventory.addItem(playerId, farmId, cfg.item, 1).catch(() => undefined);
+      throw err;
+    }
+
+    return { plotId, fertilizerType, item: cfg.item, bonus: cfg.bonus, untilStage };
   }
 
   async harvestCrop(farmId: string, plotId: string): Promise<HarvestResult> {

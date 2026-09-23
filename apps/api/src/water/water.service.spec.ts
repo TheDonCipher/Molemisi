@@ -119,6 +119,65 @@ describe('WaterService', () => {
   });
 
   // ==================================================================
+  // G1 — fertilizer (01 §Fertilization)
+  // ==================================================================
+  describe('a fertilized plot', () => {
+    it('grows +20% faster inside its stage window and keeps the dose armed', async () => {
+      const { svc, calls } = makeService([
+        { data: farmRow(), error: null },
+        { data: tankRow(), error: null },
+        {
+          data: [
+            cropRow({
+              last_growth_tick_at: new Date(NOW.getTime() - 3 * HOUR).toISOString(),
+              growth_progress_hours: 0,
+              fertilizer_active: true,
+              fertilizer_bonus: 0.2,
+              fertilized_until_stage: 0,
+            }),
+          ],
+          error: null,
+        },
+      ]);
+
+      await svc.advanceFarmGrowth('farm-1', NOW);
+
+      // Sorghum band 0 = 0–6 h. Three elapsed hours x1.2 = 3.6 progress, and
+      // the window (6 h) is not exhausted, so the dose stays armed.
+      const write = updateTo(calls, 'crop_instances')!;
+      expect(write.growth_progress_hours).toBeCloseTo(3.6, 6);
+      expect(write.fertilizer_active).toBe(true);
+    });
+
+    it('retires the dose once the interval runs past its stage window', async () => {
+      const { svc, calls } = makeService([
+        { data: farmRow(), error: null },
+        { data: tankRow(), error: null },
+        {
+          data: [
+            cropRow({
+              last_growth_tick_at: new Date(NOW.getTime() - 12 * HOUR).toISOString(),
+              growth_progress_hours: 0,
+              fertilizer_active: true,
+              fertilizer_bonus: 0.2,
+              fertilized_until_stage: 0,
+            }),
+          ],
+          error: null,
+        },
+      ]);
+
+      await svc.advanceFarmGrowth('farm-1', NOW);
+
+      // Twelve elapsed hours, but only the first six (band 0) earn the bonus:
+      // 12 + 0.2 x 6 = 13.2, and the dose is spent.
+      const write = updateTo(calls, 'crop_instances')!;
+      expect(write.growth_progress_hours).toBeCloseTo(13.2, 6);
+      expect(write.fertilizer_active).toBe(false);
+    });
+  });
+
+  // ==================================================================
   // Criterion 2 — refilling resumes from where it stopped
   // ==================================================================
   describe('a refilled tank', () => {

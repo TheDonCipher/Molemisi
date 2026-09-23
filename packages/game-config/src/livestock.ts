@@ -109,6 +109,15 @@ export function getAnimalConfig(animalType: string): AnimalConfig | undefined {
 }
 
 /**
+ * G1 — every collect is also a muck-out: this many manure ride along with the
+ * product, from every animal (03 §5: "produce eggs, milk and manure"; 01 §Animal
+ * Products: "Manure — all livestock"). The service grants both in ONE combined
+ * slot check so a full store fails the whole collect (G4) rather than
+ * duplicating the byproduct on retry.
+ */
+export const MANURE_PER_COLLECT = 1;
+
+/**
  * Livestock productType -> inventory item slug (02 §6.2). The bridge is
  * explicit because the two tables name things differently ('egg' vs 'eggs').
  * It lives here — with the animals — so adding a product means touching one
