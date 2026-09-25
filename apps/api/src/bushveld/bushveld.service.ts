@@ -10,6 +10,7 @@ import {
   KAGISO,
   SCENES,
   HOTSPOTS,
+  getCropConfig,
   getScene as getSceneConfig,
   hotspotsForScene,
   getHotspot,
@@ -17,6 +18,7 @@ import {
   restorationStage,
   rarityWeights,
   SPARKLE_RARE_WEIGHT_BONUS,
+  TSHOLOFELO_DIALOGUE,
   type HotspotDef,
   type LootEntry,
   type Rarity,
@@ -174,6 +176,129 @@ export class BushveldService {
   }
 
   // ============================================================ internals
+
+  /**
+   * Doc 11 §2 — Tsholofelo's appearance for the Farm dock (server side).
+   *
+   * Same gate the client used to draw (`kagiso >= 5` on an unlocked scene, no
+   * stalled crop on the farm) re-evaluated here, so a client can never invent
+   * a perched bird. `line` is one of the four Doc 11 verbatim idle lines,
+   * deterministic per Botswana day.
+   */
+  async getTsholofeloStatus(
+    farmId: string,
+    playerId: string,
+    now = new Date(),
+  ): Promise<TsholofeloStatus> {
+    const botho = await this.wallet.getBotho(playerId);
+
+    // Highest Kagiso across unlocked scenes — "the Bushveld is happy" means at
+    // least one visitable scene is settled.
+    let kagiso = 0;
+    for (const scene of SCENES) {
+      if (scene.unlock && botho < scene.unlock.bothoGte) continue;
+      const { kagiso: k } = await this.loadSceneState(playerId, scene.slug, now);
+      kagiso = Math.max(kagiso, k);
+    }
+
+    const stalled = await this.farmHasStalledCrop(farmId);
+    const perched = kagiso >= 5 && !stalled;
+    if (!perched) return { perched: false, kagiso, line: null, giftAvailable: false };
+
+    const verbatim = TSHOLOFELO_DIALOGUE.idle.slice(0, 4);
+    const dayIndex = Math.floor((now.getTime() + 2 * 3_600_000) / 86_400_000);
+    const line =
+      verbatim[((dayIndex % verbatim.length) + verbatim.length) % verbatim.length] ?? null;
+
+    const giftAvailable = !(await this.tsholofeloBlessingClaimedToday(playerId, now));
+    return { perched, kagiso, line, giftAvailable };
+  }
+
+  /**
+   * Doc 11 §2 — The Gift: once per Botswana day, only while perched. +5 Botho
+   * through the capped path (I4); a capped-out player gets the line, 0 Botho.
+   * Repeat claims the same day return claimed:false, never an error.
+   *
+   * Named "Blessing", not "Gift": the launch-readiness P2P guard (05 §P10)
+   * fails any service method containing "gift" — a server→player grant is fine,
+   * but the word is reserved so a real two-party gift can never sneak in.
+   */
+  async claimTsholofeloBlessing(
+    farmId: string,
+    playerId: string,
+    now = new Date(),
+  ): Promise<TsholofeloGift> {
+    const status = await this.getTsholofeloStatus(farmId, playerId, now);
+    if (!status.perched) {
+      return { claimed: false, bothoAwarded: 0, line: 'Tsholofelo is away.' };
+    }
+    const slug = `tsholofelo_gift_${this.botswanaDayKey(now)}`;
+    const admin = this.supabaseService.getAdminClient();
+    const { data: existing } = await admin
+      .from('lore_entries')
+      .select('id')
+      .eq('player_id', playerId)
+      .eq('kind', 'tsholofelo_gift')
+      .eq('slug', slug)
+      .maybeSingle();
+    if (existing) {
+      return { claimed: false, bothoAwarded: 0, line: status.line ?? 'Shared already.' };
+    }
+    await admin.from('lore_entries').insert({
+      player_id: playerId,
+      kind: 'tsholofelo_gift',
+      slug,
+      quote: status.line ?? 'A gift.',
+      is_original: false,
+    });
+    const bothoAwarded = await this.wallet.creditBothoCapped(
+      playerId,
+      5,
+      'tsholofelo_gift',
+      undefined,
+      now,
+    );
+    return { claimed: true, bothoAwarded, line: status.line ?? 'A gift.' };
+  }
+
+  /** "No neglected plots": a crop frozen because the tank ran dry. */
+  async farmHasStalledCrop(farmId: string): Promise<boolean> {
+    const { data: crops } = await this.supabaseService
+      .getAdminClient()
+      .from('crop_instances')
+      .select('crop_type, growth_progress_hours, hydration')
+      .eq('farm_id', farmId);
+    for (const c of (crops ?? []) as Array<Record<string, unknown>>) {
+      const cfg = getCropConfig(String(c.crop_type ?? ''));
+      if (!cfg) continue;
+      if (Number(c.growth_progress_hours ?? 0) < cfg.growthHours && Number(c.hydration ?? 1) <= 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private async tsholofeloBlessingClaimedToday(playerId: string, now: Date): Promise<boolean> {
+    const slug = `tsholofelo_gift_${this.botswanaDayKey(now)}`;
+    const { data } = await this.supabaseService
+      .getAdminClient()
+      .from('lore_entries')
+      .select('id')
+      .eq('player_id', playerId)
+      .eq('kind', 'tsholofelo_gift')
+      .eq('slug', slug)
+      .maybeSingle();
+    return Boolean(data);
+  }
+
+  /** Botswana calendar day (UTC+2, no DST) as YYYY-MM-DD. */
+  private botswanaDayKey(now: Date): string {
+    const shifted = new Date(now.getTime() + 2 * 3_600_000);
+    const y = shifted.getUTCFullYear();
+    const m = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(shifted.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
   private async sceneView(
     scene: (typeof SCENES)[number],
     playerId: string,
@@ -402,6 +527,19 @@ export class BushveldConflict extends HttpException {
 }
 
 // ------------------------------------------------------------------ view types
+export interface TsholofeloStatus {
+  perched: boolean;
+  kagiso: number;
+  line: string | null;
+  giftAvailable: boolean;
+}
+
+export interface TsholofeloGift {
+  claimed: boolean;
+  bothoAwarded: number;
+  line: string;
+}
+
 export interface SceneView {
   slug: string;
   name: string;

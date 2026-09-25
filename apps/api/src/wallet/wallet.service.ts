@@ -46,6 +46,14 @@ export type LedgerSource =
   | 'bushveld_forage'
   | 'almanac'
   | 'chapter_spend'
+  | 'tsholofelo_gift'
+  /**
+   * Doc 11 §4 — Nako ya Go Arogana: the Village Feast. 20 watermelons leave the
+   * bag, capped Botho comes back, Pula is never touched. Added for the
+   * `donateVillageFeast` path in KgotlaService; `ledger_entries.source` is TEXT,
+   * so no migration is required to accept it.
+   */
+  | 'village_feast'
   | 'admin_adjustment'
   | 'refund';
 
@@ -259,20 +267,33 @@ export class WalletService {
    * are stored negative, so this sums magnitudes.
    */
   async contributedToday(playerId: string, now = new Date()): Promise<number> {
-    const startUtc = this.startOfBotswanaDay(now);
+    return this.sumSince(
+      playerId,
+      'pula',
+      'letsema_contribution',
+      new Date(this.startOfBotswanaDay(now)),
+      'debit',
+    );
+  }
 
-    const { data, error } = await this.supabase
-      .getAdminClient()
-      .from('ledger_entries')
-      .select('amount')
-      .eq('player_id', playerId)
-      .eq('currency', 'pula')
-      .eq('source', 'letsema_contribution')
-      .lt('amount', 0)
-      .gte('created_at', startUtc);
+  /**
+   * Pula donated to community projects since an arbitrary instant (Kgotla charge
+   * progress, SPEC §5.2). Day-scoped sibling is `contributedToday`.
+   */
+  async contributedSince(playerId: string, since: Date): Promise<number> {
+    return this.sumSince(playerId, 'pula', 'letsema_contribution', since, 'debit');
+  }
 
-    if (error) throw new Error(`Failed to read contributions: ${error.message}`);
-    return (data ?? []).reduce((sum, r) => sum + Math.abs(Number(r.amount ?? 0)), 0);
+  /**
+   * Pula actually received from Co-op sales since an arbitrary instant (Kgotla
+   * charge progress, SPEC §5.2).
+   *
+   * Only CREDITS count. `market.buyItem` also writes `coop_sale` rows for non-seed
+   * purchases, and those are debits — counting them would let a player buy back
+   * what they just sold and run the objective backwards.
+   */
+  async coopSalesSince(playerId: string, since: Date): Promise<number> {
+    return this.sumSince(playerId, 'pula', 'coop_sale', since, 'credit');
   }
 
   /**
@@ -354,6 +375,37 @@ export class WalletService {
   }
 
   // ---------------------------------------------------------------- internals
+
+  /**
+   * Sum ledger magnitudes for one currency+source since an instant, in one
+   * direction only. Every "how much has the player done since X" question in the
+   * game funnels through here so the day-boundary and sign rules live in one place.
+   *
+   * `direction` is the load-bearing part: several sources carry both credits and
+   * debits, and a Kgotla objective that summed them net could be walked backwards.
+   */
+  private async sumSince(
+    playerId: string,
+    currency: WalletCurrency,
+    source: LedgerSource,
+    since: Date,
+    direction: 'credit' | 'debit',
+  ): Promise<number> {
+    let query = this.supabase
+      .getAdminClient()
+      .from('ledger_entries')
+      .select('amount')
+      .eq('player_id', playerId)
+      .eq('currency', currency)
+      .eq('source', source)
+      .gte('created_at', since.toISOString());
+
+    query = direction === 'credit' ? query.gt('amount', 0) : query.lt('amount', 0);
+
+    const { data, error } = await query;
+    if (error) throw new Error(`Failed to read ledger: ${error.message}`);
+    return (data ?? []).reduce((sum, r) => sum + Math.abs(Number(r.amount ?? 0)), 0);
+  }
 
   /**
    * The only path to the database for a balance change. Delegates to

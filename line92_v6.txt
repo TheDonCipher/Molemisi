@@ -1,0 +1,9 @@
+console.log(`The economics above are the **1.0$\u00d7 baseline** (every price at base value). The live `
+  `$\u0060Co-op price for a raw or foraged good swings in ${PRICE_BAND} [${PRICE_BAND.min}, ${PRICE_BAND.max}] every ${PRICE_CYCLE_HOURS}h; every recipe $\u0060` +
+  `$\u0060output (DITSALO/DIKUNO) is exempt and sells in ${CRAFTED_BAND} [${CRAFTED_BAND.min}, ${CRAFTED_BAND.max}]. Opportunity cost of an input is its live $\u0060` +
+  `$\u0060net sell price ($\u0060base × band × (1 − COOP_TAX)$\u0060), but $\u0060recipeEconomics$` evaluates $\u0060it at 1.0$\u00d7 only — so the §6 table is the baseline, not the live margin. $\u0060` +
+  `$\u0060Worst-case = output at the band floor with inputs at their band ceiling; best-case = $\u0060` +
+  `$\u0060output at the band ceiling with inputs at their floor. Break-even mult = the input $\u0060` +
+  'multiplier at which the 1.0×-output margin hits zero. A recipe marked ✗ goes $\u0060' +
+  `$\u0060negative when its raw inputs peak; the signal is for the player to sell the inputs raw $\u0060` +
+  `$\u0060instead — intended, not a bug.\n`);

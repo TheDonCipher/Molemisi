@@ -95,7 +95,7 @@ interface ActiveContractView {
 
 export function JournalScreen() {
   const { farmId, setActiveNav } = useGame();
-  const { journal, reload } = useKgotla();
+  const { journal, reload, feastStatus } = useKgotla();
   const { tl } = useTranslation();
   const discoveries = useDiscoveries();
   const [contracts, setContracts] = useState<JournalContract[]>([]);
@@ -211,6 +211,40 @@ export function JournalScreen() {
           <p className="font-mono text-[9px] text-on-surface-variant mt-2">
             {pct}% {tl('restored') || 'restored'}
           </p>
+        </div>
+      </section>
+
+      {/* Doc 11 §3/§6 — the Deep Time layer: Water Whispers listened to, and the
+          Guardian of Sesana honour once it is earned. A quiet counter, not a
+          scoreboard: the whispers are +1 journal progress each, forever. */}
+      <section className="mb-6">
+        <div className="bg-wood-dark p-4 border border-wood-border">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-mono text-xs text-on-surface-variant uppercase">
+              💧 {tl('whispersHeard')}
+            </span>
+            <span className="font-mono text-[11px] text-sky-blue font-bold">
+              {journal?.whispers ?? 0}
+            </span>
+          </div>
+          {journal?.isGuardianOfSesana ? (
+            <p className="font-mono text-[10px] text-gold-currency mt-1">
+              🌳 {tl('guardianEarned')}
+            </p>
+          ) : (
+            // The requirement is stated, never hidden: the Heritage Tree gate is
+            // the same sentence, so the player can see what the title is worth.
+            <p className="font-mono text-[9px] text-on-surface-variant mt-1">
+              {tl('guardianOnlyHint')}
+            </p>
+          )}
+          {/* Doc 11 §4 — Friend of the Feast: a title the Journal keeps, once
+              the first feast is shared. Cosmetic-adjacent, never a currency. */}
+          {feastStatus?.isFriendOfTheFeast && (
+            <p className="font-mono text-[10px] text-gold-currency mt-1">
+              🍽️ {tl('friendOfTheFeast')}
+            </p>
+          )}
         </div>
       </section>
 

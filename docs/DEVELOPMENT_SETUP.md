@@ -125,11 +125,23 @@ node scripts/create-admin.mjs
 
 Default account is defined in that script. Sign in at `/admin/login`.
 
-For a **dev** account (separate `DevGuard` area at `/dev`):
+For a **dev** account (can do and test EVERYTHING — dev is the top tier,
+admitted to `/dev` tooling, the `/admin` panel, and all player routes):
 
 ```bash
 node scripts/create-dev.mjs
 ```
+
+Default: `dev@molemisi.co` / `Dev12345!` (overridable via `DEV_EMAIL` / `DEV_PASSWORD`).
+
+For a **test player** account (plain player tier — simulates real player
+activity; blocked from `/admin` and `/dev` with 403):
+
+```bash
+node scripts/create-player.mjs
+```
+
+Default: `player@molemisi.co` / `Player123!` (overridable via `PLAYER_EMAIL` / `PLAYER_PASSWORD`).
 
 > Role tiers `player|admin|dev` are defined by migration `000021`, which — like all of
 > `000016`–`000021` — is **not yet pushed** to the linked project. Until then, `AdminGuard`

@@ -168,6 +168,35 @@ export const FERTILIZERS: Record<string, FertilizerDef> = {
  */
 export const KGOTLA_DAILY_CONTRIBUTION_CAP = 200;
 
+/* ------------------------------------------------------------------ Kgotla charges */
+/**
+ * docs/Screens/Kgotla/SPEC.md §5.1 — the daily charge allowance is a SHARED POOL:
+ * three charges per farm per Botswana day across the whole council, not one per
+ * elder. Five elders, three charges — the player must choose whom to serve, and
+ * that choice is the decision the council chamber exists to create.
+ */
+export const KGOTLA_DAILY_CHARGE_POOL = 3;
+
+/** §5.2 — regard granted per completed charge, alongside the currency rewards. */
+export const REGARD_PER_CHARGE = 10;
+
+/**
+ * §4.1 — regard is not permanent. An elder who is not served forgets a little:
+ * −2 regard per full 7-day period in which no charge for that elder was completed,
+ * floored at 0.
+ *
+ * At +10 per charge a wholly neglected elder falls from Respected (75) to
+ * Acquaintance (24) in about 26 weeks — slower than a chapter. It is a nudge to
+ * keep visiting, never a punishment for taking a holiday.
+ */
+export const REGARD_DECAY = {
+  points: 2,
+  periodDays: 7,
+  /** Surface a warning this long before the next period elapses (§4.1 "visible"):
+   *  nobody is silently punished. */
+  warningLeadHours: 24,
+} as const;
+
 /* ------------------------------------------------------------------ Monetisation */
 export interface TopUpPack {
   slug: string;

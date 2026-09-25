@@ -39,8 +39,10 @@ export class BuildingsController {
     @Param('farmId') farmId: string,
     @CurrentUser('id') userId: string,
     @Body('buildingType') buildingType: string,
+    // Doc 11 §6 — optional plot slot; required server-side for the Heritage Tree.
+    @Body('slotIndex') slotIndex?: number,
   ) {
-    return this.buildingsService.constructBuilding(farmId, userId, buildingType);
+    return this.buildingsService.constructBuilding(farmId, userId, buildingType, slotIndex);
   }
 
   @Post(':buildingId/upgrade')

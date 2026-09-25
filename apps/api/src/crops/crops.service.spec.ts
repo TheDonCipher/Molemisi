@@ -44,6 +44,35 @@ describe('CropsService', () => {
     markLetsemaUsed: jest.fn().mockResolvedValue(undefined),
   };
 
+  /**
+   * plantCrop resolves the plot's slot and then asks whether the Heritage Tree
+   * stands on it (Doc 11 §6) BEFORE it reaches the transaction, so the plant
+   * specs need both reads stubbed. `tree` non-null simulates a plot the tree
+   * occupies; the default is a clear plot.
+   */
+  function plantReads(over: { slotIndex?: number; tree?: unknown } = {}) {
+    const slotIndex = over.slotIndex ?? 0;
+    const tree = over.tree ?? null;
+    return jest.fn((table: string) => {
+      if (table === 'farm_plots') {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest
+                .fn()
+                .mockResolvedValue({ data: { slot_index: slotIndex }, error: null }),
+            }),
+          }),
+        };
+      }
+      // buildings: three stacked eq() filters, then maybeSingle().
+      const builder: Record<string, unknown> = {};
+      builder.eq = jest.fn().mockReturnValue(builder);
+      builder.maybeSingle = jest.fn().mockResolvedValue({ data: tree, error: null });
+      return { select: jest.fn().mockReturnValue(builder) };
+    });
+  }
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -74,6 +103,7 @@ describe('CropsService', () => {
           data: null,
           error: { message: 'Plot not found' },
         }),
+        from: plantReads(),
       });
 
       await expect(
@@ -87,6 +117,7 @@ describe('CropsService', () => {
           data: { success: false },
           error: null,
         }),
+        from: plantReads(),
       });
 
       await expect(
@@ -99,25 +130,17 @@ describe('CropsService', () => {
         data: { success: true, crop_id: 'crop-123' },
         error: null,
       });
-      const mockSelect = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: { slot_index: 0 },
-            error: null,
-          }),
-        }),
-      });
-
+      // Planting resolves the slot, finds no Heritage Tree on it, then commits
+      // the transaction — the reads the service makes before the RPC.
       mockSupabaseService.getAdminClient.mockReturnValue({
         rpc: mockRpc,
-        from: jest.fn().mockReturnValue({
-          select: mockSelect,
-        }),
+        from: plantReads({ slotIndex: 0 }),
       });
 
       const result = await service.plantCrop('farm-1', 'plot-1', 'user-1', 'sorghum', 'seed-1');
 
       expect(result.plot.state).toBe('PLANTED');
+      expect(result.plot.slotIndex).toBe(0);
       expect(result.crop.type).toBe('sorghum');
       expect(result.crop.growthStage).toBe(0);
       // D5 — XP is deleted, not zeroed by accident. The field survives in the
@@ -132,6 +155,21 @@ describe('CropsService', () => {
         // never hard-codes a growth time (05 §P1).
         p_growth_hours: getCropConfig('sorghum')!.growthHours,
       });
+    });
+
+    it('refuses to plant on the plot the Heritage Tree occupies (Doc 11 §6)', async () => {
+      const mockRpc = jest.fn();
+      mockSupabaseService.getAdminClient.mockReturnValue({
+        rpc: mockRpc,
+        from: plantReads({ tree: { id: 'tree-1' } }),
+      });
+
+      await expect(
+        service.plantCrop('farm-1', 'plot-1', 'user-1', 'sorghum', 'seed-1'),
+      ).rejects.toThrow(/Heritage Tree/);
+      // The refusal lands before the transaction, so no seed is spent and no
+      // half-planted crop is left behind for the player to notice later.
+      expect(mockRpc).not.toHaveBeenCalled();
     });
 
     it('should reject an unknown crop type before touching the database', async () => {

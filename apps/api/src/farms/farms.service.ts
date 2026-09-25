@@ -3,7 +3,7 @@ import { SupabaseService } from '../database/supabase.service';
 import { SimulationService } from '../simulation/simulation.service';
 import { WalletService } from '../wallet/wallet.service';
 import { PlotView, toPlotViews } from '../crops/plot-view';
-import { BOTHO_DAILY_CAP, nextLandTier, type LandTier } from '@molemisi/game-config';
+import { BOTHO_DAILY_CAP, nextLandTier, getBuildingConfig, isBuildingAutomated, type LandTier } from '@molemisi/game-config';
 
 /**
  * GET /farms/current payload.
@@ -48,6 +48,20 @@ export interface FarmWithPlots {
   simulation: SimulationSummary | null;
   /** The next land-ladder rung (C15), or null when the farm is at 20 plots. */
   nextLand: { plots: number; costPula: number } | null;
+  /**
+   * Doc 11 §6.2 — every building's exact `wear` (0.0–1.0), grid `slotIndex`
+   * (Heritage Tree) and `isAutomated` flag, so the Farm Screen can render
+   * degradation, automation and the golden-mist overlay from this ONE payload
+   * without a second request. Same rows GET /farms/:id/buildings returns.
+   */
+  buildings: Array<{
+    id: string;
+    buildingType: string;
+    state: string;
+    wear: number;
+    slotIndex: number | null;
+    isAutomated: boolean;
+  }>;
 }
 
 @Injectable()
@@ -139,6 +153,26 @@ export class FarmsService {
     // C15 — the next land-ladder rung, quoted from the fresh farm read.
     const nextLandTierInfo: LandTier | null = nextLandTier(farm.plot_count as number);
 
+    // Doc 11 §6.2 — wear / slot / automation for every building, read directly
+    // (same admin client, same rows GET /buildings maps) so `GET /farms/current`
+    // stays the ONE payload the Farm Screen needs. Fetched after the simulation
+    // so wear reflects any maintenance the welcome-back tick just completed.
+    const { data: buildingRows } = await adminClient
+      .from('buildings')
+      .select('id, building_type, state, wear, slot_index')
+      .eq('farm_id', farm.id)
+      .order('building_type');
+    const buildings: FarmWithPlots['buildings'] = (buildingRows ?? []).map(
+      (b: Record<string, unknown>) => ({
+        id: b.id as string,
+        buildingType: b.building_type as string,
+        state: b.state as string,
+        wear: Number(b.wear ?? 0),
+        slotIndex: (b.slot_index as number | null) ?? null,
+        isAutomated: isBuildingAutomated(b.building_type as string),
+      }),
+    );
+
     return {
       farm: {
         id: farm.id,
@@ -156,6 +190,7 @@ export class FarmsService {
       nextLand: nextLandTierInfo
         ? { plots: nextLandTierInfo.plots, costPula: nextLandTierInfo.costPula ?? 0 }
         : null,
+      buildings,
     };
   }
 

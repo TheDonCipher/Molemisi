@@ -6,8 +6,8 @@ import { SupabaseService } from '../../database/supabase.service';
  *
  * Must run AFTER AuthGuard has verified the token and attached request.user.
  * Grants access for role='admin' (canonical, migration 20260911000021) or the
- * legacy is_admin flag. Dev accounts (role='dev') are a DISTINCT tier and must
- * NOT be admitted here — they use the separate /dev area.
+ * legacy is_admin flag. Dev accounts (role='dev') are the top tier and ARE
+ * admitted here — the dev test account must be able to do and test anything.
  */
 @Injectable()
 export class AdminGuard implements CanActivate {
@@ -28,7 +28,10 @@ export class AdminGuard implements CanActivate {
       .eq('id', user.id)
       .single();
 
-    const isAdmin = profile?.is_admin === true || profile?.role === 'admin';
+    const isAdmin =
+      profile?.is_admin === true ||
+      profile?.role === 'admin' ||
+      profile?.role === 'dev';
     if (error || !isAdmin) {
       throw new ForbiddenException('Admin access required');
     }

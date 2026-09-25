@@ -1,0 +1,41 @@
+﻿=== ITEMS (baseValue, category) ===
+wood P2 DITSHIMOLOGO TSA NAGENG
+hardwood P8 DITSHIMOLOGO TSA NAGENG
+stone P3 DITSHIMOLOGO TSA NAGENG
+clay P3 DITSHIMOLOGO TSA NAGENG
+palm_fiber P4 DITSHIMOLOGO TSA NAGENG
+thatch P3 DITSHIMOLOGO TSA NAGENG
+phane P10 DITSHIMOLOGO TSA NAGENG
+sorghum P3 DIJALO
+millet P4 DIJALO
+maize P5 DIJALO
+cowpeas P6 DIJALO
+tomatoes P10 DIJALO
+watermelon P11 DIJALO
+groundnuts P11 DIJALO
+sesame P15 DIJALO
+pepper P17 DIJALO
+herbs P25 DIJALO
+morula P46 DIJALO
+poleto P7 DITSALO
+thapo P18 DITSALO
+setena P11 DITSALO
+bupi P20 DIKUNO
+borotho P60 DIKUNO
+=== CONFIG ===
+CRAFTED_CATEGORIES ["DITSALO","DIKUNO"]
+PRICE_BAND {"min":0.5,"max":2}
+CRAFTED_BAND {"min":0.9,"max":1.1}
+OPPORTUNITY_COST_FACTOR 0.95
+COOP_TAX 0.05
+=== RECIPES (baseline economics @ qty 1) ===
+{"recipe":"poleto","output":"poleto","outputQty":1,"outBase":7,"outCat":"DITSALO","inputs":"wood x2","fee":1,"inputValue":3.8,"saleGross":7,"netAfterTax":6.65,"totalCost":4.8,"profit":1.85,"roi":0.39}
+   breakEvenRawMult(min output 0.9): 1.312 | baselineRawMultForZeroProfit: 1.487
+{"recipe":"thapo","output":"thapo","outputQty":1,"outBase":18,"outCat":"DITSALO","inputs":"palm_fiber x3","fee":1,"inputValue":11.4,"saleGross":18,"netAfterTax":17.1,"totalCost":12.4,"profit":4.7,"roi":0.38}
+   breakEvenRawMult(min output 0.9): 1.262 | baselineRawMultForZeroProfit: 1.412
+{"recipe":"setena","output":"setena","outputQty":1,"outBase":11,"outCat":"DITSALO","inputs":"clay/stone x2","fee":2,"inputValue":5.7,"saleGross":11,"netAfterTax":10.45,"totalCost":7.7,"profit":2.75,"roi":0.36}
+   breakEvenRawMult(min output 0.9): 1.299 | baselineRawMultForZeroProfit: 1.482
+{"recipe":"bupi","output":"bupi","outputQty":1,"outBase":20,"outCat":"DIKUNO","inputs":"sorghum/millet x4","fee":2,"inputValue":11.4,"saleGross":20,"netAfterTax":19,"totalCost":13.4,"profit":5.6,"roi":0.42}
+   breakEvenRawMult(min output 0.9): 1.325 | baselineRawMultForZeroProfit: 1.491
+{"recipe":"borotho","output":"borotho","outputQty":1,"outBase":60,"outCat":"DIKUNO","inputs":"bupi x2","fee":3,"inputValue":38,"saleGross":60,"netAfterTax":57,"totalCost":41,"profit":16,"roi":0.39}
+   breakEvenRawMult(min output 0.9): 1.271 | baselineRawMultForZeroProfit: 1.421

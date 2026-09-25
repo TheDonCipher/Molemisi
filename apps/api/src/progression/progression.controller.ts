@@ -1,5 +1,6 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
 import { ProgressionService } from './progression.service';
+import { BushveldService } from '../bushveld/bushveld.service';
 import { FarmsService } from '../farms/farms.service';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -16,6 +17,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 export class ProgressionController {
   constructor(
     private progressionService: ProgressionService,
+    private bushveldService: BushveldService,
     private farmsService: FarmsService,
   ) {}
 
@@ -42,12 +44,32 @@ export class ProgressionController {
 
   /** Farm-scoped variant, for clients that already know the farm id. */
   @Get('farm/:farmId/elder')
-  async getElderForFarm(
-    @Param('farmId') farmId: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  async getElderForFarm(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     const data = await this.progressionService.getElderGuidance(farmId);
+    return { success: true, data };
+  }
+
+  /**
+   * Doc 11 §2 — Tsholofelo's appearance for the Farm dock (server side).
+   * The client renders the perch + speech line from this, never from its own
+   * Kagiso math.
+   */
+  @Get('farm/:farmId/tsholofelo')
+  async getTsholofelo(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
+    await this.farmsService.verifyFarmOwnership(farmId, userId);
+    const data = await this.bushveldService.getTsholofeloStatus(farmId, userId);
+    return { success: true, data };
+  }
+
+  /**
+   * Doc 11 §2 — The Gift. Once per Botswana day while perched. Repeat claims
+   * the same day are a no-op (claimed:false), never an error.
+   */
+  @Post('farm/:farmId/tsholofelo/gift')
+  async claimTsholofeloGift(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
+    await this.farmsService.verifyFarmOwnership(farmId, userId);
+    const data = await this.bushveldService.claimTsholofeloBlessing(farmId, userId);
     return { success: true, data };
   }
 }

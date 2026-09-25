@@ -31,6 +31,18 @@ function isCrafted(itemType: string): boolean {
 }
 
 /**
+ * Seeds (DIPEO) are buyable at the Co-op but explicitly NOT sellable
+ * (docs/26 §11.1 — "seeds never sell"). The catalogue carries seed rows only so
+ * the BUY path (buyItem) has a price; the SELL path (sellItem/quoteSale) must
+ * reject them, otherwise a player could flip seeds. The `_seed` suffix is the
+ * documented UI gate (26 §11); the category check is the authoritative one.
+ */
+function isSeedItem(itemType: string): boolean {
+  const def = getItemDef(itemType);
+  return def?.category === 'DIPEO' || itemType.endsWith('_seed');
+}
+
+/**
  * Which price band an item sells in. Crafted and processed goods get the narrow
  * 0.9–1.1 band instead of the speculative 0.5–2.0 one (C14). Anything
  * unrecognised falls back to the wide band, which is the safe default.
@@ -151,6 +163,10 @@ export class MarketService {
       throw new BadRequestException('Item has no market value');
     }
 
+    if (isSeedItem(itemType)) {
+      throw new BadRequestException('Seeds cannot be sold at the Co-op');
+    }
+
     const { gross, tax, netProceeds } = this.computeSale(pricePerUnit, quantity);
     return {
       itemType,
@@ -181,6 +197,11 @@ export class MarketService {
       .single();
     if (!farm || farm.user_id !== userId) {
       throw new NotFoundException('Farm not found');
+    }
+
+    // 1b. Seeds are buyable but never sellable (docs/26 §11.1).
+    if (isSeedItem(itemType)) {
+      throw new BadRequestException('Seeds cannot be sold at the Co-op');
     }
 
     // 2. Check inventory has the item (canonical store)

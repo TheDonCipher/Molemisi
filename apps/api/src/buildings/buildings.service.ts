@@ -7,7 +7,7 @@ import {
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import { InventoryService } from '../inventory/inventory.service';
-import { getBuildingConfig, type BuildCost } from '@molemisi/game-config';
+import { getBuildingConfig, isBuildingAutomated, type BuildCost } from '@molemisi/game-config';
 
 interface BuildingRow {
   id: string;
@@ -51,6 +51,13 @@ export class BuildingsService {
       nextUpgradeCost: BuildCost | null;
       /** Minutes the next tier takes, or null when maxed. */
       nextUpgradeTime: number | null;
+      /**
+       * Doc 11 — 0-based plot slot for grid-placed buildings (Heritage Tree),
+       * NULL when the building sits off the plot grid.
+       */
+      slotIndex: number | null;
+      /** Doc 11 §6.2 — the building's benefit applies without player action. */
+      isAutomated: boolean;
     }>
   > {
     const adminClient = this.supabaseService.getAdminClient();
@@ -79,14 +86,25 @@ export class BuildingsService {
         maxTier: config?.maxTier ?? 1,
         nextUpgradeCost: config?.upgradeCosts[level - 1] ?? null,
         nextUpgradeTime: config?.upgradeTimes[level - 1] ?? null,
+        slotIndex: (b.slot_index as number | null) ?? null,
+        isAutomated: isBuildingAutomated(buildingType),
       };
     });
   }
 
+  /**
+   * Doc 11 6 - the Heritage Tree is planted ON a plot (slot_index), so this
+   * accepts an optional slot. Two server-side controls, in order:
+   *   1. Guardian of Sesana (profiles.is_guardian_of_sesana) - the store's
+   *      `unlock` display hint is NOT a control; only this check is.
+   *   2. The slot must exist, be EMPTY, and not already hold a building.
+   * Both fail BEFORE any Pula moves.
+   */
   async constructBuilding(
     farmId: string,
     userId: string,
     buildingType: string,
+    slotIndex?: number,
   ): Promise<{ id: string; buildingType: string; state: string; constructionEndsAt: string }> {
     const adminClient = this.supabaseService.getAdminClient();
 
@@ -97,6 +115,63 @@ export class BuildingsService {
     const config = getBuildingConfig(buildingType);
     if (!config) {
       throw new BadRequestException(`Unknown building type: ${buildingType}`);
+    }
+
+    // --- Doc 11 6 controls (Heritage Tree only) -------------------------------
+    let placeAt: number | null = null;
+    if (buildingType === 'setlhare_sa_boswa') {
+      const { data: profile } = await adminClient
+        .from('profiles')
+        .select('is_guardian_of_sesana')
+        .eq('id', userId)
+        .single();
+      if (!profile?.is_guardian_of_sesana) {
+        throw new BadRequestException(
+          'Only a Guardian of Sesana may plant the Heritage Tree - complete the Field Journal and reach 500 Botho.',
+        );
+      }
+
+      if (!Number.isInteger(slotIndex) || (slotIndex as number) < 0) {
+        throw new BadRequestException(
+          'Choose an empty plot for the Heritage Tree (slotIndex required).',
+        );
+      }
+      placeAt = slotIndex as number;
+
+      const { data: plotCountRow } = await adminClient
+        .from('farms')
+        .select('plot_count')
+        .eq('id', farmId)
+        .single();
+      const plotCount = Number(plotCountRow?.plot_count ?? 0);
+      if (placeAt >= plotCount) {
+        throw new BadRequestException('That plot does not exist on this farm.');
+      }
+
+      const { data: plotRow } = await adminClient
+        .from('farm_plots')
+        .select('id, state')
+        .eq('farm_id', farmId)
+        .eq('slot_index', placeAt)
+        .single();
+      if (!plotRow) {
+        throw new BadRequestException('That plot does not exist on this farm.');
+      }
+      if (plotRow.state !== 'EMPTY') {
+        throw new BadRequestException(
+          'The Heritage Tree needs an empty plot - harvest or clear this one first.',
+        );
+      }
+
+      const { data: occupying } = await adminClient
+        .from('buildings')
+        .select('id, building_type')
+        .eq('farm_id', farmId)
+        .eq('slot_index', placeAt)
+        .maybeSingle();
+      if (occupying) {
+        throw new BadRequestException('Another building already stands on that plot.');
+      }
     }
 
     // Check if player already has this building
@@ -111,7 +186,7 @@ export class BuildingsService {
       throw new BadRequestException(`You already have a ${config.name}`);
     }
 
-    // Spend through the wallet — the only sanctioned way to move Pula (05 §P2).
+    // Spend through the wallet - the only sanctioned way to move Pula (05 P2).
     // This checks the balance and writes the ledger row in one atomic call, so
     // there is no window where two concurrent builds both pass an affordability
     // check that only one of them can actually satisfy.
@@ -119,7 +194,7 @@ export class BuildingsService {
     const materialNeeds = this.buildCostMaterials(config.baseCost);
     await this.wallet.spendPula(userId, cost, 'building_construction');
 
-    // Crafted materials are part of the price (03 §3.5) — Poleto, Thapo and
+    // Crafted materials are part of the price (03 3.5) - Poleto, Thapo and
     // Setena exist mainly as building inputs. Charging only Pula made the build
     // sheet quote a cost the server never actually took.
     try {
@@ -144,6 +219,7 @@ export class BuildingsService {
         state: 'CONSTRUCTION',
         capacity: config.capacity,
         wear: 0,
+        slot_index: placeAt,
         construction_started_at: new Date().toISOString(),
         construction_ends_at: constructionEndsAt,
         last_maintained_at: new Date().toISOString(),
@@ -154,7 +230,7 @@ export class BuildingsService {
     if (error || !building) {
       // The debit has already happened. Money must never be wrong, so give it
       // back rather than charge for a building that does not exist. The ledger
-      // keeps both rows, which is what we want: it shows the attempt.
+      // keeps both rows, which is what we want - it shows the attempt.
       await this.wallet.credit(userId, 'pula', cost, 'refund');
       await this.returnMaterials(userId, farmId, materialNeeds);
       throw new Error('Failed to create building');
@@ -169,7 +245,6 @@ export class BuildingsService {
       constructionEndsAt,
     };
   }
-
   async upgradeBuilding(
     farmId: string,
     userId: string,

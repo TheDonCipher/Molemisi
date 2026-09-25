@@ -5,8 +5,8 @@ import { SupabaseService } from '../../database/supabase.service';
  * DevGuard — verifies the requester is a developer account (profiles.role = 'dev').
  *
  * Must run AFTER AuthGuard has verified the token and attached request.user.
- * Dev is a DISTINCT tier from admin (separate /dev tooling area), so this guard
- * must NOT grant admin access and AdminGuard must NOT grant devs /admin.
+ * Dev is the TOP tier (dev > admin > player): devs are admitted to /dev and
+ * /admin, and admins are admitted to /dev tooling as well.
  */
 @Injectable()
 export class DevGuard implements CanActivate {
@@ -23,11 +23,16 @@ export class DevGuard implements CanActivate {
     const { data: profile, error } = await this.supabaseService
       .getAdminClient()
       .from('profiles')
-      .select('role')
+      .select('is_admin, role')
       .eq('id', user.id)
       .single();
 
-    if (error || profile?.role !== 'dev') {
+    const isDevOrAdmin =
+      profile?.role === 'dev' ||
+      profile?.role === 'admin' ||
+      profile?.is_admin === true;
+
+    if (error || !isDevOrAdmin) {
       throw new ForbiddenException('Developer access required');
     }
 

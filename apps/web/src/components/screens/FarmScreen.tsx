@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   useGame,
   apiFetch,
@@ -11,8 +11,9 @@ import {
   AvailableBuilding,
 } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
-import { isSeedInSeason, getCropConfig, type CropId } from '@molemisi/game-config';
+import { isSeedInSeason, getCropConfig, adjacentPlotSlots, type CropId } from '@molemisi/game-config';
 import { PixelIcon } from '@/components/PixelIcon';
+import { WaterWhisperToast } from '../WaterWhisperToast';
 
 const SEED_OPTIONS = [
   { name: 'Sorghum', cost: 15, icon: '🌾', trait: 'Drought Resistant', itemType: 'sorghum_seed' },
@@ -153,6 +154,9 @@ const BUILDING_ICON: Record<string, string> = {
   kraal: 'building_paddock',
   farm_boundary: 'building_fence',
   crafting: 'building_mill',
+  // Doc 11 §6 — the monument gets its own art (`deep-time` asset group) instead
+  // of borrowing the generic baobab scene prop.
+  setlhare_sa_boswa: 'building_setlhare_sa_boswa',
 };
 const BUILDING_EMOJI: Record<string, string> = {
   storage: '🧺',
@@ -160,6 +164,7 @@ const BUILDING_EMOJI: Record<string, string> = {
   kraal: '🪵',
   farm_boundary: '🚧',
   crafting: '⚒️',
+  setlhare_sa_boswa: '🌳',
 };
 const MAINTENANCE_INFO: Record<string, { pula: number; mat?: { slug: string; qty: number } }> = {
   water_source: { pula: 60, mat: { slug: 'setena', qty: 2 } },
@@ -174,13 +179,15 @@ type BuildingNameKey =
   | 'buildingWaterSource'
   | 'buildingKraal'
   | 'buildingBoundary'
-  | 'buildingCrafting';
+  | 'buildingCrafting'
+  | 'buildingHeritageTree';
 const BUILDING_NAME_KEY: Record<string, BuildingNameKey> = {
   storage: 'buildingStorage',
   water_source: 'buildingWaterSource',
   kraal: 'buildingKraal',
   farm_boundary: 'buildingBoundary',
   crafting: 'buildingCrafting',
+  setlhare_sa_boswa: 'buildingHeritageTree',
 };
 
 /** Building icon from the item-icon set, with emoji fallback. */
@@ -305,6 +312,13 @@ export function FarmScreen() {
     maxWater,
     hasTank,
     refillWell,
+    waterWhisper,
+    botho,
+    isGuardianOfSesana,
+    journalPages,
+    journalTotalPages,
+    tsholofelo,
+    claimTsholofeloGift,
     plots,
     harvestPlot,
     plantPlot,
@@ -332,6 +346,45 @@ export function FarmScreen() {
   const selectedBuilding = buildings.find((b) => b.id === selectedBuildingId) ?? null;
   const [showBuildSheet, setShowBuildSheet] = useState(false);
   const [availableBuildings, setAvailableBuildings] = useState<AvailableBuilding[]>([]);
+  // Doc 11 §6 — the Heritage Tree stands ON a plot, so its build tap opens a slot
+  // picker rather than constructing immediately.
+  const [treeSlotPicker, setTreeSlotPicker] = useState(false);
+  // Doc 12 §2.2/§2.3/§3.2 — the micro-animations that make the verbs feel
+  // physical: the product icon pops, the animal bobs while it eats, the repaired
+  // slot plays its sweep. Haptics live with the actions (gameState).
+  const [poppedAnimalId, setPoppedAnimalId] = useState<string | null>(null);
+  const [feedingId, setFeedingId] = useState<string | null>(null);
+  const [shiningBuildingId, setShiningBuildingId] = useState<string | null>(null);
+  // Long press opens the detail sheet; a fired long press must not also collect.
+  // Typed off `window.setTimeout` (a number in the browser) rather than the Node
+  // global, which the DOM build resolves to a Timeout object.
+  const pressTimer = useRef<number | null>(null);
+  const longPressed = useRef(false);
+
+  // Doc 11 §6 — the plots the Heritage Tree is blessing: its cross neighbours on
+  // the plot grid. Same helper the API applies the 0.8x saving with, so the
+  // golden mist can never disagree with the water actually saved. UI plots are
+  // `slotIndex + 1` (see mapServerPlotToUI), hence `plot.id - 1` at the call site.
+  const heritageTree = buildings.find(
+    (b) => b.buildingType === 'setlhare_sa_boswa' && b.state === 'ACTIVE' && b.slotIndex != null,
+  );
+  const blessedSlots =
+    heritageTree && heritageTree.slotIndex != null
+      ? new Set(adjacentPlotSlots(heritageTree.slotIndex, 4, plots.length))
+      : new Set<number>();
+
+  // Slots already taken by a grid-placed building, and the plots nothing occupies
+  // — together they are the only legal places to plant the tree (the server
+  // re-checks both, so the picker cannot offer a plot that will be refused).
+  const buildingSlots = new Set(
+    buildings.map((b) => b.slotIndex).filter((s): s is number => s != null),
+  );
+  const freePlots = plots.filter((p) => p.state === 'TILLED' && !buildingSlots.has(p.id - 1));
+
+  // Doc 11 §2 — Tsholofelo's perch is decided by the server (kagiso >= 5 on an
+  // unlocked scene AND no stalled crop) and read through gameState. She is never
+  // shown to scold, so a missing bird is silence rather than a warning.
+  const tsholofeloPerched = tsholofelo?.perched ?? false;
 
   // 03 §14 — first-visit nudge. One-time (localStorage): a fresh grid of
   // identical "Empty Soil" tiles gives a new player nothing to read.
@@ -430,6 +483,39 @@ export function FarmScreen() {
     : 0;
   const canFeed =
     !!selectedAnimal && !!selFeed && selFeedQty >= selFeed.amount && selectedAnimal.hunger < 0.95;
+
+  /**
+   * Doc 12 §2.2 — the direct collection verb. A tap on a READY slot collects
+   * straight into the granary (the same server call the sheet makes, so there is
+   * no second path to keep honest) and pops the product icon. A slot that is not
+   * ready opens the sheet instead, because there is nothing to collect yet.
+   */
+  const handleAnimalTap = (animal: FarmAnimal) => {
+    if (longPressed.current) {
+      longPressed.current = false;
+      return;
+    }
+    if (animal.productReady) {
+      setPoppedAnimalId(animal.id);
+      window.setTimeout(() => setPoppedAnimalId((p) => (p === animal.id ? null : p)), 240);
+      collectAnimalProduct(animal.id);
+      return;
+    }
+    setSelectedAnimalId(animal.id);
+  };
+
+  /** Long press (450ms) opens the detail sheet — ready product or not (§2.2). */
+  const startAnimalPress = (animal: FarmAnimal) => {
+    longPressed.current = false;
+    pressTimer.current = window.setTimeout(() => {
+      longPressed.current = true;
+      setSelectedAnimalId(animal.id);
+    }, 450);
+  };
+  const endAnimalPress = () => {
+    if (pressTimer.current) window.clearTimeout(pressTimer.current);
+    pressTimer.current = null;
+  };
 
   // Build sheet: server-driven list (config = authority), lazy on open.
   const openBuildSheet = async () => {
@@ -617,11 +703,13 @@ export function FarmScreen() {
                     selectedPlot?.id === plot.id
                       ? 'border-primary ring-2 ring-primary/50 shadow-lg'
                       : plot.canHarvest
-                        ? 'border-gold-currency animate-pulse'
+                        ? 'border-gold-currency plot-ready'
                         : plot.stalled
                           ? 'border-sky-blue'
                           : 'border-wood-border hover:border-primary/50'
-                  } ${celebrate?.id === plot.id ? `animate-${celebrate.kind}` : ''}`}
+                  } ${celebrate?.id === plot.id ? `animate-${celebrate.kind}` : ''} ${
+                    blessedSlots.has(plot.id - 1) ? 'heritage-mist' : ''
+                  }`}
                 >
                   <CropSprite
                     cropType={plot.cropType}
@@ -632,6 +720,16 @@ export function FarmScreen() {
                   <span className="font-headline text-[11px] sm:text-xs text-cream-surface font-bold leading-tight">
                     {plot.cropName}
                   </span>
+                  {blessedSlots.has(plot.id - 1) && (
+                    // Doc 11 §6 — the Heritage Tree's shade. A gift, never a
+                    // requirement: the plot grows fine without it.
+                    <span
+                      aria-hidden
+                      className="absolute top-1 right-1 text-[11px] leading-none opacity-90"
+                    >
+                      🌳
+                    </span>
+                  )}
                   {plot.canHarvest && (
                     <span className="font-mono text-[10px] text-gold-currency font-bold tracking-wider animate-bounce">
                       {tl('ready')}
@@ -688,19 +786,41 @@ export function FarmScreen() {
                 {livestock.map((animal) => (
                   <button
                     key={animal.id}
-                    onClick={() => setSelectedAnimalId(animal.id)}
+                    onClick={() => handleAnimalTap(animal)}
+                    onPointerDown={() => startAnimalPress(animal)}
+                    onPointerUp={endAnimalPress}
+                    onPointerLeave={endAnimalPress}
+                    onPointerCancel={endAnimalPress}
+                    onContextMenu={(e) => e.preventDefault()}
                     aria-label={
                       animal.name ?? tl(ANIMAL_NAME_KEY[animal.animalType] ?? 'animalChicken')
                     }
-                    className={`relative flex-shrink-0 w-20 p-1.5 border flex flex-col items-center gap-1 transition-all active:scale-95 ${
-                      animal.productReady
-                        ? 'bg-gold-currency/20 border-gold-currency animate-pulse'
-                        : animal.isSick || animal.hunger < 0.3
-                          ? 'bg-error-container/40 border-status-danger'
-                          : 'bg-wood-dark/80 border-wood-border'
+                    title={animal.productReady ? tl('collect') : undefined}
+                    className={`relative flex-shrink-0 w-20 p-1.5 border flex flex-col items-center gap-1 transition-colors active:scale-95 ${
+                      // Doc 12 §2.1 — the slot itself reports the state: a warm
+                      // amber wash when the animal is fed and content, a
+                      // desaturated grey-blue one when it needs care. Never a
+                      // flashing alert (§0).
+                      animal.isSick
+                        ? 'bg-[#9FB3C8]/25 border-status-danger'
+                        : animal.hunger < 0.3
+                          ? 'bg-[#9FB3C8]/20 border-status-warning'
+                          : animal.productReady
+                            ? 'bg-[#FAEEDA]/25 border-gold-currency'
+                            : animal.hunger > 0.6 && animal.happiness > 0.6
+                              ? 'bg-[#FAEEDA]/15 border-wood-border'
+                              : 'bg-wood-dark/80 border-wood-border'
                     }`}
                   >
-                    <AnimalSprite type={animal.animalType} mood={animalMood(animal)} size={40} />
+                    <span className={`relative ${feedingId === animal.id ? 'feed-bob' : ''}`}>
+                      <AnimalSprite type={animal.animalType} mood={animalMood(animal)} size={40} />
+                      {feedingId === animal.id && (
+                        // §2.3 — the grain scatters in as the animal bobs.
+                        <span className="feed-grain absolute -top-1 right-0 text-xs" aria-hidden>
+                          🌾
+                        </span>
+                      )}
+                    </span>
                     <span className="font-mono text-[10px] text-cream-surface truncate w-full text-center">
                       {animal.name ?? tl(ANIMAL_NAME_KEY[animal.animalType] ?? 'animalChicken')}
                     </span>
@@ -712,7 +832,12 @@ export function FarmScreen() {
                       />
                     </div>
                     {animal.productReady && (
-                      <span className="absolute -top-1 -right-1 text-xs" aria-hidden>
+                      <span
+                        className={`absolute -top-1 -right-1 text-xs ${
+                          poppedAnimalId === animal.id ? 'product-pop' : ''
+                        }`}
+                        aria-hidden
+                      >
                         {ANIMAL_PRODUCT[animal.animalType] ?? '🧺'}
                       </span>
                     )}
@@ -756,17 +881,32 @@ export function FarmScreen() {
                       key={b.id}
                       onClick={() => setSelectedBuildingId(b.id)}
                       aria-label={tl(BUILDING_NAME_KEY[b.buildingType] ?? 'buildingStorage')}
-                      className={`relative flex-shrink-0 w-20 p-1.5 border flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                      className={`relative flex-shrink-0 w-20 p-1.5 border flex flex-col items-center gap-1 transition-colors active:scale-95 ${
                         b.state === 'CONSTRUCTION'
                           ? 'bg-surface-container-high/60 border-status-info'
                           : b.state === 'DISABLED'
                             ? 'bg-error-container/40 border-status-danger'
                             : b.state === 'MAINTENANCE_NEEDED'
                               ? 'bg-status-warning/10 border-status-warning'
-                              : 'bg-wood-dark/80 border-wood-border'
-                      }`}
+                              : // Doc 12 §3.1 — 80%+ wear hands the border to the
+                                // soft amber, so degradation is visible without a
+                                // single exclamation mark.
+                                b.wear >= 0.8
+                                ? 'bg-wood-dark/80 border-[#EF9F27]'
+                                : 'bg-wood-dark/80 border-wood-border'
+                      } ${shiningBuildingId === b.id ? 'repair-shine' : ''}`}
                     >
-                      <BuildingIcon type={b.buildingType} size={32} />
+                      {/* §3.1 — colours fade from 50% wear; a tiny amber detail
+                          appears where a board has started to lift. */}
+                      <span className={b.wear >= 0.5 ? 'saturate-[0.85]' : undefined}>
+                        <BuildingIcon type={b.buildingType} size={32} />
+                      </span>
+                      {b.wear >= 0.5 && b.wear < 0.8 && (
+                        <span
+                          aria-hidden
+                          className="absolute top-1 right-1 w-[3px] h-[3px] bg-[#EF9F27]/80"
+                        />
+                      )}
                       <span className="font-mono text-[10px] text-cream-surface truncate w-full text-center">
                         {tl(BUILDING_NAME_KEY[b.buildingType] ?? 'buildingStorage')}
                       </span>
@@ -965,7 +1105,41 @@ export function FarmScreen() {
             </div>
           </div>
         ) : (
-          <div className="mx-auto w-full max-w-2xl lg:max-w-5xl flex items-stretch gap-2">
+          <div className="relative mx-auto w-full max-w-2xl lg:max-w-5xl flex items-stretch gap-2">
+            {/* Doc 12 §4.1 — the Water Whisper rides directly above the tank bar:
+                italics that fade in, hold ~4s and fade out. Absolutely placed so
+                it can never shift the dock, and it clears itself (see refillWell). */}
+            <WaterWhisperToast text={waterWhisper} />
+            {/* Doc 11 §2 — Tsholofelo, perched on the dock when the land is at
+                peace. The server owns the gate, the speech line (one of her four
+                verbatim idle lines, per Botswana day) and the daily gift; the
+                client only renders. Three frames, swapped by CSS. */}
+            {tsholofeloPerched && (
+              <div className="absolute -top-3 right-1 z-10 flex flex-col items-end gap-1">
+                {tsholofelo?.line && (
+                  <span className="max-w-[11rem] bg-cream-surface text-wood-dark font-body text-[10px] italic leading-snug px-2 py-1 border border-wood-border shadow-md">
+                    {tsholofelo.line}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={tsholofelo?.giftAvailable ? () => claimTsholofeloGift() : undefined}
+                  aria-label={tl('tsholofelo')}
+                  title={tsholofelo?.giftAvailable ? tl('tsholofeloGift') : tl('tsholofeloHere')}
+                  className={`relative ${tsholofelo?.giftAvailable ? 'cursor-pointer' : 'cursor-default'}`}
+                >
+                  <span className="tsholofelo-idle block" role="img" aria-hidden="true" />
+                  {tsholofelo?.giftAvailable && (
+                    <span
+                      className="absolute -top-1 -right-1 text-[10px] animate-bounce"
+                      aria-hidden="true"
+                    >
+                      🎁
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
             {/* Water gauge — tappable: refills the one shared tank (see refillWell) */}
             <button
               onClick={() => {
@@ -985,16 +1159,19 @@ export function FarmScreen() {
             >
               <span className="text-sm leading-none">💧</span>
               <div className="flex-1 h-2.5 bg-surface-container-lowest overflow-hidden">
+                {/* Doc 12 §4.2 — keyed on the level so the bar replays its slosh
+                    overshoot whenever the tank is refilled or drained. */}
                 <div
-                  className={`h-full transition-all ${
-                    hasTank ? 'bg-sky-blue' : 'bg-status-error/60'
+                  key={waterLevel}
+                  className={`h-full transition-all tank-slosh ${
+                    hasTank ? 'bg-sky-blue' : 'bg-status-danger/60'
                   }`}
                   style={{ width: `${hasTank ? waterPercent : 0}%` }}
                 />
               </div>
               <span
                 className={`font-mono text-xs font-bold ${
-                  hasTank ? 'text-sky-blue' : 'text-status-error'
+                  hasTank ? 'text-sky-blue' : 'text-status-danger'
                 }`}
               >
                 {hasTank ? `${waterLevel}L` : tl('noTank')}
@@ -1033,11 +1210,21 @@ export function FarmScreen() {
           <div className="w-full max-w-sm bg-wood-dark/95 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] p-4 animate-slide-up">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <AnimalSprite
-                  type={selectedAnimal.animalType}
-                  mood={animalMood(selectedAnimal)}
-                  size={40}
-                />
+                <span
+                  className={`relative ${feedingId === selectedAnimal.id ? 'feed-bob' : ''}`}
+                >
+                  <AnimalSprite
+                    type={selectedAnimal.animalType}
+                    mood={animalMood(selectedAnimal)}
+                    size={40}
+                  />
+                  {feedingId === selectedAnimal.id && (
+                    // §2.3 — grain scatters in while the animal does its bob.
+                    <span className="feed-grain absolute -top-1 right-0 text-xs" aria-hidden>
+                      🌾
+                    </span>
+                  )}
+                </span>
                 <div>
                   <span className="font-headline text-sm text-cream-surface font-bold block">
                     {selectedAnimal.name ??
@@ -1087,7 +1274,14 @@ export function FarmScreen() {
             <div className="flex gap-2">
               <button
                 disabled={!canFeed}
-                onClick={() => feedAnimal(selectedAnimal.id)}
+                onClick={() => {
+                  // Doc 12 §2.3 — the feed ritual: the animal bobs twice and the
+                  // grain scatters in. Wired here, where Feed lives.
+                  const id = selectedAnimal.id;
+                  setFeedingId(id);
+                  window.setTimeout(() => setFeedingId((f) => (f === id ? null : f)), 520);
+                  feedAnimal(id);
+                }}
                 title={selFeed ? `${selFeed.amount}× ${selFeed.slug} (${selFeedQty})` : undefined}
                 className="flex-1 py-2 bg-primary-container text-on-primary-container font-mono text-[11px] font-bold uppercase active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -1102,7 +1296,7 @@ export function FarmScreen() {
               </button>
               <button
                 disabled={!selectedAnimal.productReady}
-                onClick={() => collectAnimalProduct(selectedAnimal.id)}
+                onClick={() => handleAnimalTap(selectedAnimal)}
                 className="flex-1 py-2 bg-gold-currency/90 text-wood-dark font-mono text-[11px] font-bold uppercase active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {tl('collect')} {ANIMAL_PRODUCT[selectedAnimal.animalType] ?? '🧺'}
@@ -1227,7 +1421,15 @@ export function FarmScreen() {
                 <button
                   disabled={!canMaintain}
                   onClick={() => {
-                    maintainBuilding(selectedBuilding.id);
+                    // Doc 12 §3.2 — the slot plays the 1s restoration sweep as the
+                    // colours snap back. The haptic pulse rides with the request.
+                    const id = selectedBuilding.id;
+                    setShiningBuildingId(id);
+                    window.setTimeout(
+                      () => setShiningBuildingId((s) => (s === id ? null : s)),
+                      1000,
+                    );
+                    maintainBuilding(id);
                     setSelectedBuildingId(null);
                   }}
                   className="w-full py-2 bg-primary-container text-on-primary-container font-mono text-xs font-bold uppercase active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1288,12 +1490,24 @@ export function FarmScreen() {
                 const matsShort = matCost.some(
                   (m) => (inventory.find((i) => i.itemType === m.slug)?.quantity ?? 0) < m.qty,
                 );
-                const unavailable = b.owned || b.cost.currency > pula || matsShort;
+                // Doc 11 §6 — the Heritage Tree: gated on the Guardian title (the
+                // server re-checks it) and planted on a chosen plot, so this row
+                // never constructs straight away.
+                const isTree = b.id === 'setlhare_sa_boswa';
+                const treeLocked = isTree && !isGuardianOfSesana;
+                const unavailable = b.owned || treeLocked || b.cost.currency > pula || matsShort;
                 return (
                   <button
                     key={b.id}
                     disabled={unavailable}
                     onClick={() => {
+                      if (isTree) {
+                        // Which plot it stands on is the player's choice, so the
+                        // tap opens the slot picker instead of constructing.
+                        setTreeSlotPicker(true);
+                        setShowBuildSheet(false);
+                        return;
+                      }
                       constructBuilding(b.id);
                       setShowBuildSheet(false);
                     }}
@@ -1317,6 +1531,19 @@ export function FarmScreen() {
                                 .map((m) => `${m.qty}${MAT_EMOJI[m.slug] ?? ''} ${m.slug}`)
                                 .join(' ')}
                         </span>
+                        {isTree && (
+                          // The gate and the benefit, stated plainly: no greyed-out
+                          // mystery button and no dead end.
+                          <span
+                            className={`font-mono text-[9px] block ${
+                              treeLocked ? 'text-status-warning' : 'text-gold-currency'
+                            }`}
+                          >
+                            {treeLocked
+                              ? `${tl('guardianOnlyHint')} — ${journalPages}/${journalTotalPages} · ${botho} Botho`
+                              : tl('heritageShade')}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <span
@@ -1334,6 +1561,62 @@ export function FarmScreen() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Doc 11 §6 — planting the Heritage Tree: which plot it stands on. The
+          server re-checks the Guardian title, that the plot exists, is EMPTY and
+          carries no other building, so this list is a convenience, not the gate. */}
+      {treeSlotPicker && (
+        <div className="fixed inset-x-0 bottom-16 md:bottom-0 z-30 flex justify-center px-4 pb-2">
+          <div className="w-full max-w-sm bg-wood-dark/95 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] p-4 animate-slide-up">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-headline text-sm text-cream-surface font-bold">
+                {tl('buildingHeritageTree')}
+              </span>
+              <button
+                onClick={() => setTreeSlotPicker(false)}
+                aria-label="Close"
+                className="text-cream-surface/90 hover:text-cream-surface text-xs"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="font-mono text-[10px] text-cream-surface/90 mb-2">
+              {tl('chooseTreePlot')}
+            </p>
+            <div className="grid grid-cols-4 gap-2 max-h-56 overflow-y-auto">
+              {freePlots.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    // The slot travels with the request; the plot's own id is
+                    // `slotIndex + 1`, so the slot is `id - 1` (see the grid map).
+                    constructBuilding('setlhare_sa_boswa', p.id - 1);
+                    setTreeSlotPicker(false);
+                  }}
+                  className="flex flex-col items-center gap-1 p-1.5 bg-surface-container-high hover:bg-wood-medium border border-wood-border active:scale-95"
+                >
+                  <img
+                    src="/assets/tiles/decorations/setlhare_sa_boswa.png"
+                    alt=""
+                    aria-hidden
+                    className="w-6 h-8 object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <span className="font-mono text-[9px] text-cream-surface/90">{p.label}</span>
+                </button>
+              ))}
+              {freePlots.length === 0 && (
+                <p className="col-span-4 font-mono text-[11px] text-cream-surface/90">
+                  {tl('noFreePlot')}
+                </p>
+              )}
+            </div>
+            <p className="font-mono text-[9px] text-on-surface-variant mt-2">
+              {tl('heritageShade')}
+            </p>
           </div>
         </div>
       )}

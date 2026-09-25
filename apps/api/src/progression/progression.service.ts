@@ -50,6 +50,18 @@ export interface BothoView {
 export interface JournalView {
   pagesComplete: number;
   totalPages: number;
+  /**
+   * Doc 11 §3 — Water Whispers listened to. This is the Deep Time "+1 Journal
+   * Progress": one row per listen in `lore_entries`, additive forever, never
+   * spendable.
+   */
+  whispers: number;
+  /**
+   * Doc 11 §6 — Guardian of Sesana: Journal at 100% AND Botho >= 500. Written
+   * once by the server (profiles.is_guardian_of_sesana) and never cleared —
+   * honours have no downgrades. Gates the Heritage Tree.
+   */
+  isGuardianOfSesana: boolean;
 }
 
 export interface ProgressionView {
@@ -162,7 +174,53 @@ export class ProgressionService {
       if (found >= findsForScene(scene.slug).length) pagesComplete++;
     }
 
-    return { pagesComplete, totalPages: pages.length };
+    // Doc 11 §3 — Water Whispers listened to: the Deep Time "+1 Journal
+    // Progress". One row per listen in `lore_entries`, counted here so the
+    // Journal's quiet moments live beside its discoveries.
+    const { data: whisperRows } = await this.supabase
+      .getAdminClient()
+      .from('lore_entries')
+      .select('slug')
+      .eq('player_id', playerId)
+      .eq('kind', 'water_whisper');
+    const whispers = (whisperRows ?? []).length;
+
+    // Doc 11 §6 — Guardian of Sesana: Journal at 100% AND Botho >= 500. The
+    // title is written to profiles ONCE and never cleared (honours have no
+    // downgrades); until then the view reports what the title WOULD be, so the
+    // client can show the Heritage Tree unlock coming. Purely positive: a
+    // player who has earned it can never lose it.
+    let isGuardianOfSesana = false;
+    if (pages.length > 0 && pagesComplete >= pages.length) {
+      const botho = await this.wallet.getBotho(playerId);
+      if (botho >= 500) {
+        const admin = this.supabase.getAdminClient();
+        const { data: profile } = await admin
+          .from('profiles')
+          .select('is_guardian_of_sesana')
+          .eq('id', playerId)
+          .maybeSingle();
+        const already =
+          Boolean((profile as Record<string, unknown> | null)?.is_guardian_of_sesana) ?? false;
+        isGuardianOfSesana = true;
+        if (profile && !already) {
+          await admin
+            .from('profiles')
+            .update({ is_guardian_of_sesana: true })
+            .eq('id', playerId);
+          // One dated lore row so the honour has a moment attached to it.
+          await admin.from('lore_entries').insert({
+            player_id: playerId,
+            kind: 'guardian_of_sesana',
+            slug: 'guardian_of_sesana',
+            quote: 'Named Guardian of Sesana — keeper of the land and its memory.',
+            is_original: false,
+          });
+        }
+      }
+    }
+
+    return { pagesComplete, totalPages: pages.length, whispers, isGuardianOfSesana };
   }
 
   /**
@@ -253,8 +311,6 @@ export class ProgressionService {
         blurb: scene.blurb,
         bothoRequired,
         unlocked,
-        // Unlocked-but-empty reads as "coming soon"; locked reads as locked.
-        // Neither is ever a 403 — a wall tells the player nothing.
         comingSoon: unlocked && !hasContent,
         hasContent,
       };

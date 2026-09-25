@@ -1,0 +1,251 @@
+# Document 11: Deep Time Lore & Cozy Progression Framework
+
+**Status:** Finalized Design Spec  
+**Target Systems:** `packages/game-config`, `apps/api`, `apps/web`  
+
+---
+
+## 0. Core Philosophy & Tagging Rules
+
+**Core Philosophy:** Farming as a Conversation, not a Conquest. *Molemisi* is a cozy, low-stress management experience about growth, patience, and community. The lore reflects gentle reciprocity and the quiet joy of a balanced homestead. There are no blights, curses, or epic conflicts. 
+
+**Tagging Rules:**
+*   **[REAL]:** An attested Setswana linguistic or cultural fact. 
+*   **[ORIGINAL]:** Invented for *Molemisi*. Never presented to players as a real, currently-practiced belief, deity, or sacred site. 
+
+Nothing below gamifies a real, living religious practice. All mechanics respect the "Three Pillars" (Pula, Botho, Journal) and the strict "No XP/Level" economy rule.
+
+---
+
+## 1. The Setting: Sesana
+
+**[ORIGINAL] Name.**  
+Sesana is the fictional composite village where the game takes place. Built from real Central District geography (dryland *masimo* fields, a seasonal river, rocky outcrops), the village itself, its chieftaincy, and its residents are entirely invented. The name is simply Sesana.
+
+---
+
+## 2. The Companion: Tsholofelo (Hope)
+
+**Lore Concept:** Tsholofelo is a small, luminous, bird-like spirit ([ORIGINAL] design). She is the living manifestation of the farm’s potential and hope. She nests near the Jojo water tank or the oldest tree on the farm, appearing only when the farm is in a state of balance (crops watered, animals fed) and the Bushveld `kagiso` is high.
+
+**Gameplay Integration & Dialogue:**
+Unlike the solemn Elder Mogolo, Tsholofelo is an active, daily presence. She does not just chirp; she speaks in short, observant, and hopeful lines. Her dialogue is delivered via a small, animated speech bubble above her sprite when she is on-screen.
+
+*   **Trigger:** She appears when `kagiso >= 5` and the farm has no neglected plots.
+*   **Dialogue Pool Examples:**
+    *   *"The soil is thirsty, but patient. You are doing well."*
+    *   *"I found a shiny stone by the river today! The bush is happy."*
+    *   *"The water in the tank is cool and deep. It remembers the spring rains."*
+    *   *"Rest your hands for a moment. The crops know you are here."*
+*   **The Gift:** Occasionally, when the player logs in to a perfectly balanced farm, Tsholofelo’s dialogue bubble will contain a small, free gift (e.g., a single wild seed or +5 Botho).
+
+---
+
+## 3. Pillar 1: Pula (The Physical Conversation)
+
+**Lore Concept:** *Metsi a a Gopola* ([ORIGINAL] concept: The Water that Listens/Remembers). Water is the medium through which the farmer and the land speak. When you water a crop, you are not just hydrating it; you are reminding the seed of its purpose, and the water remembers the rains of the past.
+
+**Lightweight Gameplay Integration:**
+*   **The Water Whisper:** When a player waters a crop via the farming action, the API rolls a 10% chance (`Math.random() < 0.1`). 
+*   **The Reward:** If triggered, the API response includes a `water_whisper` string (pulled from a poetic quote pool). The frontend displays this as a subtle, fading ambient text at the bottom of the screen.
+    *   *Example:* "The maize remembers the rain of last year. It grows quickly today."
+    *   *Example:* "Deep roots drink from the memory of the river."
+*   **Progression:** Listening to the water grants **+1 Journal Progress**. It turns a repetitive daily chore into a moment of mindful connection.
+
+---
+
+## 4. Pillar 2: Botho (The Social Conversation)
+
+**Lore Concept:** *Nako ya Go Arogana* ([REAL] concept: The Season of Sharing). A harvest is never truly complete until it is shared. Sesana thrives not on wealth, but on the circulation of goods and the warmth of the community.
+
+**Lightweight Gameplay Integration:**
+*   **The Village Feast (Positive World Event):** A gentle, positive seasonal event. The Kgotla announces a need for a specific crop (e.g., "The village is preparing for the Autumn Feast, and we need 20 Watermelons").
+*   **The Reward:** Donating the crops yields a massive **Botho** boost and a permanent, cozy cosmetic reward (e.g., a unique woven fence pattern, a special well decoration, or the title "Friend of the Feast"). 
+*   **Design Note:** There is no penalty for ignoring it. It is purely positive reinforcement that makes the player feel integrated into Sesana.
+
+---
+
+## 5. Pillar 3: Journal (The Hidden Conversation)
+
+**Lore Concept:** *Dikgopolo tsa Naga* ([ORIGINAL] concept: The Thoughts of the Wild). The Bushveld is not a dungeon to be conquered; it is a library to be browsed. The rocks, rivers, and deep brush hold the quiet memories of the land.
+
+**Lightweight Gameplay Integration:**
+*   **Gentle Discoveries:** When exploring the Bushveld, players occasionally find simple, natural items: a `smooth_river_stone`, a `patterned_feather`, or a `fossilized_leaf`. 
+*   **The Almanac Reward:** These items do not unlock complex crafting chains. Instead, they fill a page in the Field Journal with a beautiful illustration and a short lore entry from Mogolo.
+*   **Progression:** Completing a Journal section unlocks a **cosmetic farm upgrade** (e.g., a traditional thatched roof for the coop, a new color palette for the farm) or a new, rare seed variety. It rewards curiosity, not grind.
+
+---
+
+## 6. Endgame: Setlhare sa Boswa (The Heritage Tree)
+
+**Lore Concept:** The ultimate goal of a cozy farm sim is to leave the land better than you found it. *Setlhare sa Boswa* ([ORIGINAL] concept: The Heritage Tree) is a living monument to a farmer's lifelong care for the soil.
+
+**Lightweight Gameplay Integration:**
+*   **The Ultimate Milestone:** When a player maxes their Journal Progress (100% Discoveries) and reaches a high Botho threshold (e.g., ≥ 500), the Kgosi recognizes them with a simple honor: they are named a **Guardian of Sesana**.
+*   **The Reward:** The player unlocks the ability to plant the **Setlhare sa Boswa** on their farm. 
+    *   It is a permanent, beautiful, large-scale cosmetic addition to the farm.
+    *   It provides a tiny, passive ambient benefit: it slightly reduces the `water_decay_rate` for the 4 plots immediately surrounding it, tying back to the "Water Memory" theme.
+    *   It serves as a permanent, visible monument to the player’s legacy.
+
+---
+
+## 7. Technical Implementation Checklist
+
+### 7.1 Configuration (`packages/game-config`)
+*   **Dialogue:** Add the `water_whisper` quote pool and the `tsholofelo_dialogue` pool to the dialogue config.
+*   **Bushveld Loot:** Add gentle discovery items (`smooth_river_stone`, `patterned_feather`, `fossilized_leaf`) to Bushveld drop tables.
+*   **Events:** Add `village_feast` to the world events pool (positive donation event, no negative modifiers).
+*   **Cosmetics/Buildings:** Add the `setlhare_sa_boswa` item to the late-game unlock catalog, including its adjacency buff parameters.
+
+### 7.2 API Updates (`apps/api`)
+*   **Water Whisper:** In the crop watering service, add the 10% RNG check. If true, attach `water_whisper: string` to the response DTO and increment the player's `journal_progress` by 1.
+*   **Feast Donation:** Ensure the Kgotla donation endpoint can handle `village_feast` events, granting Botho and triggering the cosmetic unlock without granting Pula.
+*   **Heritage Tree Buff:** Update the crop simulation hydration decay logic to check for the `setlhare_sa_boswa` building in adjacent plots and apply the decay reduction modifier.
+
+### 7.3 Frontend Updates (`apps/web`)
+*   **Companion UI:** Update the companion sprite to the new bird-like design. Implement the animated speech bubble component to display Tsholofelo's dialogue and gift drops.
+*   **Water Whisper:** Add a UI toast/fade-in component on the Farm Screen to display the `water_whisper` string when returned by the API.
+*   **Endgame UI:** Add the "Plant Heritage Tree" interaction for eligible players (Guardian of Sesana title holders).
+
+# Document 12: Farm Screen UI & Gameplay Refinement
+
+**Status:** Finalized Implementation Spec  
+**Target Systems:** `apps/web` (React UI), `apps/api` (NestJS), `packages/game-config`  
+**Context:** Enhances the existing Farm Screen layout (Doc 23 wireframe) with "slight game art and animations" to create a living, tactile management experience in Sesana, without breaking the core management focus.
+
+---
+
+## 0. Core Philosophy: Art as Feedback & Atmosphere
+
+The Farm Screen remains a management dashboard. Animations and art are used strictly for **feedback, state communication, and atmosphere**. 
+*   **No blocking pop-ups:** Interactions use contextual Bottom Sheets.
+*   **No stressful alerts:** Degradation is shown through subtle visual fading, not flashing red exclamation marks.
+*   **Tactile verbs:** Actions like watering, feeding, and collecting feel physical through micro-animations and haptics.
+
+---
+
+## 1. Global UI Art Direction
+
+*   **Materials:** UI panels use subtle pixel-art textures (woven thapo grass, carved wood) as borders via Tailwind `bg-[url(...)]` or `border-image`.
+*   **Typography:** Stats use the custom Molemisi pixel font with a subtle "stamp" drop-shadow.
+*   **Color Palette:** Earth reds, grass greens, amber gold (`#EF9F27`), dark brown. Highlights use Amber Gold for readiness and Sky Blue (`#378ADD`) for water.
+
+---
+
+## 2. Livestock Row: Micro-Kraals & Direct Collection
+
+The livestock row (3 slots on phone, 2 on desktop) transitions from static buttons to live status indicators.
+
+### 2.1 Stateful Slot Backgrounds
+*   **Logic:** The slot background tint shifts based on the animal's `hunger` and `happiness` state (pulled from `GET /farms/current`).
+*   **Visuals:** 
+    *   *Happy/Fed (>0.6):* Warm, faint amber glow (`#FAEEDA` tint).
+    *   *Hungry/Needs Care (<0.3):* Subtle, desaturated grey-blue tint.
+
+### 2.2 Direct "Product" Collection (The Tactile Verb)
+*   **Visual:** If `productReady === true`, a tiny pixel-art icon (egg, milk bottle) appears inside the slot.
+*   **Interaction:** 
+    *   *Single Tap:* Collects the product directly into the granary. Triggers a 0.2s "pop" scale animation on the icon and a haptic tap (`navigator.vibrate([10])`).
+    *   *Long Press / Double Tap:* Opens the detailed Bottom Sheet for feeding/petting.
+
+### 2.3 The "Feed" Animation
+*   **Visual:** When "Feed" is tapped in the Bottom Sheet, a quick 0.5s animation plays: pixel-art grain scatters into the slot, and the animal icon does a tiny 2-frame "bob" animation.
+
+---
+
+## 3. Buildings Row: Visual Wear & The Heritage Tree
+
+The buildings row (2 slots) communicates maintenance through visual degradation and restoration.
+
+### 3.1 Visual Wear (Show, Don't Tell)
+*   **Logic:** As a building's `wear` stat increases (0.0 to 1.0), the slot icon/background subtly degrades.
+*   **Stages:**
+    *   *0-50% Wear:* Crisp, vibrant pixel art.
+    *   *50-80% Wear:* Colors fade by 15%. A tiny pixel detail appears (e.g., loose board).
+    *   *80-100% Wear:* Slot border changes from standard grey to soft amber (`#EF9F27`).
+
+### 3.2 The "Repair" Ritual
+*   **Visual:** When "Repair" is clicked in the Bottom Sheet, the slot plays a 1s "restoration" animation: a quick visual "shine" or "sweep" effect, and colors snap back to vibrant. Haptic feedback: `navigator.vibrate([50])`.
+
+### 3.3 Setlhare sa Boswa (The Heritage Tree)
+*   **Placement:** Once unlocked (Guardian of Sesana status), it replaces the "buy plot" dashed button area.
+*   **Visual:** A 2x2 or 3x3 pixel-art ancient tree. The 4 plots immediately surrounding it have a faint golden mist overlay (CSS `box-shadow` or opacity fade) indicating the "Water Memory" hydration buff.
+
+---
+
+## 4. Tank Bar & Water Memory (Lore Integration)
+
+The bottom bar (`tank [====] 620 L | harvest all · 3`) integrates the *Metsi a a Gopola* lore.
+
+### 4.1 The Water Whisper UI
+*   **Trigger:** When `POST /plots/:id/water` returns a `water_whisper` string (10% chance).
+*   **Visual:** The text fades in gently *directly above the Tank Bar* in an italic, slightly transparent font. Holds for 4s, fades out over 2s.
+
+### 4.2 Tank "Slosh" Animation
+*   **Visual:** When the tank is refilled or water is used, the blue bar (`#378ADD`) width overshoots slightly and settles back using a CSS `cubic-bezier` transition, mimicking liquid movement.
+
+---
+
+## 5. Tsholofelo (The Companion) Integration
+
+Tsholofelo acts as a visual indicator of farm balance without blocking UI.
+
+*   **Perching Logic:** If `kagiso >= 5` and no neglected plots, her sprite appears perched on the edge of the **Granary bar** (top) or **Tank bar** (bottom).
+*   **Idle Animation:** 3-frame CSS sprite sheet loop (blink, shift weight).
+*   **Reactions:** 
+    *   *High Quality Harvest:* Tiny hop animation.
+    *   *Building Needs Repair:* Looks toward the buildings row with a small thought bubble ("The wood is tired...").
+
+---
+
+## 6. Technical Implementation Guide (For Coder Agent)
+
+### 6.1 Frontend (apps/web - React/Tailwind)
+1.  **CSS Animations:** Add the following to the global Tailwind CSS file:
+    ```css
+    @keyframes slosh {
+      0% { transform: scaleX(1); }
+      50% { transform: scaleX(1.05); }
+      100% { transform: scaleX(1); }
+    }
+    .tank-slosh { animation: slosh 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    @keyframes breathe-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0); }
+      50% { box-shadow: 0 0 8px 2px rgba(255, 143, 0, 0.4); }
+    }
+    .plot-ready { animation: breathe-glow 3s infinite ease-in-out; }
+    ```
+2.  **Sprite Sheets:** Use CSS `steps()` for Tsholofelo and animal bobs.
+    ```css
+    .tsholofelo-idle {
+      background: url('/assets/ui/tsholofelo_idle.png') 0 0;
+      width: 24px; height: 24px;
+      animation: play-idle 2s steps(3) infinite;
+    }
+    ```
+3.  **Haptics:** Create a utility `utils/haptics.ts` wrapping `navigator.vibrate()` with fallback for non-mobile browsers.
+4.  **Water Whisper Component:** Create `<WaterWhisperToast text={string} />` fixed above the Tank Bar.
+
+### 6.2 Backend & Configuration (apps/api & packages/game-config)
+1.  **Data Payload:** Ensure `GET /farms/current` returns exact `wear` (0.0-1.0) for buildings and `hunger`/`happiness`/`productReady` for livestock. (Verify against `simulation.service.ts`).
+2.  **Water Whisper:** In `crops.service.ts` (or equivalent watering endpoint), add the 10% RNG check. If triggered, attach `water_whisper: string` to the response DTO and increment `journal_progress` by 1.
+3.  **Config:** Add `tsholofelo_dialogue` and `water_whispers` string arrays to `packages/game-config/src/dialogue.ts`.
+
+### 6.3 Execution Checklist
+1.  [x] **Config:** Add dialogue pools and verify simulation payload includes wear/hunger states.
+    — `packages/game-config/src/dialogue.ts` (`WATER_WHISPERS`, `WATER_WHISPER_CHANCE`, `TSHOLOFELO_DIALOGUE`); `GET /farms/current` already carried `wear` and the livestock `hunger`/`happiness`/`productReady` fields.
+2.  [x] **Frontend (Livestock):** Implement stateful slot backgrounds and direct product collection with haptics.
+    — §2.1 slot tints by state (`hunger`/`happiness`/`isSick`, warm amber vs desaturated grey-blue — no flashing); §2.2 single tap on a ready slot collects straight into the granary with a 0.2s `.product-pop` and `hapticTap()` (`vibrate([10])`), long press (450ms) opens the sheet; §2.3 Feed plays a 0.5s `.feed-bob` + `.feed-grain` scatter.
+3.  [x] **Frontend (Buildings):** Implement visual wear stages and repair shine animation.
+    — §3.1 wear is show-don't-tell: colours `saturate-[0.85]` from 50% with a small amber detail, border turns `#EF9F27` at 80%; §3.2 Repair plays the 1s `.repair-shine` sweep and `hapticStrong()` (`vibrate([50])`).
+4.  [x] **Frontend (Tank):** Add slosh animation and Water Whisper toast component.
+    — `.tank-slosh` keyed on the level in the Farm dock, plus `WaterWhisperToast` above the tank bar; the line itself comes from the server (`POST /farms/:farmId/water/refill` → `water_whisper`) and clears itself after ~7s.
+5.  [x] **Frontend (Tsholofelo):** Add perching sprite and idle animation.
+    — three PixelLab frames (`ui/tsholofelo_f1..f3.png`, `deep-time` group) swapped by CSS `steps()` over a 1.5s loop; she perches only when Kagiso >= 5 and nothing is stalled (§5), so her absence is never a scold.
+6.  [x] **Testing:** Run `pnpm test`. Verify animations do not cause layout shifts or performance drops on mobile.
+    — `pnpm -r test` green (validation 35, game-config 95, api 260) and `tsc --noEmit` clean for `apps/api` and `apps/web`. Every added animation is CSS/DOM on absolutely-positioned or same-box elements (no canvas, no reflow), so layout shift is structurally excluded; a real-device performance pass is still owed.
+
+*Agent Note: Keep animations lightweight (CSS/DOM only). Do not introduce canvas overlays for the UI. The goal is to enhance the management feel, not turn it into an action game.*
+
+Use Pixellab API to generate any required pixel art assets.

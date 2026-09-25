@@ -4,7 +4,7 @@ import { BushveldService, BushveldConflict } from './bushveld.service';
 import { SupabaseService } from '../database/supabase.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { WalletService } from '../wallet/wallet.service';
-import { HOTSPOTS, findsForScene } from '@molemisi/game-config';
+import { HOTSPOTS, TSHOLOFELO_DIALOGUE, findsForScene, getCropConfig } from '@molemisi/game-config';
 
 /**
  * P6 — The Bushveld (05 §P6; 04 §4.2, §7.2, §8, §9.3).
@@ -32,6 +32,10 @@ interface Seed {
   discoveries?: string[];
   /** date -> hotspotId already in daily_sparkle */
   sparkles?: Record<string, string>;
+  /** crop_instances rows for the farm under test (Tsholofelo stall check) */
+  crops?: Array<{ crop_type: string; growth_progress_hours: number; hydration: number }>;
+  /** "playerId:kind:slug" rows already in lore_entries */
+  lore?: string[];
 }
 
 interface Metrics {
@@ -44,6 +48,8 @@ function makeStatefulAdmin(seed: Seed, metrics: Metrics) {
   const hotspots = { ...(seed.hotspots ?? {}) };
   const disc = new Set(seed.discoveries ?? []);
   const sparks = { ...(seed.sparkles ?? {}) };
+  const crops = [...(seed.crops ?? [])];
+  const lore = new Set(seed.lore ?? []);
 
   const client: any = {
     from: (table: string) => {
@@ -90,12 +96,27 @@ function makeStatefulAdmin(seed: Seed, metrics: Metrics) {
           }
           return { data: null, error: null };
         }),
+        maybeSingle: jest.fn(async () => {
+          if (table === 'lore_entries') {
+            const pid = filters.find((f) => f[0] === 'player_id')?.[1];
+            const kind = filters.find((f) => f[0] === 'kind')?.[1];
+            const slug = filters.find((f) => f[0] === 'slug')?.[1];
+            return {
+              data: lore.has(`${pid}:${kind}:${slug}`) ? { id: 'lore-1' } : null,
+              error: null,
+            };
+          }
+          return { data: null, error: null };
+        }),
         // list read (the chain is awaited directly, with no .single()).
         // NOTE: Promise adoption calls `then(resolve, reject)` and WE must call
         // resolve — returning a promise from `then` is ignored by the adoption
         // procedure, which would leave `await builder` hanging forever.
         then: (resolve: (v: any) => void, _reject: (e: any) => void) => {
           let data: any = [];
+          if (table === 'crop_instances') {
+            data = crops.map((c) => ({ ...c }));
+          }
           if (table === 'field_journal_entries') {
             const pid = filters.find((f) => f[0] === 'player_id')?.[1] as string;
             data = [...disc]
@@ -123,6 +144,8 @@ function makeStatefulAdmin(seed: Seed, metrics: Metrics) {
             sparks[row.sparkle_date] = row.hotspot_id;
           } else if (table === 'field_journal_entries') {
             disc.add(`${row.player_id}:${row.discovery_slug}`);
+          } else if (table === 'lore_entries') {
+            lore.add(`${row.player_id}:${row.kind}:${row.slug}`);
           }
           metrics.insertRows.push(row);
           return { data: null, error: null };
@@ -148,7 +171,10 @@ describe('BushveldService — P6', () => {
       overflow: 0,
     })),
   };
-  const mockWallet = { getBotho: jest.fn().mockResolvedValue(600) };
+  const mockWallet = {
+    getBotho: jest.fn().mockResolvedValue(600),
+    creditBothoCapped: jest.fn().mockResolvedValue(5),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -157,6 +183,7 @@ describe('BushveldService — P6', () => {
     admin = makeStatefulAdmin({}, metrics);
     mockSupabase.getAdminClient.mockReturnValue(admin.client);
     mockWallet.getBotho.mockResolvedValue(600);
+    mockWallet.creditBothoCapped.mockResolvedValue(5);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -405,6 +432,134 @@ describe('BushveldService — P6', () => {
       const resting = new BushveldConflict('hotspot_resting', 3600);
       expect(resting.getStatus()).toBe(409);
       expect(resting.getResponse()).toEqual({ reason: 'hotspot_resting', etaSeconds: 3600 });
+    });
+  });
+
+  describe('Tsholofelo — Doc 11 §2 (perch gate + the daily gift)', () => {
+    const NOW = new Date('2026-09-23T10:00:00.000Z'); // 12:00 CAT, day key 2026-09-23
+
+    it('perches when an unlocked scene is settled (kagiso >= 5) and no crop is stalled', async () => {
+      // No seeds: every scene is fresh, which means kagiso 6 (04 §4.2).
+      const status = await service.getTsholofeloStatus('farm-1', 'user-1', NOW);
+      expect(status.perched).toBe(true);
+      expect(status.kagiso).toBe(6);
+      expect(status.giftAvailable).toBe(true);
+      expect(TSHOLOFELO_DIALOGUE.idle.slice(0, 4)).toContain(status.line);
+    });
+
+    it('stays away when every unlocked scene is below 5', async () => {
+      withSeed({
+        scenes: {
+          'user-1:open_bush': { kagiso: 2, updatedAt: NOW.toISOString() },
+          'user-1:riverbank': { kagiso: 4, updatedAt: NOW.toISOString() },
+          'user-1:rocky_outcrop': { kagiso: 1, updatedAt: NOW.toISOString() },
+          'user-1:deep_bushveld': { kagiso: 3, updatedAt: NOW.toISOString() },
+        },
+      });
+      const status = await service.getTsholofeloStatus('farm-1', 'user-1', NOW);
+      expect(status.perched).toBe(false);
+      expect(status.kagiso).toBe(4); // the max across unlocked scenes is still reported
+      expect(status.line).toBeNull();
+      expect(status.giftAvailable).toBe(false);
+    });
+
+    it('ignores locked scenes — a settled Deep Bushveld does not count before Botho 300', async () => {
+      mockWallet.getBotho.mockResolvedValue(0);
+      withSeed({
+        scenes: {
+          'user-1:open_bush': { kagiso: 0, updatedAt: NOW.toISOString() },
+          'user-1:riverbank': { kagiso: 0, updatedAt: NOW.toISOString() },
+          'user-1:rocky_outcrop': { kagiso: 0, updatedAt: NOW.toISOString() },
+          'user-1:deep_bushveld': { kagiso: 6, updatedAt: NOW.toISOString() },
+        },
+      });
+      const status = await service.getTsholofeloStatus('farm-1', 'user-1', NOW);
+      expect(status.perched).toBe(false);
+      expect(status.kagiso).toBe(0);
+    });
+
+    it('stays away while any crop is stalled (hydration 0 before maturity), even at kagiso 6', async () => {
+      withSeed({
+        crops: [{ crop_type: 'watermelon', growth_progress_hours: 0, hydration: 0 }],
+      });
+      const status = await service.getTsholofeloStatus('farm-1', 'user-1', NOW);
+      expect(status.perched).toBe(false);
+    });
+
+    it('a finished crop is not a stall — the perch stays', async () => {
+      const cfg = getCropConfig('watermelon')!;
+      withSeed({
+        crops: [{ crop_type: 'watermelon', growth_progress_hours: cfg.growthHours, hydration: 0 }],
+      });
+      const status = await service.getTsholofeloStatus('farm-1', 'user-1', NOW);
+      expect(status.perched).toBe(true);
+    });
+
+    it('the speech line is deterministic per Botswana day', async () => {
+      const a = await service.getTsholofeloStatus('farm-1', 'user-1', NOW);
+      const b = await service.getTsholofeloStatus('farm-1', 'user-1', NOW);
+      expect(a.line).not.toBeNull();
+      expect(b.line).toBe(a.line);
+    });
+
+    it('claims once per Botswana day: +5 Botho via the capped path, then a no-op', async () => {
+      const first = await service.claimTsholofeloBlessing('farm-1', 'user-1', NOW);
+      expect(first.claimed).toBe(true);
+      expect(first.bothoAwarded).toBe(5);
+      expect(mockWallet.creditBothoCapped).toHaveBeenCalledWith(
+        'user-1',
+        5,
+        'tsholofelo_gift',
+        undefined,
+        NOW,
+      );
+      const loreInsert = metrics.insertRows.find((r) => r.kind === 'tsholofelo_gift');
+      expect(loreInsert.slug).toBe('tsholofelo_gift_2026-09-23');
+
+      // The perch now reports the gift as taken...
+      const after = await service.getTsholofeloStatus('farm-1', 'user-1', NOW);
+      expect(after.giftAvailable).toBe(false);
+
+      // ...and a second claim the same day is a quiet no-op, never an error.
+      const again = await service.claimTsholofeloBlessing('farm-1', 'user-1', NOW);
+      expect(again).toEqual({ claimed: false, bothoAwarded: 0, line: first.line });
+      expect(mockWallet.creditBothoCapped).toHaveBeenCalledTimes(1);
+    });
+
+    it('a new Botswana day opens a new gift', async () => {
+      await service.claimTsholofeloBlessing('farm-1', 'user-1', NOW);
+      const tomorrow = new Date(NOW.getTime() + 24 * 60 * 60 * 1000);
+      const again = await service.claimTsholofeloBlessing('farm-1', 'user-1', tomorrow);
+      expect(again.claimed).toBe(true);
+      expect(mockWallet.creditBothoCapped).toHaveBeenCalledTimes(2);
+    });
+
+    it('the day boundary is Botswana time (UTC+2), not UTC', async () => {
+      // 22:30 UTC on the 23rd is already 00:30 CAT on the 24th.
+      const res = await service.claimTsholofeloBlessing(
+        'farm-1',
+        'user-1',
+        new Date('2026-09-23T22:30:00.000Z'),
+      );
+      expect(res.claimed).toBe(true);
+      const loreInsert = metrics.insertRows.find((r) => r.kind === 'tsholofelo_gift');
+      expect(loreInsert.slug).toBe('tsholofelo_gift_2026-09-24');
+    });
+
+    it('refuses the gift while Tsholofelo is away, without touching the wallet', async () => {
+      withSeed({
+        crops: [{ crop_type: 'watermelon', growth_progress_hours: 0, hydration: 0 }],
+      });
+      const res = await service.claimTsholofeloBlessing('farm-1', 'user-1', NOW);
+      expect(res).toEqual({ claimed: false, bothoAwarded: 0, line: 'Tsholofelo is away.' });
+      expect(mockWallet.creditBothoCapped).not.toHaveBeenCalled();
+    });
+
+    it('a capped-out player still gets the line, just 0 Botho (I4)', async () => {
+      mockWallet.creditBothoCapped.mockResolvedValue(0);
+      const res = await service.claimTsholofeloBlessing('farm-1', 'user-1', NOW);
+      expect(res.claimed).toBe(true);
+      expect(res.bothoAwarded).toBe(0);
     });
   });
 });

@@ -921,13 +921,36 @@ All interactive elements must have:
 
 ### 20.2 Kgotla Screen
 
-**Purpose:** Community hub
-**Components:** NPCs, quest board, donation area, events
-**Interactions:** Tap NPC to talk, accept quests
-**States:** Normal, talking, quest active
-**Mobile:** Scrollable scene
-**Desktop:** Full scene with sidebar info
-**Accessibility:** NPC descriptions available
+**Purpose:** Council chamber — the community hub where the village talks, and where a charge is
+given, worked elsewhere, and turned in. Full normative specification:
+`docs/Screens/Kgotla/SPEC.md`.
+
+**Components:** Header plaque · Botho meter (pillar threshold + daily cap) · The Council (five
+carved seats with NPC portraits, Elder Neo raised at the centre, regard as stars **and** tier)
+· Quest board (offered, accepted, in flight, ready to turn in) · The village decides (community
+projects + daily contribution allowance) · Elder's guidance (first visit only).
+
+**Interactions:** Tap a seat to hear counsel; accept a charge from a shared pool of three per
+day across the whole council; satisfy the objective outside the Kgotla; return to turn it in;
+contribute Pula to a community project (200/day, per-farm).
+
+**States:** Normal · counsel open · charge offered · charge in flight · charge ready to turn in
+· pool exhausted · project complete · contribution cap reached · loading (per-section
+skeletons, never a full-screen overlay) · fetch failed (error + retry) · first visit.
+
+**Mobile:** Single-column scroll with The Council above the fold; counsel opens as a bottom
+sheet.
+
+**Desktop:** 2× scale, stage framed at the 800×480 ratio with pinned side consoles — council
+left, quest board and projects right.
+
+**Accessibility:** Menu-driven (no movement). Seats are buttons with `aria-expanded` and a
+label combining name, role, tier and regard; the counsel sheet is a modal dialog with Escape,
+a focus trap, and focus restored to the originating seat; 48px minimum touch targets; stars are
+never the sole carrier of meaning.
+
+**Note:** periodic **events** (harvest festival, market day, community meeting — 01 §16) are
+not part of v1 of this screen. Recorded as a documented deviation in the screen spec.
 
 ### 20.3 Bushveld Screen
 

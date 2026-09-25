@@ -1,0 +1,25 @@
+{
+  "name": "@molemisi/simulator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Molemisi game simulator — scripted player population against the real API over compressed time",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "simulate": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "simulate": "node ./dist/cli.js",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@molemisi/game-config": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

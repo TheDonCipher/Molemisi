@@ -19,6 +19,7 @@ export interface MockDb {
   ledger_entries: any[];
   player_boosts: any[];
   player_cosmetics: any[];
+  lore_entries: unknown[];
   payments: any[];
   real_world_transactions: any[];
   chapters: any[];
@@ -49,6 +50,7 @@ export function makeDb(seed: Partial<MockDb> = {}): MockDb {
     ledger_entries: seed.ledger_entries ?? [],
     player_boosts: seed.player_boosts ?? [],
     player_cosmetics: seed.player_cosmetics ?? [],
+    lore_entries: seed.lore_entries ?? [],
     payments: seed.payments ?? [],
     real_world_transactions: seed.real_world_transactions ?? [],
     chapters: seed.chapters ?? [],
@@ -127,8 +129,8 @@ class MockBuilder {
     this.write = { type: 'update', row };
     return this;
   }
-  upsert(row: any) {
-    this.write = { type: 'upsert', row };
+  upsert(row: Record<string, unknown>, opts?: { onConflict?: string }) {
+    this.write = { type: 'upsert', row, onConflict: opts?.onConflict };
     return this;
   }
   onConflict(col: string) {
@@ -183,9 +185,12 @@ class MockBuilder {
         for (const t of matched) Object.assign(t, w.row);
         this.lastResult = this.selectCalled ? { data: matched, error: null } : { data: null, error: null };
       } else {
-        const key = w.onConflict;
-        const cv = key ? w.row[key] : undefined;
-        const idx = key ? this.store.findIndex((r) => r[key] === cv) : -1;
+        // Upsert: match on every column of the (possibly composite) conflict
+        // key, like Postgres ON CONFLICT (col, ...) — not on a literal key name.
+        const cols = w.onConflict ? w.onConflict.split(',').map((c) => c.trim()) : [];
+        const idx = cols.length
+          ? this.store.findIndex((r) => cols.every((c) => r[c] === w.row[c]))
+          : -1;
         if (idx >= 0) this.store[idx] = { ...this.store[idx], ...w.row };
         else {
           const dflt = TABLE_DEFAULTS[this.table];

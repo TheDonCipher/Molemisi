@@ -1,0 +1,100 @@
+### 11.1 Market reconciliation (Co-op price formation)
+
+This section reconciles the inventory document with `MarketService` (`apps/api/src/market/`).
+Every field below is traceable to that service or to `economy.ts`; nothing here is hand-waved.
+
+**Market endpoints & shapes (read-side):**
+
+- `GET /market/prices` → `MarketPrice[]`, each row: `{ itemType, basePrice, currentPrice, trend, supply, demand }`.
+  `basePrice` = the item's `ItemDef.baseValue`. `currentPrice` is the live Co-op price
+  (see formation below). `trend` is 'up' | 'down' | 'stable' — `currentPrice > basePrice`
+  → up, `<` → down, `===` → stable. `supply`/`demand` are the decayed values the service
+  maintains per item type; they reset only by explicit supply/demand updates.
+- `GET /market/quote` → `SaleQuote` (preview, no write): `{ itemType, quantity, pricePerUnit, gross, tax, taxRate: 0.05, netProceeds, band }`.
+  `band` is 'wide' for raw/forage/livestock/materials, 'crafted' for DITSALO/DIKUNO — same predicate
+  as `isCrafted()` in the service and the recipe card (C14).
+- `POST /market/sell` → `SellResult`: `{ transaction: { itemType, quantity, pricePerUnit, totalPrice, tax, netProceeds }, currencyAdded, newCurrencyBalance }`.
+  The sale **(a)** deducts `quantity` from `player_inventory`, **(b)** adds `netProceeds` to the wallet,
+  **(c)** bumps `supply` by `quantity × SUPPLY_IMPACT (0.002)` and calls `updateSupplyDemand`.
+  Both the inventory write and the wallet credit are atomic with the sale — a failed wallet credit
+  rolls the inventory deduction back.
+
+**Price formation (five layers, in order):**
+
+1. **Base** — `ItemDef.baseValue` (e.g. sorghum 3, milk 15, bupi 20). Seeds are in `market_prices`
+   because they are buyable; their live price is used on the buy path, not the sell path (seeds are
+   never sold — `sellable: false`, §11).
+2. **Band clamp** — `CRAFTED_BAND { min: 0.9, max: 1.1 }` for DITSALO/DIKUNO outputs (poleto, thapo,
+   setena, bupi, borotho); `PRICE_BAND { min: 0.5, max: 2.0 }` for everything else (raw crops, livestock
+   products, bushveld materials). This is the *only* place the two bands diverge — a sorghum crop and a
+   poleto plank draw from the same constants, just different bands.
+3. **Supply-demand modifier** — `±30%` capped, derived from `demand / supply`: at ratio 1.0 → 0%; the
+   modifier grows with imbalance but is clamped to `[-0.3, +0.3]`.
+4. **Event modifier** — additive sum of all *active* market events (`ends_at > now`) whose `effect`
+   matches the item. Event modifiers are stored as a price *multiplier*; the service adds `multiplier − 1`
+   to the running total (so a 1.3× event contributes +0.3). An item can be affected by multiple events
+   simultaneously; their modifiers stack.
+5. **Final** — `base × max(band.min, min(band.max, 1 + supplyDemandModifier + eventModifier))`, rounded
+   to the nearest integer Pula. The band clamp is applied *after* the modifiers, so events cannot push a
+   raw good outside its 0.5–2.0 band; crafted goods are similarly bounded to 0.9–1.1.
+
+**Price cycle & decay:**
+
+- The cycle is **6 hours** (`PRICE_CYCLE_HOURS` / `MARKET_PRICE_UPDATE_INTERVAL_HOURS`) — the same
+  constant the doc cites for the Co-op band drift.
+- Each cycle, `updateSupplyDemand` applies `PRICE_DECAY = 0.02` (2%) to both supply and demand before
+  adding the marginal change from recent sells/buys. So a one-time sell's supply bump fades over ~35
+  cycles (≈ 210 hours) back toward baseline; a sustained selling pattern holds supply elevated.
+- `trend` is computed purely from `currentPrice vs basePrice` — it is *not* a moving average and says
+  nothing about trajectory. A price that rose because of an event and then decayed back can still show
+  'stable' if it lands exactly on base.
+
+**Event taxonomy (which event type affects which items):**
+
+| Effect type | Items it matches | Notes |
+|---|---|---|
+| `all` | Every item with a market price row | Multiplier applies to all |
+| `grain` | `sorghum`, `maize`, `millet` | Hardcoded set in `getEventModifier` |
+| `food` | Any item whose slug does **not** end in `_seed` | Processed goods (bupi, borotho), raw crops, livestock products, materials all match |
+| `materials` | `wood`, `stone`, `iron` | Hardcoded set; `iron` is reserved for future tool tiers |
+| `<itemType>` | Exactly one item (e.g. `pepper`) | Per-item targeted event |
+
+An event with `effect: 'food'` and `multiplier: 1.4` therefore affects bupi, borotho, sorghum, milk,
+poleto, etc. — everything except the seed items. The modifier is additive across matching events: two
+active events that both match an item sum their contributions.
+
+**Sellable-item universe invariant:**
+
+Every item with `ItemDef.sellable === true` **must** have a seeded row in `market_prices`.
+`getDynamicPrice` returns 0 when no row exists — so an un-seeded sellable item would sell for P0.
+The current sellable set (from the §4 catalogue, `sellable: true`): all `DIJALO` crops (sorghum → morula),
+all `DIPHOLOGOLO` products (eggs, milk, truffle, manure), all `DITSHIMOLOGO` materials (wood, hardwood,
+stone, clay, palm_fiber, thatch, phane), and all `DITSALO`/`DIKUNO` outputs (poleto, thapo, setena, bupi,
+borotho). Seeds (`DIPEO`) are *not* sellable. Tools (`DIDIRISIWA`) are equipment — not stored, not sold,
+`baseValue: 0`.
+
+**Crafting vs. the live market (C14, reconciled):**
+
+The §6 recipe-economics table uses the *same* band constants the live market uses (`CRAFTED_BAND` for
+outputs, `PRICE_BAND` for raw inputs). That means the table's worst-case column — output at `CRAFTED_BAND.min`,
+raw inputs at `PRICE_BAND.max`, both net of the 5% Co-op tax — is the *same* worst case the live market can
+produce for that recipe. The difference is that the table is **static**: it holds every price at base value
+(1.0×) and applies bands only to compute the floor/ceiling. The live market additionally applies the
+supply-demand modifier and active event modifiers, so the live margin can be **better or worse** than the
+table shows when an event is firing or supply is skewed.
+
+The table's "Break-even mult" column flags the boundary: when the average input multiplier exceeds that
+value, selling the inputs raw beats crafting. For Bupi from millet that boundary sits below the raw band
+ceiling (2.0) — so millet Bupi is *sometimes* a loss (when millet peaks). That is by design (millet is
+worth more raw than sorghum), and the recipe card's margin note surfaces it. The §6 table now carries a
+"Worst-case P / Best-case P / Verdict" column generated from the same constants, so the reader sees the
+dynamic range explicitly rather than inferring it.
+
+**Buy path:**
+
+`POST /market/buy` (the `BuyResult` shape: `{ transaction: { itemType, quantity, pricePerUnit, totalPrice }, currencyDeducted, newCurrencyBalance }`)
+buys **seeds only** — the Co-op seed stock rotates by chapter (§8 seed calendar). A buy deducts Pula from
+the wallet and adds the seed item to `player_inventory`. This is the `BUY seeds (Co-op, by chapter)` arrow
+in §1 and the `buy` variant of `ItemSource` in §2.2. Seeds are never sellable (`sellable: false`), so the
+buy→sell loop for seeds does not exist — seeds are planted, not flipped.
+

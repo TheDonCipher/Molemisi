@@ -127,6 +127,55 @@ export const translations = {
   buildingKraal: { en: 'Kraal', tn: 'Lesaka' },
   buildingBoundary: { en: 'Farm Boundary', tn: 'Legora' },
   buildingCrafting: { en: 'Workshop', tn: 'Lefelo la Tiro' },
+  // ---- Deep Time Lore (Doc 11/12) ----
+  buildingHeritageTree: { en: 'Heritage Tree', tn: 'Setlhare sa Boswa' },
+  guardianOfSesana: { en: 'Guardian of Sesana', tn: 'Modisa wa Sesana' },
+  guardianOnlyHint: {
+    en: 'Guardian of Sesana only — Field Journal 100% and 500 Botho',
+    tn: 'Modisa wa Sesana fela — Tlaleho 100% le Botho 500',
+  },
+  guardianEarned: {
+    en: 'Named Guardian of Sesana — keeper of the land and its memory.',
+    tn: 'O bidiwa Modisa wa Sesana — modisa wa naga le kgakologo ya yone.',
+  },
+  chooseTreePlot: {
+    en: 'Choose an empty plot for the Heritage Tree',
+    tn: 'Tlhopha legora le le se nang sepe go Setlhare sa Boswa',
+  },
+  noFreePlot: { en: 'No empty plot free for the tree', tn: 'Ga go na legora le le se nang sepe' },
+  heritageShade: {
+    en: 'Heritage shade — these plots drink at 80% water demand',
+    tn: 'Moriti wa boswa — dirapa tse di nwa metsi ka 80%',
+  },
+  whispersHeard: { en: 'Whispers heard', tn: 'Mafoko a a utlwilweng' },
+  tsholofelo: { en: 'Tsholofelo', tn: 'Tsholofelo' },
+  tsholofeloHere: {
+    en: 'Tsholofelo is perched — the farm is at peace.',
+    tn: 'Tsholofelo o dutse — tshimo e na le kgotso.',
+  },
+  villageFeast: { en: 'Village Feast', tn: 'Nako ya Go Arogana' },
+  tsholofeloGift: {
+    en: 'Tsholofelo has a gift for you — tap her to receive it.',
+    tn: 'Tsholofelo o na le mpho ya gago — o e tobole go e amogela.',
+  },
+  friendOfTheFeast: {
+    en: 'Friend of the Feast — shared 20 watermelons with the village.',
+    tn: 'Tsala ya Nako ya Go Arogana — o abileng motse makapu a le 20.',
+  },
+  feastFenceOwned: {
+    en: 'keepsake fence built',
+    tn: 'lefatse la gopo o kwadilwe',
+  },
+  villageFeastBlurb: {
+    en: 'Share 20 watermelons with the village. Botho, never Pula — some things are not for sale.',
+    tn: 'Arogana dijo tsa tshimo le motse. Botho, e seng Pula — dilo dingwe ga di rekisiwe.',
+  },
+  feastDonate: { en: 'Share 20 watermelons', tn: 'Arogana dijo tsa tshimo' },
+  feastThanks: { en: 'The village eats well tonight.', tn: 'Motse o ja sentle bosigo jeno.' },
+  feastNeedMelons: {
+    en: 'You need 20 watermelons in your basket',
+    tn: 'O tlhoka dijo tse di lekaneng mo baskets',
+  },
   readyIn: { en: 'Ready in', tn: 'E tla moduma ka' },
   offSeason: { en: 'Off-season', tn: 'Nako e fetileng' },
   upgrade: { en: '⬆ Upgrade', tn: '⬆ Tokafatša' },
@@ -210,6 +259,23 @@ export const translations = {
   grade: { en: 'Grade', tn: 'Kgaso' },
   sellFor: { en: 'Sell', tn: 'Radisa' },
   sellOne: { en: 'Sell 1', tn: 'Radisa 1' },
+  // ---- Inventory Item Card ----
+  comesFrom: { en: 'Where it comes from', tn: 'E tswa kae' },
+  sourceGrow: { en: 'Grow', tn: 'Jala' },
+  sourceForage: { en: 'Forage', tn: 'Kuta' },
+  sourceRaise: { en: 'Raise', tn: 'Alosa' },
+  sourceCraft: { en: 'Craft', tn: 'Botaki' },
+  sourceBuy: { en: 'Co-op', tn: 'Dishopo' },
+  noSource: {
+    en: 'Comes from the everyday work of the farm.',
+    tn: 'E tswa mo tirong ya malatsi otlhe ya polasi.',
+  },
+  makesInto: { en: 'Used to make', tn: 'E dira' },
+  craftAt: { en: 'Craft at the Workshop', tn: 'Dira kwa Workshopong' },
+  neededBy: { en: 'Needed by', tn: 'E tlhokega ke' },
+  useConstruction: { en: 'building', tn: 'kago' },
+  useUpgrade: { en: 'upgrades', tn: 'tokafatšo' },
+  useMaintenance: { en: 'repairs', tn: 'tokiso' },
 
   // ---- Bushveld Screen ----
   bushveld: { en: 'Bushveld', tn: 'Lefatshe' },
@@ -284,6 +350,57 @@ export const translations = {
   villageDecidesHint: {
     en: 'The council weighs each project — your Pula tips the scale.',
     tn: 'Lekgotla le lekola projeke nngwe le nngwe — Pula ya gago e sekametša.',
+  },
+
+  // ---- Kgotla charges (SPEC §5, settled 2026-09-23) ----
+  chargeBoard: { en: 'Today’s charges', tn: 'Ditiro tsa gompieno' },
+  chargesRemaining: { en: 'charges left today', tn: 'ditiro di setse gompieno' },
+  chargePoolSpent: {
+    en: 'The council has given you every charge for today. Come back tomorrow.',
+    tn: 'Lekgotla le go neetse ditiro tsotlhe tsa gompieno. Boela hosasa.',
+  },
+  chargeNone: { en: 'No charge', tn: 'Ga go tiro' },
+  chargeInFlight: { en: 'In flight', tn: 'E mo tirong' },
+  chargeReady: { en: 'Ready to hand over', tn: 'E itokisitse go neelwa' },
+  chargeDone: { en: 'Handed over', tn: 'E neetswe' },
+  turnIn: { en: 'Hand it over', tn: 'Neela' },
+  objectiveBring: { en: 'Bring', tn: 'Tlisa' },
+  objectiveGive: { en: 'Give', tn: 'Neela' },
+  objectiveToProject: { en: 'Pula to a project', tn: 'Pula mo projekeng' },
+  objectiveSell: { en: 'Sell', tn: 'Rekisa' },
+  objectiveOfGoods: { en: 'Pula of goods at the Co-op', tn: 'Pula ya dithoto kwa koporeseng' },
+  progressOf: { en: 'of', tn: 'go tswa mo' },
+  regard: { en: 'Regard', tn: 'Tlotlo' },
+  regardToNext: { en: 'to', tn: 'go fitlha' },
+  regardFading: { en: 'will miss you tomorrow', tn: 'o tla go tlhologela hosasa' },
+  rewardTokens: { en: 'Chapter Tokens', tn: 'Dithokisi tsa Kgaolo' },
+
+  // ---- Kgotla labels migrated out of hardcoded English (AC-11) ----
+  councilUnavailable: {
+    en: 'The council could not be reached.',
+    tn: 'Lekgotla ga le a kgona go fitlhelelwa.',
+  },
+  retry: { en: 'Try again', tn: 'Leka gape' },
+  bothoEarnedToday: { en: 'Botho earned today', tn: 'Botho e e thotseng gompieno' },
+  eldersGuidance: { en: 'Elder’s guidance', tn: 'Kaelo ya mogolo' },
+  maxed: { en: 'maxed', tn: 'e tletse' },
+  done: { en: 'Done', tn: 'E fedile' },
+  noProjects: {
+    en: 'No community projects right now.',
+    tn: 'Ga go projeke ya setšhaba ga jaanong.',
+  },
+  projectRewardClaimed: { en: 'Reward taken', tn: 'Mputso e tserwe' },
+  leftToday: { en: 'left today', tn: 'di setse gompieno' },
+
+  // ---- Kgotla toasts ----
+  chargeCompleteTitle: { en: 'Charge complete', tn: 'Tiro e fedile' },
+  chargeFailedTitle: { en: 'Charge not accepted', tn: 'Tiro ga e a amogelwa' },
+  donationFailedTitle: { en: 'Donation failed', tn: 'Moneelo o paletse' },
+  projectCompleteTitle: { en: 'Project complete', tn: 'Projeke e fedile' },
+  gavePula: { en: 'Gave', tn: 'Neetse' },
+  somethingWentWrong: {
+    en: 'Something went wrong',
+    tn: 'Go na le se se sa tsamayang sentle',
   },
 
   // ---- Settings Screen ----

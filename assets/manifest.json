@@ -2748,5 +2748,125 @@
     },
     "kind": "pixen",
     "prompt": "rustic wooden farm fence section with two posts and wire, Botswana farm boundary, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "fire_pit_f1": {
+    "group": "kgotla-chamber",
+    "file": "sprites/scene-props/fire_pit_f1.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "the same stone circle campfire as a Kgotla gathering fire, low small flame, embers glowing, little smoke, identical ring of grey stones and red earth in every frame, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "fire_pit_f2": {
+    "group": "kgotla-chamber",
+    "file": "sprites/scene-props/fire_pit_f2.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "the same stone circle campfire as a Kgotla gathering fire, tall bright flame with a few orange sparks rising, identical ring of grey stones and red earth in every frame, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "kgotla_portrait": {
+    "group": "kgotla-chamber",
+    "file": "tiles/sky/kgotla_portrait.png",
+    "size": {
+      "w": 400,
+      "h": 400
+    },
+    "kind": "pixflux",
+    "prompt": "traditional Setswana kgotla village gathering place seen from a player standing at the edge of the circle: a large flat-topped acacia shade tree at the centre with carved wooden seating beneath it, a circular ring of low stone seating blocks on swept red earth, a small crackling community fire in a stone circle, a wooden notice board on poles, a thatched meeting shelter at the back, scattered carved wooden stools, warm late-afternoon golden light, calm and welcoming, empty lower third of the image kept clear of detail for UI panels"
+  },
+  "fire_pit_f3": {
+    "group": "kgotla-chamber",
+    "file": "sprites/scene-props/fire_pit_f3.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "the same stone circle campfire as a Kgotla gathering fire, medium flame leaning to one side with a wisp of grey smoke, identical ring of grey stones and red earth in every frame, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "council_dais": {
+    "group": "kgotla-chamber",
+    "file": "sprites/scene-props/council_dais.png",
+    "size": {
+      "w": 128,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "wide low horizontal raised wooden platform dais, broad rectangular top surface with a carved dark-timber front face and simple geometric notch patterns, low and clearly wider than tall, three-quarter view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "council_seat": {
+    "group": "kgotla-chamber",
+    "file": "sprites/scene-props/council_seat.png",
+    "size": {
+      "w": 96,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "wide horizontal empty carved wooden council seat frame, a broad rectangular wooden back panel with a recessed square inset in the centre sized to hold a character portrait, dark timber frame with warm amber highlight edges, landscape orientation clearly wider than tall, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "social_botho": {
+    "group": "kgotla-chamber",
+    "file": "ui/icons/social_botho.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "two clasped hands forming a helping gesture inside a cream circle badge. single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "building_setlhare_sa_boswa": {
+    "group": "deep-time",
+    "file": "ui/items/building_setlhare_sa_boswa.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a single ancient heritage tree, thick baobab trunk with a broad round leafy canopy and a small ring of stones at the base. single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "setlhare_sa_boswa": {
+    "group": "deep-time",
+    "file": "tiles/decorations/setlhare_sa_boswa.png",
+    "size": {
+      "w": 96,
+      "h": 128
+    },
+    "kind": "pixen",
+    "prompt": "an ancient sacred heritage tree standing alone, thick gnarled baobab-like trunk with carved geometric scarification bands, broad spreading canopy of dense dark-green leaves, a few golden seed pods hanging, a small mound of red earth and a ring of smooth stones at its base, monumental and dignified, centered and grounded at the bottom of the canvas, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "tsholofelo_f1": {
+    "group": "deep-time",
+    "file": "ui/tsholofelo_f1.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a small friendly black-and-white pied bush bird perched, standing upright and calm on a perch, side view, tail hanging straight down, cheerful companion bird, single bird centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "tsholofelo_f2": {
+    "group": "deep-time",
+    "file": "ui/tsholofelo_f2.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a small friendly black-and-white pied bush bird perched, weight shifted forward with the head lowered as if blinking, tail slightly raised, cheerful companion bird, single bird centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "tsholofelo_f3": {
+    "group": "deep-time",
+    "file": "ui/tsholofelo_f3.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a small friendly black-and-white pied bush bird perched, head turned back over its shoulder preening one wing, tail lifted, cheerful companion bird, single bird centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   }
 }

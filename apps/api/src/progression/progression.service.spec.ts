@@ -47,26 +47,36 @@ describe('ProgressionService — P5', () => {
     listJobs: jest.fn().mockResolvedValue([]),
   };
 
-  /** Rows returned per table. Everything the service reads is a plain list. */
+  /**
+   * Rows returned per table. Everything the service reads is a plain list, and
+   * chains may stack several `.eq()` filters (Deep Time lore reads
+   * `player_id` + `kind`), so the stub is a chainable thenable — mirroring
+   * postgrest-js, where every builder is also the awaited result.
+   */
   function adminFor(rows: Record<string, Array<Record<string, unknown>> | null>) {
     return {
       from: jest.fn((table: string) => {
         const result = rows[table] ?? [];
-        // `farms` is the only single-row read; everything else is a list.
-        if (table === 'farms') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: result[0] ?? null, error: null }),
-              }),
-            }),
-          };
-        }
-        return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ data: result, error: null }),
-          }),
-        };
+        // `single()` / `maybeSingle()` resolve the table's first row: the service
+        // only ever singles `farms` and `profiles`, and both are one-row reads.
+        const row = result[0] ?? null;
+
+        const builder: Record<string, unknown> = {};
+        const settle = () => Promise.resolve({ data: result, error: null });
+        builder.select = jest.fn().mockReturnValue(builder);
+        builder.eq = jest.fn().mockReturnValue(builder);
+        builder.not = jest.fn().mockReturnValue(builder);
+        builder.insert = jest.fn().mockReturnValue(builder);
+        builder.update = jest.fn().mockReturnValue(builder);
+        builder.single = jest.fn().mockResolvedValue({ data: row, error: null });
+        builder.maybeSingle = jest.fn().mockResolvedValue({ data: row, error: null });
+        // Awaiting the builder (the bare `.select().eq()` list read) resolves
+        // the full result set.
+        builder.then = (
+          onFulfilled: (v: { data: unknown; error: null }) => unknown,
+          onRejected?: (e: unknown) => unknown,
+        ) => settle().then(onFulfilled, onRejected);
+        return builder;
       }),
     };
   }
@@ -215,7 +225,67 @@ describe('ProgressionService — P5', () => {
       await expect(service.journalProgress('user-1')).resolves.toEqual({
         pagesComplete: 0,
         totalPages: expect.any(Number),
+        whispers: 0,
+        isGuardianOfSesana: false,
       });
+    });
+
+    it('counts Water Whispers as Journal progress (Doc 11 §3)', async () => {
+      mockSupabaseService.getAdminClient.mockReturnValue(
+        adminFor({
+          lore_entries: [{ slug: 'water_whisper_deep_roots' }, { slug: 'water_whisper_tank_hum' }],
+        }),
+      );
+
+      await expect(service.journalProgress('user-1')).resolves.toMatchObject({ whispers: 2 });
+    });
+
+    it('names a Guardian of Sesana only at 100% journal AND 500 Botho (Doc 11 §6)', async () => {
+      const complete = SCENES.flatMap((s) =>
+        findsForScene(s.slug).map((f) => ({ scene_id: s.slug, discovery_slug: f.discovery })),
+      );
+      const withProfile = adminFor({
+        field_journal_entries: complete,
+        profiles: [{ id: 'user-1', is_guardian_of_sesana: false }],
+      });
+      mockSupabaseService.getAdminClient.mockReturnValue(withProfile);
+
+      // Botho is 120 (the default wallet mock) — every page is turned, but the
+      // bar is not met, so the title correctly stays false.
+      await expect(service.journalProgress('user-1')).resolves.toMatchObject({
+        totalPages: expect.any(Number),
+        isGuardianOfSesana: false,
+      });
+
+      // Raise Botho to exactly the bar: the view flips true. A honour, not a
+      // purchase — and purely positive (never unset once earned).
+      mockWalletService.getBotho.mockResolvedValueOnce(500);
+      const guardian = adminFor({
+        field_journal_entries: complete,
+        profiles: [{ id: 'user-1', is_guardian_of_sesana: false }],
+      });
+      mockSupabaseService.getAdminClient.mockReturnValue(guardian);
+
+      await expect(service.journalProgress('user-1')).resolves.toMatchObject({
+        isGuardianOfSesana: true,
+      });
+      // profiles is written through the admin client, and a dated lore row
+      // records the moment the title was conferred.
+      const builders = guardian.from.mock.results.map(
+        (r) => r.value as Record<string, jest.Mock>,
+      );
+      const profileWrite = builders.find(
+        (b) => b.update && b.update.mock.calls.length > 0,
+      );
+      expect(profileWrite!.update).toHaveBeenCalledWith({ is_guardian_of_sesana: true });
+      const loreWrite = builders.find(
+        (b) =>
+          b.insert &&
+          b.insert.mock.calls.some(
+            (call) => (call[0] as Record<string, unknown>).kind === 'guardian_of_sesana',
+          ),
+      );
+      expect(loreWrite).toBeDefined();
     });
   });
 

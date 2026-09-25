@@ -201,6 +201,16 @@ importers:
         specifier: ^5.5.0
         version: 5.9.3
 
+  packages/simulator:
+    dependencies:
+      '@molemisi/game-config':
+        specifier: workspace:*
+        version: link:../game-config
+    devDependencies:
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+
   packages/validation:
     dependencies:
       zod:

@@ -314,6 +314,17 @@ const OPEN_BUSH: HotspotDef[] = [
         journal:
           'A speckled feather caught in the thorn grass. Mogolo says where you find one guinea fowl, six more are already watching you from somewhere close.',
       },
+      {
+        // Doc 11 §5 — a Gentle Discovery: a Field Journal find, never an
+        // inventory item (R3). Its page and Mogolo's line are the whole reward.
+        discovery: 'patterned_feather',
+        name: 'Patterned Feather',
+        setswana: 'Palo e e Embilweng',
+        rarity: 'rare',
+        weight: 2,
+        journal:
+          'Stripes no pen could copy, banded dusk-to-dawn along the quill. Mogolo turns it once against the light and says the bird wears this so the grass can never quite agree where it settled.',
+      },
     ],
   },
   {
@@ -359,6 +370,17 @@ const RIVERBANK: HotspotDef[] = [
         qty: { min: 2, max: 4 },
         journal:
           'Cool, heavy clay from the riverbank. Good for building. Better, Mogolo says, for teaching patience.',
+      },
+      {
+        // Doc 11 §5 — Gentle Discovery: a Field Journal find only, never an
+        // inventory item (R3). The page and Mogolo's line ARE the reward.
+        discovery: 'smooth_river_stone',
+        name: 'Smooth River Stone',
+        setswana: 'Leadiba la Noka',
+        rarity: 'rare',
+        weight: 2,
+        journal:
+          'Worn glass-smooth by a river that stopped arguing with it centuries ago. Mogolo says a stone like this has been every colour the water has ever been.',
       },
     ],
   },
@@ -581,6 +603,17 @@ const ROCKY: HotspotDef[] = [
         weight: 3,
         journal:
           'A piece of stone catches the light wrong — too clean, too bright for ordinary rock. Mogolo turns it over twice before he says anything at all.',
+      },
+      {
+        // Doc 11 §5 — Gentle Discovery: a Field Journal find only, never an
+        // inventory item (R3). The page and Mogolo's line ARE the reward.
+        discovery: 'fossilized_leaf',
+        name: 'Fossilized Leaf',
+        setswana: 'Mophalaphala wa Kgale',
+        rarity: 'rare',
+        weight: 2,
+        journal:
+          'A leaf pressed into stone, still holding the shape the wind once gave it. Mogolo goes quiet — this was green before the river learned this bend.',
       },
     ],
   },

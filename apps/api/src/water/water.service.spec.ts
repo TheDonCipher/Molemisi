@@ -2,7 +2,7 @@ import { WaterService } from './water.service';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import { makeFakeSupabase, updatesTo, updateTo, FakeResult } from '../test/fake-supabase';
-import { MAX_OFFLINE_HOURS, WATER } from '@molemisi/game-config';
+import { MAX_OFFLINE_HOURS, WATER, WATER_WHISPERS, getCropConfig } from '@molemisi/game-config';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 /**
@@ -434,7 +434,7 @@ describe('WaterService', () => {
 
       const result = await svc.refillTank('farm-1', 'user-1');
 
-      expect(result).toEqual({ added: 40, cost: 40, waterLevel: 60, capacity: 60 });
+      expect(result).toMatchObject({ added: 40, cost: 40, waterLevel: 60, capacity: 60 });
       // spendPula is the only sanctioned path (05 §P2): check-and-debit + ledger.
       expect(wallet.spendPula).toHaveBeenCalledWith('user-1', 40, 'water_refill');
       expect(updateTo(calls, 'buildings')!.water_level).toBe(60);
@@ -445,7 +445,7 @@ describe('WaterService', () => {
 
       const result = await svc.refillTank('farm-1', 'user-1');
 
-      expect(result).toEqual({ added: 0, cost: 0, waterLevel: 60, capacity: 60 });
+      expect(result).toMatchObject({ added: 0, cost: 0, waterLevel: 60, capacity: 60 });
       expect(wallet.spendPula).not.toHaveBeenCalled();
       expect(updatesTo(calls, 'buildings')).toHaveLength(0);
     });
@@ -473,6 +473,149 @@ describe('WaterService', () => {
       // Money must never be wrong: a failure the player can retry is a failure,
       // but paying for water they never received is theft.
       expect(wallet.credit).toHaveBeenCalledWith('user-1', 'pula', 40, 'refund');
+    });
+
+    // ----------------------------------------------------------------
+    // Doc 11 §3 — the Water Whisper: a 10% roll on a refill that added
+    // water. Rolled and recorded on the server; the client only shows it.
+    // ----------------------------------------------------------------
+    afterEach(() => jest.restoreAllMocks());
+
+    it('rolls the whisper, records the listen, and hands back the line', async () => {
+      // First roll fires (0.05 < 0.10); the second picks index 0 of the pool.
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.05).mockReturnValueOnce(0);
+      const { svc, calls } = makeService([
+        { data: tankRow({ water_level: 20 }), error: null },
+        ok,
+        ok,
+      ]);
+
+      const result = await svc.refillTank('farm-1', 'user-1');
+
+      expect(result.water_whisper).toBe(WATER_WHISPERS[0]!.text);
+      // The row IS the "+1 Journal progress": one listen, recorded server-side.
+      const listen = calls.find((c) => c.table === 'lore_entries' && c.method === 'insert')!;
+      expect(listen.args[0]).toMatchObject({
+        player_id: 'user-1',
+        kind: 'water_whisper',
+        slug: WATER_WHISPERS[0]!.slug,
+        quote: WATER_WHISPERS[0]!.text,
+        is_original: true,
+      });
+      expect(updateTo(calls, 'buildings')!.water_level).toBe(60);
+    });
+
+    it('stays silent on most refills and records nothing', async () => {
+      jest.spyOn(Math, 'random').mockReturnValue(0.99);
+      const { svc, calls } = makeService([
+        { data: tankRow({ water_level: 20 }), error: null },
+        ok,
+      ]);
+
+      const result = await svc.refillTank('farm-1', 'user-1');
+
+      expect(result.water_whisper).toBeNull();
+      expect(calls.some((c) => c.table === 'lore_entries')).toBe(false);
+    });
+
+    it('marks a repeat listen non-original rather than failing (unique index)', async () => {
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(0);
+      const { svc, calls } = makeService([
+        { data: tankRow({ water_level: 20 }), error: null },
+        ok,
+        { data: null, error: { message: 'duplicate key value violates unique constraint' } },
+        ok,
+      ]);
+
+      const result = await svc.refillTank('farm-1', 'user-1');
+
+      // Still heard: a repeat is the same memory rising again, not a failure.
+      expect(result.water_whisper).toBe(WATER_WHISPERS[0]!.text);
+      const loreCalls = calls.filter((c) => c.table === 'lore_entries');
+      expect(loreCalls).toHaveLength(2);
+      expect(loreCalls[1]!.method).toBe('upsert');
+      expect(loreCalls[1]!.args[0]).toMatchObject({ is_original: false });
+    });
+
+    it('still delivers the water when the whisper cannot be logged', async () => {
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(0);
+      const { svc } = makeService([
+        { data: tankRow({ water_level: 20 }), error: null },
+        ok,
+        { data: null, error: { message: 'connection terminated unexpectedly' } },
+      ]);
+
+      // A gift, not a receipt: the Pula is spent and the water is in the tank,
+      // so a logging failure must never take either away.
+      await expect(svc.refillTank('farm-1', 'user-1')).resolves.toMatchObject({
+        added: 40,
+        water_whisper: WATER_WHISPERS[0]!.text,
+      });
+    });
+  });
+
+  // ==================================================================
+  // Doc 11 §6 — Setlhare sa Boswa: Water Memory (0.8x for its neighbours)
+  // ==================================================================
+  describe('Heritage Tree — Water Memory (Doc 11 §6)', () => {
+    const treeRow = (over: Record<string, unknown> = {}) => ({
+      id: 'tree-1',
+      building_type: 'setlhare_sa_boswa',
+      state: 'ACTIVE',
+      slot_index: 5,
+      water_level: 0,
+      capacity: 0,
+      ...over,
+    });
+
+    // A 4-column grid, three rows. Slot 5's cross neighbours are 1 (up),
+    // 9 (down), 4 (left) and 6 (right).
+    const twelvePlots = Array.from({ length: 12 }, (_, i) => ({
+      id: `plot-${i}`,
+      slot_index: i,
+    }));
+
+    it('neighbours of an ACTIVE tree pay 0.8x — and growth is never slowed', async () => {
+      const { svc, calls } = makeService([
+        { data: farmRow(), error: null },
+        { data: [tankRow({ water_level: 30 }), treeRow()], error: null },
+        { data: [cropRow({ plot_id: 'plot-4' })], error: null },
+        { data: twelvePlots, error: null },
+      ]);
+
+      const result = await svc.advanceFarmGrowth('farm-1', NOW);
+
+      // The saving is water, not time: six hours of growth either way.
+      expect(updateTo(calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(6, 6);
+      expect(result.waterConsumed).toBeCloseTo(
+        0.8 * getCropConfig('sorghum')!.waterPerHour * 6,
+        6,
+      );
+    });
+
+    it('a plot outside the blessing pays full price', async () => {
+      const { svc } = makeService([
+        { data: farmRow(), error: null },
+        { data: [tankRow({ water_level: 30 }), treeRow()], error: null },
+        { data: [cropRow({ plot_id: 'plot-0' })], error: null },
+        { data: twelvePlots, error: null },
+      ]);
+
+      const result = await svc.advanceFarmGrowth('farm-1', NOW);
+
+      expect(result.waterConsumed).toBeCloseTo(getCropConfig('sorghum')!.waterPerHour * 6, 6);
+    });
+
+    it('a tree that is still building blesses nothing', async () => {
+      const { svc } = makeService([
+        { data: farmRow(), error: null },
+        { data: [tankRow({ water_level: 30 }), treeRow({ state: 'CONSTRUCTION' })], error: null },
+        { data: [cropRow({ plot_id: 'plot-4' })], error: null },
+      ]);
+
+      const result = await svc.advanceFarmGrowth('farm-1', NOW);
+
+      expect(result.waterConsumed).toBeCloseTo(getCropConfig('sorghum')!.waterPerHour * 6, 6);
     });
   });
 });

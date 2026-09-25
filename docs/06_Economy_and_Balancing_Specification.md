@@ -73,6 +73,27 @@ The economy must maintain a **positive but controlled** net flow:
 - Mid game: Near zero (balanced earning and spending)
 - Late game: Net negative (spending > earning, requires optimization)
 
+### Daily Caps & Kgotla Economy (settled 2026-09-23, SPEC §4/§5/§6)
+
+These numbers are deliberate anti-grind controls and a legal control (I4 — Botho gates a
+real-money prize). They are not economic tuning knobs.
+
+| Control | Value | Source |
+| --- | --- | --- |
+| Botho daily cap (per player, per Botswana day) | **50** | I4, `BOTHO_DAILY_CAP` |
+| Community contribution cap (per player, per day) | **200 Pula** | 02 §9, `KGOTLA_DAILY_CONTRIBUTION_CAP` |
+| Botho from donating | **1 Botho per 1 Pula** | confirmed 2026-09-23 |
+| Kgotla charge pool (per farm, per Botswana day) | **3 charges** | SPEC §5.1 (shared across the whole council) |
+| Botho per charge turned in | **10** | SPEC §5.2 |
+| Charge Pula rewards | **8 – 12 Pula** by elder (SPEC §5.2) | max 32 Pula/day from charges |
+| Maximum charge income per day | **32 Pula · 30 Botho** (3 charges) | derived |
+| Regard decay | **−2 per elder per full 7-day idle period, floored at 0** | SPEC §4.1 |
+
+**Consequence to flag (2026-09-23):** at 1 Botho per 1 Pula, a single 50-Pula donation saturates
+the entire 50/day Botho cap on its own, which makes charges the *secondary* Botho path. Both
+numbers are as confirmed; if charges should be the primary Botho path instead, the rate to
+revisit is **1 Botho per 4 Pula donated** (not the cap).
+
 ---
 
 ## 2. Resource Economy

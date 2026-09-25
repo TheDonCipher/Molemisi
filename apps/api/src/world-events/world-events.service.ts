@@ -127,6 +127,20 @@ export class WorldEventsService {
       effects: { growthModifier: 0.7 },
       duration: 24,
     },
+    // Doc 11 §4 — Nako ya Go Arogana (The Season of Sharing). Deliberately an
+    // EMPTY effects bag: the feast is a donation event with no negative modifier
+    // and nothing to fear from ignoring it. The reward lives on the Kgotla
+    // donation endpoint (Botho + a cosmetic, never Pula).
+    {
+      id: 'village_feast',
+      name: 'Village Feast',
+      description:
+        'The Kgotla is preparing the village feast and asks for 20 Watermelons. Sharing earns Botho and the feast-day fence pattern. Declining costs nothing.',
+      type: 'festival',
+      season: null,
+      effects: {},
+      duration: 72,
+    },
   ];
 
   async getActiveEvents(): Promise<ActiveEvent[]> {

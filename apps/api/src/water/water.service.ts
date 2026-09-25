@@ -1,7 +1,15 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
-import { getCropConfig, WATER, MAX_OFFLINE_HOURS } from '@molemisi/game-config';
+import {
+  getCropConfig,
+  getBuildingConfig,
+  adjacentPlotSlots,
+  WATER,
+  WATER_WHISPERS,
+  WATER_WHISPER_CHANCE,
+  MAX_OFFLINE_HOURS,
+} from '@molemisi/game-config';
 
 export interface TankStatus {
   hasTank: boolean;
@@ -15,6 +23,12 @@ export interface RefillResult {
   cost: number;
   waterLevel: number;
   capacity: number;
+  /**
+   * Doc 11 §3 — present on ~10% of refills that ADD water: a Water Whisper for
+   * the client to fade in above the tank bar. Listening is worth +1 Journal
+   * progress, recorded server-side in `lore_entries` (never client-trusted).
+   */
+  water_whisper?: string | null;
 }
 
 export interface GrowthAdvanceResult {
@@ -62,26 +76,45 @@ export class WaterService {
       return { cropsAdvanced: 0, cropsReady: 0, cropsStalled: 0, waterConsumed: 0 };
     }
 
-    // Jojo tank — the single shared water source for the whole farm.
-    const { data: tankRows } = await admin
+    // Farm buildings in ONE read (Doc 11): the Jojo tank gates growth, and an
+    // ACTIVE Heritage Tree planted on the grid blesses its neighbours — same
+    // table, same single query, so the growth engine's read ORDER (and every
+    // spec sequence built on it) is unchanged. Array in production; some tests
+    // hand back a single legacy row without building_type, so accept both.
+    const { data: tankData } = await admin
       .from('buildings')
-      .select('id, water_level, capacity, state')
-      .eq('farm_id', farmId)
-      .eq('building_type', 'water_source')
-      .maybeSingle();
+      .select('id, building_type, water_level, capacity, state, slot_index')
+      .eq('farm_id', farmId);
+    const buildingRows = (
+      Array.isArray(tankData) ? tankData : tankData ? [tankData] : []
+    ) as Array<Record<string, unknown>>;
 
     let tankId: string | null = null;
     // Annotated: WATER is `as const`, so bare inference would pin this to the
     // literal 60 and reject a tank whose capacity was set at build time.
     let capacity: number = WATER.tankCapacity;
     let waterLevel = 0;
-    if (tankRows) {
-      const tank = tankRows as Record<string, unknown>;
+    // Prefer the typed tank; fall back to a type-less legacy/test row (never a tree).
+    const tank =
+      buildingRows.find((b) => b.building_type === 'water_source') ??
+      buildingRows.find((b) => b.building_type == null) ??
+      null;
+    if (tank) {
       tankId = tank.id as string;
       capacity = (tank.capacity as number) ?? WATER.tankCapacity;
       // A tank that is not ACTIVE (under construction / disabled) cannot supply water.
       waterLevel = tank.state === 'ACTIVE' ? Number(tank.water_level ?? 0) : 0;
     }
+
+    // Doc 11 §6 — Water Memory: the Heritage Tree, if planted on the grid and
+    // ACTIVE. Read from the same row set; its `slot_index` is NULL off-grid.
+    const tree =
+      buildingRows.find(
+        (b) =>
+          b.building_type === 'setlhare_sa_boswa' &&
+          b.state === 'ACTIVE' &&
+          b.slot_index != null,
+      ) ?? null;
 
     // Rain is free water (03 §1.2). Credited before the demand calc so a storm can
     // rescue a dry farm, capped at capacity.
@@ -113,6 +146,32 @@ export class WaterService {
     let cropsStalled = 0;
 
     if (growing.length > 0) {
+      // Doc 11 §6 — Water Memory (Setlhare sa Boswa). The plots immediately
+      // around the tree's slot satisfy only `adjacency.waterDemandMultiplier`
+      // (0.8) of their normal water demand — an endless saving, never a
+      // penalty. No tree means zero extra reads and every plot pays full price.
+      let heritageMultiplier = 1;
+      const blessedPlotIds = new Set<string>();
+      if (tree && tree.slot_index != null) {
+        const adjacency = getBuildingConfig('setlhare_sa_boswa')?.adjacency;
+        const gridColumns = adjacency?.gridColumns ?? 4;
+        heritageMultiplier = adjacency?.waterDemandMultiplier ?? 0.8;
+
+        const { data: plots } = await admin
+          .from('farm_plots')
+          .select('id, slot_index')
+          .eq('farm_id', farmId);
+        const plotRows = (plots ?? []) as Array<Record<string, unknown>>;
+        const treeSlot = Number(tree.slot_index);
+        // Same helper the client uses for the golden-mist overlay — the glow and
+        // the saving can never disagree about which plots are blessed.
+        const blessedSlots = new Set(adjacentPlotSlots(treeSlot, gridColumns, plotRows.length));
+        for (const p of plotRows) {
+          if (blessedSlots.has(Number(p.slot_index))) blessedPlotIds.add(p.id as string);
+        }
+        if (blessedPlotIds.size === 0) heritageMultiplier = 1;
+      }
+
       // Shared tank: each crop's water demand over the interval vs the water on hand.
       const demands = growing.map((c) => {
         const row = c as Record<string, unknown>;
@@ -122,12 +181,16 @@ export class WaterService {
           (nowMs - new Date(tickBase as string).getTime()) / 3_600_000,
           MAX_OFFLINE_HOURS,
         );
+        const plotId = row.plot_id as string;
         return {
           id: row.id as string,
-          plotId: row.plot_id as string,
+          plotId,
           cfg,
           cropElapsed,
-          demand: cfg.waterPerHour * cropElapsed,
+          demand:
+            (blessedPlotIds.has(plotId) ? heritageMultiplier : 1) *
+            cfg.waterPerHour *
+            cropElapsed,
           prevProgress: Number(row.growth_progress_hours ?? 0),
           // G1 — fertilizer state rides along from the same SELECT (*).
           fertilizerActive: row.fertilizer_active === true,
@@ -289,6 +352,48 @@ export class WaterService {
       throw new BadRequestException('Failed to refill the Jojo Tank');
     }
 
-    return { added: toAdd, cost, waterLevel: capacity, capacity };
+    // Doc 11 §3 — the Water Whisper (Metsi a a Gopola). The tank has just filled
+    // and, on a refill that actually added water, there is a small chance it
+    // "speaks": the memory of old rains rising up the pipes at the moment of
+    // plenty. The roll lives here for the same reason the tank does — a client
+    // that "rolled" could simply decide to hear a whisper every time. A listen
+    // is recorded server-side in `lore_entries` (one row per quote, `is_original`
+    // marking the first), and the line is handed back only so the UI has
+    // something to display. Purely positive: +1 Journal progress, nothing spent.
+    let waterWhisper: string | null = null;
+    if (WATER_WHISPERS.length > 0 && Math.random() < WATER_WHISPER_CHANCE) {
+      const whisper = WATER_WHISPERS[Math.floor(Math.random() * WATER_WHISPERS.length)];
+      if (whisper) {
+        waterWhisper = whisper.text;
+        const base = {
+          player_id: userId,
+          kind: 'water_whisper',
+          slug: whisper.slug,
+          quote: whisper.text,
+        };
+        // No pre-read: the partial unique index on (player_id, slug) is the
+        // source of truth, so a repeat listen answers itself.
+        const { error: whisperError } = await admin.from('lore_entries').insert({
+          ...base,
+          is_original: true,
+        });
+        if (whisperError) {
+          const duplicate =
+            (whisperError as { code?: string }).code === '23505' ||
+            /duplicate key|unique constraint/i.test(whisperError.message ?? '');
+          if (duplicate) {
+            // The same memory rising again — recorded, never a second original.
+            await admin
+              .from('lore_entries')
+              .upsert({ ...base, is_original: false }, { onConflict: 'player_id,slug' });
+          }
+          // Any other logging failure is swallowed on purpose. The water is
+          // already paid for and in the tank, and a whisper is a gift rather
+          // than a receipt: the player keeps the line, only the row is lost.
+        }
+      }
+    }
+
+    return { added: toAdd, cost, waterLevel: capacity, capacity, water_whisper: waterWhisper };
   }
 }

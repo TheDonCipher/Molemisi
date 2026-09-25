@@ -18,6 +18,7 @@ export * from './livestock';
 export * from './weather';
 export * from './store';
 export * from './theme';
+export * from './dialogue';
 
 export const GAME_VERSION = '1.0.0-mvp';
 

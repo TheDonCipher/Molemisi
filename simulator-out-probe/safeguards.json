@@ -1,0 +1,319 @@
+{
+  "generated": "2026-09-24T12:50:37.471Z",
+  "meta": {
+    "cohort": "wide",
+    "players": 2,
+    "days": 2,
+    "profileCounts": {
+      "f2p": 1,
+      "adversary": 1
+    },
+    "payerShare": 0,
+    "realDates": [
+      "2026-09-24",
+      "2026-09-25"
+    ],
+    "seed": 1,
+    "anchor": "2026-09-24",
+    "provisioning": {
+      "register": 0,
+      "admin": 2
+    }
+  },
+  "checks": [
+    {
+      "id": "SEC-01a",
+      "group": "security",
+      "name": "harvest another player's plot is rejected",
+      "passed": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "id": "SEC-02:/market/sell:negative-quantity",
+      "group": "security",
+      "name": "/market/sell rejects negative-quantity",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/sell:zero-quantity",
+      "group": "security",
+      "name": "/market/sell rejects zero-quantity",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/sell:absurd-quantity",
+      "group": "security",
+      "name": "/market/sell rejects absurd-quantity",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/sell:wrong-type",
+      "group": "security",
+      "name": "/market/sell rejects wrong-type",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/sell:missing-field",
+      "group": "security",
+      "name": "/market/sell rejects missing-field",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/sell:null-body",
+      "group": "security",
+      "name": "/market/sell rejects null-body",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/buy:negative-quantity",
+      "group": "security",
+      "name": "/market/buy rejects negative-quantity",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/buy:zero-quantity",
+      "group": "security",
+      "name": "/market/buy rejects zero-quantity",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/buy:absurd-quantity",
+      "group": "security",
+      "name": "/market/buy rejects absurd-quantity",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/buy:wrong-type",
+      "group": "security",
+      "name": "/market/buy rejects wrong-type",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/buy:missing-field",
+      "group": "security",
+      "name": "/market/buy rejects missing-field",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/market/buy:null-body",
+      "group": "security",
+      "name": "/market/buy rejects null-body",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/store/purchase:negative-quantity",
+      "group": "security",
+      "name": "/store/purchase rejects negative-quantity",
+      "passed": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "id": "SEC-02:/store/purchase:zero-quantity",
+      "group": "security",
+      "name": "/store/purchase rejects zero-quantity",
+      "passed": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "id": "SEC-02:/store/purchase:absurd-quantity",
+      "group": "security",
+      "name": "/store/purchase rejects absurd-quantity",
+      "passed": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "id": "SEC-02:/store/purchase:wrong-type",
+      "group": "security",
+      "name": "/store/purchase rejects wrong-type",
+      "passed": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "id": "SEC-02:/store/purchase:missing-field",
+      "group": "security",
+      "name": "/store/purchase rejects missing-field",
+      "passed": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "id": "SEC-02:/store/purchase:null-body",
+      "group": "security",
+      "name": "/store/purchase rejects null-body",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-02:/payments/create:negative-quantity",
+      "group": "security",
+      "name": "/payments/create rejects negative-quantity",
+      "passed": false,
+      "detail": "HTTP 201"
+    },
+    {
+      "id": "SEC-02:/payments/create:zero-quantity",
+      "group": "security",
+      "name": "/payments/create rejects zero-quantity",
+      "passed": false,
+      "detail": "HTTP 201"
+    },
+    {
+      "id": "SEC-02:/payments/create:absurd-quantity",
+      "group": "security",
+      "name": "/payments/create rejects absurd-quantity",
+      "passed": false,
+      "detail": "HTTP 201"
+    },
+    {
+      "id": "SEC-02:/payments/create:wrong-type",
+      "group": "security",
+      "name": "/payments/create rejects wrong-type",
+      "passed": false,
+      "detail": "HTTP 201"
+    },
+    {
+      "id": "SEC-02:/payments/create:missing-field",
+      "group": "security",
+      "name": "/payments/create rejects missing-field",
+      "passed": false,
+      "detail": "HTTP 201"
+    },
+    {
+      "id": "SEC-02:/payments/create:null-body",
+      "group": "security",
+      "name": "/payments/create rejects null-body",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "id": "SEC-03",
+      "group": "security",
+      "name": "replayed webhook provider_tx_id credits at most once",
+      "passed": true,
+      "detail": "first HTTP 201, replay HTTP 201, matching ledger entries: 0"
+    },
+    {
+      "id": "SEC-04",
+      "group": "security",
+      "name": "exceeding 60 mutating requests/60s throttles",
+      "passed": true,
+      "detail": "throttled=true; status histogram=201x64 429x1"
+    },
+    {
+      "id": "SEC-05",
+      "group": "security",
+      "name": "client-supplied reward/quality is ignored",
+      "passed": false,
+      "detail": "INCONCLUSIVE — sale rejected (HTTP 404); no payout to inspect, so this check asserted nothing."
+    },
+    {
+      "id": "SEC-06",
+      "group": "security",
+      "name": "PUT /config is admin-gated (known gap — expected to fail)",
+      "passed": false,
+      "detail": "HTTP 500 — a non-admin player must not rewrite live config"
+    },
+    {
+      "id": "AC-01a",
+      "group": "anticheat",
+      "name": "concurrent harvest credits once",
+      "passed": true,
+      "detail": "Promise.all statuses: 400, 400 — at most one may succeed"
+    },
+    {
+      "id": "AC-01c",
+      "group": "anticheat",
+      "name": "concurrent market sell credits once",
+      "passed": true,
+      "detail": "Promise.all statuses: 404, 404 — at most one may succeed"
+    },
+    {
+      "id": "AC-01d",
+      "group": "anticheat",
+      "name": "concurrent charge turn-in credits and consumes once",
+      "passed": true,
+      "detail": "Promise.all statuses: 400, 400 — at most one may succeed"
+    },
+    {
+      "id": "AC-02",
+      "group": "anticheat",
+      "name": "at most 3 charges accepted per Botswana day (shared pool)",
+      "passed": true,
+      "detail": "accepted=0 of 4 attempts; statuses=0,0,0,0"
+    },
+    {
+      "id": "AC-03a",
+      "group": "anticheat",
+      "name": "Bupi/Borotho below Botho 100 is rejected (or player legitimately unlocked)",
+      "passed": true,
+      "detail": "statuses=400,400"
+    },
+    {
+      "id": "AC-03b",
+      "group": "anticheat",
+      "name": "Letsema below Botho 500 / inside the 7-day cooldown is rejected",
+      "passed": true,
+      "detail": "HTTP 400 — 200 is only acceptable if genuinely eligible"
+    },
+    {
+      "id": "AC-04",
+      "group": "anticheat",
+      "name": "collecting a hotspot before its rest elapses is rejected",
+      "passed": true,
+      "detail": "first HTTP 201, immediately-after HTTP 409"
+    },
+    {
+      "id": "AC-05",
+      "group": "anticheat",
+      "name": "no Pula transfer to another player is possible",
+      "passed": true,
+      "detail": "HTTP 404 (404 = no such route, which is also correct)"
+    },
+    {
+      "id": "AC-06",
+      "group": "anticheat",
+      "name": "top-up above the P500/player/day cap is rejected",
+      "passed": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "id": "DEF-01",
+      "group": "deferred",
+      "name": "boost purchases are rejected (boost effects deferred from v1)",
+      "passed": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "id": "DEF-02",
+      "group": "deferred",
+      "name": "no wildlife-raid surface for the Ancestral Ward to protect",
+      "passed": true,
+      "detail": "raids deferred from v1 (ruling 2026-09-11)"
+    },
+    {
+      "id": "GAP-01",
+      "group": "gap",
+      "name": "multi-accounting / one-win-per-identity",
+      "passed": false,
+      "detail": "NOT TESTED — no phone number or KYC field exists anywhere in the API. Botho gates a real-money prize, so this is an open legal exposure."
+    },
+    {
+      "id": "GAP-02",
+      "group": "gap",
+      "name": "inhuman action-pace / bot-speed detection",
+      "passed": false,
+      "detail": "NOT TESTED — no defense found in current design."
+    }
+  ]
+}

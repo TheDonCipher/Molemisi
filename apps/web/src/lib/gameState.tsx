@@ -12,6 +12,7 @@ import React, {
 import { resolveItemIcon, pixelItemIcon } from './pixelIcons';
 import { notifyIfEnabled, registerServiceWorker } from './notifications';
 import { recordAction } from './playerActions';
+import { hapticStrong, hapticTap } from '../utils/haptics';
 
 // ============================================================
 // API helper
@@ -347,6 +348,14 @@ export interface FarmBuilding {
   nextUpgradeCost: { currency: number; poleto?: number; thapo?: number; setena?: number; thatch?: number } | null;
   /** Minutes the next tier takes, or null when maxed. */
   nextUpgradeTime: number | null;
+  /**
+   * Doc 11 §6 — the plot grid slot this building stands on, or null when it
+   * sits off the grid (the Jojo Tank, the Granary). The Heritage Tree is placed
+   * on a slot, and its neighbours are the plots it blesses.
+   */
+  slotIndex?: number | null;
+  /** Doc 11 §6.2 — the benefit applies without player action. */
+  isAutomated?: boolean;
 }
 
 /** One purchasable building from GET /farms/:id/buildings/available. */
@@ -358,6 +367,18 @@ export interface AvailableBuilding {
   constructionTime: number;
   capacity: number;
   owned: boolean;
+}
+
+/**
+ * Doc 11 §2 — Tsholofelo's perch, read from the server (never computed here).
+ * `line` is one of her verbatim idle lines, deterministic per Botswana day;
+ * `giftAvailable` means her once-a-day gift is still waiting.
+ */
+export interface TsholofeloStatus {
+  perched: boolean;
+  kagiso: number;
+  line: string | null;
+  giftAvailable: boolean;
 }
 
 export interface GameState {
@@ -377,6 +398,39 @@ export interface GameState {
   maxWater: number;
   /** False when the farm has no tank yet; growth cannot advance until one is built. */
   hasTank: boolean;
+  /**
+   * Doc 11 §3 / Doc 12 §4.1 — the Water Whisper currently on screen, or null.
+   * Set by refillWell when the server rolls one (10% on a refill that added
+   * water). It auto-clears after ~7s to match the CSS fade: ambient, never a
+   * blocking popup, and the Journal progress behind it is already saved.
+   */
+  waterWhisper: string | null;
+  dismissWaterWhisper: () => void;
+  /**
+   * Doc 11 §3 — Water Whispers listened to: the Deep Time "+1 Journal progress".
+   * Additive forever, never spendable; the Journal screen shows it quietly.
+   */
+  whispers: number;
+  /** Field Journal pages turned / available (04 §7). */
+  journalPages: number;
+  journalTotalPages: number;
+  /**
+   * Doc 11 §6 — Guardian of Sesana: Journal at 100% AND Botho >= 500. The server
+   * writes the title once and never clears it; this only mirrors it for the UI.
+   * Gates the Heritage Tree.
+   */
+  isGuardianOfSesana: boolean;
+  /** Doc 12 §5 — the Bushveld peace meter (0..kagisoMax) Tsholofelo's perch reads. */
+  kagiso: number;
+  kagisoMax: number;
+  /**
+   * Doc 11 §2 — Tsholofelo, server-authoritative: the perch gate, today's speech
+   * line and whether her daily gift still waits. Null until the first read lands;
+   * a missing bird is silence, never a warning.
+   */
+  tsholofelo: TsholofeloStatus | null;
+  /** Doc 11 §2 — claim her once-per-Botswana-day gift (+5 Botho, capped). */
+  claimTsholofeloGift: () => void;
   energy: number;
   maxEnergy: number;
   daylight: string;
@@ -412,7 +466,7 @@ export interface GameState {
   collectAnimalProduct: (animalId: string) => void;
   purchaseAnimal: (animalType: string) => void;
   buildings: FarmBuilding[];
-  constructBuilding: (buildingType: string) => void;
+  constructBuilding: (buildingType: string, slotIndex?: number) => void;
   maintainBuilding: (buildingId: string) => void;
   upgradeBuilding: (buildingId: string) => void;
 
@@ -478,6 +532,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [waterLevel, setWaterLevel] = useState(0);
   const [maxWater, setMaxWater] = useState(100);
   const [hasTank, setHasTank] = useState(false);
+  // Doc 11 §3 — the whisper fades on its own; the timer is kept so a fresh
+  // whisper replaces the previous one cleanly instead of being cut short.
+  const [waterWhisper, setWaterWhisper] = useState<string | null>(null);
+  const whisperTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Doc 11 §3/§6 — Journal standing and the Guardian title; Doc 12 §5 — Kagiso,
+  // the Bushveld peace meter Tsholofelo's perch reads.
+  const [whispers, setWhispers] = useState(0);
+  const [journalPages, setJournalPages] = useState(0);
+  const [journalTotalPages, setJournalTotalPages] = useState(0);
+  const [isGuardianOfSesana, setIsGuardianOfSesana] = useState(false);
+  const [kagiso, setKagiso] = useState(0);
+  const [kagisoMax, setKagisoMax] = useState(6);
+  // Doc 11 §2 — the perch itself: gate, line and gift all come from the server.
+  const [tsholofelo, setTsholofelo] = useState<TsholofeloStatus | null>(null);
   const [season, setSeason] = useState('Spring');
   const [currentDay, setCurrentDay] = useState(1);
   const [weather, setWeather] = useState('clear');
@@ -650,6 +718,54 @@ export function GameProvider({ children }: { children: ReactNode }) {
           setBuildings(Array.isArray(list) ? list : []);
         } catch {
           setBuildings([]);
+        }
+
+        // Doc 11 §3/§6 — the Journal read: pages turned, Water Whispers listened
+        // to, and the Guardian of Sesana title. The title is authored by the
+        // server (written once, never cleared), so this only mirrors it.
+        try {
+          const prog = await apiFetch<{
+            journal?: {
+              pagesComplete?: number;
+              totalPages?: number;
+              whispers?: number;
+              isGuardianOfSesana?: boolean;
+            };
+          }>('GET', '/progression');
+          setJournalPages(prog.journal?.pagesComplete ?? 0);
+          setJournalTotalPages(prog.journal?.totalPages ?? 0);
+          setWhispers(prog.journal?.whispers ?? 0);
+          setIsGuardianOfSesana(Boolean(prog.journal?.isGuardianOfSesana));
+        } catch {
+          // A failed read is not a state change: the last known standing stays.
+        }
+
+        // Doc 12 §5 — Tsholofelo perches when the land is at peace: Kagiso at 5+
+        // in the Bushveld scene the screen opens on, and nothing stalled on the
+        // tank. Read here (not in the Bushveld screen) so the Farm dock can see
+        // it; her absence only ever means "not yet".
+        try {
+          const scenes = await apiFetch<
+            Array<{ slug: string; unlocked: boolean; kagiso: number; kagisoMax: number }>
+          >('GET', `/farms/${fd.farm.id}/bushveld/scenes`);
+          const first = Array.isArray(scenes) ? scenes.find((s) => s.unlocked) : undefined;
+          setKagiso(first?.kagiso ?? 0);
+          setKagisoMax(first?.kagisoMax ?? 6);
+        } catch {
+          setKagiso(0);
+        }
+
+        // Doc 11 §2 — Tsholofelo, server side: the Farm dock renders the perch,
+        // the speech line and the gift affordance from THIS, never from its own
+        // Kagiso math (a client must not be able to invent a perched bird).
+        try {
+          const status = await apiFetch<TsholofeloStatus>(
+            'GET',
+            `/progression/farm/${fd.farm.id}/tsholofelo`,
+          );
+          setTsholofelo(status);
+        } catch {
+          setTsholofelo(null);
         }
 
         // Fetch inventory for THIS farm
@@ -994,15 +1110,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
    */
   const refillWell = useCallback(async () => {
     if (!farmId) return;
+    hapticTap();
     try {
-      const result = await apiFetch<{ added: number; cost: number; waterLevel: number }>(
-        'POST',
-        `/farms/${farmId}/water/refill`,
-        {},
-      );
+      const result = await apiFetch<{
+        added: number;
+        cost: number;
+        waterLevel: number;
+        /** Doc 11 §3 — the Water Whisper, when this refill rolled one. */
+        water_whisper?: string | null;
+      }>('POST', `/farms/${farmId}/water/refill`, {});
       recordAction('water');
       setWaterLevel(result.waterLevel);
       setHasTank(true);
+      // A whisper is a moment, not a message: it fades over ~7s (globals.css
+      // `.water-whisper`) and then clears itself. The +1 Journal progress behind
+      // it is already recorded server-side, so nothing here is load-bearing.
+      if (result.water_whisper) {
+        setWaterWhisper(result.water_whisper);
+        if (whisperTimer.current) clearTimeout(whisperTimer.current);
+        whisperTimer.current = setTimeout(() => setWaterWhisper(null), 7000);
+      }
       showToast(
         'Tank Filled',
         `+${result.added}L for ${result.cost} Pula.`,
@@ -1015,6 +1142,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       showToast('Refill Failed', msg, '⚠️', 'error');
     }
   }, [farmId, showToast, refreshFarmData]);
+
+  /** Clear the whisper early — still ambient, still never blocking. */
+  const dismissWaterWhisper = useCallback(() => {
+    if (whisperTimer.current) clearTimeout(whisperTimer.current);
+    whisperTimer.current = null;
+    setWaterWhisper(null);
+  }, []);
 
   // ============================================================
   // Livestock (03 §5) — the real server loop. The old collectEggs mock
@@ -1035,6 +1169,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const feedAnimal = useCallback(
     async (animalId: string) => {
       if (!farmId) return;
+      // Doc 12 §2.3 — feeding is a tactile verb, so the tick fires on the tap
+      // rather than after the round-trip.
+      hapticTap();
       try {
         const result = await apiFetch<{ hunger: number; feedUsed: number; feedItemType: string }>(
           'POST',
@@ -1055,6 +1192,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const petAnimal = useCallback(
     async (animalId: string) => {
       if (!farmId) return;
+      hapticTap();
       try {
         await apiFetch('POST', `/farms/${farmId}/livestock/${animalId}/pet`, {});
         showToast('Pet', '+Happiness', '💛', 'success');
@@ -1070,6 +1208,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const collectAnimalProduct = useCallback(
     async (animalId: string) => {
       if (!farmId) return;
+      // Doc 12 §2.2 — the collect pulse (navigator.vibrate([10])).
+      hapticTap();
       try {
         const result = await apiFetch<{ productType: string; quantity: number }>(
           'POST',
@@ -1108,10 +1248,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // ============================================================
 
   const constructBuilding = useCallback(
-    async (buildingType: string) => {
+    async (buildingType: string, slotIndex?: number) => {
       if (!farmId) return;
       try {
-        await apiFetch('POST', `/farms/${farmId}/buildings/construct`, { buildingType });
+        // Doc 11 §6 — the Heritage Tree is planted ON a plot, so the slot (and
+        // the Guardian-of-Sesana gate behind it) travels with the request. Every
+        // other building sits off the grid and sends nothing.
+        await apiFetch('POST', `/farms/${farmId}/buildings/construct`, {
+          buildingType,
+          ...(slotIndex == null ? {} : { slotIndex }),
+        });
+        hapticStrong();
         showToast('Construction Started', `Your ${buildingType.replace(/_/g, ' ')} is going up.`, '🏗️', 'success');
         await refreshFarmData();
       } catch (err) {
@@ -1130,6 +1277,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           pulaSpent: number;
           materialsConsumed: Array<{ slug: string; qty: number }>;
         }>('POST', `/farms/${farmId}/buildings/${buildingId}/maintain`, {});
+        // Doc 12 §3.2 — the repair ritual's stronger pulse (vibrate([50])).
+        hapticStrong();
         const mats = result.materialsConsumed?.map((m) => `${m.qty}× ${m.slug}`).join(' + ');
         showToast(
           'Repaired',
@@ -1296,6 +1445,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [farmId, inventory, showToast, refreshFarmData]);
 
+  /**
+   * Doc 11 §2 — The Gift. Once per Botswana day, only while perched. The server
+   * owns the day key and the I4 cap; a repeat tap the same day is a quiet no-op
+   * (claimed:false), never an error.
+   */
+  const claimTsholofeloGift = useCallback(async () => {
+    if (!farmId || !tsholofelo?.giftAvailable) return;
+    try {
+      const res = await apiFetch<{ claimed: boolean; bothoAwarded: number; line: string }>(
+        'POST',
+        `/progression/farm/${farmId}/tsholofelo/gift`,
+      );
+      if (res.claimed) {
+        const tail = res.bothoAwarded > 0 ? ` +${res.bothoAwarded} Botho.` : '';
+        showToast('Tsholofelo', `${res.line}${tail}`, '🕊️', 'success');
+        setTsholofelo((cur) => (cur ? { ...cur, giftAvailable: false } : cur));
+        await refreshFarmData();
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'The gift could not be claimed.';
+      showToast('Tsholofelo', msg, '⚠️', 'error');
+    }
+  }, [farmId, tsholofelo, showToast, refreshFarmData]);
+
   // ============================================================
   // Bushveld (still client-side — no real API yet)
   // ============================================================
@@ -1391,6 +1564,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
         plantPlot,
         quickHarvestAll,
         refillWell,
+        waterWhisper,
+        dismissWaterWhisper,
+        whispers,
+        journalPages,
+        journalTotalPages,
+        isGuardianOfSesana,
+        kagiso,
+        kagisoMax,
+        tsholofelo,
+        claimTsholofeloGift,
         livestock,
         feedAnimal,
         petAnimal,

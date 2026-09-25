@@ -82,6 +82,27 @@ export class CropsService {
       throw new BadRequestException(`Unknown crop type: ${cropType}`);
     }
 
+    // Resolve the slot first: the Heritage Tree occupies its plot (Doc 11 §6),
+    // so planting must fail BEFORE the transaction, not after it.
+    const { data: plot } = await adminClient
+      .from('farm_plots')
+      .select('slot_index')
+      .eq('id', plotId)
+      .single();
+    const slotIndex = (plot?.slot_index as number | null) ?? 0;
+    const { data: tree } = await adminClient
+      .from('buildings')
+      .select('id')
+      .eq('farm_id', farmId)
+      .eq('building_type', 'setlhare_sa_boswa')
+      .eq('slot_index', slotIndex)
+      .maybeSingle();
+    if (tree) {
+      throw new BadRequestException(
+        'The Heritage Tree stands on this plot — its shade is for the plots around it.',
+      );
+    }
+
     // The seed is identified inside the transaction by slug (crop_type || '_seed'),
     // resolved against player_inventory (see migration 00020). p_seed_id is no longer
     // used by the function but is kept in the signature for caller compatibility.
@@ -102,14 +123,8 @@ export class CropsService {
       throw new BadRequestException('Failed to plant crop');
     }
 
-    const { data: plot } = await adminClient
-      .from('farm_plots')
-      .select('slot_index')
-      .eq('id', plotId)
-      .single();
-
     return {
-      plot: { id: plotId, state: 'PLANTED', slotIndex: plot?.slot_index ?? 0 },
+      plot: { id: plotId, state: 'PLANTED', slotIndex },
       crop: {
         id: result.crop_id as string,
         type: cropType,

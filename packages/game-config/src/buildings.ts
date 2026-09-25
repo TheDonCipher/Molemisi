@@ -40,7 +40,7 @@ export interface BuildingConfig {
   upgradeTimes: number[];
   constructionTime: number;
   capacity: number;
-  capacityType: 'storage' | 'livestock' | 'water' | 'crafting_slots' | 'protection';
+  capacityType: 'storage' | 'livestock' | 'water' | 'crafting_slots' | 'protection' | 'heritage';
   /** How many tiers this line actually has (D8 — only Storage has 3). */
   maxTier: number;
   wearPerHour: number;
@@ -50,6 +50,26 @@ export interface BuildingConfig {
   maintenanceMaterials?: BuildCost;
   spriteSheet: string;
   benefit: string;
+  /**
+   * Doc 11 §6.2 — true when the building's benefit applies WITHOUT the player
+   * acting on it (the tank feeds growth, the kraal guards overnight, the
+   * Heritage Tree remembers water). Surfaced as `is_automated` on
+   * `GET /farms/current` and `GET /farms/:id/buildings`.
+   */
+  automated?: boolean;
+  /**
+   * Doc 11 §6 — Setlhare sa Boswa (Heritage Tree) adjacency: the plots directly
+   * around the tree drink at `waterDemandMultiplier` of the normal rate — the
+   * "Water Memory" endgame buff. Purely positive: it only ever saves water.
+   */
+  adjacency?: {
+    /** Plot-grid width the buff is computed against (Farm Screen `md:grid-cols-4`). */
+    gridColumns: number;
+    /** How many plots the buff touches — the 4 immediately surrounding the tree. */
+    adjacentPlots: number;
+    /** 0.8 = 20% slower water demand on the neighbouring plots. */
+    waterDemandMultiplier: number;
+  };
 }
 
 export const BUILDINGS: Record<string, BuildingConfig> = {
@@ -166,6 +186,42 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     spriteSheet: 'ui/items/building_mill.png',
     benefit: 'Unlocks a 2nd and 3rd concurrent crafting slot.',
   },
+  // Doc 11 §6 — Setlhare sa Boswa (The Heritage Tree), the endgame monument.
+  // The REAL gate is the Guardian of Sesana title (Journal 100% AND Botho >= 500),
+  // enforced SERVER-side in BuildingsService.constructBuilding against
+  // profiles.is_guardian_of_sesana; `unlock` below is only the store's display
+  // hint. wearPerHour 0 and no maintenance on purpose: a purely positive
+  // mechanic must never become a chore or a decay timer.
+  setlhare_sa_boswa: {
+    id: 'setlhare_sa_boswa',
+    name: 'Heritage Tree',
+    setswana: 'Setlhare sa Boswa',
+    description:
+      'An ancient tree planted for the land you leave behind. Its shade remembers water — the plots around it drink more slowly.',
+    unlock: { bothoGte: 500 },
+    baseCost: { currency: 12000 },
+    upgradeCosts: [],
+    upgradeTimes: [],
+    constructionTime: 120,
+    capacity: 0,
+    capacityType: 'heritage',
+    maxTier: 1,
+    wearPerHour: 0,
+    maintenanceCost: 0,
+    maintenanceIntervalDays: 0,
+    spriteSheet: 'tiles/decorations/setlhare_sa_boswa.png',
+    automated: true,
+    // Water Memory: the 4 plots immediately around the tree (cross adjacency on
+    // the 4-column grid) satisfy only 80% of their normal water demand — an
+    // endless, passive saving, never a penalty (Doc 11 §6).
+    adjacency: {
+      gridColumns: 4,
+      adjacentPlots: 4,
+      waterDemandMultiplier: 0.8,
+    },
+    benefit:
+      'The 4 plots around it drink at 80% water demand — the land remembers every rain you listened to.',
+  },
 };
 
 /**
@@ -199,4 +255,61 @@ export function getUnlockedBuildings(_level?: number): BuildingConfig[] {
  */
 export function craftingSlotsFor(workshopTier: number): number {
   return Math.min(3, 1 + Math.max(0, workshopTier - 1));
+}
+
+/* ==================================================== Deep Time Lore (Doc 11) */
+
+/**
+ * True when the building's benefit applies without the player acting on it —
+ * the tank feeds growth, the kraal and boundary guard overnight, the Heritage
+ * Tree remembers water. Storage and the Workshop wait for your hands, so they
+ * are not automated. Surfaced as `is_automated` on `GET /farms/current`.
+ */
+const AUTOMATED_BUILDING_IDS = new Set([
+  'water_source',
+  'kraal',
+  'farm_boundary',
+  'setlhare_sa_boswa',
+]);
+
+export function isBuildingAutomated(buildingType: string): boolean {
+  const resolved = LEGACY_ALIASES[buildingType] ?? buildingType;
+  return AUTOMATED_BUILDING_IDS.has(resolved);
+}
+
+/**
+ * Doc 11 §6 — cross adjacency of a plot slot on the Farm Screen grid: the plots
+ * directly up / down / left / right (never diagonal, never row-wrap), clipped to
+ * `[0, plotCount)`. Edge slots therefore return fewer than `adjacentPlots`
+ * neighbours — a tree in the corner simply shades what it can.
+ *
+ * One implementation shared by the server (water-demand multiplier in
+ * `WaterService`) and the client (golden-mist overlay), so the glow and the
+ * saving can never disagree about which plots are blessed.
+ */
+export function adjacentPlotSlots(
+  slotIndex: number,
+  gridColumns: number,
+  plotCount: number,
+): number[] {
+  if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= plotCount) return [];
+  if (!Number.isInteger(gridColumns) || gridColumns < 1) return [];
+
+  const col = slotIndex % gridColumns;
+  const row = Math.floor(slotIndex / gridColumns);
+  const slots: number[] = [];
+
+  const push = (r: number, c: number) => {
+    // Guard the column FIRST: slot-1 / slot+1 would otherwise wrap into the
+    // previous/next row at the grid edges.
+    if (c < 0 || c >= gridColumns) return;
+    const i = r * gridColumns + c;
+    if (i >= 0 && i < plotCount) slots.push(i);
+  };
+
+  push(row - 1, col);
+  push(row + 1, col);
+  push(row, col - 1);
+  push(row, col + 1);
+  return slots;
 }

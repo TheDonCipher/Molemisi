@@ -110,3 +110,120 @@ jobs:
             packages/*/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
       - run: pnpm build
+
+  # Scaled-down simulator run — see docs/Simulator Implementation Prompt §7.
+  # Deliberately small (30 players / 14 days): enough to catch a regression in
+  # the core safeguard checks and crafting margins, not a full-scale run.
+  # It never crosses a Mophane window; the Bushveld report says so explicitly.
+  simulate:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Detect API-affecting changes
+        id: changes
+        run: |
+          BASE="${{ github.event.pull_request.base.ref }}"
+          if [ -z "$BASE" ]; then
+            BASE="HEAD~1"
+          else
+            git fetch origin "$BASE" --depth=1
+            BASE="origin/$BASE"
+          fi
+          if git diff --name-only "$BASE"...HEAD | grep -qE '^(apps/api/|packages/)'; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=false" >> "$GITHUB_OUTPUT"
+            echo "No apps/api or packages changes — skipping the simulator run."
+          fi
+
+      - uses: supabase/setup-cli@v1
+        if: steps.changes.outputs.api == 'true'
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        if: steps.changes.outputs.api == 'true'
+        run: supabase start
+
+      - name: Write API environment from local Supabase
+        if: steps.changes.outputs.api == 'true'
+        run: |
+          supabase status -o env > "$RUNNER_TEMP/supabase.env"
+          set -a; . "$RUNNER_TEMP/supabase.env"; set +a
+          : "${API_URL:?supabase status did not report API_URL}"
+          : "${ANON_KEY:?supabase status did not report ANON_KEY}"
+          : "${SERVICE_ROLE_KEY:?supabase status did not report SERVICE_ROLE_KEY}"
+          cat > apps/api/.env <<EOF
+          SUPABASE_URL=$API_URL
+          SUPABASE_ANON_KEY=$ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          CORS_ORIGIN=http://127.0.0.1:3001
+          NODE_ENV=test
+          EOF
+
+      - name: Build API and simulator
+        if: steps.changes.outputs.api == 'true'
+        run: pnpm exec turbo build --filter=@molemisi/api... --filter=@molemisi/simulator...
+
+      - name: Start API
+        if: steps.changes.outputs.api == 'true'
+        working-directory: apps/api
+        run: |
+          node dist/main.js > "$RUNNER_TEMP/api.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/api.pid"
+
+      - name: Wait for API health
+        if: steps.changes.outputs.api == 'true'
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:3001/api/v1/health > /dev/null; then
+              echo "API healthy after $((i * 2))s"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API never became healthy. Log:"
+          cat "$RUNNER_TEMP/api.log"
+          exit 1
+
+      - name: Run scaled-down simulator
+        if: steps.changes.outputs.api == 'true'
+        env:
+          SIMULATOR_ALLOW: 'true'
+          NODE_ENV: test
+        run: |
+          set -a; . "$RUNNER_TEMP/supabase.env"; set +a
+          node packages/simulator/dist/cli.js \
+            --target=http://127.0.0.1:3001 \
+            --players=30 --days=14 --cohort=wide --seed=1 \
+            --anchor=2026-01-01 --out=simulator-out \
+            --supabase-url="$API_URL" --supabase-key="$SERVICE_ROLE_KEY"
+
+      - name: Stop API
+        if: always() && steps.changes.outputs.api == 'true'
+        run: kill "$(cat "$RUNNER_TEMP/api.pid")" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.changes.outputs.api == 'true'
+        with:
+          name: simulator-report
+          path: simulator-out
+          if-no-files-found: warn

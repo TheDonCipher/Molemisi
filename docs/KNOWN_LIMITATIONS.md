@@ -198,8 +198,8 @@ Deployment spec is design-only.
 
 - JWT in localStorage (XSS-sensitive), not httpOnly cookies
 - Service role key is server-only if env is set correctly
-- Admin is a boolean on `profiles` (`is_admin`) **and** a `role` (`admin`) — both must agree
-  for `AdminGuard`; devs are excluded from admin
+- Admin is a boolean on `profiles` (`is_admin`) **and** a `role` (`admin`) — either grants
+  `AdminGuard`; `role='dev'` is the top tier and is admitted to both `/admin` and `/dev`
 - Banned users can still hit `/admin/` URLs at the guard layer (intended for admin tooling)
 
 ---

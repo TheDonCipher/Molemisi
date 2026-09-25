@@ -83,6 +83,8 @@ const GROUP_NAMES = [
   'ui-assets',
   'scene-props',
   'branding',
+  'kgotla-chamber',
+  'deep-time',
 ];
 
 for (let i = 0; i < argv.length; i++) {
@@ -719,6 +721,132 @@ for (const [id, _file, desc] of SCENE_PROPS) {
     'pixen',
     `${cleanDesc}, single game prop centered, ${STYLE}`,
     { noBg: true },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// kgotla-chamber — the council-chamber dressing for the Kgotla screen
+// (docs/Screens/Kgotla/SPEC.md §2/§3, doc 22 §3.2).
+//
+// The flat props (fire_pit, elder_chair, quest_board, stone_bench, herb_garden,
+// community_circle, stall_canopy) already exist in `scene-props`. What the
+// chamber spec adds is the *animated and framing* layer:
+//   - a portrait backdrop, because the screen is mobile-first and the existing
+//     tiles/sky/kgotla.png is a 400x300 landscape that object-cover crops badly
+//     on a tall phone viewport;
+//   - three fire frames so the community fire can flicker instead of sitting
+//     frozen (22 §3.2 wants flicker + rising smoke);
+//   - a carved seat frame and a raised dais, so the CouncilSeat stops being a
+//     CSS gradient and reads as hand-hewn woodwork;
+//   - a Botho emblem, since the Botho meter is the screen's standing number and
+//     had no glyph of its own (social_reputation already covers per-elder regard).
+// ---------------------------------------------------------------------------
+add(
+  'kgotla-chamber',
+  'kgotla_portrait',
+  'tiles/sky/kgotla_portrait.png',
+  { w: 400, h: 400 },
+  'pixflux',
+  'traditional Setswana kgotla village gathering place seen from a player standing at the edge of the circle: a large flat-topped acacia shade tree at the centre with carved wooden seating beneath it, a circular ring of low stone seating blocks on swept red earth, a small crackling community fire in a stone circle, a wooden notice board on poles, a thatched meeting shelter at the back, scattered carved wooden stools, warm late-afternoon golden light, calm and welcoming, empty lower third of the image kept clear of detail for UI panels',
+);
+
+// Fire flicker cycle. Same stone circle every frame — only the flame changes —
+// so the three frames cut cleanly together in an animation.
+const FIRE_FRAMES = [
+  ['fire_pit_f1', 'low small flame, embers glowing, little smoke'],
+  ['fire_pit_f2', 'tall bright flame with a few orange sparks rising'],
+  ['fire_pit_f3', 'medium flame leaning to one side with a wisp of grey smoke'],
+];
+for (const [id, flame] of FIRE_FRAMES) {
+  add(
+    'kgotla-chamber',
+    id,
+    `sprites/scene-props/${id}.png`,
+    { w: 64, h: 64 },
+    'pixen',
+    `the same stone circle campfire as a Kgotla gathering fire, ${flame}, identical ring of grey stones and red earth in every frame, ${STYLE}`,
+    { noBg: true },
+  );
+}
+
+add(
+  'kgotla-chamber',
+  'council_dais',
+  'sprites/scene-props/council_dais.png',
+  { w: 128, h: 64 },
+  'pixen',
+  `wide low horizontal raised wooden platform dais, broad rectangular top surface with a carved dark-timber front face and simple geometric notch patterns, low and clearly wider than tall, three-quarter view, centered, ${STYLE}`,
+  { noBg: true, seed: seedFor('council_dais_v2') },
+);
+add(
+  'kgotla-chamber',
+  'council_seat',
+  'sprites/scene-props/council_seat.png',
+  { w: 96, h: 64 },
+  'pixen',
+  `wide horizontal empty carved wooden council seat frame, a broad rectangular wooden back panel with a recessed square inset in the centre sized to hold a character portrait, dark timber frame with warm amber highlight edges, landscape orientation clearly wider than tall, front view, centered, ${STYLE}`,
+  { noBg: true, seed: seedFor('council_seat_v2') },
+);
+add(
+  'kgotla-chamber',
+  'social_botho',
+  'ui/icons/social_botho.png',
+  { w: 32, h: 32 },
+  'pixen',
+  `two clasped hands forming a helping gesture inside a cream circle badge. ${ICON_STYLE}`,
+  { noBg: true, detail: 'low detail' },
+);
+
+// ---------------------------------------------------------------------------
+// deep-time — Doc 11 §3/§6: the Heritage Tree (Setlhare sa Boswa) and Tsholofelo
+// (docs/Molemisi LORE FINAL.txt, documents 11 and 12).
+//
+// Three things the Deep Time layer needs that no existing group covers:
+//   - the Heritage Tree itself. It reused `tiles/decorations/baobab_tree.png`
+//     as a placeholder (a generic savanna prop), which reads as scenery rather
+//     than the one monument a player earns at 100% journal + 500 Botho. It gets
+//     its own world sprite AND its own 32x32 build-sheet icon, matching the
+//     `building_*` icon family so the build sheet stays consistent.
+//   - Tsholofelo, the companion bird (Doc 12 §5), as a three-frame idle cycle:
+//     perch, weight-shift/blink, preen. The frames share one seed so it is the
+//     same bird in all three; the web swaps them at 1.5s without a stitcher.
+// ---------------------------------------------------------------------------
+add(
+  'deep-time',
+  'setlhare_sa_boswa',
+  'tiles/decorations/setlhare_sa_boswa.png',
+  { w: 96, h: 128 },
+  'pixen',
+  `an ancient sacred heritage tree standing alone, thick gnarled baobab-like trunk with carved geometric scarification bands, broad spreading canopy of dense dark-green leaves, a few golden seed pods hanging, a small mound of red earth and a ring of smooth stones at its base, monumental and dignified, centered and grounded at the bottom of the canvas, ${STYLE}`,
+  { noBg: true, detail: 'highly detailed' },
+);
+
+add(
+  'deep-time',
+  'building_setlhare_sa_boswa',
+  'ui/items/building_setlhare_sa_boswa.png',
+  { w: 32, h: 32 },
+  'pixen',
+  `a single ancient heritage tree, thick baobab trunk with a broad round leafy canopy and a small ring of stones at the base. ${ICON_STYLE}`,
+  { noBg: true, detail: 'low detail' },
+);
+
+// Tsholofelo's idle cycle. One shared seed so all three frames are the same
+// bird; only the pose changes, which is what makes the swap read as breathing.
+const TSHOLOFELO_FRAMES = [
+  ['tsholofelo_f1', 'standing upright and calm on a perch, side view, tail hanging straight down'],
+  ['tsholofelo_f2', 'weight shifted forward with the head lowered as if blinking, tail slightly raised'],
+  ['tsholofelo_f3', 'head turned back over its shoulder preening one wing, tail lifted'],
+];
+for (const [id, pose] of TSHOLOFELO_FRAMES) {
+  add(
+    'deep-time',
+    id,
+    `ui/${id}.png`,
+    { w: 32, h: 32 },
+    'pixen',
+    `a small friendly black-and-white pied bush bird perched, ${pose}, cheerful companion bird, single bird centered, ${STYLE}`,
+    { noBg: true, seed: seedFor('tsholofelo_idle') },
   );
 }
 

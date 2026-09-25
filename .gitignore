@@ -50,5 +50,8 @@ yarn-error.log*
 apps/web/.next.prev-1789021611/cache/webpack/server-production/3.pack
 apps/web/.next.prev-1789021611/trace
 
+# Simulator run output (summary.md / raw_events.jsonl / safeguards.json)
+simulator-out/
+
 # Agent / working memory (project data, not source)
 .workbuddy-ai/

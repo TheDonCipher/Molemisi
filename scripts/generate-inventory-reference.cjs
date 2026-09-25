@@ -11,8 +11,9 @@ const {
   storageUpgradeCost, productValuePula,
   sourcesForItem, recipesUsingItem, buildingsUsingItem,
   recipeEconomics, intentGroup, TOOL_SLUGS,
-  BATCH_SIZES, BATCH_FEE_MULTIPLIER, CRAFTING_SLOTS, BONUS_YIELD_CHANCE,
+    BATCH_SIZES, BATCH_FEE_MULTIPLIER, CRAFTING_SLOTS, BONUS_YIELD_CHANCE,
   OPPORTUNITY_COST_FACTOR, COOP_TAX,
+  PRICE_BAND, CRAFTED_BAND, CRAFTED_CATEGORIES, PRICE_CYCLE_HOURS,
 } = gc;
 
 const CATEGORY_ORDER = ['DIPEO', 'DIJALO', 'DIPHOLOGOLO', 'DITSHIMOLOGO TSA NAGENG', 'DITSALO', 'DIKUNO', 'DIDIRISIWA'];
@@ -59,7 +60,7 @@ for (const i of Object.values(ITEMS)) {
 console.log('');
 
 console.log('## 6. Recipe table\n');
-console.log(`Constants: COOP_TAX=${COOP_TAX}, OPPORTUNITY_COST_FACTOR=${OPPORTUNITY_COST_FACTOR}, BONUS_YIELD_CHANCE=${BONUS_YIELD_CHANCE}, slots=${JSON.stringify(CRAFTING_SLOTS)}, batch fees=${JSON.stringify(BATCH_FEE_MULTIPLIER)}\n`);
+console.log(`Constants: COOP_TAX=${COOP_TAX}, OPPORTUNITY_COST_FACTOR=${OPPORTUNITY_COST_FACTOR}, BONUS_YIELD_CHANCE=${BONUS_YIELD_CHANCE}, slots=${JSON.stringify(CRAFTING_SLOTS)}, batch sizes=${JSON.stringify(BATCH_SIZES)}, batch fees=${JSON.stringify(BATCH_FEE_MULTIPLIER)}, PRICE_BAND=${JSON.stringify(PRICE_BAND)}, CRAFTED_BAND=${JSON.stringify(CRAFTED_BAND)}, PRICE_CYCLE_HOURS=${PRICE_CYCLE_HOURS}h\n`);
 console.log('| Recipe | Output | Inputs (anyOf × qty) | Fee P1 | Time | Unlock |');
 console.log('|---|---|---|---|---|---|');
 for (const r of Object.values(RECIPES)) {
@@ -84,6 +85,49 @@ for (const r of Object.values(RECIPES)) {
       console.log(`| ${r.slug} | ${label} | ${b} | ${e.inputValue} | ${e.fee} | ${e.saleGross} | ${e.netAfterTax} | ${e.profit} | ${Math.round(e.roi * 100)}% |`);
     }
   }
+}
+console.log('');
+
+console.log('### Crafting vs. the market band (C14 reconciled)\n')
+console.log(`The economics above are the **1.0$\u00d7 baseline** (every price at base value). The live `
+  `$\u0060Co-op price for a raw or foraged good swings in ${PRICE_BAND} [${PRICE_BAND.min}, ${PRICE_BAND.max}] every ${PRICE_CYCLE_HOURS}h; every recipe $\u0060` +
+  `$\u0060output (DITSALO/DIKUNO) is exempt and sells in ${CRAFTED_BAND} [${CRAFTED_BAND.min}, ${CRAFTED_BAND.max}]. Opportunity cost of an input is its live $\u0060` +
+  `$\u0060net sell price ($\u0060base × band × (1 − COOP_TAX)$\u0060), but $\u0060recipeEconomics$` evaluates $\u0060it at 1.0$\u00d7 only — so the §6 table is the baseline, not the live margin. $\u0060` +
+  `$\u0060Worst-case = output at the band floor with inputs at their band ceiling; best-case = $\u0060` +
+  `$\u0060output at the band ceiling with inputs at their floor. Break-even mult = the input $\u0060` +
+  'multiplier at which the 1.0×-output margin hits zero. A recipe marked ✗ goes $\u0060' +
+  `$\u0060negative when its raw inputs peak; the signal is for the player to sell the inputs raw $\u0060` +
+  `$\u0060instead — intended, not a bug.\n`);
+console.log('| Recipe | Inputs | Fee P1 | Worst-case P | Best-case P | Break-even mult | Verdict |')
+console.log('|---|---|---|---|---|---|---|')
+const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+const inputBand = (slug) => {
+  const def = ITEMS[slug];
+  return (def && (CRAFTED_CATEGORIES).includes(def.category)) ? CRAFTED_BAND : PRICE_BAND;
+};
+for (const r of Object.values(RECIPES)) {
+  // Representative branch = the cheapest base-value input variant, matching \u00a76 economics.
+  const branch = r.inputs[0].anyOf
+    .map((s) => ({ s, v: ITEMS[s].baseValue }))
+    .sort((a, b) => a.v - b.v)[0].s;
+  const chosen = {};
+  for (const g of r.inputs) chosen[g.anyOf.includes(branch) ? branch : g.anyOf[0]] = g.qty;
+  const out = ITEMS[r.output];
+  const outBase = out.baseValue * r.outputQty;
+  const fee = r.feePula;
+  const sumBase = Object.entries(chosen).reduce((a, [s, n]) => a + ITEMS[s].baseValue * n, 0);
+  const inputMaxBand = Math.max(...Object.keys(chosen).map((s) => inputBand(s).max));
+  const sumAtMax = Object.entries(chosen).reduce((a, [s, n]) => a + ITEMS[s].baseValue * n * inputBand(s).max, 0);
+  const sumAtMin = Object.entries(chosen).reduce((a, [s, n]) => a + ITEMS[s].baseValue * n * inputBand(s).min, 0);
+  const worst = r2(outBase * CRAFTED_BAND.min * (1 - COOP_TAX) - (sumAtMax * (1 - COOP_TAX) + fee));
+  // raw/forage inputs can dip to PRICE_BAND.min when the market turns; crafted outputs
+  // are exempt (CRAFTED_BAND) but that floor was already applied to outBase above.
+  const best = r2(outBase * CRAFTED_BAND.max * (1 - COOP_TAX) - (sumAtMin * (1 - COOP_TAX) + fee));
+  const breakeven = r2((outBase * (1 - COOP_TAX) - fee) / (sumBase * (1 - COOP_TAX)));
+  const safe = worst >= 0;
+  const label = Object.entries(chosen).map(([s, n]) => `${n} ${s}`).join(' + ');
+  const verdict = safe ? 'profitable across band \u2713' : `loss above raw \u00d7${breakeven.toFixed(2)}`;
+  console.log(`| ${r.slug} | ${label} | ${fee} | ${worst} | ${best} | ${breakeven} | ${verdict} |`);
 }
 console.log('');
 
