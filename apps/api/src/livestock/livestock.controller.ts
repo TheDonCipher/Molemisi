@@ -53,6 +53,31 @@ export class LivestockController {
     return this.livestockService.feedAnimal(farmId, userId, animalId);
   }
 
+  /**
+   * R1/30-1.1 — recovery path for a sick animal (P0-1). Consumes 1 herbs.
+   */
+  @Post(':animalId/treat')
+  async treatAnimal(
+    @Param('farmId') farmId: string,
+    @Param('animalId') animalId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.livestockService.treatAnimal(farmId, userId, animalId);
+  }
+
+  /**
+   * R2/30-1.7 — per-kraal feed: one tap feeds every feedable animal,
+   * consuming the summed rations. Per-animal `:animalId/feed` stays as the
+   * fallback. (Single-segment route — cannot collide with `:animalId/feed`.)
+   */
+  @Post('feed-kraal')
+  async feedKraal(
+    @Param('farmId') farmId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.livestockService.feedKraal(farmId, userId);
+  }
+
   @Post(':animalId/collect')
   async collectProduct(
     @Param('farmId') farmId: string,

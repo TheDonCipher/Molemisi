@@ -21,6 +21,8 @@
 export interface FakeResult {
   data: unknown;
   error: { message: string } | null;
+  /** Top-level `count` for head+count queries (mirrors Supabase's response shape). */
+  count?: number | null;
 }
 
 export interface FakeCall {

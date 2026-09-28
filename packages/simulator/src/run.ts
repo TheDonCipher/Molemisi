@@ -8,6 +8,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ApiClient } from './client';
+import { loginForToken } from './provision';
 import { EventLog } from './events';
 import { Rng } from './rng';
 import { planSteps, monthOf } from './time';
@@ -68,10 +69,13 @@ export async function run(config: RunConfig): Promise<RunResult> {
 
   const roster = buildRoster(config, rng);
   const players: Player[] = [];
+  const tokenIssuedAt = new Map<number, number>();
   for (let i = 0; i < roster.slots.length; i++) {
     const profile = roster.slots[i]!;
     try {
-      players.push(await registerPlayer(api, i, profile, rng, config.runToken, adminCreds));
+      const p = await registerPlayer(api, i, profile, rng, config.runToken, adminCreds);
+      players.push(p);
+      tokenIssuedAt.set(p.index, Date.now());
     } catch (err) {
       console.error(`registration failed for slot ${i} (${profile}): ${(err as Error).message}`);
     }
@@ -91,6 +95,29 @@ export async function run(config: RunConfig): Promise<RunResult> {
   const steps = planSteps(config.days, config.anchor);
   const realDates = steps.map((s) => s.realDate);
 
+  // --- Token lifecycle ---------------------------------------------------
+  // Supabase JWTs default to a 1-hour lifetime. A 7-day run overruns that, so a
+  // player's token expires mid-run and every later call 401s (observed on days
+  // 6-7 of the prior run, which also crashed the safeguard pass on the 401
+  // error-body shape). Refresh proactively when a token is older than 45 min,
+  // and unconditionally before the safeguard pass.
+  async function refreshToken(player: Player): Promise<boolean> {
+    try {
+      const token = await loginForToken(api, player.email, player.password);
+      if (!token) return false;
+      player.token = token;
+      tokenIssuedAt.set(player.index, Date.now());
+      return true;
+    } catch (err) {
+      console.warn(`token refresh failed for ${player.email}: ${(err as Error).message}`);
+      return false;
+    }
+  }
+  async function refreshIfStale(player: Player): Promise<void> {
+    const issued = tokenIssuedAt.get(player.index) ?? 0;
+    if (Date.now() - issued >= 45 * 60_000) await refreshToken(player);
+  }
+
   // `--safeguards-only` still registers the population because most checks need
   // a real token and a real farm to act against — it just skips the behaviour
   // loop and every time-advancing call.
@@ -101,6 +128,7 @@ export async function run(config: RunConfig): Promise<RunResult> {
       for (const player of players) {
         if (player.profile === 'adversary') continue;
         if (player.profile === 'churner' && step.day > 14) continue;
+        await refreshIfStale(player);
         await runPlayerDay({
           api,
           log,
@@ -121,7 +149,9 @@ export async function run(config: RunConfig): Promise<RunResult> {
   }
 
   // Safeguards run after population activity so ownership and threshold checks
-  // have real state to act against.
+  // have real state to act against. Refresh every token first so the pass is not
+  // tanked by a 1-hour JWT expiry at the run's tail.
+  for (const player of players) await refreshToken(player);
   const checks = await runSafeguards(api, players, { webhookToken: players[0]?.token ?? '' });
 
   const meta: RunMeta = {

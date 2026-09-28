@@ -7,6 +7,7 @@
  */
 
 import { BUILDINGS } from './buildings';
+import { getItemDef } from './items';
 
 /* ------------------------------------------------------------------ Market */
 /** 02 §4.1 — the Co-op's tax. Applied server-side on every sale. */
@@ -22,6 +23,54 @@ export const PRICE_CYCLE_HOURS = 6;
  */
 export const CRAFTED_BAND = { min: 0.9, max: 1.1 } as const;
 export const CRAFTED_CATEGORIES = ['DITSALO', 'DIKUNO'] as const;
+/* --------------------------------------------------------------- Contracts */
+/**
+ * R3 / docs-31 P0-2 — the contract board paid MORE for a basket of goods than the
+ * Co-op did, and a completed contract could be re-accepted in the same second.
+ * accept → deliver → complete → accept therefore printed Pula faster than any sink
+ * could drain it (the audit measured roughly P1.35 paid per P1.00 of goods handed
+ * in). Two rules close it, and both live here so no call site can drift.
+ */
+export const CONTRACT_RULES = {
+  /** A completed contract stays off ONE farm's board for this many hours. */
+  repeatCooldownHours: 24,
+  /**
+   * The reward ceiling, as a multiple of what the SAME goods would net at the
+   * Co-op at a neutral 1.0x price. 1.25 keeps contracts the better offer — they
+   * are meant to be — without making the market strictly wrong to use.
+   */
+  rewardMarketMultiple: 1.25,
+} as const;
+
+/**
+ * What `requirements` would net at the Co-op at a neutral price: catalogue
+ * base value, less the Co-op's tax (02 §4.1). This is the honest yardstick for
+ * "is this contract paying too much", because it is the alternative the player
+ * was already free to take.
+ */
+export function contractGoodsMarketValue(
+  requirements: readonly { itemType: string; quantity: number }[],
+): number {
+  const gross = requirements.reduce(
+    (sum, r) => sum + (getItemDef(r.itemType)?.baseValue ?? 0) * r.quantity,
+    0,
+  );
+  return Math.round(gross * (1 - COOP_TAX_RATE) * 100) / 100;
+}
+
+/**
+ * The most a contract with these requirements may pay. Floored at 1 so an
+ * unrecognised slug cannot silently zero a player's reward.
+ */
+export function contractRewardCap(
+  requirements: readonly { itemType: string; quantity: number }[],
+): number {
+  return Math.max(
+    1,
+    Math.round(contractGoodsMarketValue(requirements) * CONTRACT_RULES.rewardMarketMultiple),
+  );
+}
+
 
 /* ------------------------------------------------------------------ Water */
 /**

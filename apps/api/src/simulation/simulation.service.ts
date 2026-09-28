@@ -8,6 +8,7 @@ import {
   getNextSeason,
   MAX_OFFLINE_HOURS,
   SELF_SUSTAINING_THRESHOLD_HOURS,
+  STARVATION_ONSET_HOURS,
   WEATHER_CHANGE_INTERVAL,
   SEASON_DURATION_HOURS,
   type WeatherState,
@@ -26,6 +27,8 @@ interface LivestockRow {
   is_sick: boolean;
   last_fed_at: string;
   last_pet_at: string | null;
+  /** R1/30-1.4 — when hunger last hit 0; null while the animal is fed. */
+  hunger_zero_since?: string | null;
 }
 
 interface BuildingRow {
@@ -171,7 +174,10 @@ export class SimulationService {
     if (livestock && livestock.length > 0) {
       for (const rawAnimal of livestock) {
         const animal = rawAnimal as unknown as LivestockRow;
-        const animalResult = this.simulateLivestock(animal, cappedHours);
+        // 1.5 — livestock gets BOTH windows: the 24 h cap for growth stays, but
+        // the self-sustaining rule reads the UNCAPPED elapsed time (G-4), so a
+        // 4-day absence finally reaches `SELF_SUSTAINING_THRESHOLD_HOURS`.
+        const animalResult = this.simulateLivestock(animal, cappedHours, elapsedHours);
         result.livestockSimulated++;
 
         if (animalResult.productReady) result.livestockProducts++;
@@ -187,6 +193,8 @@ export class SimulationService {
               product_ready: animalResult.productReady,
               product_timer_hours: animalResult.newProductTimer,
               is_sick: animalResult.isSick,
+              // R1/30-1.4 — the starvation window must survive simulation passes.
+              hunger_zero_since: animalResult.newHungerZeroSince,
               updated_at: new Date(now).toISOString(),
             })
             .eq('id', animal.id);
@@ -262,6 +270,7 @@ export class SimulationService {
   private simulateLivestock(
     animal: LivestockRow,
     elapsedHours: number,
+    uncappedHours: number = elapsedHours,
   ): {
     newHunger: number;
     newHealth: number;
@@ -271,6 +280,7 @@ export class SimulationService {
     isSick: boolean;
     wasFed: boolean;
     stateChanged: boolean;
+    newHungerZeroSince: string | null;
   } {
     const config = getAnimalConfig(animal.animal_type);
     if (!config) {
@@ -283,6 +293,7 @@ export class SimulationService {
         isSick: animal.is_sick,
         wasFed: false,
         stateChanged: false,
+        newHungerZeroSince: animal.hunger_zero_since ?? null,
       };
     }
 
@@ -292,21 +303,68 @@ export class SimulationService {
     let productReady = animal.product_ready;
     let productTimerHours = animal.product_timer_hours;
 
-    // Check if in self-sustaining mode (offline > 3 days)
-    const offlineDays = elapsedHours / 24;
-    const selfSustaining = offlineDays > SELF_SUSTAINING_THRESHOLD_HOURS / 24;
+    // 1.5 / G-4 — self-sustaining mode: computed from the UNCAPPED elapsed
+    // time, livestock only. The old code divided the already-clamped 24 h by
+    // 24, so `offlineDays <= 1` and the published "3 days then self-sustaining"
+    // promise (docs/09 §9) could never fire — the constant was dead code and
+    // every absence decayed at full rate. Now a 4-day absence yields true.
+    const selfSustaining = uncappedHours > SELF_SUSTAINING_THRESHOLD_HOURS;
 
-    // Self-sustaining: reduced decay rates
     const hungerDecayRate = selfSustaining ? config.hungerDecayRate * 0.25 : config.hungerDecayRate;
-
-    // Decay hunger over elapsed hours
+    const startingHunger = hunger;
     const hungerDecay = hungerDecayRate * elapsedHours;
     hunger = Math.max(0, hunger - hungerDecay);
 
-    // Health decay if starving (hunger < 0.2)
-    if (hunger < 0.2) {
-      const healthDecay = config.healthDecayRate * elapsedHours;
-      health = Math.max(0, health - healthDecay);
+    // 1.4 — STARVATION WINDOW (R1/P0-1). Health decays only after
+    // `STARVATION_ONSET_HOURS` CONSECUTIVE hours at hunger 0 — not merely
+    // "hunger < 0.2", which turned one overnight gap into a permanent
+    // soft-lock (feeding threw, no heal endpoint existed). The window start is
+    // persisted as `hunger_zero_since` so it survives across simulation passes.
+    let newHungerZeroSince: string | null = animal.hunger_zero_since ?? null;
+    if (selfSustaining) {
+      // Self-sustaining is the off-switch: hunger is floored at 0.1 below and
+      // no health may decay during a long absence.
+      if (hunger > 0) newHungerZeroSince = null;
+    } else if (hunger <= 0) {
+      const nowMs = Date.now();
+      const windowStartMs = nowMs - elapsedHours * 3_600_000;
+      const parsedZero = animal.hunger_zero_since
+        ? Date.parse(animal.hunger_zero_since)
+        : Number.NaN;
+
+      let hoursAtZeroBefore: number;
+      let hoursAtZeroInWindow: number;
+      let zeroSinceMs: number;
+      if (startingHunger > 0) {
+        // Hunger hit zero part-way through this window.
+        const hoursToZero = Math.min(
+          elapsedHours,
+          hungerDecayRate > 0 ? startingHunger / hungerDecayRate : elapsedHours,
+        );
+        hoursAtZeroInWindow = Math.max(0, elapsedHours - hoursToZero);
+        zeroSinceMs = nowMs - hoursAtZeroInWindow * 3_600_000;
+        hoursAtZeroBefore = 0;
+      } else {
+        // Already at zero when this window opened — resume the persisted clock
+        // (or start it at the window edge for rows predating the column).
+        zeroSinceMs = Number.isFinite(parsedZero) ? parsedZero : windowStartMs;
+        hoursAtZeroBefore = Math.max(0, (windowStartMs - zeroSinceMs) / 3_600_000);
+        hoursAtZeroInWindow = elapsedHours;
+      }
+      newHungerZeroSince = new Date(zeroSinceMs).toISOString();
+
+      // Hours that fall beyond the onset threshold, minus the portion already
+      // "spent" before this window — so repeated passes never over-decay.
+      const decayingHours =
+        Math.max(0, hoursAtZeroBefore + hoursAtZeroInWindow - STARVATION_ONSET_HOURS) -
+        Math.max(0, hoursAtZeroBefore - STARVATION_ONSET_HOURS);
+
+      if (decayingHours > 0) {
+        health = Math.max(0, health - config.healthDecayRate * decayingHours);
+      }
+    } else {
+      // Fed again — the starvation clock resets.
+      newHungerZeroSince = null;
     }
 
     // Happiness decay if not petted for 24+ hours
@@ -340,7 +398,8 @@ export class SimulationService {
       happiness !== animal.happiness ||
       productReady !== animal.product_ready ||
       productTimerHours !== animal.product_timer_hours ||
-      isSick !== animal.is_sick;
+      isSick !== animal.is_sick ||
+      (newHungerZeroSince ?? null) !== (animal.hunger_zero_since ?? null);
 
     return {
       newHunger: hunger,
@@ -351,6 +410,7 @@ export class SimulationService {
       isSick,
       wasFed: false,
       stateChanged,
+      newHungerZeroSince,
     };
   }
 

@@ -83,3 +83,40 @@ describe('LivestockService.collectProduct', () => {
     expect(inv.addItems).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('LivestockService.purchaseAnimal — kraal capacity (R-fix)', () => {
+  function makePurchaseService(livestockCount: number) {
+    // purchaseAnimal await order:
+    // 1. verifyFarmOwnership: farms .single()
+    // 2. buildings: .select('id, capacity, state').single()
+    // 3. livestock: .select('*', { count, head }) -> TOTAL occupancy
+    // 4. (wallet.spendPula — mock, no sequence)
+    // 5. livestock: .insert().select().single()
+    const sequence = [
+      { data: { user_id: 'u1' }, error: null },
+      { data: { id: 'b1', capacity: 2, state: 'ACTIVE' }, error: null },
+      { data: null, error: null, count: livestockCount },
+      { data: { id: 'a-new' }, error: null },
+    ];
+    const { client } = makeFakeSupabase(sequence);
+    const wallet = { spendPula: jest.fn().mockResolvedValue(undefined) } as unknown as WalletService;
+    const inv = {} as unknown as InventoryService;
+    const svc = new LivestockService(
+      { getAdminClient: () => client } as unknown as SupabaseService,
+      wallet,
+      inv,
+    );
+    return { svc };
+  }
+
+  it('throws when the kraal is at capacity (total livestock, not per-type)', async () => {
+    const { svc } = makePurchaseService(2); // capacity 2, 2 already present
+    await expect(svc.purchaseAnimal('f1', 'u1', 'chicken')).rejects.toThrow(/full/i);
+  });
+
+  it('allows a purchase while under capacity', async () => {
+    const { svc } = makePurchaseService(1); // capacity 2, 1 present
+    const res = await svc.purchaseAnimal('f1', 'u1', 'chicken');
+    expect(res.id).toBe('a-new');
+  });
+});

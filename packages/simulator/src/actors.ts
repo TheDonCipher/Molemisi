@@ -36,11 +36,21 @@ export interface DayContext {
 
 type Json = Record<string, unknown>;
 
-function arr(v: unknown): Json[] {
+export function arr(v: unknown): Json[] {
   if (Array.isArray(v)) return v as Json[];
   if (v && typeof v === 'object') {
     const o = v as Json;
-    for (const key of ['plots', 'items', 'jobs', 'scenes', 'hotspots', 'npcs', 'data', 'results']) {
+    for (const key of [
+      'plots',
+      'items',
+      'jobs',
+      'scenes',
+      'hotspots',
+      'npcs',
+      'projects',
+      'data',
+      'results',
+    ]) {
       if (Array.isArray(o[key])) return o[key] as Json[];
     }
   }

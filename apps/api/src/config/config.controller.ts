@@ -1,5 +1,6 @@
 import { Controller, Get, Put, Body, Query, Param, UseGuards, Logger } from '@nestjs/common';
 import { AuthGuard } from '../common/guards/auth.guard';
+import { AdminGuard } from '../common/guards/admin.guard';
 import { ConfigService } from './config.service';
 
 /**
@@ -50,6 +51,7 @@ export class ConfigController {
    * PUT /api/v1/config/:key — Update a single config entry
    */
   @Put(':key')
+  @UseGuards(AdminGuard)
   async update(@Param('key') key: string, @Body() body: { value: unknown; reason?: string }) {
     this.logger.log(`Config: update ${key} = ${JSON.stringify(body.value)}`);
 
@@ -71,6 +73,7 @@ export class ConfigController {
    * PUT /api/v1/config — Batch update multiple config entries
    */
   @Put()
+  @UseGuards(AdminGuard)
   async updateBatch(
     @Body() body: { updates: Array<{ key: string; value: unknown; reason?: string }> },
   ) {

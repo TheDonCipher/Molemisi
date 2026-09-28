@@ -75,3 +75,35 @@ export const TSHOLOFELO_DIALOGUE: Record<'idle' | 'gift' | 'repair', readonly st
     'The fence post leans. It is not judgmental, but it leans.',
   ],
 };
+
+/**
+ * R5 / docs-30 Pass 1 task 1.12 (docs-30 §6.1).
+ *
+ * The story review asked for a fourth ambient beat: market chatter that treats
+ * LIVESTOCK as something valued rather than something converted to Pula. Three
+ * of the four ambient voices in the game are implemented (Water Whisper,
+ * Tsholofelo, the weather greeting); this is the missing one, and it is the only
+ * livestock voice in the game that is not a transaction.
+ *
+ * Same rules as every other pool here (D5/C12): observations only — never an XP
+ * amount, a level, a countdown, or a price quoted as a number.
+ */
+export const MARKET_WHISPERS: readonly WhisperLine[] = [
+  {
+    slug: 'market_whisper_kraal_warm',
+    text: 'Your kraal was warm this morning. The animals carry that with them into town.',
+  },
+  {
+    slug: 'market_whisper_name_them',
+    text: 'An animal with a name is worth more than an animal with a number. The whole co-op knows it.',
+  },
+  {
+    slug: 'market_whisper_no_rush',
+    text: 'There is no rush. The milk will come, and the season will hold long enough for it.',
+  },
+  {
+    slug: 'market_whisper_grandmothers_cows',
+    text: 'My grandmother counted her wealth in cows and in rain. She was never poor.',
+  },
+];
+

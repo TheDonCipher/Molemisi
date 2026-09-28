@@ -1,4 +1,5 @@
 import { Injectable, Logger, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { SupabaseService } from '../database/supabase.service';
 import {
   PaymentProvider,
@@ -8,10 +9,26 @@ import {
 import { getVirtualGood, DAILY_TOP_UP_CAP_BWP, TOP_UP_PACKS } from '@molemisi/game-config';
 import { WalletService } from '../wallet/wallet.service';
 
-export interface CreatePaymentDto {
+/**
+ * R2a / docs-30 Pass 1 task 1.10 (docs-29 P0-5, simulator SEC-05).
+ *
+ * This was an `interface`. TypeScript types are erased at runtime, so
+ * `@Body()` on the controller validated NOTHING: `sku` arrived as `undefined`
+ * or any string, the service answered 404 ("Unknown SKU") instead of 400, and
+ * the route never hit its failure ceiling. It must be a decorated CLASS for
+ * `main.ts`'s global `ValidationPipe` to reject the payload before it reaches
+ * the service.
+ */
+export class CreatePaymentDto {
   /** SKU of the virtual good */
-  sku: string;
+  @IsString()
+  @MaxLength(48)
+  sku!: string;
+
   /** Optional idempotency key */
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
   idempotencyKey?: string;
 }
 

@@ -24,7 +24,19 @@ export class ContractsController {
   @Get('available')
   async getAvailableContracts(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
-    return this.contractsService.getAvailableContracts(farmId);
+    const [contracts, cooldowns] = await Promise.all([
+      this.contractsService.getAvailableContracts(farmId),
+      this.contractsService.getCooldowns(farmId),
+    ]);
+    // R3 / docs-31 P0-2 — the same cooldown message the accept endpoint would
+    // send, computed BEFORE the player commits. Same `{record, hoursLeft}` shape
+    // as `acceptContract`'s thrown payload, so the client renders the resting
+    // contracts identically whether they came from this list or from a refusal.
+    return contracts.map((c) => ({
+      ...c,
+      coolingDown: Boolean(cooldowns[c.id]),
+      availableInHours: cooldowns[c.id] ?? null,
+    }));
   }
 
   @Get('active')

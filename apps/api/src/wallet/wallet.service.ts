@@ -55,7 +55,8 @@ export type LedgerSource =
    */
   | 'village_feast'
   | 'admin_adjustment'
-  | 'refund';
+  | 'refund'
+  | 'contract_complete';
 
 export interface WalletSnapshot {
   pula_balance: number;

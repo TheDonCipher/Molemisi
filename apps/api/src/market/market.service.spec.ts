@@ -4,6 +4,31 @@ import { MarketService } from './market.service';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { isSeedInSeason, type CropId } from '@molemisi/game-config';
+
+/**
+ * R3a regression cover. The seed calendar is REAL (04 §9.1) — a spec written
+ * against 'sorghum_seed' would pass in September and fail in March, because the
+ * calendar is the machine's actual clock. The in-season and out-of-season seeds
+ * are therefore DISCOVERED, not assumed. Every chapter stocks exactly six of
+ * these eleven crops, so both directions of the buy gate always have a witness,
+ * in every month of the year.
+ */
+const SEED_CANDIDATES = [
+  'sorghum',
+  'maize',
+  'tomatoes',
+  'cowpeas',
+  'groundnuts',
+  'millet',
+  'watermelon',
+  'sesame',
+  'pepper',
+  'herbs',
+  'morula',
+] as const;
+const IN_SEASON_SEED = `${SEED_CANDIDATES.find((c) => isSeedInSeason(c as CropId)) ?? 'sorghum'}_seed`;
+const OUT_OF_SEASON_SEED = `${SEED_CANDIDATES.find((c) => !isSeedInSeason(c as CropId)) ?? 'maize'}_seed`;
 
 describe('MarketService', () => {
   let service: MarketService;
@@ -121,7 +146,7 @@ describe('MarketService', () => {
       builder.single.mockResolvedValue({ data: null, error: null });
       mockSupabaseService.getAdminClient.mockReturnValue(chain);
 
-      await expect(service.buyItem('farm-1', 'user-1', 'sorghum_seed', 5)).rejects.toThrow(
+      await expect(service.buyItem('farm-1', 'user-1', IN_SEASON_SEED, 5)).rejects.toThrow(
         'Farm not found',
       );
     });
@@ -140,11 +165,34 @@ describe('MarketService', () => {
         new BadRequestException('Insufficient funds'),
       );
 
-      await expect(service.buyItem('farm-1', 'user-1', 'sorghum_seed', 10)).rejects.toThrow(
+      await expect(service.buyItem('farm-1', 'user-1', IN_SEASON_SEED, 10)).rejects.toThrow(
         'Insufficient funds',
       );
       // ...and the refusal must happen before anything is put in the inventory.
       expect(chain.from).not.toHaveBeenCalledWith('inventory');
+    });
+
+    it('rejects buying produce outright — the Co-op sells SEED, not harvest (R3a/31 P0-1)', async () => {
+      const { chain, builder } = createMockClient();
+      builder.single.mockResolvedValueOnce({ data: { user_id: 'user-1' }, error: null });
+      mockSupabaseService.getAdminClient.mockReturnValue(chain);
+
+      await expect(service.buyItem('farm-1', 'user-1', 'sorghum', 1)).rejects.toThrow(
+        'only sells seed',
+      );
+    });
+
+    it('rejects out-of-season seed with the chapter it returns in (R3a/31 P0-1)', async () => {
+      const { chain, builder } = createMockClient();
+      builder.single.mockResolvedValueOnce({ data: { user_id: 'user-1' }, error: null });
+      mockSupabaseService.getAdminClient.mockReturnValue(chain);
+
+      // OUT_OF_SEASON_SEED is discovered from the chapter clock, so it is
+      // guaranteed out of season whenever this test runs. No catalogue rows,
+      // no wallet calls — the gate must fire before either.
+      await expect(service.buyItem('farm-1', 'user-1', OUT_OF_SEASON_SEED, 1)).rejects.toThrow(
+        'out of season',
+      );
     });
   });
 

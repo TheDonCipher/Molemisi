@@ -8,6 +8,8 @@ import {
   CRAFTED_BAND,
   CRAFTED_CATEGORIES,
   getItemDef,
+  isSeedInSeason,
+  nextSeasonFor,
 } from '@molemisi/game-config';
 
 /**
@@ -271,6 +273,25 @@ export class MarketService {
       .single();
     if (!farm || farm.user_id !== userId) {
       throw new NotFoundException('Farm not found');
+    }
+
+    // 1b. R3a / docs-31 P0-1 — THE CO-OP SELLS SEEDS ONLY, and only the ones in
+    // season. The audit found the buy path accepted any priced item, so a player
+    // could skip production entirely and farm craft/market arbitrage. The docs
+    // have always said seeds only (26 §11); this is the code catching up.
+    if (!isSeedItem(itemType)) {
+      throw new BadRequestException(
+        'The Co-op only sells seed (DIPEO). Produce and materials are sold, not bought.',
+      );
+    }
+    const cropId = itemType.endsWith('_seed')
+      ? itemType.slice(0, -'_seed'.length)
+      : itemType;
+    if (!isSeedInSeason(cropId as Parameters<typeof isSeedInSeason>[0])) {
+      const next = nextSeasonFor(cropId as Parameters<typeof nextSeasonFor>[0]);
+      throw new BadRequestException(
+        `${cropId} seed is out of season — the Co-op stocks it again in ${next.name}.`,
+      );
     }
 
     // 2. Get dynamic market price

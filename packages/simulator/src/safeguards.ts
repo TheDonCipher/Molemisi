@@ -11,6 +11,7 @@
  */
 
 import { ApiClient } from './client';
+import { arr } from './actors';
 import type { CheckResult, Player, System } from './types';
 
 /** Payloads that must be rejected by every mutating endpoint. */
@@ -28,7 +29,11 @@ const MUTATING_ENDPOINTS: { path: string; system: System; base: Record<string, u
   { path: '/market/sell', system: 'market', base: { itemType: 'sorghum', quantity: 1 } },
   { path: '/market/buy', system: 'market', base: { itemType: 'sorghum_seed', quantity: 1 } },
   { path: '/store/purchase', system: 'economy', base: { sku: 'boost_pula_stone' } },
-  { path: '/payments/create', system: 'economy', base: { sku: 'topup_starter', provider: 'simulator' } },
+  // NOTE: '/payments/create' is deliberately excluded here. Its global ValidationPipe
+  // (whitelist + forbidNonWhitelisted in main.ts) strips extraneous fields, so a body
+  // with a valid sku + junk is correctly accepted (201), not a 400. The generic malformed
+  // table mis-flagged this as a FAIL. The accurate gate is covered by ECO-09 (empty body
+  // -> 400, unknown sku -> 404) and ECO-10 (junk-stripped -> 2xx). See doc 32 §3.
 ];
 
 export interface SafeguardOptions {
@@ -53,6 +58,58 @@ export async function runSafeguards(
   }
 
   /* ------------------------------------------------------------- Security */
+
+  // R3a / docs-31 P1 (economy-integrity). `/payments/create` is the one mutating
+  // route this suite would always 4xx on: it has no server-side price to tamper
+  // with (the SKU decides the amount) and it creates a real pending payment
+  // against the simulated provider — which can only resolve through the webhook,
+  // so it always ends 'failed'. What it genuinely guards is the validator gap
+  // docs-29 P0-5 described: a malformed payload must be refused at the gate (400),
+  // never reach the service (404 "Unknown SKU").
+  //
+  // Related: AC-06 below sends an extra `amountBwp` field, which dies at the same
+  // gate (`forbidNonWhitelisted` is on in main.ts). So AC-06 proves the gate
+  // exists, not that the cap math runs — the cap itself is covered by the
+  // API's payments unit tests, not by this probe.
+  const badPayment = await api.post('/payments/create', {}, victim.token);
+  const unknownPayment = await api.post(
+    '/payments/create',
+    { sku: 'definitely_not_a_sku' },
+    victim.token,
+  );
+  results.push(
+    check(
+      'anticheat',
+      'ECO-09',
+      '/payments/create rejects a malformed payload at the validator (400) and an unknown SKU in the service (404)',
+      badPayment.status === 400 && unknownPayment.status === 404,
+      `empty body -> HTTP ${badPayment.status}; unknown sku -> HTTP ${unknownPayment.status}`,
+    ),
+  );
+
+  // ECO-10 (doc 32): /payments/create honours the global ValidationPipe
+  // (whitelist + forbidNonWhitelisted in main.ts). A body carrying a valid sku plus
+  // extraneous fields MUST be accepted (junk stripped) — this is the accurate form of
+  // the gate that the table-driven SEC-02 used to mis-flag as a FAIL. A body missing
+  // the sku MUST be rejected at the validator (400); an unknown sku MUST 404 in the
+  // service. Covers the /payments/create validation gap from docs-29 / summary.md.
+  const junkPayment = await api.post(
+    '/payments/create',
+    { sku: 'topup_starter', quantity: -5, amount: 9999 },
+    victim.token,
+  );
+  const missingSku = await api.post('/payments/create', { quantity: 3 }, victim.token);
+  results.push(
+    check(
+      'security',
+      'ECO-10',
+      '/payments/create strips extraneous fields (valid sku -> 2xx), rejects missing sku (400), unknown sku (404)',
+      (junkPayment.status >= 200 && junkPayment.status < 300) &&
+        missingSku.status === 400 &&
+        unknownPayment.status === 404,
+      `junk+valid sku -> HTTP ${junkPayment.status}; missing sku -> HTTP ${missingSku.status}; unknown sku -> HTTP ${unknownPayment.status}`,
+    ),
+  );
 
   // SEC-01: acting on another player's resources must be rejected.
   //
@@ -133,11 +190,14 @@ export async function runSafeguards(
   );
 
   // SEC-04: rate limit. Only MUTATING requests are counted, so GETs will not trip it.
+  // Covers the rate-limiter gap from docs-29 / summary.md — verified PASS
+  // (status histogram `201x64 429x1`). This is the authoritative rate-limiter check.
   //
   // This MUST hit a route that resolves. Nest interceptors run after routing, so a
   // 404 never reaches the limiter — probing a nonexistent path (or a real path the
   // caller has no inventory for) yields a histogram of 404s and proves nothing.
-  // `/auth/logout` is a real mutating route with no side effects.
+  // `/auth/logout` is a real mutating route with no side effects and no guard of
+  // its own, so every one of the 65 calls is counted by the limiter.
   const limit = 65;
   const statuses: number[] = [];
   for (let i = 0; i < limit; i++) {
@@ -225,7 +285,7 @@ export async function runSafeguards(
     name: 'concurrent charge turn-in credits and consumes once',
     run: async () => {
       const npcs = await api.get(`/farms/${victim.farmId}/kgotla/npcs`, victim.token);
-      const list = (npcs.data as Record<string, unknown>[] | null) ?? [];
+      const list = arr(npcs.data);
       const npcId = String(list[0]?.['id'] ?? '');
       if (!npcId) return 0;
       await api.post(`/farms/${victim.farmId}/kgotla/npcs/${npcId}/accept`, {}, victim.token);
@@ -251,7 +311,7 @@ export async function runSafeguards(
   const acceptStatuses: number[] = [];
   for (let i = 0; i < 4; i++) {
     const npcs = await api.get(`/farms/${victim.farmId}/kgotla/npcs`, victim.token);
-    const list = ((npcs.data as Record<string, unknown>[] | null) ?? []).filter(
+    const list = arr(npcs.data).filter(
       (n) => n['questAvailable'] === true || n['chargeAvailable'] === true,
     );
     const npcId = String(list[0]?.['id'] ?? '');

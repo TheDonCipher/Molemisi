@@ -25,11 +25,26 @@ export interface AnimalConfig {
   name: string;
   description: string;
   feedPerDay: number;
+  /**
+   * R2/30-G3 — the inventory slug `feedAnimal` actually debits. This MUST be a
+   * real `ITEMS` slug: the audit found `grain`/`hay`/`mixed_feed` were declared
+   * but existed nowhere, so feeding could never be charged. Mapped to the crops
+   * the client's `FEED_INFO` mirror already shows (chicken/pig → sorghum,
+   * goat/cow → herbs) — one source of truth, zero new items, and the feed sink
+   * stays inside the crop economy (docs/31 P0-2's "or map feed to crops" option).
+   */
   feedType: string;
   productionCycleHours: number;
   productType: string;
   productQuantity: number;
   purchaseCost: number;
+  /**
+   * R2/30-G10.1 — retuned from 0.10–0.15/h to a ~24 h feed cycle. Acceptance
+   * criterion (docs/30 Pass 1 task 1.6): ONE visit per real day keeps a fed
+   * animal above hunger 0.5 and still producing. With feeding topping hunger to
+   * 1.0, 1.0 − 0.02×24 = 0.52 > 0.5. The doc's 0.035–0.05/h suggestion fails
+   * that criterion arithmetically (1.0 − 0.035×24 = 0.16), so the criterion wins.
+   */
   hungerDecayRate: number;
   healthDecayRate: number;
   happinessDecayRate: number;
@@ -37,18 +52,35 @@ export interface AnimalConfig {
   spriteSheet: string;
 }
 
+/**
+ * R1/30-1.4 — health decays only after this many CONSECUTIVE hours at
+ * `hunger === 0` (the "starvation window"). One missed visit is a nudge, not a
+ * death: from a full feed (hunger 1.0) an animal takes 50 h to reach zero at
+ * 0.02/h, then 12 h more before health moves at all — a ~2.5-day absence with
+ * zero health loss, and the `treat` recovery path behind that.
+ */
+export const STARVATION_ONSET_HOURS = 12;
+
+/** R1/30-1.1 — the item a `treat` consumes, and the health it restores. */
+export const TREATMENT_ITEM = 'herbs';
+export const TREATMENT_HEALTH = 0.6;
+
+/** R1/30-1.2 — a sick animal still eats, but gains only this much hunger. */
+export const SICK_FEED_GAIN = 0.15;
+
+
 export const ANIMALS: Record<string, AnimalConfig> = {
   chicken: {
     id: 'chicken',
     name: 'Chicken',
     description: 'A friendly chicken that lays eggs daily.',
     feedPerDay: 2,
-    feedType: 'grain',
+    feedType: 'sorghum',
     productionCycleHours: 12,
     productType: 'egg',
     productQuantity: 2,
     purchaseCost: 50,
-    hungerDecayRate: 0.15,
+    hungerDecayRate: 0.02,
     healthDecayRate: 0.1,
     happinessDecayRate: 0.05,
     buildingRequired: 'kraal',
@@ -59,12 +91,12 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     name: 'Goat',
     description: 'A hardy goat that produces milk.',
     feedPerDay: 4,
-    feedType: 'hay',
+    feedType: 'herbs',
     productionCycleHours: 24,
     productType: 'goat_milk',
     productQuantity: 1,
     purchaseCost: 150,
-    hungerDecayRate: 0.12,
+    hungerDecayRate: 0.02,
     healthDecayRate: 0.08,
     happinessDecayRate: 0.04,
     buildingRequired: 'kraal',
@@ -75,12 +107,12 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     name: 'Cow',
     description: 'A dairy cow that produces milk.',
     feedPerDay: 8,
-    feedType: 'hay',
+    feedType: 'herbs',
     productionCycleHours: 24,
     productType: 'cow_milk',
     productQuantity: 3,
     purchaseCost: 400,
-    hungerDecayRate: 0.1,
+    hungerDecayRate: 0.02,
     healthDecayRate: 0.06,
     happinessDecayRate: 0.03,
     buildingRequired: 'kraal',
@@ -91,12 +123,12 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     name: 'Pig',
     description: 'A pig that occasionally finds truffles.',
     feedPerDay: 6,
-    feedType: 'mixed_feed',
+    feedType: 'sorghum',
     productionCycleHours: 48,
     productType: 'truffle',
     productQuantity: 1,
     purchaseCost: 300,
-    hungerDecayRate: 0.13,
+    hungerDecayRate: 0.02,
     healthDecayRate: 0.07,
     happinessDecayRate: 0.04,
     buildingRequired: 'kraal',
@@ -107,6 +139,15 @@ export const ANIMALS: Record<string, AnimalConfig> = {
 export function getAnimalConfig(animalType: string): AnimalConfig | undefined {
   return ANIMALS[animalType];
 }
+
+/**
+ * R2/30-1.3 — the animal → inventory-slug feed map, derived from `ANIMALS` so
+ * the two can never drift. This is the `FEED_ITEM` map the client's `FEED_INFO`
+ * mirror claims to follow; the server now reads it on every feed.
+ */
+export const FEED_ITEM: Record<string, string> = Object.fromEntries(
+  Object.values(ANIMALS).map((a) => [a.id, a.feedType]),
+);
 
 /**
  * G1 — every collect is also a muck-out: this many manure ride along with the
