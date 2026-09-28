@@ -248,6 +248,7 @@ const CROPS = [
   ['pepper', 4, 'chilli pepper plant with red and green peppers'],
   ['herbs', 3, 'small leafy herb bush, soft green'],
   ['saffron', 5, 'saffron crocus flower with purple petals and red stigmas'],
+  ['morula', 5, 'marula tree crop — slender green trunk with round yellow-green fruit, two-day cycle'],
 ];
 
 const ANIMALS = [
@@ -265,6 +266,7 @@ const BUILDINGS = [
   ['mill', 'small grain mill with turning wooden wheel'],
   ['paddock', 'cattle paddock with wooden post fence'],
   ['pig_pen', 'pig pen with low wooden fence and mud patch'],
+  ['kraal', 'round wooden livestock kraal enclosure with a gate and a small thatch shelter'],
 ];
 
 // Canonical Kgotla NPCs — must match apps/api/src/kgotla/kgotla.service.ts exactly
@@ -499,6 +501,19 @@ const ITEM_ICONS = [
   ['building_borehole', 'modern deep borehole water pump with metal pipe'],
   ['building_greenhouse', 'small glass greenhouse with plants inside'],
   ['building_fence', 'rustic wooden farm fence section with two posts and wire, Botswana farm boundary'],
+  ['building_kraal', 'round wooden livestock kraal enclosure with a gate and a small thatch shelter, front view'],
+  ['seed_morula', 'tiny pouch of morula (marula) seeds with a small round green-yellow fruit beside it'],
+  ['product_morula', 'small pile of ripe marula fruit, round green-yellow, one cut open showing pale flesh'],
+  ['product_poleto', 'coiled sisal rope (poleto), pale tan, looped bundle'],
+  ['product_thapo', 'woven sisal tether rope (thapo), thicker coil, darker tan'],
+  ['product_setena', 'woven reed sleeping mat (setena), rolled, sandy beige'],
+  ['product_bupi', 'small wooden bowl of fine white sorghum flour (bupi) with a spoon'],
+  ['product_borotho', 'freshly baked round loaf of brown sorghum bread (borotho)'],
+  ['material_letsopa', 'small wedge of grey clay (letsopa) with a thumb imprint'],
+  ['material_mokolwane', 'bundle of dried palm fibre (mokolwane), pale tan strands tied'],
+  ['material_lotlhaka', 'bundle of dried thatch grass (lotlhaka), golden dried strands tied'],
+  ['material_phane', 'cluster of phane caterpillars, grey-brown mopane worms, a bushveld delicacy'],
+  ['material_manyoro', 'small heap of dry livestock manure pats (manyoro), dark brown'],
 ];
 
 for (const [id, desc] of ITEM_ICONS) {

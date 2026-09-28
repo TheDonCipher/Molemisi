@@ -108,6 +108,7 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
   borehole: 'building_borehole',
   borehole_well: 'building_borehole',
   greenhouse: 'building_greenhouse',
+  kraal: 'building_kraal',
 };
 
 /** Pixel icon URL for an itemType/cropType, or null when unknown. */
