@@ -4,6 +4,24 @@
 > Version: 1.0.0
 > Status: Design spec (target)
 > Last Updated: 2026-09-02
+>
+> ## ⚠️ SUPERSEDED IN PART (2026-10-02)
+>
+> The standalone Phaser 3 client this document specifies **was deleted on 2026-09-11** along with
+> `apps/game`. None of the rendering architecture below — the Phaser-in-Next host, Boot / Preload
+> / FarmScene, the texture atlases, Tiled maps, `:3002`, the `VITE_API_URL` client — exists in the
+> repo. The shipped playable client is **React** (`apps/web/src/app/game/page.tsx`, ten screens
+> switched by `lib/gameState.tsx`).
+>
+> **What is still worth reading:** §1–§3 on scale, performance budgets and device tiers (the
+> concerns transfer to React), and §7–§8 on accessibility and legal-compliance checks.
+>
+> **What is now void:** the scene/boot architecture, the atlas pipeline, the `apps/game` layout
+> and the Phaser-specific API surface. For as-built rendering see `ARCHITECTURE_OVERVIEW.md` and
+> `docs/05_Art_Direction_and_Asset_Specification.md` §14–15.
+>
+> Per ADRs 001–002 the *intent* (embed a game canvas in the Next shell) was also abandoned, not
+> merely deferred; see `KNOWN_LIMITATIONS.md` ("Full Phaser embedding in Next.js").
 > Implementation: 2026-09-06 — `apps/game` was Vite + Phaser 3 on port 3002. Only Boot, Preload, and FarmScene are registered. Pixel assets load from `generated-assets.ts`. This spec's full scene/object tree is **not** the running game. **Note (2026-09-11):** the `apps/game` Phaser prototype was deleted; React `/game` is now the only client.
 
 ---

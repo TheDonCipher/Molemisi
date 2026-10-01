@@ -1,5 +1,12 @@
 # Scaffold Audit
 
+> **Historical record (M1 scaffold, 2026-09-06).** The counts below are what was true when the
+> scaffold was laid down and are deliberately left as written — this document is a provenance
+> record, not a status page. For current numbers see `DEVELOPMENT_STATE.md`.
+>
+> Known drift if you are reading it as current: migrations are **38** (not 29) and the asset
+> manifest holds **282** entries (not 268).
+
 > **Molemisi Farm Management Simulator**
 > Version: repo 0.1.0 / game-config 1.0.0-mvp
 > Status: Superseded by implementation

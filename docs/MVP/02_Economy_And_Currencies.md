@@ -6,7 +6,7 @@
 
 ## 1. Philosophy
 
-1. **Pula is transparent and 1:1.** P5 spent buys P5 of Pula. No premium currency layer, no exchange rate, no multiplier.
+1. **Pula is earned-only — never sold.** *(DECIDED 2026-10-01, `docs/33` §2/§9: supersedes the old 1:1 line.)* No amount of real money buys Pula. No premium-currency conversion, no exchange rate, no multiplier.
 2. **Money buys time and expression, never access.** A free player can reach every piece of content.
 3. **The house never funds withdrawable rewards.** (The Withdrawal Funding Rule, §2.)
 4. **Never surprise the player with a cost.** Every fee is shown before confirmation.
@@ -34,18 +34,20 @@ This single rule is what makes Molemisi a **marketplace** rather than a scheme, 
 
 ### 3.1 Pula (P) — soft
 
-Earned by play. **Never purchasable with real money in v1**, never transferable between players, never withdrawable.
+Earned by play. **Never purchasable with real money** — not in v1, not later. Never transferable between players, never withdrawable.
 
-*Wait — top-up packs sell Pula (§7).* Purchasable, yes. Transferable and withdrawable, no. The distinction that matters for compliance: Pula only ever flows *in* from a player and *out* into sinks. It never comes back out as money.
+> *(DECIDED 2026-10-01, `docs/33` §2/§9.)* The line below ("top-up packs sell Pula") is superseded: **Pula is never sold.** The distinction that matters for compliance: Pula only ever flows *in* from play and *out* into sinks. It never comes from money and never goes back out as money.
 
 **Buys:** seeds, water, crafting fees, buildings, maintenance, land, cosmetics.
 **Earned from:** Co-op sales, Kgotla quests, community projects, the Almanac.
 
 Pula inflates freely. That's correct — it's soft, and the sinks below are sized to absorb it.
 
-### 3.2 Madi (M) — hard, withdrawable
+### 3.2 Madi (M) — hard, spend-only (decided 2026-10-01)
 
-**1 Madi = BWP 1.00**, two decimal places. Purchased via mobile money. Spent on the **Exchange** to buy goods other players listed. **Withdrawable** to the verified mobile number that funded the account.
+> *(DECIDED 2026-10-01, `docs/33` §2/§9.)* The withdrawable/marketplace Madi described below is **deferred to post-v1** and will need a **different currency name** when it ships. The v1 Madi is a **spend-only premium currency**: bought with mobile money, spent on festival decorations and the Village Pass only. **Never converts to Pula. Never withdrawable. Never transferred between players.**
+
+**1 Madi = BWP 1.00**, whole Madi only. Purchased via mobile money (Orange Money, MyZaka, Smega — Phase 7, `docs/10`).
 
 Madi is **always 1:1 backed by player deposits in the system**. It cannot inflate, because none can be created except by a deposit.
 
@@ -55,6 +57,8 @@ Madi is **always 1:1 backed by player deposits in the system**. It cannot inflat
 **Leaves by:** withdrawal (2% fee), or buying someone's goods (10% fee, charged to the seller).
 
 ### 3.3 Chapter Token — seasonal, expiring
+
+> *(DECIDED 2026-10-01, `docs/33` §5.)* Presented to players as **season stamps**. Cosmetic framing, same mechanics.
 
 Earned and spendable **within a single 3-month chapter only**. At chapter end, **all balances go to zero**.
 
@@ -191,8 +195,8 @@ This table is load-bearing: it replaces the level gate, prevents monoculture, ma
 | Pepper | Pepere | DIJALO | 50 | 17 | Farm |
 | Herbs | Ditlhare tsa Setso | DIJALO | 50 | 25 | Farm |
 | Morula | Morula | DIJALO | 50 | 46 | Farm |
-| Eggs | Mae | DIPHOLOGOLO | 30 | 3 | Farm |
-| Milk | Mashi | DIPHOLOGOLO | 30 | 5 | Farm |
+| Eggs | Mae | DIPHOLOGOLO | 30 | 5 | Farm |
+| Milk | Mashi | DIPHOLOGOLO | 30 | 15 | Farm |
 | Manure | Manyoro | DIPHOLOGOLO | 30 | 1 | Farm |
 | Wood | Dikgong | DITSHIMOLOGO TSA NAGENG | 50 | 2 | Open Bush |
 | Stone | Matlapa | DITSHIMOLOGO TSA NAGENG | 50 | 3 | Rocky Outcrop — **Setena input** |
@@ -237,9 +241,11 @@ Borotho is deliberately a **two-day good** in practice: Bupi 4 h then Borotho 6 
 | Botho | Unlocks |
 |---|---|
 | 100 | Bupi (Flour) recipe |
-| 300 | Deep Bushveld — row exists, shows "coming soon", zero hotspots |
-| 500 | Letsema — one free instant full-harvest per 7 days |
+| 300 | Deep Bushveld + **Auto-Feeder** (*DECIDED 2026-10-01, `docs/33` §4*) |
+| 500 | Letsema — one free instant full-harvest per 7 days · **Auto-helper** (waters + harvests, *DECIDED 2026-10-01, `docs/33` §4*) |
 | 1000 | Eligibility for the monthly community prize |
+
+> *`docs/33` simplifies the helper ladder to 100 → 300 → 500 (bake → feed → water+harvest). The earlier "Auto-Collector at 150" plan (`docs/32` task 3.5) is folded into the 500 Auto-helper.*
 
 No levels, no XP. Any existing level/XP field is **deleted**, not extended.
 
@@ -251,36 +257,56 @@ No levels, no XP. Any existing level/XP field is **deleted**, not extended.
 | 2 | Storage Shed | 48 | 10 |
 | 3 | Storehouse | 96 | 20 |
 
-Guild subscribers: **+50%, stacking** (24→36, 48→72, 96→144).
+**Village Pass subscribers: +50%, stacking** (24→36, 48→72, 96→144).
+
+> The Village Pass replaced the Guild subscription on 2026-10-01 (`docs/33` §2). "Guild
+> subscriber" language is stale everywhere it still appears in this folder.
 
 | Land tier | Plots | Cost | Cost per plot |
 |---|---|---|---|
 | Start | 4 | — | — |
 | Basket | 8 | P1,200 | P300 |
 | Shed | 12 | P6,000 | P1,500 |
-| Storehouse | 20 | P30,000 | P3,750 |
+| Co-op | 16 | P8,000 | P500 |
+| Export | 20 | P15,000 | P750 |
 
-Total to max: **P37,200**. Payback on the full ladder: **58 days** playing the best available crop, **114 days** at the median, **205 days** at the worst.
+> *(DECIDED 2026-10-01, `docs/33` §3.2: 16-plot rung fixed at ~P8,000 and 16→20 at ~P15,000 — every rung pays back in ~2 months or less. **Implemented:** `LAND_LADDER` in `packages/game-config/src/economy.ts` now carries exactly these values and `LAND_LADDER_TOTAL = 31200`.)*
+
+Total to max: **P31,200.** Payback on the full ladder: **~49 days** playing the best available
+crop, **~96 days** at the median, **~173 days** at the worst.
+
+> *(Corrected 2026-10-02. This line previously said "P37,200" and 58/114/205 days, which were
+> computed against the *pre-retune* 12→16 / 16→20 ladder. `docs/34` Wave 4.1 changed the last two
+> rungs to P8,000 and P15,000 precisely because the old ones created a **~254-day** churn wall at
+> the exact point a player decides to commit. The 20-plot rung is now the longest at ~92 days
+> (`landRungPaybackDays`), and the rule going forward is that no rung may exceed ~60 days of
+> marginal payback.)*
 
 > These costs rose from P15,800 because the crop retune roughly doubled farm income; holding them flat would have made max land a two-week formality. Pacing is the target, not the absolute number.
 
 Also fixed: **water P1.00 per unit, Jojo tank capacity 60, full refill P60.** Water is charged only while a crop is *growing* — never while it sits ready. At 20 plots that runs **P18/day for sorghum to P137/day for watermelon in a drought** — a **7.5×** spread, so the tank is the difference between a farm that runs and one that stalls. A 20-plot watermelon field drains a full tank in **under half a day** and needs **~2.4 refills**; the same field in sorghum lasts **3.1 days**.
 
-### 6.6 Monetisation
+### 6.6 Monetisation — DECIDED 2026-10-01 (`docs/33` §2)
+
+Simple plan: **two products** — decorations (two shelves) and the Village Pass. Top-up packs **grant Madi, never Pula**. Boosts are **cut** until they actually work (they were withdrawn for shipping broken, and stay out).
 
 | Item | Price | Grants / effect |
 |---|---|---|
-| Starter pack | P5 | 5 Pula |
-| Farmer pack | P50 | 50 Pula |
-| Harvest pack | P100 | 105 Pula |
-| Cattle pack | P250 | 265 Pula |
-| Export pack | P500 | 540 Pula |
+| Spark pack | P5 | **5 Madi** |
+| Farmer pack | P20 | **20 Madi** |
+| Harvest pack (popular) | P50 | **55 Madi** |
+| Cattle pack | P100 | **110 Madi** |
+| Export pack | P250 | **275 Madi** |
 | **Daily cap** | **P500/player/day** | Server-side, **Botswana time (UTC+2)** |
-| Guild subscription | P49/mo | Auto-Collector, +50% storage, cosmetics, weekly Pula Stone, ad-free |
-| Pula Stone | P20 | Refill Jojo tank 50%, or guarantee rain within 24 h |
-| Ancestral Ward | P25 | 3-day shield against wildlife damage |
-| Breath of the Land | P15 | Instantly completes an active crafting or building timer |
+| Market-shelf decoration | P200 / P600 / P1,500 | Pula (earned) — everyday look |
+| Festival-shelf decoration | M40 / M80 / M150 / M300 | Madi (bought) — seasonal look |
+| Village Pass | **M50/mo** | Helper (waters + collects) · one festival outfit/mo · +50% storage |
+| Pula Stone | — | **Cut.** Sold broken; returns only when the effect works. |
+| Ancestral Ward | — | **Cut.** Same (raids themselves are deferred). |
+| Breath of the Land | — | **Cut.** Same. |
 | ~~Fertility Shell~~ | — | **Removed (R8)** |
+
+> *Supersedes the earlier table below: Pula grants are removed ("Sold Pula" line struck), Guild P49/mo → Village Pass M50/mo, boosts re-priced-away (cut, not re-priced).* The helper in the Village Pass is also earned free at **Botho 500** — paying gets it early; playing gets it forever.
 
 ### 6.7 Community prize
 

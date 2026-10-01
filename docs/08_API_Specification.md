@@ -4,7 +4,16 @@
 > Version: 1.0.0
 > Status: Design spec (target)
 > Last Updated: 2026-09-02
-> Implementation: 2026-09-06 — Live prefix `/api/v1`. As-built route list is in `DEVELOPMENT_STATE.md`. Rate limit is a flat 60 req/min, not the table in section 1. No `/auth/refresh`. Config routes are not admin-only.
+> Implementation: 2026-09-06 — Live prefix `/api/v1`. As-built route list is in `DEVELOPMENT_STATE.md`. Rate limit is a flat 60 req/min, not the table in section 1. No `/auth/refresh`.
+>
+> **Amended 2026-10-02:** config routes are now `AdminGuard`-gated (both PUT routes); the payment
+> entitlement model in §4/payment examples below predates the `docs/33` decision, so a
+> `premium_currency_pack` line is now a **Madi top-up** and can never credit Pula; and the API
+> has two endpoint families this document never anticipated —
+> `GET /api/v1/admin/economy/{overview,currency,wealth,velocity,prices,inflation,crop-supply,progression}`
+> and `GET /api/v1/admin/anti-cheat/flags` (+ `POST .../passive`, `POST .../active`).
+> §8's `'currency': 'pula'` request/response examples for `/payments/create` should be read as
+> `'madi'`.
 
 ---
 

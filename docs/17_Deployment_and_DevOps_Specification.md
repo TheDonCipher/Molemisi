@@ -141,7 +141,6 @@ jobs:
       - uses: actions/checkout@v4
       - run: pnpm lint
       # typecheck, test, build similarly; see repo workflow
-```
 
   deploy-staging:
     needs: test
@@ -173,10 +172,16 @@ jobs:
 
 ### Asset Pipeline
 
-1. Assets stored in `assets/` (source) and synced to `apps/web/public/assets/` by `scripts/sync-assets.mjs` (the standalone Phaser build `apps/game` was deleted 2026-09-11)
-2. Built with game client (Vite)
-3. Served via Vercel CDN
-4. Cache-Control headers for performance
+1. Assets live in `assets/` (source of truth) and are synced to `apps/web/public/assets/` by
+   `scripts/sync-assets.mjs`, which also regenerates the typed manifest (282 entries).
+   `assets/_archive/` is **excluded** from the sync. The standalone Phaser build `apps/game`
+   was deleted on 2026-09-11, so there is no second asset destination and no atlas build.
+2. ⚠️ **Backgrounds are at `assets/tiles/sky/`**, not `assets/backgrounds/` — the manifest
+   `group` field is a label, not a path. Resolve through the manifest's `file` field.
+3. ⚠️ **Ground autotiles are `0.png` / `15.png`** per transition set (renamed by
+   `scripts/normalize-ground-tiles.mjs`), indexed by the sibling `<set>.json`.
+4. Built with the **Next.js** client and served via CDN
+5. Cache-Control headers for performance
 
 ### CDN Configuration
 

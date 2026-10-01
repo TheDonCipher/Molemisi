@@ -1,6 +1,6 @@
 # Development Setup
 
-Last updated 2026-09-14.
+Last updated 2026-10-02.
 
 ## Prerequisites
 
@@ -51,10 +51,21 @@ API_URL=http://localhost:3001
 NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
-VITE_API_URL=http://localhost:3001/api/v1
 JWT_SECRET=unused-by-api
 CORS_ORIGIN=http://localhost:3000
 ```
+
+> **`CORS_ORIGIN` is load-bearing.** There is no Next.js rewrite/proxy for `/api` — the browser
+> calls `:3001` directly. If you open the app on any origin other than the one in `CORS_ORIGIN`
+> (a preview host, a LAN IP, a different port) every API call fails with a CORS error. Set it to
+> the origin you are actually using, or a comma-separated list.
+
+> `VITE_API_URL` is **not** used any more. It belonged to the deleted Phaser prototype
+> (`apps/game`, removed 2026-09-11); the only client is Next.js and it reads
+> `NEXT_PUBLIC_API_URL`. It is harmless to leave in `.env`, but it does nothing.
+
+> `JWT_SECRET` is **unused** — auth is Supabase Auth (`auth.getUser(token)`), not a locally
+> signed JWT. It is still listed in `.env.example`; nothing reads it.
 
 Optional: `PIXELLAB_API_KEY` for asset generation.
 
@@ -72,15 +83,20 @@ Copy API URL, Studio URL, anon key, and service role key into `.env.local`.
 pnpm supabase:reset
 ```
 
-Applies `supabase/migrations/*` and `supabase/seed/seed.sql`.
+Applies `supabase/migrations/*` (38 files) and `supabase/seed/seed.sql`.
 
-**Do not run `pnpm db:seed`.** The Nest script `apps/api/src/database/seed.ts` is missing.
+**Do not run `pnpm db:seed`.** The root script delegates to
+`pnpm --filter @molemisi/api db:seed`, which runs `ts-node src/database/seed.ts` — and that file
+does not exist. Use registration + `supabase:reset`.
 
 > **Deploying to the linked remote project:** the local flow (`supabase:start` +
 > `supabase:reset`) targets a Docker instance. The production-shaped target
-> `nyapfgawanqvnkkjudxb` is **schema-current** — the 11-migration gap was pushed on 2026-09-14
-> (`supabase db push --dry-run` reports "Remote database is up to date"). Two corrective migrations
-> remain unpushed. See `DEVELOPMENT_STATE.md` Headline status.
+> `nyapfgawanqvnkkjudxb` has everything up to `20260916000030` pushed (the original 11-migration
+> gap went up on 2026-09-14). **Ten migrations are now pending push**
+> (`20260914000022` → `20261001000003`), and one of them matters more than the rest:
+> **`20261001000003` adds `madi_balance`**, which the store and wallet code already use. Until it
+> is applied, Pula paths work and Madi paths fail. See `KNOWN_LIMITATIONS.md` for the full list
+> and `DEVELOPMENT_STATE.md` Headline status.
 
 ### 6. Dev servers
 
@@ -88,13 +104,14 @@ Applies `supabase/migrations/*` and `supabase/seed/seed.sql`.
 pnpm dev
 ```
 
-`predev` runs `pnpm assets:sync`. Turborepo starts web (3000) and api (3001).
+`predev` runs `pnpm build-font` + `pnpm assets:sync` + `pnpm generate-icons.mjs`. Turborepo
+starts web (3000) and api (3001).
 
 | Service | URL |
 | --- | --- |
 | Web | http://localhost:3000 |
 | Game (React) | http://localhost:3000/game |
-| Phaser standalone | deleted 2026-09-11 |
+| Phaser standalone | **deleted 2026-09-11** — no longer a service |
 | API health | http://localhost:3001/api/v1/health |
 | Admin | http://localhost:3000/admin/login |
 | Studio | http://localhost:54323 |
@@ -143,16 +160,24 @@ node scripts/create-player.mjs
 
 Default: `player@molemisi.co` / `Player123!` (overridable via `PLAYER_EMAIL` / `PLAYER_PASSWORD`).
 
-> Role tiers `player|admin|dev` are defined by migration `000021`, which — like all of
-> `000016`–`000021` — is **not yet pushed** to the linked project. Until then, `AdminGuard`
-> and `DevGuard` fail closed. See `DEVELOPMENT_STATE.md` Headline status.
+> Role tiers `player|admin|dev` come from migration `20260911000021` and are **pushed**. `dev` is
+> the **top tier**: admitted to `/admin` *and* `/dev`. `AdminGuard` and `DevGuard` query
+> `profiles` on every request — there is no JWT role claim to go stale.
 
 ### Tests
 
 ```bash
-pnpm test
-pnpm --filter @molemisi/api test
+pnpm test                        # everything: 35 suites / 592 tests
+pnpm --filter @molemisi/api test        # 27 suites / 411 tests
+pnpm --filter @molemisi/game-config test # 7 suites / 146 tests
+pnpm --filter @molemisi/validation test  # 1 suite  / 35 tests
 pnpm --filter @molemisi/api test:watch
+```
+
+The economy gate is separate and is **not** part of `pnpm test`:
+
+```bash
+python scripts/balance_verify.py    # must print PASS
 ```
 
 Live API (servers up):
@@ -161,6 +186,10 @@ Live API (servers up):
 node scripts/test-game-loop.mjs
 node scripts/test-full-suite.mjs
 ```
+
+> ⚠️ **Never run the simulator against the linked Supabase project.** `pnpm simulate` creates
+> real accounts. Validate with Jest and `balance_verify.py` instead, or point it at a throwaway
+> local database.
 
 ### Database changes
 
@@ -184,7 +213,8 @@ Generation overwrites files under `assets/` and needs `PIXELLAB_API_KEY`.
 pnpm dev:kill
 ```
 
-Frees 3000, 3001, and 3002. Then `pnpm dev`.
+Frees 3000 and 3001. (The 3002 entry that used to be listed belonged to the deleted Phaser
+prototype.) Then `pnpm dev`.
 
 On macOS/Linux you can also inspect with `lsof -i :3000`.
 
@@ -228,7 +258,16 @@ pnpm build
 
 ### CORS on preview hosts
 
-There is no `/api` proxy. Set `CORS_ORIGIN` and `NEXT_PUBLIC_API_URL` to the hosts you actually use.
+There is no `/api` proxy. Set `CORS_ORIGIN` and `NEXT_PUBLIC_API_URL` to the hosts you actually
+use. The single most common local failure is opening `http://127.0.0.1:3000` while
+`CORS_ORIGIN=http://localhost:3000` — different origins as far as the browser is concerned.
+
+### Assets missing / 404 on an icon
+
+`apps/web/public/assets/` is **generated**, not committed in a durable way. If icons 404, run
+`pnpm assets:sync`. Note the background files live at `assets/tiles/sky/` even though the
+manifest group is called `backgrounds` — resolve via the manifest's `file` field, never by
+rebuilding a path from the group name (`docs/05 §14`).
 
 ### Game shows demo plots
 

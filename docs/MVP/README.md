@@ -1,7 +1,6 @@
 # Molemisi — MVP Specification
 
-**Status:** implementation complete (code); **deployable** — the schema is current (the 11-migration gap was pushed 2026-09-14; see `DEVELOPMENT_STATE.md`). **Last consolidated:**
-2026-09-07; status confirmed 2026-09-16.
+**Status:** implementation complete (code); **deployable** — the schema is at 38 migrations and everything up to `20260916000030` has been pushed, so `/admin`, `/dev` and P2–P9 run at runtime. **Ten migrations are pending push** (see `DEVELOPMENT_STATE.md`); `20261001000003` (`madi_balance`) is load-bearing, because the store already references it. **Last consolidated:** 2026-09-07; status confirmed **2026-10-02**.
 **Owner of this folder:** Princess Eugenia. **Consolidated by:** Belvedere.
 
 ---
@@ -15,12 +14,20 @@ The authoritative specification for building Molemisi. Read `01` through `06` in
 | # | Document | Covers |
 |---|---|---|
 | **01** | `01_Product_Definition.md` | What the game is, who it's for, the four screens, locked decisions, scope, evolution |
-| **02** | `02_Economy_And_Currencies.md` | Three currencies, the marketplace, payments and KYC, monetisation, **all numbers of record**, financial model |
+| **02** | `02_Economy_And_Currencies.md` | Currencies, the marketplace, payments and KYC, monetisation, **all numbers of record**, financial model |
 | **03** | `03_Core_Systems.md` | Farming, water, inventory, crafting, buildings, livestock, progression |
 | **04** | `04_Bushveld.md` | Scenes, hotspots, scarcity model, Field Journal, seasonal events |
 | **05** | `05_Implementation_Plan.md` | Phases, dependencies, done-criteria |
 | **06** | `06_Verification_Rubric.md` | Audit criteria, hard invariants, per-phase checklists |
 | **07** | `07_Balance_And_UX_Review.md` | Why the numbers are what they are; session design; UI flows |
+
+> **Post-consolidation amendments (2026-10-01 → 2026-10-02).** `docs/33` re-decided the economy and
+> `docs/34` built Waves 1–3 of it. Where this set and `docs/33`/`docs/34` disagree, the later
+> decision governs and the affected lines here have been amended in place: **Pula is never sold**
+> and top-ups grant **Madi** (§2, §3.1); the **Village Pass** M50/mo replaced the Guild
+> subscription (§6.6); **boosts are cut from the catalogue entirely** rather than withdrawn
+> (`05`, `06` C10); and the **land tail** is P8,000 / P15,000 with `LAND_LADDER_TOTAL = 31,200`
+> (§6.5). Known remaining drift is listed in `KNOWN_LIMITATIONS.md`.
 
 **`01`–`06` are normative — build from them.** `07` is the audit record: read it to understand a decision, but it is not a spec in its own right. Where `07` and `01`–`06` disagree, `01`–`06` win (they were updated with the findings).
 

@@ -2,9 +2,12 @@
 
 > **Molemisi Farm Management Simulator**
 > Version: 1.0.0
-> Status: Design spec (target)
-> Last Updated: 2026-09-02
-> Implementation: 2026-09-06 — Provider interface + `StubPaymentProvider` only. 13 SKUs in `packages/game-config/src/store.ts`. No Stripe/Orange Money. No React store UI.
+> Status: Design spec (target), **reconciled to the as-built store 2026-10-02**
+> Last Updated: 2026-10-02
+> Implementation: provider interface + `StubPaymentProvider` only. Store SKUs in
+> `packages/game-config/src/store.ts`. **No Stripe / Orange Money / MyZaka / Smega.** The
+> `StoreScreen` component renders both shelves but there is **no wired purchase flow** yet
+> (`docs/34` §4.3).
 
 ---
 
@@ -12,24 +15,40 @@
 
 **FR-PAY-001**
 
-Molemisi uses a **cosmetic and convenience** monetization model. No gameplay advantages are sold. All content is achievable through play.
+Molemisi uses a **cosmetic-only** monetization model (DECIDED 2026-10-01, `docs/33` §1–§2): **decorations and the Village Pass only**. No gameplay advantages are sold. All content is achievable through play.
 
 ### Revenue Streams
 
-| Stream           | Type      | Price Range  | Description                 |
-| ---------------- | --------- | ------------ | --------------------------- |
-| Premium currency | One-time  | 5-50 BWP     | Buy Gems for cosmetic shop  |
-| Cosmetic packs   | One-time  | 10-100 BWP   | Farm decorations, themes    |
-| Season passes    | Recurring | 25 BWP/month | Exclusive cosmetic tracks   |
-| Convenience      | One-time  | 5-20 BWP     | Speed boosts, extra storage |
+| Stream | Type | Price Range | Description |
+| --- | --- | --- | --- |
+| Madi top-up packs | One-time | P5–P250 BWP | Buy Madi (1 Madi = 1 BWP; bonus on the P50+ packs) |
+| Decorations — **Market shelf** | One-time | P200 / P600 / P1,500 (Pula, **earned**) | The everyday line, and the unbounded Pula sink |
+| Decorations — **Festival shelf** | One-time | M40 / M80 / M150 / M300 (Madi, **bought**) | The seasonal look, optional |
+| Village Pass | Recurring | M50/month | Helper + monthly festival outfit + 50 % storage |
+
+**The shelf model is the merchandising decision.** Every Festival item has a **Market cousin in
+the same `slot`** (`hut` · `kraal` · `frame` · `livestock` · `outfit`), so a free player can
+reach every visual affordance the game has and nobody's farm looks poorer for not paying.
+`store.spec.ts` asserts this on every test run, because that promise is the whole product.
 
 ### What is NOT sold
 
 - Gameplay advantages (no pay-to-win)
 - Exclusive crops or animals
-- Currency directly
+- **Pula — never.** No amount of real money buys Pula, and no premium currency converts to it
 - Resources that affect economy
 - Competitive advantages
+- Botho, season stamps, or anything standing-related
+
+### Boosts are cut, not withdrawn
+
+`05 §P9` originally required three boosts (Pula Stone, Ancestral Ward, Breath of the Land). They
+were catalogued and sold while **no endpoint applied any of their effects**. The 2026-09-11
+ruling set `available: false`; `docs/34` §3.3 (2026-10-01) went further and **removed the entries
+entirely** — `BOOSTS` is `readonly never[]`, `BOOST_SLUGS` is empty, and `store.spec.ts` asserts
+the catalogue stays empty. A dead catalogue entry is worse than no entry: it can be half-restored
+by a later merge and it keeps `BOOSTS` looking like a live product line. Re-adding one is a
+deliberate act gated on **every** effect in its description working.
 
 ---
 
@@ -42,17 +61,17 @@ Molemisi uses a **cosmetic and convenience** monetization model. No gameplay adv
 ```
 Player
   ↓
-Molemisi Payment API (NestJS)
+Molemisi Payment API (NestJS)          POST /api/v1/payments/create
   ↓
-Payment Provider Abstraction
+PaymentProvider  (DI token 'PAYMENT_PROVIDER')
   ↓
-Provider (Mobile Money / Cards)
+Provider (Mobile Money / Cards)       ← only StubPaymentProvider is bound today
   ↓
-Provider Webhook/Callback
+Provider Webhook/Callback             POST /api/v1/payments/webhook
   ↓
 Payment Verification (Server)
   ↓
-Transaction Ledger
+Transaction Ledger                    ledger_entries, via wallet_apply()
   ↓
 Entitlement Grant
   ↓
@@ -61,30 +80,55 @@ Game Economy
 
 ### Provider Abstraction
 
+**The real interface** — `apps/api/src/payments/providers/payment-provider.interface.ts`:
+
 ```typescript
-interface PaymentProvider {
-  name: string;
-  createTransaction(amount: number, currency: string, metadata: any): Promise<PaymentSession>;
-  verifyTransaction(transactionId: string): Promise<PaymentVerification>;
-  handleWebhook(payload: any, signature: string): Promise<WebhookResult>;
-  refund(transactionId: string, amount: number): Promise<RefundResult>;
+export interface PaymentProvider {
+  /** Unique provider identifier */
+  readonly name: string;
+
+  createPayment(request: CreatePaymentRequest): Promise<CreatePaymentResponse>;
+  verifyPayment(transactionId: string): Promise<PaymentVerification>;
+  verifyWebhookEvent(payload: unknown, signature: string): Promise<boolean>;
+  refund(request: RefundPaymentRequest): Promise<RefundResponse>;
 }
 ```
 
+> ⚠️ The interface in earlier revisions of this document
+> (`createTransaction` / `handleWebhook` / `refund(transactionId, amount, ...)`) **did not match
+> the code** and would not have compiled against it. The signature above is the as-built one;
+> `PaymentsService` injects it as `@Inject('PAYMENT_PROVIDER') private readonly provider:
+> PaymentProvider`.
+
 ### Supported Providers (MVP)
 
-| Provider        | Type         | Regions  | Status  |
-| --------------- | ------------ | -------- | ------- |
-| Orange Money    | Mobile Money | Botswana | Phase 7 |
-| Mascom WiFi Pay | Mobile Money | Botswana | Phase 7 |
-| Stripe          | Cards        | Global   | Phase 7 |
+| Provider | Type | Regions | Status |
+| --- | --- | --- | --- |
+| `stub` | Dev only | — | **Bound.** Completes inline, always succeeds |
+| Orange Money | Mobile Money | Botswana | Phase 7 — interface ready, not implemented |
+| Mascom MyZaka | Mobile Money | Botswana | Phase 7 — interface ready, not implemented |
+| BTC BeMobile Smega | Mobile Money | Botswana | Phase 7 — interface ready, not implemented |
+| Stripe (cards) | Cards | Global | **Deferred** — no card-only model; mobile money is the only rail for Madi |
+
+> *(DECIDED 2026-10-01, `docs/33` §0.)* All real-money transactions flow through the Botswana
+> mobile-money providers above. No card-only payment model.
 
 ### Adding New Providers
 
-1. Implement `PaymentProvider` interface
+1. Implement the `PaymentProvider` interface above
 2. Add provider configuration to environment
-3. Register provider in provider registry
-4. No changes to game economy needed
+3. Register the implementation in `payments.module.ts` under the `PAYMENT_PROVIDER` token
+4. **No changes to game economy needed** — this claim is real and load-bearing: the store
+   catalogue, entitlements and ledger are all provider-agnostic, and `docs/34` Waves 2–3 were
+   built behind exactly this seam
+
+### Webhook authentication — a known gap
+
+The webhook is *conceptually* unauthenticated, but `PaymentsController` applies `AuthGuard` at
+the class level, so `POST /payments/webhook` currently **requires a Bearer token**. A real PSP
+cannot call it. Fixing this means scoping `AuthGuard` per-route rather than per-class and
+replacing the stub's `verifyWebhookEvent` (which always returns `true`) with real HMAC
+verification. Tracked in `KNOWN_LIMITATIONS.md`.
 
 ---
 
@@ -226,40 +270,62 @@ async function reconcilePayments(date: Date): Promise<ReconciliationReport> {
 
 **FR-PAY-008**
 
-### Entitlement Types
+### Entitlement Types — as built
 
-| Type             | Data                                | Grant Method                |
-| ---------------- | ----------------------------------- | --------------------------- |
-| premium_currency | `{ amount: 500 }`                   | Add to profile.gems         |
-| cosmetic_item    | `{ itemId: "farm_theme_sunset" }`   | Add to inventory            |
-| season_pass      | `{ seasonId: "spring_2026" }`       | Set profile flag            |
-| extra_storage    | `{ slots: 50 }`                     | Increase inventory capacity |
-| speed_boost      | `{ multiplier: 2, duration: 3600 }` | Set temporary multiplier    |
+`VirtualEntitlement` in `packages/game-config/src/store.ts` is the real union. It is **much
+smaller than it was**: the currency entitlement was renamed, the boost entitlement is **gone**,
+and `season_pass` / `extra_storage` / `speed_boost` were never implemented in the catalogue at
+all.
+
+```typescript
+export type VirtualEntitlement =
+  | { type: 'madi'; amount: number }                            // top-up packs
+  | { type: 'subscription'; slug: string; days: number }       // the Village Pass
+  | { type: 'cosmetic'; cosmeticId: string };                  // both shelves
+```
+
+| Retired entitlement | Was | Why it is gone |
+| --- | --- | --- |
+| `{ type: 'currency' }` | granted **Pula** for BWP | Pula is earned-only. Renamed to `madi` (`docs/33` §2). `wallet_apply()` will still accept `'pula'`, but no SKU may produce a Pula ledger row — asserted by `payments.service.spec.ts` |
+| `{ type: 'boost' }` | Pula Stone, Ancestral Ward, Breath of the Land | **Cut** (`docs/34` §3.3). None of their effects was ever applied |
+| `season_pass` / `speed_boost` | never implemented | Removed from this spec rather than left as a phantom type |
+| `extra_storage` | "+50 % storage" | Now part of the **Village Pass** subscription, not a standalone SKU |
+
+> ⚠️ `profile.gems` does not exist. The premium currency is `player_wallets.madi_balance`
+> (migration `20261001000003`), and the whole anti-pay-to-win guarantee is structural: there is
+> deliberately **no conversion helper** in the schema, so money → Madi → *(nothing that affects
+> progression)*.
 
 ### Entitlement Grant
 
 ```typescript
-async function grantEntitlement(paymentId: string, entitlement: Entitlement): Promise<void> {
-  // 1. Record entitlement
-  await db.paymentEntitlements.create({
-    paymentId,
-    farmId: entitlement.farmId,
-    entitlementType: entitlement.type,
-    entitlementData: entitlement.data,
-  });
-
-  // 2. Apply to game state
+// apps/api/src/payments/payments.service.ts
+private async awardEntitlement(playerId: string, virtualGood: VirtualGood) {
+  const entitlement = virtualGood.entitlement;
   switch (entitlement.type) {
-    case 'premium_currency':
-      await addCurrency(entitlement.farmId, entitlement.data.amount, 'PAYMENT_PURCHASE');
+    case 'madi':
+      // The ONLY thing a real-money purchase may ever credit.
+      await this.wallet.creditMadi(playerId, entitlement.amount, `payment:${virtualGood.sku}`);
       break;
-    case 'cosmetic_item':
-      await addToInventory(entitlement.farmId, entitlement.data.itemId, 1);
+    case 'subscription':
+      await this.wallet.setSubscription(playerId, entitlement.slug, entitlement.days);
       break;
-    // ... other types
+    case 'cosmetic':
+      // Written by StoreService, the only writer of player_cosmetics.
+      break;
   }
 }
 ```
+
+In-game cosmetic purchases take a **different** path — `StoreService.purchase()` debits
+`spendPula` for the Market shelf and `spendMadi` for the Festival shelf, both ledgered and both
+floored at zero, and it rejects any `BWP`-denominated SKU with a message pointing at
+`POST /payments/create`. Real money and earned money never meet in one code path.
+
+> **Known gap:** entitlements for extra plots, extra storage and cosmetics are still **largely
+> logged rather than fully applied** at runtime. The Village Pass's +50 % storage in particular is
+> declared in the SKU description but its effect is not yet wired to the storage-tier check.
+> See `KNOWN_LIMITATIONS.md`.
 
 ---
 

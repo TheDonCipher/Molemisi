@@ -1,19 +1,132 @@
 # Known Limitations
 
-As-built gaps and debt as of **2026-09-16**. Supersedes the 2026-09-14 version. See
-`DEVELOPMENT_STATE.md` for the live inventory.
+As-built gaps and debt as of **2026-10-02** (prior: 2026-09-28). See `DEVELOPMENT_STATE.md` for
+the live inventory.
 
 ---
 
-## Hard blocker — RESOLVED
+## RESOLVED since 2026-09-28 — the three P0 gameplay/visual defects
 
-### Migrations are pushed (resolved 2026-09-14)
+`docs/30_Gameplay_Visual_Narrative_Review.md` §6 laid out the fix plan. Two of the three P0s
+are closed; the third is partially closed. Recorded here so the old "open bug" entries are not
+re-discovered and re-reported.
+
+### P0-1 — Animals became permanently sick, with no recovery — **RESOLVED**
+
+Previously: health decayed while `hunger < 0.2`, `is_sick` was set at `health < 0.3`, and
+feeding then **refused all further input**, with no heal endpoint or medicine item anywhere. Time
+to the unrecoverable state was chicken ~7 h, goat ~8.8 h, pig ~10 h, cow ~11.7 h. The published
+`SELF_SUSTAINING_THRESHOLD_HOURS = 72` could never fire, because elapsed time was clamped to
+24 h first.
+
+Now, three separate fixes:
+- **12 h starvation window** — health only begins to decay after 12 *consecutive* hours at
+  `hunger == 0`, tracked by the persisted `hunger_zero_since` column (migration
+  `20260928000001`). An overnight gap no longer kills anything.
+- **72 h livestock decay window** — `LIVESTOCK_OFFLINE_CAP_HOURS` replaces the old
+  `min(elapsed, 24)` for animals, so a four-day absence decays as four days, not one.
+- **Self-sustaining computed from uncapped away-time** — the threshold is compared against true
+  away-time in `engine/time.ts`, so the constant is live rather than dead. Beyond 72 h: hunger
+  decays at 25 %, no production, no health or happiness decay, hunger floored at 0.1.
+
+### P0-2 — Feeding cost nothing — **RESOLVED**
+
+`feedAnimal` now debits `{feedType, feedPerDay}` atomically through `InventoryService`, and
+`AnimalConfig.feedPerDay` is read server-side. The real bug turned out to be the feed **map**, not
+missing items: goat and cow were fed `herbs` (baseValue P25), so a cow burned P200/day of fodder
+to make P45/day of milk and three of four animals were net-negative. All four are on `sorghum`
+now. Per-kraal feeding (one tap feeds every feedable animal, summing rations atomically) landed
+with the per-animal path kept as a fallback.
+
+Resulting net/day: chicken **P14** · guinea fowl **P7** · goat **P21** · cow **P27** — all
+positive, all below morula (P40.63), so animals complement the crop ladder rather than dominate
+it. `livestock.spec.ts` asserts every one of these, so this cannot silently regress.
+
+### P0-3 — ~198 of 423 asset files unreachable — **PARTIALLY CLOSED**
+
+Reachability improved: kraal, morula, crafted and Deep Bushveld content is now wired, and the
+four building `lvl1` sheets were replaced by a `kraal/` set. Withdrawn art (pig, saffron,
+`building_borehole`, `building_greenhouse`, `snowflake`) moved to `assets/_archive/` so it stops
+being counted as shipped.
+
+**Still open:** buildings render as 32×32 item icons in a list, so the four building states
+required by `docs/05 §5` have no visual presence; the palette/quantise pass (V-2) has not run, and
+sampled assets were measured at 0 % in-palette with ~20 colours covering 80 % of a 32×32 icon.
+Doc 30 Pass 2 is not finished.
+
+---
+
+## Open gaps — `docs/34` Wave 4 (partial)
+
+The economy/monetization strategy is **decided** and **Waves 1–3 are implemented**. What remains
+is Wave 4 plus two persistence holes. Recorded here so "specified but absent" never reads as an
+oversight.
+
+| # | Gap | State | Needed |
+| --- | --- | --- | --- |
+| **W4-a** | **Store purchase UI not wired** | `StoreScreen` exists as a component reference; no live purchase flow against the real endpoint | Wire end-to-end against the stub provider (`docs/34` §4.3) |
+| **W4-b** | **Botho automation unlocks have no persistence** | `BOTHO_THRESHOLDS` + `AUTOMATION_LADDER` + `automationUnlockedAt()` are config-only; nothing stores an unlock, so nothing is granted at runtime | A place to record unlocks — same blocker as `docs/32` 3.4/3.5 |
+| **W4-c** | **Chapter Tokens are unspentable** | `ChapterService.spendTokens()` exists, `ChapterController` exposes no route | `POST /chapters/tokens/spend`, or hide the balance in the UI |
+| **W4-d** | **Maintenance rhythm not fully rolled out** | `MAINTENANCE.intervalDays` is 30 and `economy.spec.ts` asserts it, but the four `BUILDINGS[*].maintenanceIntervalDays` consumer path is not re-verified end-to-end | Confirm the building path reads the new cadence |
+
+### Landed (Waves 1–3) — for the avoidance of doubt
+
+- **Madi is real.** `player_wallets.madi_balance` exists (migration `20261001000003`) with a
+  non-negative constraint, and `wallet_apply()` accepts `'pula' | 'botho' | 'madi'`. There is
+  deliberately **no conversion helper** anywhere in the schema — the absence is the feature, and
+  adding a `madi_to_pula()` later must be a separate, argued migration.
+- **Top-ups grant Madi, never Pula.** `TOP_UP_PACKS` are P5/20/50/100/250 → 5/20/55/110/275 Madi.
+- **Two cosmetic shelves.** Market (Pula 200/600/1,500) and Festival (Madi 40/80/150/300), with
+  every Festival item required to have a Market cousin in the same slot — asserted by
+  `store.spec.ts`, because that promise is the whole product.
+- **Village Pass** replaced the Guild subscription: M50/month, helper + monthly outfit + 50 %
+  storage. The helper is also earned free at Botho 500, so paying gets it early and playing gets
+  it forever.
+- **Boosts are cut**, not withdrawn: `BOOSTS` is `readonly never[]` and `BOOST_SLUGS` is empty.
+
+---
+
+## Real-money rails
+
+Unimplemented and unchanged: `StubPaymentProvider` only. Orange Money, Mascom MyZaka and BTC
+BeMobile Smega are all **Phase 7**. The `PaymentProvider` interface means adding one needs no
+economy change (`docs/10 §2`) — the abstraction is real and working, there is just nothing
+behind it but the stub.
+
+---
+
+## Schema push status
+
+### The original deploy gap is closed (2026-09-14); nine migrations now pending
 
 The 11-migration deploy gap (`000016`–`000120` + `000021`) was pushed to `nyapfgawanqvnkkjudxb`;
-`supabase db push --dry-run` reports "Remote database is up to date". `/admin`, `/dev` and P2–P9
-now run at runtime and `/auth/me` resolves roles correctly. Two **pending** corrective migrations
-remain (`20260914000022` cosmetic-id type fix; `20260916000030` obsolete overload drop) and are
-not yet pushed, but they are non-blocking bug-fixes.
+`/admin`, `/dev` and P2–P9 now run at runtime and `/auth/me` resolves roles correctly.
+
+The repo has since grown to **38 migrations**. **Ten** are **not yet pushed**, and this is now the
+largest single schema delta:
+
+| Pending | Summary |
+| --- | --- |
+| `20260914000022` | `player_cosmetics.cosmetic_id` UUID → TEXT drift fix |
+| `20260916000030` | drop 2 obsolete `plant_crop_transaction` overloads |
+| `20260923000031` | livestock inventory cutover |
+| `20260923000032` | Kgotla charges + decay |
+| `20260923000033` | deep time & lore content |
+| `20260923000034` | batch-2 Deep Bushveld + fertilizer |
+| `20260924000000` | reconcile `market_prices` to the catalogue |
+| `20260928000001` | livestock starvation window (`hunger_zero_since`) |
+| `20261001000001` | economy metrics (`economy_price_snapshots`) |
+| `20261001000002` | anti-cheat (`anti_cheat_flags`) |
+| `20261001000003` | **`madi_balance` + `wallet_apply()` third currency** |
+
+> ⚠️ Until `20261001000003` is pushed, the **Madi balance does not exist in the database** even
+> though the code and the store catalogue already use it. Pula-spend paths still work; Madi paths
+> will fail. This is the one push-order dependency that matters — Wave 2.1 (the migration) must
+> land before Wave 2.2 (the entitlement change) is exercised against a real database.
+>
+> ⚠️ `20261001000001` must call `public.is_admin(auth.uid())`, never the bare `is_admin()`. The
+> function has no zero-arg overload, so the bare form is a `42883` at `CREATE POLICY` time,
+> which aborts the transaction and leaves the migration unapplied.
 
 ---
 
@@ -28,17 +141,20 @@ so "specified but absent" never reads as an oversight.
 livestock, the Farm Boundary protecting crops, and the Ancestral Ward granting a 3-day shield.
 **No raid mechanic exists anywhere in `apps/api/src`.** Deferred because it touches the
 highest-risk surface — the growth simulation, building effects, and the offline-elapsed-time
-pass — and no v1 done-criterion tests it. **The Ancestral Ward has been withdrawn from the
-store** so nothing is sold that does nothing; restore `available: true` in
-`packages/game-config/src/store.ts` in the same commit that implements raids.
+pass — and no v1 done-criterion tests it. The Ancestral Ward was one of the three boosts, and
+**all three boosts are now cut from the catalogue entirely** (`docs/34` §3.3), so nothing is sold
+that does nothing. Re-adding the SKUs is a deliberate act gated on every effect working —
+see `docs/34` §6 "do-not-do".
 
 ### Boost effects are not wired
 
-`05 §P9` requires three boosts (Pula Stone, Ancestral Ward, Breath of the Land). They are
-catalogued and the weekly Pula Stone is granted, but **no endpoint applies any of their
-effects** — no tank refill or rain guarantee, no shield, no timer completion. Deferred with
-the raids; the Ancestral Ward's effect *is* the raid shield. All three are withdrawn from the
-store (`available: false`) until they do something.
+`05 §P9` required three boosts (Pula Stone, Ancestral Ward, Breath of the Land). They were
+catalogued and sold while **no endpoint applied any of their effects** — no tank refill or rain
+guarantee, no shield, no timer completion. The ruling of 2026-09-11 withdrew them
+(`available: false`); `docs/34` §3.3 then went further and **deleted the entries**, because
+catalogue entries that do nothing can be half-restored by a later merge and keep `BOOSTS`
+looking like a live product line. `BOOSTS` is now `readonly never[]` and `BOOST_SLUGS` is empty,
+and `store.spec.ts` asserts the catalogue stays empty.
 
 ### Bushveld comparative income is answered by telemetry, not a model
 
@@ -74,10 +190,11 @@ die with JWT expiry (`jwt_expiry = 3600` in `supabase/config.toml`).
 
 No Phaser sound, Howler, or audio assets. Settings BGM/SFX sliders only write React state.
 
-### Store UI exists on the web client
+### Store UI exists on the web client, but the purchase flow is not wired
 
-`StoreScreen` renders the Pula store (`GET /store`) and real-money packs (`GET
-/payments/store`). **The three boosts are absent from both shelves** (deferred ruling above).
+`StoreScreen` renders the in-game store (`GET /store`) and real-money packs (`GET
+/payments/store`). There is **no live purchase flow** against the real endpoint yet — this is
+`docs/34` §4.3 and is tracked as **W4-a** above. The boosts are gone from both shelves entirely.
 
 ### Bushveld React forage is partly client-side
 
@@ -99,10 +216,12 @@ reconciles the four-screen model (`01 §3` / `07 §7.2`); Inventory + Settings l
 
 ## API / backend
 
-### `PUT /config` is not admin-gated
+### `PUT /config` is now admin-gated (resolved)
 
-`GET/PUT /config` and `/config/:key` use `AuthGuard` only. Any logged-in player can change
-live `game_config`.
+**RESOLVED.** `config.controller.ts` carries `@UseGuards(AdminGuard)` on **both** `PUT /config`
+and `PUT /config/:key`. The class-level `AuthGuard` still applies, so a plain player now gets
+403 rather than being able to change live `game_config`. (Before the fix it returned 500 for
+non-admins, which was the SEC-06 finding.)
 
 ### Payment webhook requires JWT
 
@@ -123,10 +242,30 @@ applied.
 
 60 requests / 60 seconds, memory map, not Redis. Resets per API process.
 
+### Anti-cheat exists but has no admin review UI
+
+Detection is shipped: pure passive rules (negative balances, negative inventory, orphan crops,
+resources without a source) and active rules (rapid currency gain, cost bypass, inventory
+manipulation, market flip / out-of-band price, sequence violations) in
+`apps/api/src/anti-cheat/rules.ts`, plus the `anti_cheat_flags` table and admin read endpoints
+(`GET /admin/anti-cheat/flags`, `POST .../passive`, `POST .../active`).
+
+**What is missing is the human half.** There is no review surface in `/admin`, so a reviewer has
+to use the API directly. Two design points to preserve when building it: writing a flag **never**
+mutates player state, and the unique-open index means one open flag of the same kind per target —
+a reviewer resolving a flag is what allows a repeat to be re-raised.
+
+### State validation exists but is not wired into a scheduled sweep
+
+`validateGameState()` / `planRecovery()` are pure and complete, and they run inside the anti-cheat
+pass. There is **no cron or admin sweep** that walks all farms, so a corrupted row on a dormant
+account is detected only when that player returns.
+
 ### Analytics has no HTTP API
 
 `analytics_events` table + service exist. No player or admin query endpoints. Events are
-emitted from most actions but not all.
+emitted from most actions but not all. (Note the new `economy/` module *is* queryable — it reads
+`economy_price_snapshots` and the ledger, not `analytics_events`.)
 
 ### Validation schemas underused
 
@@ -148,9 +287,10 @@ Payments table has an idempotency column. Plant/water/harvest/market are not ide
 
 ### No reverse proxy
 
-Next.js has no `rewrites` for `/api`. Vite has no `server.proxy`. Online single-port preview
-cannot reach the API unless `NEXT_PUBLIC_API_URL` is publicly reachable and CORS allows the
-preview origin.
+Next.js has no `rewrites` for `/api`. Online single-port preview cannot reach the API unless
+`NEXT_PUBLIC_API_URL` is publicly reachable and `CORS_ORIGIN` allows the preview origin. For
+local work, set `CORS_ORIGIN=http://localhost:3000` (or a comma-separated list) — this is the
+only thing standing between a local `pnpm dev` and a CORS failure.
 
 ### Vite `allowedHosts` not set (removed)
 
@@ -177,11 +317,19 @@ Not used (ADR-012: optional later). No cache, no distributed rate limit, no job 
 
 ## Testing / ops
 
-### Thin automated tests
+### Unit coverage is broad; integration coverage is narrow
 
-18 Jest suites / **209 tests** across the API — a real suite, but integration coverage is
-narrow. `apps/api/test/core-loop.integration.spec.ts` is outside Jest `rootDir`. No
-Playwright/E2E. Live coverage is `scripts/test-*.mjs` against a running API.
+**35 Jest suites / 592 tests** across the workspace (`apps/api` 27 suites / 411 tests;
+`packages/game-config` 7 / 146; `packages/validation` 1 / 35) — a real suite, and the new
+`engine`, `economy`, `anti-cheat`, `livestock` and `world-events` suites are the direct
+counter-evidence to the old "thin tests" claim.
+
+What is still missing:
+- `apps/api/test/core-loop.integration.spec.ts` sits outside Jest's `rootDir: src` and is
+  **never run**.
+- No Playwright or other E2E. Live coverage is `scripts/test-*.mjs` against a running API.
+- No test exercises the real Supabase schema, so a migration that fails to apply is invisible to
+  `pnpm test`. This is why the pending-push list in this document matters.
 
 ### CI has no database
 
@@ -194,20 +342,38 @@ Deployment spec is design-only.
 
 ---
 
+## Tooling debt
+
+### `db:seed` is a dead script in two places
+
+The root `package.json` defines `"db:seed": "pnpm --filter @molemisi/api db:seed"`, and
+`apps/api/package.json` defines `"db:seed": "ts-node src/database/seed.ts"` — but
+**`apps/api/src/database/` contains only `database.module.ts` and `supabase.service.ts`**. The
+command therefore fails on a missing file. Either restore the script or delete both entries;
+leaving it documented-but-broken is how people lose an afternoon.
+
+---
+
 ## Security notes (known, not a scan)
 
 - JWT in localStorage (XSS-sensitive), not httpOnly cookies
 - Service role key is server-only if env is set correctly
 - Admin is a boolean on `profiles` (`is_admin`) **and** a `role` (`admin`) — either grants
-  `AdminGuard`; `role='dev'` is the top tier and is admitted to both `/admin` and `/dev`
+  `AdminGuard`, and `role='dev'` is the top tier, admitted to both `/admin` and `/dev`
+- `DevGuard` is the mirror: `role='dev'`, `role='admin'` or `is_admin`, so admins can reach dev
+  tooling. Neither guard reads a JWT claim; both query `profiles` on every request.
 - Banned users can still hit `/admin/` URLs at the guard layer (intended for admin tooling)
+- `anti_cheat_flags` has RLS enabled with **no** player policy — players cannot read their own
+  flags, and nothing writes from the client. Admins reach it through the service role only.
+- Payment webhook verification is a stub that always returns true, so a real PSP must bring its
+  own HMAC/signature check with it
 
 ---
 
 ## Won't-fix for Alpha unless blocking
 
-- Full Phaser embedding in Next.js
-- Real payment providers
+- Full Phaser embedding in Next.js (ADR-001/002; React owns the playable UI)
+- Real payment providers (behind a working `PaymentProvider` interface)
 - Sound design
 - Push notifications
 - Friend/social features (post-MVP roadmap)

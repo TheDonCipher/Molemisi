@@ -18,12 +18,23 @@ Phaser 3 prototype `apps/game` was deleted on 2026-09-11; the React `/game` clie
 
 ## Current status
 
-The MVP is **code-complete** and the four gates are green (api tsc 0 · web tsc 0 · **209 Jest
-tests** · `balance_verify.py` PASS). The database schema is **current**: the 11-migration gap was
-pushed to the linked Supabase project `nyapfgawanqvnkkjudxb` on 2026-09-14, so `/admin`, `/dev`
-and P2–P9 all run at runtime. Remaining gaps are real-money payments (stub provider), wildlife
-raids, and boost effects — the latter two are deferred from v1 by ruling, with their store entries
-withdrawn.
+The MVP is **code-complete** and the four gates are green (api tsc 0 · web tsc 0 · **592 Jest
+tests** across 35 suites · `balance_verify.py` PASS). The schema is at **38 migrations**. The
+original 11-migration deploy gap was pushed to the linked Supabase project `nyapfgawanqvnkkjudxb`
+on 2026-09-14, so `/admin`, `/dev` and P2–P9 all run at runtime.
+
+Since the 2026-09-16 state note, four further capability areas have landed:
+
+- **Deterministic simulation engine** (`apps/api/src/simulation/engine/`) — one pure
+  `runSimulation(input) => output`, no clock reads, no I/O, seeded RNG
+- **Anti-cheat** (`apps/api/src/anti-cheat/`) — pure detection rules + `anti_cheat_flags` table
+- **State validation & recovery** (`apps/api/src/simulation/state-validation.ts`)
+- **Economy metrics API** (`apps/api/src/economy/`) — supply, wealth, velocity, inflation
+- **The decided economy** (`docs/33` → `docs/34`, Waves 1–3): top-ups grant **Madi, never Pula**;
+  the store sells decorations on two shelves plus the **Village Pass**; boosts are **cut**
+
+Remaining gaps: real-money payments (stub provider only), wildlife raids, boost effects, and
+automation-unlock persistence. Raids and boosts are deferred from v1 by ruling.
 
 Specs and the marketplace pivot (cash-out to mobile money, P2P Exchange) are captured in
 `docs/MVP/`; the original design suite lives in `docs/01`–`docs/23`.
@@ -63,8 +74,10 @@ pnpm dev                     # predev runs assets:sync
 
 Do not set `NODE_ENV` in `.env` or `.env.local`. Next.js and NestJS set it themselves.
 
-Register at http://localhost:3000/auth/register. `pnpm db:seed` is **not** available (the Nest
-seed script is missing — use registration + `supabase:reset`).
+Register at http://localhost:3000/auth/register. `pnpm db:seed` is **broken** — the root script
+delegates to `pnpm --filter @molemisi/api db:seed`, which runs `ts-node src/database/seed.ts`, and
+**that file does not exist**. Use registration + `supabase:reset` instead. (Removing the dead
+script from both `package.json` files is a standing task — see `KNOWN_LIMITATIONS.md`.)
 
 ### Development servers
 
@@ -88,19 +101,23 @@ molemisi/
 │   ├── shared/       # API helpers and constants
 │   ├── game-types/   # Shared TypeScript types
 │   ├── game-config/  # Crops, buildings, livestock, crafting, chapters, almanac, bushveld, store, theme
-│   └── validation/   # Zod schemas
-├── supabase/         # Migrations (29), seed, local config
-├── assets/           # Pixel-art source (268 manifest entries, synced into web public/)
+│   ├── validation/   # Zod schemas
+│   └── simulator/    # Offline balance simulator (not a game client)
+├── supabase/         # Migrations (38), seed, local config
+├── assets/           # Pixel-art source (282 manifest entries), synced into web public/
 ├── scripts/          # Asset pipeline, admin/dev bootstrap, live API tests, economy gate
 └── docs/             # As-built notes + design specs + MVP normative set
 ```
+
+Retired art is moved, not deleted: `assets/_archive/` (19 files) holds the withdrawn pig, saffron,
+`building_borehole` / `building_greenhouse` and legacy snowflake assets. See `assets/_archive/README.md`.
 
 ## Commands
 
 ```bash
 pnpm dev                 # Start web and api (runs assets:sync first)
 pnpm build               # Build all packages
-pnpm test                # Run Jest suites (209 tests across 18)
+pnpm test                # Run Jest suites (592 tests across 35 suites)
 pnpm lint                # Lint all packages
 pnpm typecheck           # Type-check all packages
 pnpm format              # Format with Prettier
@@ -113,7 +130,12 @@ pnpm dev:kill            # Free ports 3000/3001
 
 pnpm assets:sync         # Copy assets/ into web public folders
 pnpm assets:generate     # Generate assets via PixelLab (needs PIXELLAB_API_KEY)
+
+pnpm simulate            # Run the offline balance simulator (DO NOT point at the live project)
 ```
+
+> **Live-sim hazard.** `packages/simulator` creates real accounts. Never run `pnpm simulate`
+> against the linked Supabase project — validate with Jest and `balance_verify.py` instead.
 
 ## What works today
 
@@ -124,8 +146,12 @@ pnpm assets:generate     # Generate assets via PixelLab (needs PIXELLAB_API_KEY)
 - Kgotla (Botho, Letsema, NPCs) with NPC head-portrait dialog, Bushveld (Kagiso, Field Journal, Daily Sparkle), chapters + almanac
 - Seasons / weather / world events, notifications, PWA (manifest + service worker)
 - Admin dashboard (`AdminGuard`) + dev tooling area (`DevGuard`), in-memory rate limit
-- Payments: store catalog (top-up packs, Guild subscription, cosmetics) + stub provider; real-money packs labelled in BWP to distinguish them from soft Pula
-- Wallet + ledger with Botswana-day caps; no XP / level (intentionally removed)
+- **Deterministic simulation engine** — pure, seeded, replayable; livestock decays on a 72 h window and self-sustains beyond it, building wear is uncapped
+- **State validation & recovery** — pure detection of negative balances, orphan crops and stale/future timestamps, each mapped to a named corrective action
+- **Anti-cheat** — pure passive (corrupt state) and active (suspicious sequences) rules writing `anti_cheat_flags`; flags are review signals, never verdicts
+- **Economy metrics API** — currency supply, wealth, velocity, prices, inflation, crop supply, progression
+- Payments: store catalog + stub provider; decided direction (`docs/33`, 2026-10-01): top-ups grant **Madi, never Pula** — the store sells only looks and time
+- Wallet + ledger with Botswana-day caps; **Madi** balance added as spend-only premium currency; no XP / level (intentionally removed)
 - **Currency clarity UI**: a header `?` guide + an inline Wallet section explaining Pula / Botho / Madi / Chapter Token (and that Kagiso is not a currency)
 - **Hybrid navigation**: 4 primary screens (Farm · Kgotla · Bushveld · Market) + a More menu, reconciling the four-screen model
 
@@ -134,9 +160,11 @@ pnpm assets:generate     # Generate assets via PixelLab (needs PIXELLAB_API_KEY)
 - `docs/DEVELOPMENT_STATE.md` — as-built status (**start here**)
 - `docs/ARCHITECTURE_OVERVIEW.md` — as-built architecture
 - `docs/DEVELOPMENT_SETUP.md` — local setup
-- `docs/KNOWN_LIMITATIONS.md` — gaps and debt (migration blocker resolved 2026-09-14)
+- `docs/KNOWN_LIMITATIONS.md` — gaps and debt
 - `docs/DOCUMENTATION_AUDIT.md` — how the doc set is organized + accuracy map
 - `docs/MVP/` — **the normative spec set** (01–07) for the current build
+- `docs/30`–`docs/34` — gameplay/visual review, systems audit, sprint roadmap, economy strategy
+  and its implementation sequence (Waves 1–4)
 - `docs/01_Game_Design_Specification.md` … `docs/23_*` — original design suite (intent)
 
 Numbered design specs are intent. Where they conflict with the repo, `DEVELOPMENT_STATE.md` and

@@ -3,8 +3,16 @@
 > **Molemisi Player Experience**
 > Version: 1.0.0 (post-review)
 > Status: Living analysis + recommendations ledger
-> Last Updated: 2026-09-22
+> Last Updated: 2026-09-22 (banner added 2026-10-02)
 > Companion work: Farm UI/GX review pass, 2026-09-22 sessions
+>
+> **Note (2026-10-02).** This analysis predates the `docs/33` → `docs/34` economy build. The
+> gate counts in §8 read **209/209 tests / 18 suites** and were true on 2026-09-22; they are now
+> **592/592 across 35 suites** (api 27/411, game-config 7/146, validation 1/35), re-verified
+> green on 2026-10-02. Three problems this document raises are since **closed**: the livestock
+> soft-lock and free-feeding defects (72 h decay window + 12 h starvation window + `feedAnimal`
+> now debiting rations) and the three-net-negative-animals problem (all four are net-positive
+> now, asserted in `livestock.spec.ts`). The daily-loop and progression analysis still stands.
 
 ---
 
@@ -234,9 +242,19 @@ and the existing spec fixed. Combined with the new analytics events
 
 ## 7. Remaining risks & open items
 
+> **Superseded in part — 2026-09-28.** The gameplay/visual/narrative review pass
+> (`docs/30_Gameplay_Visual_Narrative_Review.md`) adds three **P0** risks that outrank everything
+> below and should be worked first: **G-2 / P0-1** (animals become permanently sick with no
+> recovery path), **G-3 / P0-2** (feeding is free while the UI charges for it) and **P0-3**
+> (≈198 of 423 asset files are unreachable, so the farm screen has no scene and buildings have no
+> states — `docs/30` §4.4). G-4 (the self-sustaining rule can never fire) also lands on this
+> section. `docs/30 §6` is the implementation brief; `docs/KNOWN_LIMITATIONS.md` now carries the
+> same three defects as as-built bugs. Items 1–5 below remain valid.
+
 1. **Tier-3 jump pacing** (12→20 at P30,000): the largest single leap in the
    ladder. The balance model blesses it; watch `plot_purchased` + income
-   telemetry for the first cohorts before touching it.
+   telemetry for the first cohorts before touching it. *(A refinement is
+   proposed as `docs/30` **G-9**: insert a 16-plot rung ~P14,000.)*
 2. **balance_verify.py §5 / balance_audit.py land numbers are stale**
    (P15,800 in the audit vs 37,200 in config) — the only place the F19
    single-source rule is currently violated. Next pass: make the script read
@@ -255,7 +273,8 @@ and the existing spec fixed. Combined with the new analytics events
 
 - `tsc --noEmit`: web ✅ / api ✅ / game-config build ✅ (71/71 config tests)
 - API suite: 18/18 suites, **209/209 tests** (one spec updated for the new
-  `cropsStalled` counter)
+  `cropsStalled` counter) — *reading as of 2026-09-22; re-verified 2026-10-02 at
+  27/411 for the API and 592/592 across the whole workspace*
 - ESLint: no new issues on touched files (pre-existing useState formatting +
   repo-wide CRLF noise only)
 - The Botho catch-up was routed through `creditBothoCapped` deliberately so

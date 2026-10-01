@@ -98,7 +98,13 @@ Molemisi's art style is **warm, cozy, detailed pixel art** inspired by the Botsw
 
 ### Display Scaling
 
-The game renders at 800x600 logical pixels and scales to fit the device screen. All pixel art is designed at 1:1 pixel ratio at the base resolution.
+> **Corrected 2026-10-02.** This section said the game renders at **800×600** logical pixels.
+> That number came from the deleted Phaser prototype. The scene backgrounds in
+> `assets/backgrounds/` are **800×480** (`docs/23`), and the shipped React client does not use a
+> fixed logical resolution at all — screens are CSS/Tailwind and scale fluidly, with pixel art
+> held at 1:1 via `image-rendering: pixelated`. If you are sizing new art, the numbers that matter
+> are the sprite sizes in the table above and the 800×480 background canvas, not a logical
+> resolution.
 
 ---
 
@@ -540,61 +546,103 @@ animal_animals_atlas.png
 
 **NFR-ART-014**
 
-> Note (2026-09-11): the standalone Phaser client `apps/game` was deleted; its `public/assets/` tree below is illustrative of the source assets in `assets/`, which `scripts/sync-assets.mjs` now copies to `apps/web/public/assets/` only.
+> **Corrected 2026-10-02.** Earlier revisions of this section showed an `apps/game/public/assets/`
+> tree full of Phaser texture atlases, Tiled maps and an `audio/` folder. **None of that
+> existed at deletion and none of it exists now.** The standalone Phaser client `apps/game` was
+> removed on 2026-09-11 (ADR-001). What is real is below.
+
+### The one real tree
+
+`assets/` is the **source**. `pnpm assets:sync` (`scripts/sync-assets.mjs`) copies it into
+`apps/web/public/assets/` and regenerates the manifest
+(`apps/web/public/assets/manifest.json`, **282 entries**). There is no second destination and no
+atlas build.
 
 ```
-apps/game/public/assets/
-├── tiles/
-│   ├── ground/
-│   │   ├── grass_01.png
-│   │   ├── dirt_01.png
-│   │   ├── path_01.png
-│   │   ├── water_01.png
-│   │   └── sand_01.png
-│   └── transitions/
-│       ├── grass_dirt.png
-│       └── dirt_path.png
+assets/
+├── manifest.json                  # the typed index (282 entries) — generated, never hand-edited
+├── _archive/                      # WITHDRAWN art — excluded from sync (19 files)
+├── branding/                      # logo.png, wordmark lockups, OG card
+├── particles/                     # dust_puff, smoke_puff, sparkle_gold, rain_cloud, …
+├── weather/                       # cloud_storm, sun_glow, lightning, wind_swirl, rain_cloud
 ├── sprites/
-│   ├── crops/
-│   │   ├── crops_atlas.json
-│   │   └── crops_atlas.png
-│   ├── animals/
-│   │   ├── animals_atlas.json
-│   │   └── animals_atlas.png
-│   ├── buildings/
-│   │   ├── buildings_atlas.json
-│   │   └── buildings_atlas.png
-│   ├── npcs/
-│   │   ├── npcs_atlas.json
-│   │   └── npcs_atlas.png
-│   └── objects/
-│       ├── objects_atlas.json
-│       └── objects_atlas.png
-├── maps/
-│   ├── farm.json
-│   ├── kgotla.json
-│   ├── bushveld.json
-│   └── market.json
-├── ui/
-│   ├── buttons/
-│   ├── panels/
-│   ├── icons/
-│   └── fonts/
-├── particles/
-│   ├── water.png
-│   ├── sparkle.png
-│   ├── dust.png
-│   ├── leaf.png
-│   ├── rain.png
-│   ├── snow.png
-│   ├── smoke.png
-│   └── star.png
-├── audio/
-│   ├── sfx/
-│   └── music/
-└── fonts/
-    └── pixel_font.ttf
+│   ├── animals/<species>/         # idle.png, happy.png, sick.png, product.png
+│   ├── buildings/kraal/           # lvl1.png  ← the only building set left
+│   ├── crops/<crop>/              # stage_0..stage_N.png, seed_<crop>.png, product_<crop>.png
+│   ├── hotspots/<scene>/          # open_bush_stage_0..3, riverbank_stage_0..3, rocky_outcrop_…
+│   ├── npcs/                      # <npc>.png + <npc>_head.png (dialog portraits)
+│   └── scene-props/               # acacia_tree, baobab_tree, bush, fence, reeds, sandstone_rock,
+│                                  #   grass_tuft, flower_patch, marula_tree, setlhare_sa_boswa
+├── tiles/
+│   ├── decorations/               # the scene-props listed above + kgotla_portrait, market_portrait
+│   ├── sky/                       # ⭐ THE BACKGROUNDS live here (see note below)
+│   └── ground/                    # grass_base.png, plot_soil.png, plot_empty.png
+│       ├── grass_dirt/            #   0.png, 15.png
+│       ├── grass_dry/              #   0.png, 15.png
+│       ├── grass_path/             #   0.png, 15.png
+│       └── grass_water/            #   0.png, 15.png
+│       └── *.json                  #   one index per transition set, listing the variants
+└── ui/
+    ├── items/                     # <slug>.png for every catalogue item, incl. building_*
+    ├── icons/                     # action + status + weather + currency icons
+    ├── panels/  buttons/          # panel_dialog, panel_sheet, panel_titlebar, button_*
+    └── tools/                     # hoe, watering_can, sickle, pickaxe, basket, canteen, …
 ```
+
+### ⚠️ Backgrounds are in `tiles/sky/`, not `backgrounds/`
+
+There is **no `assets/backgrounds/` directory**, despite the manifest *group* being called
+`backgrounds`. The four scene backgrounds — plus three time-of-day variants — are files under
+`assets/tiles/sky/`:
+
+| Manifest key | Actual path |
+| --- | --- |
+| `farm_day` | `assets/tiles/sky/farm_day.png` |
+| `farm_sunset` | `assets/tiles/sky/farm_sunset.png` |
+| `farm_night` | `assets/tiles/sky/farm_night.png` |
+| `kgotla` | `assets/tiles/sky/kgotla.png` |
+| `market` | `assets/tiles/sky/market.png` |
+| `bushveld_savanna` | `assets/tiles/sky/bushveld_savanna.png` |
+| `bushveld_riverbank` | `assets/tiles/sky/bushveld_riverbank.png` |
+
+The `group` field in the manifest is a **label, not a path** — always resolve through the
+manifest's `file` field, never by reconstructing a path from the group name. Bushveld hotspot
+stages are elsewhere again, in `assets/sprites/hotspots/<scene>/stage_0..3.png`.
+
+The farm also has **three time-of-day backgrounds** (`farm_day` / `farm_sunset` / `farm_night`),
+which the four-scene model in `docs/23` does not mention.
+
+### Three things that changed and will bite you
+
+1. **No atlases.** Phaser is gone, so `*_atlas.json` / `*_atlas.png` do not exist and nothing
+   consumes them. Sprites are individual PNGs referenced by manifest key. If you are porting an
+   old example from a design doc, that example is describing the deleted prototype.
+2. **No `maps/`, no `audio/`.** There are no Tiled maps (the farm is a CSS grid plus a background
+   image) and no audio at all — no music, no SFX, no audio assets anywhere in the repo.
+3. **Ground autotiles are `0.png` and `15.png`.** They used to be UUID filenames
+   (`3d6d8c50-…png`). `scripts/normalize-ground-tiles.mjs` renamed them to the two endpoints each
+   transition needs, with the variant list in the sibling `<set>.json`. The client reads that
+   index via `apps/web/src/lib/groundTiles.ts`. If you add a ground tile set, follow the
+   `0`/`15` convention or `groundTiles.ts` will not find it.
+
+### Withdrawn art is archived, not deleted
+
+`assets/_archive/` (19 files) holds art that was paid for and then ruled out. It is **excluded
+from `assets:sync`**, so these paths resolve to nothing at runtime and do not appear in the
+manifest:
+
+| Archived | Why |
+| --- | --- |
+| `sprites/animals/pig/*` | Pig removed from the roster (`docs/32` R5) — `pig` + `truffle` were ruled culturally off |
+| `sprites/crops/saffron/*` | Saffron replaced by **Morula** as the top-of-ladder crop (resolved 2026-09-07) |
+| `sprites/buildings/{barn,coop,goat_pen,mill,paddock,pig_pen,well}/lvl1.png` | Superseded by `sprites/buildings/kraal/lvl1.png` |
+| `ui/items/building_borehole.png`, `building_greenhouse.png` | Buildings that were cut |
+| `ui/items/material_marula.png`, `material_salt.png`, `product_saffron.png`, `product_wool.png` | Superseded item slugs |
+| `particles/snowflake.png` | No snow in a Botswana game |
+
+See `assets/_archive/README.md` for the rationale on each. **The pattern matters:** art is moved
+to the archive rather than `git rm`'d, because a reinstatement ruling should not require
+re-generating a paid PixelLab batch.
 
 ---
 
@@ -602,40 +650,47 @@ apps/game/public/assets/
 
 **NFR-ART-015**
 
-### Atlas Format
+> **Corrected 2026-10-02 — this section is now historical.** Texture atlases were a Phaser
+> concept. With `apps/game` deleted there is **no atlas packer, no `*_atlas.json` and no
+> `*_atlas.png`** in the repo, and nothing in `apps/web` would read one. The JSON Hash example
+> below is retained only to document what the deleted prototype used.
 
-Use JSON Hash format for texture atlases:
+### How sprites are actually addressed now
 
-```json
-{
-  "textures": [
-    {
-      "image": "crops_atlas.png",
-      "format": "RGBA8888",
-      "size": { "w": 256, "h": 256 },
-      "scale": 1,
-      "frames": [
-        {
-          "filename": "sorghum_0",
-          "frame": { "x": 0, "y": 0, "w": 16, "h": 16 },
-          "rotated": false,
-          "trimmed": false,
-          "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 16 },
-          "sourceSize": { "w": 16, "h": 16 }
-        }
-      ]
-    }
-  ]
-}
+Individual PNGs, keyed through the generated manifest:
+
+```ts
+// apps/web/src/lib/pixelIcons.ts — resolves a catalogue item slug to its icon URL.
+import { resolveItemIcon, pixelItemIcon } from '@/lib/pixelIcons';
+
+resolveItemIcon('sorghum');   // => '/assets/ui/items/...png' | null
+pixelItemIcon('sorghum');     // => the same, with a fallback icon when the slug is unknown
 ```
 
-### Packing Rules
+`resolveItemIcon()` returns `null` for a slug with no art, so a missing icon is a visible,
+debuggable `null` rather than a 404 — which is what the reachability audit in `docs/30` §4 used
+to find the unreachable-asset problem in the first place.
+
+Conventions that replaced the atlas rules:
+
+- **One PNG per frame**, named `{subject}_{state}[_{index}].png` — e.g. `sorghum_stage_0..4`,
+  `chicken_idle`, `fire_pit_f1..f3`
+- **Stage ranges come from config, not from filenames.** `CropSprite` is driven by each crop's
+  `spriteStages` array, so a crop with 5 stages needs 5 files and a crop with 3 needs 3 — the
+  renderer does not hardcode a stage count
+- **CSS keeps the pixels crisp**: `image-rendering: pixelated` (see `PixelSprite.tsx`)
+- **The manifest is generated, never hand-edited** — run `pnpm assets:sync`
+
+### Packing Rules (historical, Phaser-era)
 
 - Maximum atlas size: 2048x2048
 - Padding between sprites: 2px
 - Power-of-two dimensions preferred
 - Group related sprites in same atlas
 - Separate atlases for different categories
+
+If atlases are ever reintroduced (a future native build, say), these rules still hold — but they
+are not how the current client loads art.
 
 ---
 

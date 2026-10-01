@@ -41,7 +41,7 @@ Every conflict found across the original spec set, the codebase, and the 2026-09
 | C7 | `player_wallets.botho_points` created in Phase 5, consumed in Phase 3 | **Canonical from the start** (R6). Create it in the wallet phase; migrate the Kgotla standing score into it; delete the old field. |
 | C8 | Guild +50% storage in the economy spec but not in the plan's behaviour list | **Keep it** (R7). Must **stack** on tier (24→36, 48→72, 96→144) and vanish instantly on lapse. |
 | C9 | Discoveries: "reuse existing storage" vs a dedicated `field_journal_entries` table | **New table.** Nothing suitable exists in the codebase. |
-| C10 | Fertility Shell: "+50% next sale" vs "quality-grade guarantee" | **Removed entirely** (R8). Three boosts remain: Pula Stone P20, Ancestral Ward P25, Breath of the Land P15. |
+| C10 | Fertility Shell: "+50% next sale" vs "quality-grade guarantee" | **Removed entirely** (R8). The three remaining boosts (Pula Stone, Ancestral Ward, Breath of the Land) were themselves **cut** on 2026-10-01 (`docs/34` §3.3) — `BOOSTS` is now an empty list and no boost appears in any response. |
 
 ### 1b. Codebase vs spec (C11–C15)
 
@@ -157,7 +157,7 @@ Each of these must hold, and each needs its own automated test. **A bug in any o
 - [ ] Bupi fails below Botho 100 on a direct API call (I9)
 - [ ] Storage upgrade raises the enforced cap; writes rejected at cap
 - [ ] Guild +50% **stacks** on tier and disappears on lapse (C8)
-- [ ] Only three boosts exist; no Fertility Shell in seed or store response (C10)
+- [ ] Only the Village Pass subscription exists; no boost SKU in seed or either store response (C10 + `docs/34` §3.3)
 - [ ] **Every crafting row in `02 §6.3` closes horizontally**: `Total + Profit == Net` (F4)
 - [ ] Bupi takes **4** grain; Setena accepts stone as a substitute (F8)
 - [ ] Tools do not consume storage slots (F15)
@@ -215,7 +215,7 @@ Each of these must hold, and each needs its own automated test. **A bug in any o
 - [ ] Dry-run of the rollover executed against production-shaped data before the first real one
 
 ### P9 — Monetisation
-- [ ] `GET /payments/store` returns packs and the plan at `02 §6.6` values. **Boosts are absent (ruling 2026-09-11)** — withdrawn from both storefronts until their effects are wired; R8/C10 still holds because the three slugs remain in config. See `docs/KNOWN_LIMITATIONS.md`.
+- [ ] `GET /payments/store` returns packs and the Village Pass at `02 §6.6` values. **Boosts are absent from both storefronts — in fact absent from the catalogue entirely** (`docs/34` §3.3 cut them on 2026-10-01; R8/C10 holds a fortiori). Asserted by `store.spec.ts`. See `docs/KNOWN_LIMITATIONS.md`.
 - [ ] Top-up credits only after webhook confirmation, never on request
 - [ ] P100 pack credits exactly 105 Pula, once
 - [ ] Daily cap P500 enforced per player per **Botswana** day (UTC+2) — verified at the boundary and one thebe past it (C5)
