@@ -22,7 +22,18 @@ import { BOTHO_DAILY_CAP } from '@molemisi/game-config';
  *     If you are reaching around this service, the correct fix is to add a `source`
  *     here, not to write the column directly.
  */
-export type WalletCurrency = 'pula' | 'botho';
+/**
+ * docs/34 §2.2 (DECIDED 2026-10-01) — three currencies, not two.
+ *
+ * `pula`  earned by play. NEVER sold, never withdrawn (MVP/02 §3.1).
+ * `madi`  bought with mobile money. SPEND-ONLY: decorations and the Village Pass.
+ * `botho` standing. Capped per day (I4). Never sold.
+ *
+ * There is deliberately no `madi → pula` helper anywhere in this file. That
+ * absence is what makes "a free player reaches everything" structurally true
+ * rather than a promise (docs/33 §2, docs/34 §6).
+ */
+export type WalletCurrency = 'pula' | 'botho' | 'madi';
 
 /** Every reason a balance can move. Adding one is a deliberate act. */
 export type LedgerSource =
@@ -41,6 +52,16 @@ export type LedgerSource =
   | 'guild_subscription'
   | 'boost_purchase'
   | 'cosmetic_purchase'
+  /**
+   * docs/34 §2.2 — real money buys MADI, never Pula. `madi_topup` is the only
+   * source that may credit `madi_balance` from a payment, and it is the only
+   * place the old `'topup'` source should be read as "money in".
+   */
+  | 'madi_topup'
+  /** Festival-shelf cosmetic, paid with Madi. */
+  | 'madi_spend'
+  /** The recurring Village Pass. */
+  | 'village_pass'
   | 'letsema_contribution'
   | 'quest_reward'
   | 'bushveld_forage'
@@ -60,10 +81,15 @@ export type LedgerSource =
 
 export interface WalletSnapshot {
   pula_balance: number;
+  /** docs/34 §2.1 — added by 20261001000003_add_madi_balance.sql. */
+  madi_balance: number;
   botho_points: number;
   subscription_status: 'free' | 'guild';
   subscription_expires_at: string | null;
 }
+
+const WALLET_COLUMNS =
+  'pula_balance, madi_balance, botho_points, subscription_status, subscription_expires_at';
 
 @Injectable()
 export class WalletService {
@@ -78,9 +104,7 @@ export class WalletService {
 
     const { data, error } = await admin
       .from('player_wallets')
-      .select(
-        'pula_balance, botho_points, subscription_status, subscription_expires_at',
-      )
+      .select(WALLET_COLUMNS)
       .eq('player_id', playerId)
       .maybeSingle();
 
@@ -92,9 +116,7 @@ export class WalletService {
     const { data: created, error: createError } = await admin
       .from('player_wallets')
       .insert({ player_id: playerId })
-      .select(
-        'pula_balance, botho_points, subscription_status, subscription_expires_at',
-      )
+      .select(WALLET_COLUMNS)
       .single();
 
     if (createError) throw new Error(`Failed to create wallet: ${createError.message}`);
@@ -103,6 +125,11 @@ export class WalletService {
 
   async getPula(playerId: string): Promise<number> {
     return (await this.getWallet(playerId)).pula_balance;
+  }
+
+  /** docs/34 §2.1 — the spend-only premium balance. */
+  async getMadi(playerId: string): Promise<number> {
+    return (await this.getWallet(playerId)).madi_balance ?? 0;
   }
 
   async getBotho(playerId: string): Promise<number> {
@@ -171,6 +198,61 @@ export class WalletService {
     return balance;
   }
 
+  /** True when the player can afford `amount` Madi. */
+  async canAffordMadi(playerId: string, amount: number): Promise<boolean> {
+    return (await this.getMadi(playerId)) >= amount;
+  }
+
+  /**
+   * docs/34 §2.2 — spend Madi, or throw. Check-and-debit in one round trip, for
+   * the same reason `spendPula` does it: two concurrent purchases must not both
+   * pass an affordability check.
+   *
+   * The positive-finite guard is load-bearing here too — `apply()` negates the
+   * amount, so an unvalidated negative would arrive at `wallet_apply` as a
+   * positive delta and MINT Madi.
+   */
+  async spendMadi(
+    playerId: string,
+    amount: number,
+    source: LedgerSource,
+    refId?: string,
+  ): Promise<number> {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException(
+        `spendMadi requires a positive, finite amount (got ${amount})`,
+      );
+    }
+    if (!(await this.canAffordMadi(playerId, amount))) {
+      throw new BadRequestException(
+        `Not enough Madi for this (need ${amount}). Top up from the store.`,
+      );
+    }
+    return this.apply(playerId, 'madi', -amount, source, refId);
+  }
+
+  /**
+   * docs/34 §2.2 — credit Madi. The ONLY legitimate caller is PaymentsService
+   * after a provider-confirmed real-money payment.
+   *
+   * There is no gameplay path to this method and no admin grant path: Madi is
+   * 1:1 backed by player deposits, so creating it out of nothing would break the
+   * backing that makes it safe to hold.
+   */
+  async creditMadi(
+    playerId: string,
+    amount: number,
+    source: LedgerSource,
+    refId?: string,
+  ): Promise<number> {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException(
+        `creditMadi requires a positive, finite amount (got ${amount})`,
+      );
+    }
+    return this.apply(playerId, 'madi', amount, source, refId);
+  }
+
   /** Recent ledger rows, newest first. Feeds the player's own transaction view. */
   async recentEntries(playerId: string, limit = 50) {
     const { data, error } = await this.supabase
@@ -186,24 +268,45 @@ export class WalletService {
   }
 
   /**
-   * Pula credited from real-money top-ups today, in Botswana time (R4).
-   * The P500/day cap is checked against this, not against the raw ledger, so the
-   * day boundary is the player's day and not the server's.
+   * Real money (BWP) spent today, in Botswana time (R4). The P500/day cap is
+   * checked against THIS, not against a balance, so the day boundary is the
+   * player's day and not the server's.
+   *
+   * docs/34 §2.2 — this used to sum `ledger_entries` where `currency='pula'` and
+   * `source='topup'`. That cannot survive the switch to Madi, and summing Madi
+   * instead would be silently WRONG: the packs carry a bonus (P50 grants 55
+   * Madi), so a Madi sum measures credit, not spend, and would report a player
+   * who spent P50 as having spent P55 — tightening a fraud control by 10% for a
+   * reason nobody chose.
+   *
+   * The `payments` table is the record of what was actually charged, so the cap
+   * is measured there.
    */
   async topUpTotalToday(playerId: string, now = new Date()): Promise<number> {
     const startUtc = this.startOfBotswanaDay(now);
 
     const { data, error } = await this.supabase
       .getAdminClient()
-      .from('ledger_entries')
+      .from('payments')
       .select('amount')
       .eq('player_id', playerId)
-      .eq('currency', 'pula')
-      .eq('source', 'topup')
+      // `payments.status` is a Postgres ENUM (payment_status) whose members are
+      // UPPERCASE — 'PENDING' | 'COMPLETED' | ... (20260902000008). Matching the
+      // lowercase 'completed' here does not error; it silently matches nothing,
+      // which leaves the daily cap reading zero forever. Caught by the payments
+      // spec, and the reason this comment is here.
+      .eq('status', 'COMPLETED')
       .gte('created_at', startUtc);
 
     if (error) throw new Error(`Failed to read top-ups: ${error.message}`);
-    return (data ?? []).reduce((sum, r) => sum + Number(r.amount ?? 0), 0);
+
+    // UNIT TRAP: `payments.amount` is in CENTS (column comment in
+    // 20260902000008_payments_table.sql), while DAILY_TOP_UP_CAP_BWP and
+    // VirtualGood.price are whole BWP. Summing without dividing makes one
+    // P250 purchase look like BWP 25,000 and the cap fires on the first buy of
+    // the day — which is exactly what the first run of this spec caught.
+    const cents = (data ?? []).reduce((sum, r) => sum + Number(r.amount ?? 0), 0);
+    return cents / 100;
   }
 
   /**

@@ -2,7 +2,7 @@
  * Shared in-memory Supabase mock for API service specs.
  *
  * Mirrors the stateful builder pattern from chapter.service.spec, but adds the
- * `rpc('wallet_apply', …)` path so specs can exercise the REAL WalletService (and
+ * `rpc('wallet_apply', â€¦)` path so specs can exercise the REAL WalletService (and
  * therefore prove actual balance movements) against the same mock DB. The `wallet_apply`
  * implementation here matches the Postgres function's two load-bearing invariants:
  *   - a negative resulting balance is rejected (Pula and Botho)
@@ -29,10 +29,22 @@ export interface MockDb {
   water: any[];
   buildings: any[];
   livestock: any[];
+  farm_plots: any[];
+  crop_instances: any[];
+  inventory: any[];
+  game_ledger_entries: any[];
+  market_prices: any[];
+  market_transactions: any[];
+  economy_price_snapshots: any[];
+  anti_cheat_flags: any[];
 }
 
 const PLAYER_WALLET_DEFAULT = (r: any) => ({
   pula_balance: 0,
+  // docs/34 Â§2.1 â€” added by 20261001000003_add_madi_balance.sql. The mock mirrors
+  // the real schema so a spec that exercises spendMadi tests real behaviour
+  // rather than passing against a fiction.
+  madi_balance: 0,
   botho_points: 0,
   subscription_status: 'free',
   subscription_expires_at: null,
@@ -60,6 +72,14 @@ export function makeDb(seed: Partial<MockDb> = {}): MockDb {
     water: seed.water ?? [],
     buildings: seed.buildings ?? [],
     livestock: seed.livestock ?? [],
+    farm_plots: seed.farm_plots ?? [],
+    crop_instances: seed.crop_instances ?? [],
+    inventory: seed.inventory ?? [],
+    game_ledger_entries: seed.game_ledger_entries ?? [],
+    market_prices: seed.market_prices ?? [],
+    market_transactions: seed.market_transactions ?? [],
+    economy_price_snapshots: seed.economy_price_snapshots ?? [],
+    anti_cheat_flags: seed.anti_cheat_flags ?? [],
   };
 }
 
@@ -145,6 +165,23 @@ class MockBuilder {
   private matches(row: any): boolean {
     return this.filters.every((f) => {
       const v = row[f.col];
+      // ISO-8601 timestamps compare correctly as strings; pulling the guard
+      // out keeps helper tests from falling back to `(v ?? 0) >= val`, which
+      // coerces a string timestamp to NaN and drops every row.
+      if (typeof v === 'string' || typeof f.val === 'string') {
+        switch (f.op) {
+          case 'eq':
+            return v === f.val;
+          case 'neq':
+            return v !== f.val;
+          case 'gt':
+            return String(v ?? '') > String(f.val);
+          case 'lt':
+            return String(v ?? '') < String(f.val);
+          case 'gte':
+            return String(v ?? '') >= String(f.val);
+        }
+      }
       switch (f.op) {
         case 'eq':
           return v === f.val;
@@ -176,17 +213,22 @@ class MockBuilder {
             return this.lastResult;
           }
         }
+        // Supabase `insert` accepts a single row or an array of rows; support
+        // both so batched writes (e.g. anti-cheat flags) can be asserted on.
+        const items: any[] = Array.isArray(w.row) ? w.row : [w.row];
         const dflt = TABLE_DEFAULTS[this.table];
-        const filled = dflt ? dflt(w.row) : { ...w.row };
-        this.store.push(filled);
-        this.lastResult = this.selectCalled ? { data: [filled], error: null } : { data: null, error: null };
+        const inserted = items.map((item) => (dflt ? dflt(item) : { ...item }));
+        for (const row of inserted) this.store.push(row);
+        this.lastResult = this.selectCalled
+          ? { data: inserted, error: null }
+          : { data: null, error: null };
       } else if (w.type === 'update') {
         const matched = this.store.filter((r) => this.matches(r));
         for (const t of matched) Object.assign(t, w.row);
         this.lastResult = this.selectCalled ? { data: matched, error: null } : { data: null, error: null };
       } else {
         // Upsert: match on every column of the (possibly composite) conflict
-        // key, like Postgres ON CONFLICT (col, ...) — not on a literal key name.
+        // key, like Postgres ON CONFLICT (col, ...) â€” not on a literal key name.
         const cols = w.onConflict ? w.onConflict.split(',').map((c) => c.trim()) : [];
         const idx = cols.length
           ? this.store.findIndex((r) => cols.every((c) => r[c] === w.row[c]))
@@ -240,6 +282,25 @@ function runWalletApply(db: MockDb, params: any): { data: number | null; error: 
     db.ledger_entries.push({
       player_id: p_player_id,
       currency: 'pula',
+      amount,
+      balance_after: next,
+      source: p_source,
+      ref_id: p_ref_id ?? null,
+      created_at: new Date().toISOString(),
+    });
+    return { data: next, error: null };
+  }
+  // docs/34 §2.1 — the third currency. Mirrors the wallet_apply branch in
+  // 20261001000003_add_madi_balance.sql, including the floor.
+  if (p_currency === 'madi') {
+    const next = Number(w.madi_balance) + amount;
+    if (next < 0) {
+      return { data: null, error: { message: 'wallet_apply: insufficient Madi' } };
+    }
+    w.madi_balance = next;
+    db.ledger_entries.push({
+      player_id: p_player_id,
+      currency: 'madi',
       amount,
       balance_after: next,
       source: p_source,

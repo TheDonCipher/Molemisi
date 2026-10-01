@@ -46,10 +46,8 @@ export class MonetisationController {
     return { success: true, data };
   }
 
-  @Post('admin/grant-weekly')
-  @UseGuards(AdminGuard)
-  async grantWeekly() {
-    const data = await this.monetisation.grantWeeklyPulaStones(new Date());
-    return { success: true, data };
-  }
+  // docs/34 §3.2 (2026-10-01) — the `admin/grant-weekly` route is REMOVED, along
+  // with the job behind it. It granted subscribers a Pula Stone, a cut boost
+  // whose effects no endpoint applied. Leaving the route would leave an operator
+  // able to "grant" a broken item on a timer.
 }

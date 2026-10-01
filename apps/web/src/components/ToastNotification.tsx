@@ -46,7 +46,10 @@ export function ToastNotification() {
         <div
           className={`w-10 h-10 ${tone.iconBox} flex items-center justify-center shrink-0 text-2xl`}
         >
-          <span className="animate-pulse">{toast.icon || '🌾'}</span>
+          {/* 2.8/V-14 — no pulse here. The toast already enters on animate-bounce-in;
+              layering a continuous pulse on top is a second attention claim for an
+              element that is, by definition, already the newest thing on screen. */}
+          <span>{toast.icon || '🌾'}</span>
         </div>
         <div className="flex flex-col flex-1 min-w-0">
           <span

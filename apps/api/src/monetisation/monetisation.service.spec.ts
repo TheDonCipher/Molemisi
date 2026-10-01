@@ -4,20 +4,19 @@ import { WalletService } from '../wallet/wallet.service';
 import { SupabaseService } from '../database/supabase.service';
 import { makeDb, clientFor, type MockDb, type MockClient } from '../test/supabase-mock';
 
+
 /**
- * P9 — the two monetisation jobs (05 §P9 "Jobs").
+ * P9 - the subscription-expiry job (05 P9 "Jobs").
  *
  * Proves:
- *   - flipLapsedSubscriptions flips ONLY lapsed Guild subscribers, and re-running is a no-op
- *   - grantWeeklyPulaStones grants one stone per subscriber per week, idempotent within a week,
- *     and grants again the following week
- *   - the weekly key is a Botswana-time Monday (so "this week" is the player's week)
+ *   - flipLapsedSubscriptions flips ONLY lapsed subscribers; re-running is a no-op
+ *   - docs/34 3.3: NO JOB GRANTS A BOOST. The weekly Pula Stone grant was deleted
+ *     on 2026-10-01; the assertion at the end is what stops one creeping back.
  */
 
 const NOW = new Date('2026-09-10T09:00:00Z'); // a Thursday; UTC+2 week starts Mon 2026-09-07
-const NEXT_WEEK = new Date('2026-09-18T09:00:00Z'); // following Thursday; week starts Mon 2026-09-14
 
-describe('MonetisationService — P9 jobs', () => {
+describe('MonetisationService - P9 jobs', () => {
   let service: MonetisationService;
   let db: MockDb;
   let client: MockClient;
@@ -50,7 +49,8 @@ describe('MonetisationService — P9 jobs', () => {
 
       expect(db.player_wallets.find((w) => w.player_id === 'u1')!.subscription_status).toBe('free');
       expect(db.player_wallets.find((w) => w.player_id === 'u1')!.subscription_expires_at).toBeNull();
-      // Active subscriber untouched — auto-collect + storage bonus stay on.
+      // Active subscriber untouched  -- -" -a- -- -a¬-&¡ -a-¬ -- --š-¬ -a- auto-collect + storage bonus stay on.
+      // Active subscriber untouched - the helper and storage bonus stay on.
       expect(db.player_wallets.find((w) => w.player_id === 'u2')!.subscription_status).toBe('guild');
       expect(db.player_wallets.find((w) => w.player_id === 'u3')!.subscription_status).toBe('free');
 
@@ -60,42 +60,16 @@ describe('MonetisationService — P9 jobs', () => {
     });
   });
 
-  describe('grantWeeklyPulaStones (weekly)', () => {
-    function seedSubscribers() {
-      db.player_wallets = [
-        { player_id: 'u1', subscription_status: 'guild', subscription_expires_at: '2099-01-01T00:00:00Z' },
-        { player_id: 'u2', subscription_status: 'guild', subscription_expires_at: '2099-01-01T00:00:00Z' },
-        { player_id: 'u3', subscription_status: 'free' },
-      ];
-    }
-
-    it('grants one stone per Guild subscriber this week, and not to free players', async () => {
-      seedSubscribers();
-      const res = await service.grantWeeklyPulaStones(NOW);
-      expect(res.granted).toBe(2);
-
-      const stones = db.player_boosts.filter((b) => b.slug === 'pula_stone' && b.source === 'guild_weekly');
-      expect(stones).toHaveLength(2);
-      expect(stones.every((s) => s.week_start === '2026-09-07')).toBe(true);
-      // Free player got nothing.
-      expect(db.player_boosts.filter((b) => b.player_id === 'u3')).toHaveLength(0);
-    });
-
-    it('is idempotent within a week but grants again the next week', async () => {
-      seedSubscribers();
-      await service.grantWeeklyPulaStones(NOW);
-      const weekA = db.player_boosts[0]!.week_start;
-
-      // Same week, re-run: no new stones.
-      const res2 = await service.grantWeeklyPulaStones(NOW);
-      expect(res2.granted).toBe(0);
-      expect(db.player_boosts.filter((b) => b.slug === 'pula_stone')).toHaveLength(2);
-
-      // Following week: granted again, under a new week key.
-      const res3 = await service.grantWeeklyPulaStones(NEXT_WEEK);
-      expect(res3.granted).toBe(2);
-      expect(db.player_boosts.filter((b) => b.slug === 'pula_stone')).toHaveLength(4);
-      expect(db.player_boosts.filter((b) => b.week_start !== weekA)).toHaveLength(2);
-    });
+  // docs/34 3.3 (2026-10-01): the weekly Pula Stone grant and its
+  // admin/grant-weekly route are deleted. Boosts were cut, so no job may write
+  // a player_boosts row - a subscription paying a broken item on a timer is
+  // worse than paying nothing.
+  it('writes no boost rows, now that the weekly grant job is gone', async () => {
+    db.player_wallets = [
+      { player_id: 'u1', subscription_status: 'guild', subscription_expires_at: '2099-01-01T00:00:00Z' },
+    ];
+    await service.flipLapsedSubscriptions(NOW);
+    expect(db.player_boosts).toHaveLength(0);
+    expect((service as unknown as Record<string, unknown>).grantWeeklyPulaStones).toBeUndefined();
   });
 });

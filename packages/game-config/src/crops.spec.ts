@@ -293,10 +293,13 @@ describe('Economy — 02 §6', () => {
     expect(effectiveSlotCap(3, true)).toBe(144);
   });
 
-  it('D10/F17: land ladder is 4 -> 8 -> 12 -> 20 for P37,200 total', () => {
-    expect(LAND_LADDER.map((l) => l.plots)).toEqual([4, 8, 12, 20]);
-    expect(LAND_LADDER.map((l) => l.costPula)).toEqual([null, 1200, 6000, 30000]);
-    expect(LAND_LADDER_TOTAL).toBe(37200);
+  it('D10/F17 + docs/34 §4.1: land ladder is 4 -> 8 -> 12 -> 16 -> 20 for P31,200 total', () => {
+    expect(LAND_LADDER.map((l) => l.plots)).toEqual([4, 8, 12, 16, 20]);
+    // Retuned 2026-10-01 (docs/33 §3.2 / docs/34 §4.1). The 12→20 rung was
+    // P30,000 for ~+P118/day — a ~254-day payback that docs/31 P2-13 called a
+    // "severe pacing tail". Shape unchanged; only the tail's price moved.
+    expect(LAND_LADDER.map((l) => l.costPula)).toEqual([null, 1200, 6000, 8000, 15000]);
+    expect(LAND_LADDER_TOTAL).toBe(31200);
     expect(STARTING_PLOTS).toBe(4);
     expect(MAX_PLOTS).toBe(20);
   });
@@ -313,23 +316,24 @@ describe('Economy — 02 §6', () => {
     expect(BOTHO_THRESHOLDS.PRIZE_ELIGIBILITY).toBe(1000);
   });
 
-  it('top-up cap is P500/day in BWP', () => {
+  it('top-up cap is P500/day in BWP, and no single pack IS the cap', () => {
     expect(DAILY_TOP_UP_CAP_BWP).toBe(500);
-    expect(TOP_UP_PACKS.some((p) => p.priceBwp === 500)).toBe(true);
+    // docs/34 §2.3 — the P500 pack is gone. The cap is an anti-fraud control,
+    // and a ladder whose top rung sits exactly on it makes every max purchase
+    // look like a deliberate attempt to trip the limit.
+    expect(TOP_UP_PACKS.some((p) => p.priceBwp === DAILY_TOP_UP_CAP_BWP)).toBe(false);
     for (const p of TOP_UP_PACKS) {
       expect(p.priceBwp).toBeLessThanOrEqual(DAILY_TOP_UP_CAP_BWP);
-      expect(p.grantedPula).toBeGreaterThanOrEqual(p.priceBwp);
+      expect(p.grantedMadi).toBeGreaterThanOrEqual(p.priceBwp);
     }
   });
 
-  it('R8: exactly three boosts remain — no Fertility Shell', () => {
-    expect(BOOSTS).toHaveLength(3);
-    expect(BOOSTS.map((b) => b.slug).sort()).toEqual([
-      'ancestral_ward',
-      'breath_of_the_land',
-      'pula_stone',
-    ]);
-    expect(BOOSTS.some((b) => b.slug.includes('fertility'))).toBe(false);
+  it('docs/34 §3.3: boosts are cut — none remain, including Fertility Shell', () => {
+    // Replaces the old "exactly three remain" ruling (R8). They were sold while
+    // no endpoint applied their effects, so they were withdrawn on 2026-09-11
+    // and are now removed outright on 2026-10-01.
+    expect(BOOSTS).toHaveLength(0);
+    expect(BOOSTS.some((b) => String(b).includes('fertility'))).toBe(false);
   });
 
   it('F7: cosmetics are an unbounded Pula sink', () => {

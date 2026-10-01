@@ -28,6 +28,8 @@ import { ChapterModule } from './chapters/chapter.module';
 import { MonetisationModule } from './monetisation/monetisation.module';
 import { DevModule } from './dev/dev.module';
 import { DatabaseModule } from './database/database.module';
+import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
+import { EconomyModule } from './economy/economy.module';
 
 @Module({
   imports: [
@@ -69,6 +71,8 @@ import { DatabaseModule } from './database/database.module';
     ChapterModule,
     MonetisationModule,
     DevModule,
+    AntiCheatModule,
+    EconomyModule,
   ],
 })
 export class AppModule {}

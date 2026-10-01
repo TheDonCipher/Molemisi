@@ -61,6 +61,9 @@ export const translations = {
   // ---- Farm Screen ----
   emptySoil: { en: 'Empty Soil', tn: 'Mobu e Se Naga' },
   ready: { en: 'READY', tn: 'E MODUME' },
+  // The plot stall: the crop stopped because the shared tank is empty. Not a water
+  // level — a stall, and the only fix is refilling the tank (see FarmScreen).
+  dry: { en: 'DRY', tn: 'E OMETSE' },
   tapToPlant: { en: 'Tap to Plant', tn: 'Tobetsa go Rolola' },
   plantOn: { en: 'Plant on', tn: 'Rolola mo' },
   plant: { en: '🌱 Plant', tn: '🌱 Rolola' },
@@ -87,6 +90,11 @@ export const translations = {
     tn: 'Dikago di le {n} di tlhoka tsosoloso',
   },
   wbSeasonChanged: { en: 'The season turned to {season}', tn: 'Sehla se fetohile go {season}' },
+  // G-12 — the 24h offline cap silently discards time; name it so the sheet tells the truth.
+  wbAwayDiscarded: {
+    en: 'You were away {away}. The farm rested — {applied} of growth were applied.',
+    tn: 'O ne o le kwa ntle {away}. Tshimo e phomotse — {applied} ya kgololo e dirilwe.',
+  },
   wbDismiss: { en: 'Back to the farm', tn: 'Boela tshimong' },
   weatherClear: { en: 'Clear', tn: 'Phepa' },
   weatherCloudy: { en: 'Cloudy', tn: 'Maru' },
@@ -112,7 +120,7 @@ export const translations = {
   animalChicken: { en: 'Chicken', tn: 'Kgogo' },
   animalGoat: { en: 'Goat', tn: 'Pudi' },
   animalCow: { en: 'Cow', tn: 'Kgomo' },
-  animalPig: { en: 'Pig', tn: 'Kolobe' },
+  animalGuineaFowl: { en: 'Guinea Fowl', tn: 'Kgaka' },
 
   // ---- Farm Screen: Buildings ----
   buildings: { en: 'Buildings', tn: 'Dikago' },
@@ -299,6 +307,7 @@ export const translations = {
   notSettled: { en: 'Not settled', tn: 'Ga e a Khutsa' },
   needsKagiso: { en: 'Need {n} Kagiso', tn: 'E hloka Kagiso {n}' },
   sparkle: { en: 'Sparkle', tn: 'Lesedi' },
+  sparkling: { en: 'Sparkling today', tn: 'E a phadima gompieno' },
   seasonal: { en: 'In season', tn: 'Nakong' },
   newDiscovery: { en: 'New Discovery!', tn: 'Tlhakiso e Ncha!' },
   sceneLocked: { en: 'Locked', tn: 'E Notlilwe' },

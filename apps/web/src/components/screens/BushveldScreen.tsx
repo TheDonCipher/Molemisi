@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { useBushveld, BushveldHotspot } from '../../lib/bushveld';
 import { useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
+import { PixelSprite } from '../PixelSprite';
+import { PixelUiIcon } from '../PixelUiIcon';
+import { ChapterParticles } from '../ChapterParticles';
 
 const STAGE_LABEL = ['Degraded', 'Partial', 'Recovered', 'Full'];
 
@@ -42,6 +45,10 @@ export function BushveldScreen() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 pointer-events-none" />
       </div>
 
+      {/* 2.9/V-11 — the season drifts over the scene itself, so the Bushveld reads as
+          the same world as the farm rather than a static photograph. Decorative. */}
+      <ChapterParticles className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-[1]" />
+
       {/* Scene tabs */}
       <div className="relative z-10 flex gap-1 px-2 py-2 overflow-x-auto">
         {scenes.map((s) => (
@@ -67,13 +74,20 @@ export function BushveldScreen() {
             <span className="font-headline text-xs text-primary uppercase font-bold">{tl('kagiso')}</span>
             <div className="flex gap-0.5">
               {Array.from({ length: active.kagisoMax }).map((_, i) => (
-                <span
+                // 2.7/V-6 — Kagiso is drawn from its own pip sprite, not a CSS
+                // square. Empty pips are the same art desaturated by opacity, so
+                // the row keeps a constant shape at any fill level.
+                <PixelUiIcon
                   key={i}
-                  className={`w-3 h-3 rounded-sm border ${
-                    i < active.kagiso
-                      ? 'bg-status-success border-status-success'
-                      : 'bg-surface-container-lowest border-wood-border'
-                  }`}
+                  name="status_kagiso_pip"
+                  emoji={i < active.kagiso ? '🟢' : '⚪'}
+                  size={12}
+                  label={i < active.kagiso ? tl('kagiso') : `${tl('kagiso')} (empty)`}
+                  style={{
+                    display: 'block',
+                    opacity: i < active.kagiso ? 1 : 0.28,
+                    filter: i < active.kagiso ? undefined : 'grayscale(1)',
+                  }}
                 />
               ))}
             </div>
@@ -125,19 +139,46 @@ export function BushveldScreen() {
               className="absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${h.x}%`, top: `${h.y}%` }}
             >
+              {/* 2.8/V-14 — the glow marks a ready hotspot, but does NOT pulse on
+                  every one of them: with thirteen hotspots that was thirteen
+                  simultaneous pulses and the cue meant nothing (03 §13). The
+                  gather-able state is shown statically; the single highest-priority
+                  pulse on this screen belongs to the scene's own resource meter. */}
               <span
                 className={`block w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg relative ${
                   isReady
-                    ? 'bg-primary-container/90 border-primary animate-pulse'
+                    ? 'bg-primary-container/90 border-primary'
                     : 'bg-wood-dark/70 border-wood-border opacity-60'
                 }`}
               >
-                🌿
+                {/* 2.6/V-5 — the real hotspot sprite (config `spriteKey`, already
+                    served by the API) instead of one hardcoded 🌿 for all thirteen.
+                    Falls back to 🌿 only if the PNG is missing. */}
+                <PixelSprite
+                  src={`/assets/${h.spriteKey}`}
+                  scale={1}
+                  nativeWidth={24}
+                  fallback="🌿"
+                  alt={h.tell}
+                />
                 {h.isSparklingToday && (
-                  <span className="absolute -top-2 -right-2 text-yellow-300 text-sm">✦</span>
+                  <PixelUiIcon
+                    name="status_ready"
+                    emoji="✦"
+                    size={14}
+                    label={tl('sparkling')}
+                    className="absolute -top-2 -right-2"
+                    style={{ filter: 'drop-shadow(0 0 2px rgba(255,255,0,0.7))' }}
+                  />
                 )}
                 {h.isSeasonalActiveToday && (
-                  <span className="absolute -bottom-2 -right-2 text-pink-300 text-xs">🌸</span>
+                  <PixelUiIcon
+                    name="weather_wind"
+                    emoji="🌸"
+                    size={14}
+                    label={tl('seasonal')}
+                    className="absolute -bottom-2 -right-2"
+                  />
                 )}
               </span>
               <span className="block text-center font-mono text-[9px] text-cream-surface mt-0.5 bg-wood-dark/60 px-1 max-w-[80px] truncate">
@@ -153,7 +194,13 @@ export function BushveldScreen() {
         <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-sm mx-auto animate-slide-up">
           <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">🌿</span>
+              <PixelSprite
+                src={`/assets/${selected.spriteKey}`}
+                scale={1}
+                nativeWidth={24}
+                fallback="🌿"
+                alt={selected.tell}
+              />
               <span className="font-headline text-sm text-cream-surface font-bold">
                 {selected.tell}
               </span>

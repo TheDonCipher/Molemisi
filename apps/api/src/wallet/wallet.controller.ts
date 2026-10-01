@@ -28,6 +28,11 @@ export class WalletController {
       success: true,
       data: {
         pula: snapshot.pula_balance,
+        // docs/34 §4.2 — the spend-only premium balance. Coalesced to null when
+        // absent so the client can hide the row entirely on a database that has
+        // not yet run 20261001000003_add_madi_balance.sql, rather than showing a
+        // permanent "0 M" that implies the player has bought nothing.
+        madi: snapshot.madi_balance ?? null,
         botho: snapshot.botho_points,
         subscriptionStatus: snapshot.subscription_status,
         subscriptionExpiresAt: snapshot.subscription_expires_at,

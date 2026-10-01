@@ -13,11 +13,12 @@
  *   <CurrencyGuideModal />    — same cards inside a dismissable modal
  *                               (opened by the "?" button in the header)
  *
- * Facts are drawn from docs/MVP/02_Economy_And_Currencies.md (D7: Pula soft,
- * Madi hard/withdrawable, Chapter Token seasonal/expires), 03 §6.2 (Botho is
- * standing, not a balance), and the Bushveld/Kagiso model (a per-scene peace
- * meter, never buyable). Setswana copy mirrors phrasing already validated in
- * translations.ts; the longer prose should still get a native-speaker pass.
+ * Facts are drawn from the model DECIDED on 2026-10-01 (docs/33 §2, built in
+ * docs/34): Pula is earned-only and never sold, Madi is the spend-only premium
+ * currency bought with mobile money, Botho is capped standing, and the seasonal
+ * currency is a Season Stamp that buys keepsakes. Setswana copy mirrors phrasing
+ * already validated in translations.ts; the longer prose should still get a
+ * native-speaker pass.
  */
 
 import React from 'react';
@@ -63,11 +64,12 @@ const CURRENCIES: CurrencyInfo[] = [
       { en: 'Buy seeds, tools and stock at the Market', tn: 'Reka merolwana, didirisiwa le thepa Ditshopong' },
       { en: 'Fill the Jojo tank and pump the well', tn: 'Tlatša Jojo gane o hudiše lentswe' },
       { en: 'Pay crafting fees and build blueprints', tn: 'Leka tuelo ya botaki le go aga dintlha' },
-      { en: 'Back community projects; buy boosts & cosmetics', tn: 'Thekga diprojeke; reka dinonotsho le mokgabiso' },
+      { en: 'Expand your land and build on your farm', tn: 'Atolosa tshimo ea hao o aga mo tshimong' },
+      { en: 'Market decorations — the everyday line', tn: 'Dimonotsho tša Ditshopong — mo o mmoleng wa letšatši' },
     ],
     note: {
-      en: 'Cannot be withdrawn — it is play money, not real money.',
-      tn: 'Ga e tsoe — ke tšhelete ya papadi, eseng ya nnete.',
+      en: 'Earned only — we never sell it. Cannot be withdrawn.',
+      tn: 'E fenngwa ka papadi — re e rekisa ka morago. Ga e tsoe.',
     },
   },
   {
@@ -88,14 +90,16 @@ const CURRENCIES: CurrencyInfo[] = [
     ],
     spendLabel: { en: 'Unlocks', tn: 'E bula' },
     spend: [
-      { en: 'Crafting recipes (Botho 100)', tn: 'Didirišwa tša botaki (Botho 100)' },
-      { en: 'Letsema one-tap harvest (Botho 500)', tn: 'Kotulo ya Letsema (Botho 500)' },
+      { en: 'Baking recipes (Botho 100)', tn: 'Didirišwa tša botaki (Botho 100)' },
+      { en: 'Auto-Feeder for your kraal (Botho 300)', tn: 'Moima o tima kraal (Botho 300)' },
       { en: 'Deep Bushveld (Botho 300)', tn: 'Bushveld e Botelele (Botho 300)' },
+      { en: 'Letsema one-tap harvest (Botho 500)', tn: 'Kotulo ya Letsema (Botho 500)' },
+      { en: 'Auto-Helper waters and harvests (Botho 500)', tn: 'Mpho yo thusa o hlaše o kotola (Botho 500)' },
       { en: 'Prize eligibility (Botho 1000)', tn: 'Go tšhepa mputso (Botho 1000)' },
     ],
     note: {
-      en: 'Never spent or withdrawn — it only grows and opens doors.',
-      tn: 'Ga e senngwe goba ya tsoa — e gola feela gane e bula mamati.',
+      en: 'Never spent, bought or withdrawn - it only grows and opens doors. Capped at 50 a day.',
+      tn: 'Ga e senngwe, ga e rekiwe, ga e tsoe - e gola feela gane e bula mamati. Molao: 50 ka letsatsi.',
     },
   },
   {
@@ -103,46 +107,48 @@ const CURRENCIES: CurrencyInfo[] = [
     icon: '📱',
     symbol: 'M',
     name: { en: 'Madi', tn: 'Madi' },
-    kind: { en: 'Real money', tn: 'Tšhelete ya nnete' },
+    kind: { en: 'Bought with money', tn: 'E rekilwe ka tšhelete' },
     tone: 'money',
     what: {
-      en: 'The real-money layer: 1 Madi = BWP 1.00. In v1.1 you top up by mobile money and can withdraw or trade with players. For now, topping up credits Pula directly.',
-      tn: 'Legato la tšhelete ya nnete: 1 Madi = BWP 1.00. Mo v1.1 o tlatša ka tšhelete ya mogala gane o ka e tšwa goba o rekisana le babapadi. Hona ja, go tlatša go fa Pula ka go tobokga.',
+      en: 'What your phone buys: 1 Madi = BWP 1.00. You can only spend it on looking good and on the Village Pass. It cannot become Pula, so spending real money never makes you a better farmer.',
+      tn: 'Tšhelete eo o mogala o e rekang: 1 Madi = BWP 1.00. O ka e senngeng fetseng go nna le ntle le go khetha Village Pass. Ga e etlolwe go Pula, ka gonne go rekile go tšhelete ga o o se ke o dira mošoši yo mogala.',
     },
     earn: [
-      { en: 'Top up with mobile money (arrives v1.1)', tn: 'Tlatša ka tšhelete ya mogala (e tla v1.1)' },
-      { en: 'Get paid by players on the Exchange (v1.1)', tn: 'O lefwa ke babapadi mo Exchange (v1.1)' },
+      { en: 'Top up with mobile money (Orange Money, MyZaka, Smega)', tn: 'Tlatša ka tšhelete ya mogala (Orange Money, MyZaka, Smega)' },
+      { en: 'Packs from P5 up to P250, capped at P500 a day', tn: 'Diphutho tša P5 go fittha P250, molao P500 ka letšatši' },
     ],
     spendLabel: { en: 'Spend', tn: 'Senngwa' },
     spend: [
-      { en: 'Withdraw to your verified mobile number (v1.1)', tn: 'Tšwa go nomoro ya gago e netefaditswego (v1.1)' },
-      { en: 'Trade goods with players on the Exchange (v1.1)', tn: 'Rekisana thepa le babapadi mo Exchange (v1.1)' },
+      { en: 'Festival decorations - the seasonal look', tn: 'Dimonotsho tša kerafe - ntlha ya nakong' },
+      { en: 'The Village Pass (M50 a month)', tn: 'Village Pass (M50 ka kgwale)' },
     ],
     note: {
-      en: 'Not in v1 yet. Today, real-money top-ups credit Pula 1:1 (capped P500/day).',
-      tn: 'Ga e sa le v1. Gompieno, go tlatša go fa Pula 1:1 (molao P500/letšatši).',
+      en: 'Spend-only. Never converts to Pula, never withdrawn, never traded.',
+      tn: 'Senngwa fela. Ga e fetolwe go Pula, ga e tsoe, ga e rekisana.',
     },
   },
   {
     id: 'chapter',
-    icon: '📖',
-    symbol: 'CT',
-    name: { en: 'Chapter Token', tn: 'Tšhelete ya Kgaolo' },
+    icon: '✦',
+    symbol: '✦',
+    name: { en: 'Season Stamp', tn: 'Sekilafatso sa Nako' },
     kind: { en: 'Seasonal', tn: 'Nakong' },
     tone: 'seasonal',
     what: {
-      en: 'The seasonal Almanac currency. Earned by climbing the chapter track; it expires to zero when the chapter ends.',
+      en: 'A mark of the season you were here for. Earned by climbing the chapter track; it resets to zero when the chapter ends.',
       tn: 'Tšhelete ya Almanac ya nakong. E fenngwa ka go gola kgaolo; e fela go ya go lekana ge kgaolo e fela.',
     },
     earn: [
       { en: 'Almanac milestones: quests, forages, harvests, community work', tn: 'Dintlha tša Almanac: dithata, go fula, dikotulo, ditiro tša setšhaba' },
+      { en: 'Kgotla contracts and Almanac discoveries', tn: 'Ditangalo tša Kgotla le dithuti tša Almanac' },
     ],
     spendLabel: { en: 'Spend', tn: 'Senngwa' },
     spend: [
       { en: 'Claim Almanac chapter rewards before they expire', tn: 'Amogela mputso wa Almanac pele o fela' },
+      { en: 'Season souvenirs - the things you keep', tn: 'Ditlhabologelo tša nako - dintho tseo o bolokang' },
     ],
     note: {
-      en: 'Expires to zero at chapter end — spend it before the season turns.',
+      en: 'It buys keepsakes, never power. Never seeds, water, land or Pula.',
       tn: 'E fela go lekana ge kgaolo e fela — e sebelise pele nako e fetoga.',
     },
   },

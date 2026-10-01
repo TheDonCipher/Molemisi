@@ -234,9 +234,13 @@ export function MarketScreen() {
           src="/assets/tiles/sky/market_portrait.png"
           onError={(e) => {
             const img = e.target as HTMLImageElement;
+            // 2.9/V-13 — the old fallback pointed at `backgrounds/market_scene.png`,
+            // which does not exist, so a missing portrait produced a guaranteed
+            // console 404 and then a blank screen. Fall back to the landscape
+            // market tile, which is real and was previously unused.
             if (!img.dataset.fallback) {
               img.dataset.fallback = '1';
-              img.src = '/assets/backgrounds/market_scene.png';
+              img.src = '/assets/tiles/sky/market.png';
             } else {
               img.style.display = 'none';
             }

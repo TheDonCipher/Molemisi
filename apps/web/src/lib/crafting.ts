@@ -49,7 +49,10 @@ export interface CraftingRecipe {
   durationMinutes: number;
   unlock: { bothoGte: number } | null;
   isUnlocked: boolean;
+  /** Margin at TODAY's prices, straight from the server — never recomputed here (I7). */
   economics: RecipeEconomics;
+  /** Server says this craft would lose Pula right now. Warn, do not block (31 §6.3). */
+  underwaterNow: boolean;
 }
 
 export interface CraftingJob {

@@ -17,7 +17,6 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
   tomatoes_seed: 'seed_tomatoes',
   pepper_seed: 'seed_pepper',
   herbs_seed: 'seed_herbs',
-  saffron_seed: 'seed_saffron',
 
   // Crop products
   sorghum: 'product_sorghum',
@@ -30,14 +29,12 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
   tomatoes: 'product_tomatoes',
   pepper: 'product_pepper',
   herbs: 'product_herbs',
-  saffron: 'product_saffron',
 
   // Animal products
   egg: 'product_egg',
   // items.ts slug is `eggs` (plural) — the singular `egg` key above never matched.
   eggs: 'product_egg',
   milk: 'product_milk',
-  wool: 'product_wool',
 
   // Materials
   wood: 'material_wood',
@@ -95,20 +92,19 @@ const PIXEL_ITEM_ICONS: Record<string, string> = {
   clay_canteen: 'tool_canteen',
   field_scope: 'tool_field_scope',
 
-  // Buildings (inventory blueprints)
-  well: 'building_well',
-  coop: 'building_coop',
-  chicken_coop: 'building_coop',
+  // Buildings (inventory blueprints).
+  // 2.11/2.12 — trimmed to v1 ids only. This map previously carried the legacy
+  // per-animal pens (well, coop, goat_pen, mill, paddock, pig_pen → building_*.png)
+  // plus borehole/greenhouse, ALL of which pointed at files that no longer exist:
+  // the pens were deleted as stale generations and borehole/greenhouse are
+  // archived. A lookup here could only ever 404. Legacy *ids* still resolve
+  // server-side via LEGACY_ALIASES in buildings.ts — that is the right layer for
+  // the alias, not a client sprite path.
   barn: 'building_barn',
-  goat_pen: 'building_goat_pen',
-  goat_kraal: 'building_goat_pen',
-  mill: 'building_mill',
-  paddock: 'building_paddock',
-  pig_pen: 'building_pig_pen',
-  borehole: 'building_borehole',
-  borehole_well: 'building_borehole',
-  greenhouse: 'building_greenhouse',
   kraal: 'building_kraal',
+  water_source: 'building_jojo_tank',
+  crafting: 'building_mill',
+  farm_boundary: 'building_fence',
 };
 
 /** Pixel icon URL for an itemType/cropType, or null when unknown. */

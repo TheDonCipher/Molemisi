@@ -247,7 +247,8 @@ const CROPS = [
   ['tomatoes', 5, 'tomato plant on a small stake with round red fruit'],
   ['pepper', 4, 'chilli pepper plant with red and green peppers'],
   ['herbs', 3, 'small leafy herb bush, soft green'],
-  ['saffron', 5, 'saffron crocus flower with purple petals and red stigmas'],
+  // 2.11 — `saffron` was replaced by `morula` in crops.ts; it is archived, so it
+  // must not be regenerable. The crop list is the v1 11.
   ['morula', 5, 'marula tree crop — slender green trunk with round yellow-green fruit, two-day cycle'],
 ];
 
@@ -255,17 +256,15 @@ const ANIMALS = [
   ['chicken', 'plump laying hen with red comb'],
   ['goat', 'short-horned goat with floppy ears'],
   ['cow', 'dairy cow, tan with dark patches, gentle face'],
-  ['pig', 'round pink pig with a curly tail'],
+  // 2.12/N-9 — replaced the pig. A truffle-hunting pig is a European trope; the
+  // guinea fowl (kgaka) is a real, widespread Botswana farm bird.
+  ['guinea_fowl', 'speckled guinea fowl with a bony helmet on its head and red wattle'],
 ];
 
 const BUILDINGS = [
-  ['well', 'round stone well with wooden roof and bucket'],
-  ['coop', 'small wooden chicken coop with ramp and red roof'],
-  ['barn', 'large wooden storage barn with corrugated roof'],
-  ['goat_pen', 'wooden goat pen shelter with fence'],
-  ['mill', 'small grain mill with turning wooden wheel'],
-  ['paddock', 'cattle paddock with wooden post fence'],
-  ['pig_pen', 'pig pen with low wooden fence and mud patch'],
+  // 2.11 — legacy ids (well, coop, barn, goat_pen, mill, paddock, pig_pen) were
+  // pruned: their folders were deleted as stale generations. The v1 building list
+  // is storage / water_source / kraal / farm_boundary / crafting / heritage.
   ['kraal', 'round wooden livestock kraal enclosure with a gate and a small thatch shelter'],
 ];
 
@@ -417,7 +416,10 @@ const PARTICLES = [
   ['leaf_green', 'single small green leaf'],
   ['leaf_autumn', 'single small orange autumn leaf'],
   ['petal_pink', 'single small pink flower petal'],
-  ['snowflake', 'small white snowflake'],
+  // 2.9/V-11 — `snowflake` removed. Botswana has no snow; a snowflake in an art set
+  // whose first principle is "Botswana's landscape and culture" (05 §1.5) is the
+  // Western default that principle forbids. Moriti's dry-season drift uses
+  // `dust_puff` instead. Do not re-add.
   ['dust_puff', 'small brown dust puff'],
   ['smoke_puff', 'soft grey smoke puff'],
   ['dirt_chunk', 'small brown soil chunk'],
@@ -458,7 +460,6 @@ const ITEM_ICONS = [
   ['seed_tomatoes', 'tiny packet of tomato seeds with a small red tomato beside it'],
   ['seed_pepper', 'tiny open paper seed packet with red chilli pepper beside it'],
   ['seed_herbs', 'small paper seed packet with green herb sprigs beside it'],
-  ['seed_saffron', 'tiny pouch with purple crocus flowers and red stigmas beside it'],
   // crop products
   ['product_sorghum', 'bundle of golden sorghum grain heads tied with twine'],
   ['product_maize', 'two fresh yellow maize cobs with husks partially peeled'],
@@ -470,11 +471,11 @@ const ITEM_ICONS = [
   ['product_tomatoes', 'cluster of three round ripe red tomatoes on the vine'],
   ['product_pepper', 'small pile of red and green chilli peppers'],
   ['product_herbs', 'bundle of fresh green herb sprigs tied with twine'],
-  ['product_saffron', 'small glass jar of red saffron threads with purple flower'],
   // animal products
   ['product_egg', 'two brown eggs in a small straw nest'],
   ['product_milk', 'small clay milk jug with wooden cap'],
-  ['product_wool', 'fluffy white wool fleece bundle tied with twine'],
+  // 2.12/N-9 — the guinea fowl's product (replaced the pig's truffle).
+  ['product_guinea_fowl_egg', 'single small speckled cream-and-brown guinea fowl egg'],
   // materials
   ['material_wood', 'stack of three acacia logs with visible bark texture'],
   ['material_stone', 'small pile of grey building stones with one cut block'],
@@ -490,18 +491,15 @@ const ITEM_ICONS = [
   ['tool_pickaxe', 'stone pickaxe with wooden handle'],
   ['tool_canteen', 'round clay water canteen with cork stopper and strap'],
   ['tool_field_scope', 'brass field spyglass telescope collapsed'],
-  // buildings (match the world building sprites)
-  ['building_well', 'round stone well with wooden roof and bucket'],
-  ['building_coop', 'small wooden chicken coop with ramp and red roof'],
+  // buildings — v1 IDs only. 2.11 pruned the legacy per-animal pens
+  // (well/coop/goat_pen/paddock/pig_pen) and the archived borehole/greenhouse
+  // so a regeneration cannot resurrect sprites nothing references. Legacy *ids*
+  // still resolve server-side through LEGACY_ALIASES in buildings.ts.
   ['building_barn', 'large wooden storage barn with corrugated roof'],
-  ['building_goat_pen', 'wooden goat pen shelter with fence'],
   ['building_mill', 'small grain mill with turning wooden wheel'],
-  ['building_paddock', 'cattle paddock with wooden post fence'],
-  ['building_pig_pen', 'pig pen with low wooden fence and mud patch'],
-  ['building_borehole', 'modern deep borehole water pump with metal pipe'],
-  ['building_greenhouse', 'small glass greenhouse with plants inside'],
   ['building_fence', 'rustic wooden farm fence section with two posts and wire, Botswana farm boundary'],
   ['building_kraal', 'round wooden livestock kraal enclosure with a gate and a small thatch shelter, front view'],
+  ['building_jojo_tank', 'green plastic water storage jojo tank on a raised stand'],
   ['seed_morula', 'tiny pouch of morula (marula) seeds with a small round green-yellow fruit beside it'],
   ['product_morula', 'small pile of ripe marula fruit, round green-yellow, one cut open showing pale flesh'],
   ['product_poleto', 'coiled sisal rope (poleto), pale tan, looped bundle'],
@@ -570,7 +568,7 @@ const ANIMAL_PRODUCTS = {
   chicken: 'brown egg',
   goat: 'small bottle of goat milk',
   cow: 'bottle of fresh milk',
-  pig: 'brown truffle mushroom',
+  guinea_fowl: 'small speckled cream-and-brown guinea fowl egg',
 };
 for (const [animal, desc] of ANIMALS) {
   add(

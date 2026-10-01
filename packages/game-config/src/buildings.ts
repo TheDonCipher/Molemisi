@@ -25,6 +25,8 @@ export interface BuildCost {
   setena?: number;
   /** G6 — thatch is a building input (storage upgrades, the kraal), not a dead-end. */
   thatch?: number;
+  /** 3.8d — hardwood gains a recurring repair use (audit P1-8); was Deep-Bushveld-only. */
+  hardwood?: number;
 }
 
 export interface BuildingConfig {
@@ -116,8 +118,10 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     maxTier: 1,
     wearPerHour: 0.004,
     maintenanceCost: 60,
-    maintenanceIntervalDays: 90,
-    maintenanceMaterials: { currency: 0, setena: 2 },
+    // docs/34 §Wave 1.3 — 90 → 30 days. Cost unchanged; only the rhythm moves.
+    maintenanceIntervalDays: 30,
+    // 3.8d — a tank's catchment screen is re-thatched each cycle (audit P1-8).
+    maintenanceMaterials: { currency: 0, setena: 2, thatch: 1 },
     spriteSheet: 'ui/items/building_jojo_tank.png',
     benefit: 'Holds 60 units. An empty tank stops growth — it never kills a crop.',
   },
@@ -137,8 +141,10 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     maxTier: 1,
     wearPerHour: 0.006,
     maintenanceCost: 90,
-    maintenanceIntervalDays: 90,
-    maintenanceMaterials: { currency: 0, thapo: 2 },
+    // docs/34 §Wave 1.3 — 90 → 30 days. Cost unchanged; only the rhythm moves.
+    maintenanceIntervalDays: 30,
+    // 3.8d — the kraal shelter roof is re-thatched as often as its poles are reset.
+    maintenanceMaterials: { currency: 0, thapo: 2, thatch: 1 },
     spriteSheet: 'ui/items/building_paddock.png',
     benefit: 'Protects livestock from overnight raids.',
   },
@@ -157,8 +163,10 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     maxTier: 1,
     wearPerHour: 0.006,
     maintenanceCost: 90,
-    maintenanceIntervalDays: 90,
-    maintenanceMaterials: { currency: 0, poleto: 3 },
+    // docs/34 §Wave 1.3 — 90 → 30 days. Cost unchanged; only the rhythm moves.
+    maintenanceIntervalDays: 30,
+    // 3.8d — a hardwood gate-post outlasts the poles it braces (audit P1-8).
+    maintenanceMaterials: { currency: 0, poleto: 3, hardwood: 1 },
     spriteSheet: 'ui/items/building_fence.png',
     benefit: 'Protects crops from overnight wildlife raids.',
   },
@@ -182,7 +190,10 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     maxTier: 3,
     wearPerHour: 0.003,
     maintenanceCost: 45,
-    maintenanceIntervalDays: 90,
+    // docs/34 §Wave 1.3 — 90 → 30 days. Cost unchanged; only the rhythm moves.
+    maintenanceIntervalDays: 30,
+    // 3.8d — dense Deep-Bushveld timber braces the benches and the mill frame.
+    maintenanceMaterials: { currency: 0, hardwood: 1 },
     spriteSheet: 'ui/items/building_mill.png',
     benefit: 'Unlocks a 2nd and 3rd concurrent crafting slot.',
   },

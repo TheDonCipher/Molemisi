@@ -1,30 +1,36 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
-import { getVirtualGood, getGoodsByCategory, type VirtualGood } from '@molemisi/game-config';
+import { getVirtualGood, getGoodsByCategory, type VirtualGood, type CosmeticShelf } from '@molemisi/game-config';
 
 export interface StoreItemView {
   sku: string;
   name: string;
   description: string;
-  category: 'boost' | 'cosmetic';
+  /** Cosmetic is the only category left — boosts were cut (docs/34 §3.3). */
+  category: 'cosmetic';
   price: number;
+  /** Which shelf, so the client can render Market / Festival. */
+  shelf?: CosmeticShelf;
+  /** The currency this specific item is bought with. */
+  currency: 'PULA' | 'MADI';
   slug: string;
 }
 
 /**
- * P9 — the in-game Pula store (05 §P9; 02 §6.6, §7.1).
+ * P9 — the in-game store (05 §P9; 02 §6.6, §7.1; decided in docs/33, built in
+ * docs/34).
  *
- * This is the UNBOUNDED Pula sink the economy needs (F7). Top-up packs and the Guild
- * subscription are real-money and flow through PaymentsService; everything here is
- * priced in Pula and paid by debiting the wallet directly. Three things this service
- * is deliberately the only writer of:
+ * The **Market shelf** is the unbounded Pula sink the economy needs (F7): late
+ * Pula otherwise accumulates with nothing to buy (MVP/02 §7.1 records P1,913 to
+ * P8,814 a month). Top-up packs and the Village Pass are the real-money and
+ * premium side and never appear here.
  *
- *   - player_boosts rows (purchased boosts)
- *   - player_cosmetics rows (owned cosmetics)
- *
- * The wallet debit goes through WalletService.spendPula, so every purchase is a
- * ledgered event and can never take the balance negative.
+ * docs/34 §3.1 — the **Festival shelf** is the same model in Madi. This service
+ * is therefore the ONLY writer of `player_cosmetics`, and it spends from whichever
+ * wallet the SKU is denominated in: `spendPula` for the Market shelf,
+ * `spendMadi` for the Festival shelf. Both are ledgered and neither can take a
+ * balance negative.
  */
 @Injectable()
 export class StoreService {
@@ -34,36 +40,30 @@ export class StoreService {
   ) {}
 
   /**
-   * The Pula-priced catalog, optionally filtered to what is visible in a given Setswana
-   * chapter (04 §9.2). Never includes real-money goods — those are served by
-   * GET /payments/store. Fertility Shell is absent by construction (R8), and the three
-   * boosts are currently withdrawn while their effects are unwired (ruling 2026-09-11).
-   * Both fall out for free: `getGoodsByCategory` filters on `available`.
+   * The cosmetic catalogue, optionally filtered to what is visible in a given
+   * Setswana chapter (04 §9.2). Never includes real-money goods — those are
+   * served by GET /payments/store.
    */
   getCatalog(chapter?: string | null): StoreItemView[] {
-    const goods: VirtualGood[] = [
-      ...getGoodsByCategory('boost'),
-      ...getGoodsByCategory('cosmetic'),
-    ];
+    const goods: VirtualGood[] = getGoodsByCategory('cosmetic');
     return (chapter ? goods.filter((g) => !g.chapter || g.chapter === chapter) : goods).map(
       (g) => ({
         sku: g.sku,
         name: g.name,
         description: g.description,
-        category: g.category as 'boost' | 'cosmetic',
+        category: 'cosmetic' as const,
         price: g.price,
-        slug:
-          g.category === 'boost'
-            ? (g.entitlement as { slug: string }).slug
-            : (g.entitlement as { cosmeticId: string }).cosmeticId,
+        shelf: g.shelf,
+        currency: g.currency as 'PULA' | 'MADI',
+        slug: (g.entitlement as { cosmeticId: string }).cosmeticId,
       }),
     );
   }
 
   /**
-   * Buy a Pula-priced good. Validates the SKU, checks affordability, debits Pula,
-   * then records ownership. Real-money SKUs (top-up packs, the Guild subscription)
-   * are rejected here — they must go through POST /payments/create.
+   * Buy an in-game cosmetic. Market-shelf items spend Pula, Festival-shelf items
+   * spend Madi. Real-money SKUs (top-up packs, the Village Pass) are rejected
+   * here — they must go through POST /payments/create.
    */
   async purchase(playerId: string, sku: string): Promise<StoreItemView> {
     const good = getVirtualGood(sku);
@@ -73,62 +73,65 @@ export class StoreService {
     if (!good.available) {
       throw new BadRequestException(`Store item "${sku}" is not currently available.`);
     }
-    if (good.currency !== 'PULA') {
+    if (good.category !== 'cosmetic') {
+      throw new BadRequestException(`"${sku}" is not an in-game cosmetic.`);
+    }
+    if (good.currency === 'BWP') {
       throw new BadRequestException(
         `"${sku}" is bought with real money — use POST /payments/create instead.`,
       );
     }
 
     const admin = this.supabase.getAdminClient();
-
-    // A cosmetic is owned forever. Check ownership BEFORE charging: re-buying an owned
-    // cosmetic is a no-op (no debit, no duplicate row). Boosts are consumables, so they
-    // are always charged and always recorded.
-    let alreadyOwnedCosmetic = false;
-    if (good.category === 'cosmetic') {
-      const cosmeticId = (good.entitlement as { cosmeticId: string }).cosmeticId;
-      const { data: owned } = await admin
-        .from('player_cosmetics')
-        .select('id')
-        .eq('player_id', playerId)
-        .eq('cosmetic_id', cosmeticId)
-        .maybeSingle();
-      alreadyOwnedCosmetic = Boolean(owned);
-    }
-
-    if (!alreadyOwnedCosmetic) {
-      if (!(await this.wallet.canAffordPula(playerId, good.price))) {
-        throw new BadRequestException(
-          `Not enough Pula for "${sku}" (need ${good.price}, see your balance).`,
-        );
-      }
-      // Debit only when we are actually granting something. The debit is ledgered, so a
-      // purchase is always auditable and can never take the balance negative.
-      await this.wallet.spendPula(
-        playerId,
-        good.price,
-        good.category === 'boost' ? 'boost_purchase' : 'cosmetic_purchase',
-        sku,
-      );
-    }
-
-    if (good.category === 'boost') {
-      const slug = (good.entitlement as { slug: string }).slug;
-      const { error } = await admin
-        .from('player_boosts')
-        .insert({ player_id: playerId, slug, source: 'purchase' });
-      if (error) throw new BadRequestException(`Failed to record boost: ${error.message}`);
-      return { sku: good.sku, name: good.name, description: good.description, category: 'boost', price: good.price, slug };
-    }
-
-    // Cosmetic: record only if not already owned (idempotent re-buy handled above).
+    const currency = good.currency as 'PULA' | 'MADI';
     const cosmeticId = (good.entitlement as { cosmeticId: string }).cosmeticId;
-    if (!alreadyOwnedCosmetic) {
+
+    // A cosmetic is owned forever. Check ownership BEFORE charging: re-buying an
+    // owned cosmetic is a no-op (no debit, no duplicate row), so a player can
+    // click twice without losing currency.
+    const { data: owned } = await admin
+      .from('player_cosmetics')
+      .select('id')
+      .eq('player_id', playerId)
+      .eq('cosmetic_id', cosmeticId)
+      .maybeSingle();
+    const alreadyOwned = Boolean(owned);
+
+    if (!alreadyOwned) {
+      // docs/34 §3.1 — the shelf decides the wallet. This is the whole reason the
+      // two-shelf model needs one service: the SKU's own currency picks the
+      // debit, so no code path can spend the wrong balance.
+      if (currency === 'MADI') {
+        if (!(await this.wallet.canAffordMadi(playerId, good.price))) {
+          throw new BadRequestException(
+            `Not enough Madi for "${sku}" (need ${good.price}). Top up from the store.`,
+          );
+        }
+        await this.wallet.spendMadi(playerId, good.price, 'madi_spend', sku);
+      } else {
+        if (!(await this.wallet.canAffordPula(playerId, good.price))) {
+          throw new BadRequestException(
+            `Not enough Pula for "${sku}" (need ${good.price}, see your balance).`,
+          );
+        }
+        await this.wallet.spendPula(playerId, good.price, 'cosmetic_purchase', sku);
+      }
+
       const { error } = await admin
         .from('player_cosmetics')
         .insert({ player_id: playerId, cosmetic_id: cosmeticId });
       if (error) throw new BadRequestException(`Failed to record cosmetic: ${error.message}`);
     }
-    return { sku: good.sku, name: good.name, description: good.description, category: 'cosmetic', price: good.price, slug: cosmeticId };
+
+    return {
+      sku: good.sku,
+      name: good.name,
+      description: good.description,
+      category: 'cosmetic',
+      price: good.price,
+      shelf: good.shelf,
+      currency,
+      slug: cosmeticId,
+    };
   }
 }

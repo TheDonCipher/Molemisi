@@ -386,6 +386,35 @@ describe('BushveldService — P6', () => {
     });
   });
 
+  describe('Dry-season phane route — the endgame gate relief (31 §6.5)', () => {
+    it('May (month 5) can yield phane from the bleached deadfall', async () => {
+      const now = new Date(Date.UTC(2026, 4, 15)); // 4 + 1 = 5 (Moriti)
+      withSeed({ scenes: { 'user-1:open_bush': { kagiso: 6 } } });
+
+      const res = await service.collect('user-1', 'farm-1', 'ob_dry_deadfall', now);
+      // Math.random = 0 -> the first (phane) bucket of the seasonal table.
+      expect(res.reward.discovery).toBe('phane');
+      expect(res.reward.item).toBe('phane');
+    });
+
+    it('outside Moriti the same deadfall is ordinary wood again', async () => {
+      const now = new Date(Date.UTC(2026, 1, 15)); // 1 + 1 = 2 (Phane, not Moriti)
+      withSeed({ scenes: { 'user-1:open_bush': { kagiso: 6 } } });
+
+      const res = await service.collect('user-1', 'farm-1', 'ob_dry_deadfall', now);
+      expect(res.reward.discovery).toBe('dikgong');
+      expect(res.reward.item).toBe('wood');
+    });
+
+    it('adds no new find — the Open Bush page denominator is unchanged', () => {
+      const slugs = findsForScene('open_bush').map((f) => f.discovery);
+      // `findsForScene` dedupes by discovery slug, so reusing phane/dikgong keeps the
+      // page exactly the size it was: the route is new, the checkmark is not.
+      expect(new Set(slugs).size).toBe(slugs.length);
+      expect(slugs).toContain('phane');
+    });
+  });
+
   describe('Restoration — completing a Field Journal page swaps the background (04 §7.2)', () => {
     it('crossing the 100% threshold flips the stage and returns the final asset key', async () => {
       const now = new Date();

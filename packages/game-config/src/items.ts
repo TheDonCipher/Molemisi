@@ -132,17 +132,21 @@ const RAW_ITEMS: Record<string, Omit<ItemDef, 'lore'>> = {
   },
   // G3 — eggs/milk prices ARE the AnimalConfig prices of record (P5/P15); the
   // duplicated AnimalConfig.baseProductPrice is deleted so this stays the only
-  // source. G2 — the pig's truffle finally exists (P50/48 h as always intended).
-  truffle: {
-    slug: 'truffle',
-    setswana: 'Truffle ya Naga',
-    name: 'Truffle',
+  // source. 2.12/N-9 — this replaced the pig's `truffle`: a truffle is a European
+  // foraging trope, and the pig is the weakest cultural fit in a Botswana setting.
+  // The guinea fowl (`kgaka`) is a real, widespread farm bird whose speckled eggs
+  // are a genuine delicacy — and reusing the generic `eggs` item would have made
+  // it a strictly-worse chicken, so it gets its own product exactly as the truffle did.
+  guinea_fowl_egg: {
+    slug: 'guinea_fowl_egg',
+    setswana: 'Mae a Kgaka',
+    name: 'Guinea Fowl Egg',
     category: 'DIPHOLOGOLO',
     maxStack: 30,
-    baseValue: 50,
-    use: 'Go rekisa. Sell at the Co-op — chefs pay well for it.',
+    baseValue: 12,
+    use: 'Go rekisa. Sell at the Co-op — smaller than a hen’s, richer in the pan.',
     isTool: false,
-    sprite: 'ui/items/product_truffle.png',
+    sprite: 'ui/items/product_guinea_fowl_egg.png',
   },
   manure: {
     slug: 'manure',
@@ -382,7 +386,7 @@ const ITEM_LORE: Record<string, string> = {
   eggs: 'A warm egg in the morning means the kraal is content. Mogolo counts eggs the way others count blessings.',
   milk: 'Mashi left to sit becomes maas, and maas keeps when milk cannot. The cow gives; patience decides.',
   manure: 'Manyoro is not waste. It is next year’s harvest wearing rough clothes.',
-  truffle: 'The pig smells what the eye cannot see. A truffle is the bush keeping a secret for the patient.',
+  guinea_fowl_egg: 'The kgaka lays where she pleases and complains the whole while. Her egg is small, speckled, and worth the walk to find it.',
 
   /* Bushveld materials */
   wood: 'Dry dikgong from a deadfall, taken without hurting a living tree. The bush provides for those who look down.',

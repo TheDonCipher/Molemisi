@@ -4,9 +4,20 @@ import React, { useState } from 'react';
 import { useGame, InventoryItem } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
 import { PixelIcon } from '@/components/PixelIcon';
+import { PixelUiIcon } from '@/components/PixelUiIcon';
 import { getItemInfo, intentLabel } from '../../lib/itemInfo';
 
 const SOURCE_ICONS = { grow: '🌱', forage: '🌾', raise: '🐄', craft: '🔨', buy: '🛒' } as const;
+
+// 2.7/V-6 — the pixel-set counterpart of SOURCE_ICONS. Kept separate so the emoji
+// map still serves as the fallback when an icon file is missing.
+const SOURCE_UI_ICONS: Record<keyof typeof SOURCE_ICONS, string> = {
+  grow: 'farming_plant',
+  forage: 'farming_harvest',
+  raise: 'animals_shelter',
+  craft: 'buildings_construct',
+  buy: 'market_buy',
+};
 
 export function InventoryScreen() {
   const { inventory, selectedItem, setSelectedItem, sellInventoryItem, setActiveNav, pula, botho, language } = useGame();
@@ -15,13 +26,13 @@ export function InventoryScreen() {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [toast, setToast] = useState<string | null>(null);
 
-  const CATEGORIES = [
-    { id: 'all', label: tl('all'), icon: '📦' },
-    { id: 'seed', label: tl('seeds'), icon: '🌱' },
-    { id: 'crops', label: tl('crops'), icon: '🌾' },
-    { id: 'animal', label: tl('animal'), icon: '🥚' },
-    { id: 'materials', label: tl('materials'), icon: '🪵' },
-  ] as const;
+  const CATEGORIES: ReadonlyArray<{ id: string; label: string; icon: string; uiIcon: string }> = [
+    { id: 'all', label: tl('all'), icon: '📦', uiIcon: 'inventory_bag' },
+    { id: 'seed', label: tl('seeds'), icon: '🌱', uiIcon: 'farming_plant' },
+    { id: 'crops', label: tl('crops'), icon: '🌾', uiIcon: 'farming_harvest' },
+    { id: 'animal', label: tl('animal'), icon: '🥚', uiIcon: 'animals_collect' },
+    { id: 'materials', label: tl('materials'), icon: '🪵', uiIcon: 'inventory_stack' },
+  ];
 
   const filtered = inventory.filter((i) => {
     if (activeCategory === 'all') return true;
@@ -82,11 +93,13 @@ export function InventoryScreen() {
         className="w-full flex items-center justify-between px-3 py-1.5 mb-4 bg-wood-dark border border-wood-border hover:border-primary/50 active:translate-y-0.5"
       >
         <span className="flex items-center gap-2 font-mono text-[10px] uppercase text-cream-surface font-bold">
-          <span aria-hidden>👛</span> {tl('purse')}
+          <PixelUiIcon name="currency_pula" emoji="👛" size={14} /> {tl('purse')}
         </span>
         <span className="flex items-center gap-2 font-mono text-[10px] text-cream-surface">
           <span className="text-primary font-bold">P{pula}</span>
-          <span className="text-on-surface-variant">✨ {botho}</span>
+          <span className="text-on-surface-variant flex items-center gap-1">
+            <PixelUiIcon name="social_botho" emoji="✨" size={12} /> {botho}
+          </span>
           <span className="text-on-surface-variant" aria-hidden>→</span>
         </span>
       </button>
@@ -103,7 +116,7 @@ export function InventoryScreen() {
                 : 'bg-surface-container-high text-on-surface-variant border-wood-border hover:border-primary/50'
             }`}
           >
-            <span>{cat.icon}</span>
+            <PixelUiIcon name={cat.uiIcon} emoji={cat.icon} size={14} />
             {cat.label}
           </button>
         ))}
@@ -168,7 +181,9 @@ export function InventoryScreen() {
                   </span>
                 )}
                 <span className="font-mono text-[9px] text-on-surface-variant">
-                  {tl('quantity')}: {selectedItem.quantity}{info ? ` / ${info.def.maxStack}` : ''} • {tl('grade')}: {selectedItem.grade} • P{selectedItem.unitValue}
+                  {tl('quantity')}: {selectedItem.quantity}{' / '}
+                  {selectedItem.maxStack ?? info?.def.maxStack ?? '?'} • {tl('grade')}:{' '}
+                  {selectedItem.grade} • P{selectedItem.unitValue}
                 </span>
               </div>
             </div>
@@ -200,7 +215,11 @@ export function InventoryScreen() {
                   <ul className="space-y-1">
                     {info.sources.map((s, i) => (
                       <li key={`${s.kind}-${i}`} className="flex items-baseline gap-1.5 font-body text-[11px] text-cream-surface">
-                        <span aria-hidden>{SOURCE_ICONS[s.kind]}</span>
+                        <PixelUiIcon
+                          name={SOURCE_UI_ICONS[s.kind]}
+                          emoji={SOURCE_ICONS[s.kind]}
+                          size={12}
+                        />
                         <span className="font-bold shrink-0">{sourceKindLabels[s.kind]}</span>
                         <span className="text-on-surface-variant">{s.text}{s.sub ? ` · ${s.sub}` : ''}</span>
                       </li>

@@ -11,9 +11,20 @@ import {
   AvailableBuilding,
 } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
-import { isSeedInSeason, getCropConfig, adjacentPlotSlots, type CropId } from '@molemisi/game-config';
+import {
+  isSeedInSeason,
+  getCropConfig,
+  adjacentPlotSlots,
+  maintenanceScaleFor,
+  type CropId,
+} from '@molemisi/game-config';
 import { PixelIcon } from '@/components/PixelIcon';
+import { PixelUiIcon } from '../PixelUiIcon';
+import { FarmGround } from '../FarmGround';
 import { WaterWhisperToast } from '../WaterWhisperToast';
+import { currentChapterSlug, groundTileForCell } from '@/lib/groundTiles';
+import { deriveAttention, ownsPulse, ATTENTION_STYLE } from '../Attention';
+import { ChapterParticles } from '../ChapterParticles';
 
 const SEED_OPTIONS = [
   { name: 'Sorghum', cost: 15, icon: '🌾', trait: 'Drought Resistant', itemType: 'sorghum_seed' },
@@ -87,14 +98,14 @@ const FEED_INFO: Record<string, { slug: string; amount: number; emoji: string }>
   chicken: { slug: 'sorghum', amount: 2, emoji: '🌾' },
   goat: { slug: 'herbs', amount: 4, emoji: '🌿' },
   cow: { slug: 'herbs', amount: 8, emoji: '🌿' },
-  pig: { slug: 'sorghum', amount: 6, emoji: '🌾' },
+  guinea_fowl: { slug: 'sorghum', amount: 6, emoji: '🌾' },
 };
 
 const PRODUCT_EMOJI: Record<string, string> = {
   egg: '🥚',
   goat_milk: '🥛',
   cow_milk: '🥛',
-  truffle: '🍄',
+  guinea_fowl_egg: '🥚',
 };
 
 /** Product badge per animal type (mirror of AnimalConfig.productType). */
@@ -102,17 +113,22 @@ const ANIMAL_PRODUCT: Record<string, string> = {
   chicken: '🥚',
   goat: '🥛',
   cow: '🥛',
-  pig: '🍄',
+  guinea_fowl: '🥚',
 };
 
-const ANIMAL_EMOJI: Record<string, string> = { chicken: '🐔', goat: '🐐', cow: '🐄', pig: '🐖' };
+const ANIMAL_EMOJI: Record<string, string> = {
+  chicken: '🐔',
+  goat: '🐐',
+  cow: '🐄',
+  guinea_fowl: '🐦',
+};
 
-type AnimalNameKey = 'animalChicken' | 'animalGoat' | 'animalCow' | 'animalPig';
+type AnimalNameKey = 'animalChicken' | 'animalGoat' | 'animalCow' | 'animalGuineaFowl';
 const ANIMAL_NAME_KEY: Record<string, AnimalNameKey> = {
   chicken: 'animalChicken',
   goat: 'animalGoat',
   cow: 'animalCow',
-  pig: 'animalPig',
+  guinea_fowl: 'animalGuineaFowl',
 };
 
 /** Animal sprite by mood, with emoji fallback when the art is missing. */
@@ -166,13 +182,23 @@ const BUILDING_EMOJI: Record<string, string> = {
   crafting: '⚒️',
   setlhare_sa_boswa: '🌳',
 };
-const MAINTENANCE_INFO: Record<string, { pula: number; mat?: { slug: string; qty: number } }> = {
-  water_source: { pula: 60, mat: { slug: 'setena', qty: 2 } },
-  kraal: { pula: 90, mat: { slug: 'thapo', qty: 2 } },
-  farm_boundary: { pula: 90, mat: { slug: 'poleto', qty: 3 } },
-  crafting: { pula: 45 },
+// Display-only mirror of `maintenanceQuote` in buildings.service.ts: base Pula +
+// the crafted materials, each scaled by the farm's building count (3.8d). Keep the
+// base numbers in step with `BUILDINGS[*].maintenanceCost` / `maintenanceMaterials`.
+const MAINTENANCE_INFO: Record<string, { pula: number; mats: Array<{ slug: string; qty: number }> }> =
+  {
+    water_source: { pula: 60, mats: [{ slug: 'setena', qty: 2 }, { slug: 'thatch', qty: 1 }] },
+    kraal: { pula: 90, mats: [{ slug: 'thapo', qty: 2 }, { slug: 'thatch', qty: 1 }] },
+    farm_boundary: { pula: 90, mats: [{ slug: 'poleto', qty: 3 }, { slug: 'hardwood', qty: 1 }] },
+    crafting: { pula: 45, mats: [{ slug: 'hardwood', qty: 1 }] },
+  };
+const MAT_EMOJI: Record<string, string> = {
+  poleto: '🧱',
+  thapo: '🪢',
+  setena: '🪨',
+  thatch: '🌾',
+  hardwood: '🪵',
 };
-const MAT_EMOJI: Record<string, string> = { poleto: '🧱', thapo: '🪢', setena: '🪨' };
 
 type BuildingNameKey =
   | 'buildingStorage'
@@ -332,6 +358,20 @@ export function FarmScreen() {
     setActiveNav,
   } = useGame();
   const { tl } = useTranslation();
+
+  // Doc 30 V-4.1 — the chapter the farm is standing in decides the ground tint.
+  // The chapter is a pure function of the real date (04 §9.1), so the web app does
+  // not need the server to tell it; recomputed per render the same way `season` is.
+  const chapterSlug = currentChapterSlug();
+
+  // Doc 30 V-14 / 03 §13 — derive the ONE thing allowed to pulse, in priority
+  // order (withering crop → hungry animal → product ready → contract). Everything
+  // else renders a static indicator. Without this, a busy farm pulsed four things
+  // at once and the pulse stopped meaning anything.
+  const attention = deriveAttention({
+    plots: plots.map((p) => ({ id: p.id, canHarvest: p.canHarvest, stalled: p.stalled })),
+    animals: livestock.map((a) => ({ id: a.id, hunger: a.hunger, isSick: a.isSick })),
+  });
 
   // Store only the plot id and derive the plot from live game state, so the
   // action panel never renders a stale snapshot (growth %, stall flips) while open.
@@ -536,19 +576,22 @@ export function FarmScreen() {
   // Repair affordability for the open building sheet (display-only mirror of
   // maintenanceQuote in buildings.service — DISABLED doubles the Pula cost).
   const selMaint = selectedBuilding ? MAINTENANCE_INFO[selectedBuilding.buildingType] : undefined;
-  const selMat = selMaint?.mat ?? null;
+  // 3.8d — mirror the server's building-count scaling so the sheet never quotes a
+  // cost the wallet will not honour (01 §4: never surprise the player with a cost).
+  const maintScale = maintenanceScaleFor(buildings.length);
+  const selMats = (selMaint?.mats ?? []).map((m) => ({
+    slug: m.slug,
+    qty: Math.max(1, Math.round(m.qty * maintScale)),
+  }));
   const selMaintPula = selMaint
-    ? selMaint.pula * (selectedBuilding?.state === 'DISABLED' ? 2 : 1)
+    ? Math.round(selMaint.pula * maintScale) * (selectedBuilding?.state === 'DISABLED' ? 2 : 1)
     : 0;
-  const selMatQty = selMat
-    ? (inventory.find((i) => i.itemType === selMat.slug)?.quantity ?? 0)
-    : Infinity;
   const canMaintain =
     !!selectedBuilding &&
     (selectedBuilding.state === 'MAINTENANCE_NEEDED' || selectedBuilding.state === 'DISABLED') &&
     !!selMaint &&
     pula >= selMaintPula &&
-    selMatQty >= (selMat?.qty ?? 0);
+    selMats.every((m) => (inventory.find((i) => i.itemType === m.slug)?.quantity ?? 0) >= m.qty);
 
   // Tier-up affordability for the open building sheet — cost comes from the
   // server row (`nextUpgradeCost`), so the button never quotes a wrong number.
@@ -582,38 +625,58 @@ export function FarmScreen() {
   const raining = weather === 'rain' || weather === 'storm';
 
   // Welcome-back rows (09 §9) — only the lines that have something to say.
-  const wbRows: Array<{ emoji: string; text: string }> = [];
+  // 2.7/V-6 — each row names its icon, so the list uses the pixel set rather than
+  // six different OS emoji fonts.
+  const wbRows: Array<{ icon: string; emoji: string; text: string }> = [];
   if (welcomeBack) {
     if (welcomeBack.cropsReady > 0)
       wbRows.push({
+        icon: 'farming_harvest',
         emoji: '🌾',
         text: tl('wbCropsReady').replace('{n}', String(welcomeBack.cropsReady)),
       });
     if (welcomeBack.livestockProducts > 0)
       wbRows.push({
+        icon: 'animals_collect',
         emoji: '🥚',
         text: tl('wbProductsReady').replace('{n}', String(welcomeBack.livestockProducts)),
       });
     if (welcomeBack.buildingsCompleted > 0)
       wbRows.push({
+        icon: 'buildings_construct',
         emoji: '🏗️',
         text: tl('wbBuildingsDone').replace('{n}', String(welcomeBack.buildingsCompleted)),
       });
     if (welcomeBack.buildingsMaintenance > 0)
       wbRows.push({
+        icon: 'buildings_repair',
         emoji: '🔧',
         text: tl('wbMaintenance').replace('{n}', String(welcomeBack.buildingsMaintenance)),
       });
     if (welcomeBack.bothoCatchUp > 0)
       wbRows.push({
+        icon: 'social_botho',
         emoji: '🤝',
         text: tl('wbCatchUp').replace('{n}', String(welcomeBack.bothoCatchUp)),
       });
     if (welcomeBack.seasonChanged && welcomeBack.newSeason)
       wbRows.push({
+        icon: 'weather_wind',
         emoji: '🍂',
         text: tl('wbSeasonChanged').replace('{season}', welcomeBack.newSeason),
       });
+    // G-12 — name the 24h cap honestly: say how long they were away and how much
+    // was actually applied, so the offline limit never hides what it discarded.
+    if (welcomeBack.appliedHours < welcomeBack.awayHours) {
+      const awayH = welcomeBack.awayHours;
+      const awayStr = awayH >= 24 ? `${Math.floor(awayH / 24)}d` : `${Math.round(awayH)}h`;
+      const appliedStr = `${Math.round(welcomeBack.appliedHours)}h`;
+      wbRows.push({
+        icon: 'status_withered',
+        emoji: '⏳',
+        text: tl('wbAwayDiscarded').replace('{away}', awayStr).replace('{applied}', appliedStr),
+      });
+    }
   }
 
   return (
@@ -667,9 +730,18 @@ export function FarmScreen() {
             {tl('granary')}
           </span>
           <span className="flex items-center gap-3">
-            <span className="font-mono text-xs text-cream-surface">🌾 {granarySorghum}</span>
-            <span className="font-mono text-xs text-cream-surface">🌽 {granaryMaize}</span>
-            <span className="font-mono text-xs text-cream-surface">🥚 {granaryEggs}</span>
+            <span className="flex items-center gap-1 font-mono text-xs text-cream-surface">
+              <PixelUiIcon name="farming_harvest" emoji="🌾" size={14} />
+              {granarySorghum}
+            </span>
+            <span className="flex items-center gap-1 font-mono text-xs text-cream-surface">
+              <PixelUiIcon name="farming_plant" emoji="🌽" size={14} />
+              {granaryMaize}
+            </span>
+            <span className="flex items-center gap-1 font-mono text-xs text-cream-surface">
+              <PixelUiIcon name="animals_collect" emoji="🥚" size={14} />
+              {granaryEggs}
+            </span>
           </span>
         </button>
       </div>
@@ -678,13 +750,16 @@ export function FarmScreen() {
           On lg+ the plots keep the left column and the livestock/buildings
           slide into a rail beside them (E). */}
       <div className="relative z-10 flex-1 min-h-0 overflow-y-auto bg-black/25">
+        {/* 2.9/V-11 — the season drifts through the scene: water in Pula, leaves in
+            Phane, dust in Moriti, sparks in Letlhafula. Decorative only. */}
+        <ChapterParticles chapter={chapterSlug} />
         {/* Weather FX: the sky state the sim rolled, visible over the scene */}
         {WEATHER_FX_SPRITE[weather] && (
           <img
             src={WEATHER_FX_SPRITE[weather]}
             alt=""
             aria-hidden
-            className="absolute top-2 right-4 w-14 h-14 opacity-90 pointer-events-none animate-pulse"
+            className="absolute top-2 right-4 w-14 h-14 opacity-90 pointer-events-none"
             style={{ imageRendering: 'pixelated' }}
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
@@ -695,22 +770,47 @@ export function FarmScreen() {
           {/* Left column — the plots and the land ladder */}
           <div className="lg:flex-1 lg:min-w-0">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {plots.map((plot) => (
+              {plots.map((plot, cellIndex) => (
                 <button
                   key={plot.id}
                   onClick={() => handlePlotTap(plot)}
-                  className={`relative aspect-square bg-wood-dark/80 border-2 p-3 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
+                  className={`relative overflow-hidden aspect-square border-2 p-3 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
                     selectedPlot?.id === plot.id
                       ? 'border-primary ring-2 ring-primary/50 shadow-lg'
-                      : plot.canHarvest
-                        ? 'border-gold-currency plot-ready'
-                        : plot.stalled
-                          ? 'border-sky-blue'
+                      : plot.stalled
+                        ? 'border-status-error'
+                        : plot.canHarvest
+                          ? 'border-gold-currency'
                           : 'border-wood-border hover:border-primary/50'
+                  } ${
+                    // 2.8/V-14 — only the single highest-priority plot may pulse
+                    // (03 §13). Others keep a static coloured border as their cue.
+                    ownsPulse(attention, `plot:${plot.id}`)
+                      ? `attention-pulse ${ATTENTION_STYLE[attention!.level].pulse}`
+                      : ''
                   } ${celebrate?.id === plot.id ? `animate-${celebrate.kind}` : ''} ${
                     blessedSlots.has(plot.id - 1) ? 'heritage-mist' : ''
                   }`}
                 >
+                  {/* Doc 30 V-4.1 — the ground the plot stands on. A seasonal
+                      texture, not a dark panel: see lib/groundTiles.ts. */}
+                  <FarmGround tile={groundTileForCell(cellIndex, plots.length, chapterSlug)} />
+                  {/* Doc 30 V-4.1 — plot_empty (TILLED) / plot_soil (planted), the
+                      two dedicated plot tiles. TILLED is bare soil ready to sow;
+                      anything planted darkens it so the crop reads against it. */}
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundImage: `url('/assets/tiles/ground/${plot.state === 'TILLED' ? 'plot_empty' : 'plot_soil'}.png')`,
+                      backgroundSize: '32px 32px',
+                      backgroundRepeat: 'repeat',
+                      imageRendering: 'pixelated',
+                      opacity: plot.state === 'TILLED' ? 0.55 : 0.3,
+                    }}
+                  />
+                  {/* Content sits above both ground layers. */}
+                  <span className="relative z-10 flex flex-col items-center justify-center gap-1 w-full">
                   <CropSprite
                     cropType={plot.cropType}
                     stageProgress={plot.stageProgress}
@@ -725,20 +825,26 @@ export function FarmScreen() {
                     // requirement: the plot grows fine without it.
                     <span
                       aria-hidden
-                      className="absolute top-1 right-1 text-[11px] leading-none opacity-90"
+                      className="absolute top-1 right-1 leading-none opacity-90"
                     >
-                      🌳
+                      <PixelUiIcon name="status_healthy" emoji="🌳" size={14} />
                     </span>
                   )}
                   {plot.canHarvest && (
-                    <span className="font-mono text-[10px] text-gold-currency font-bold tracking-wider animate-bounce">
+                    // 2.8/V-14 — static badge. All N ready crops would otherwise
+                    // bounce at once; the pulse belongs to the one top-priority
+                    // element only (03 §13).
+                    <span className="font-mono text-[10px] text-gold-currency font-bold tracking-wider">
                       {tl('ready')}
                     </span>
                   )}
                   {plot.stalled && (
                     // Not a water level — a stall. The crop stopped because the
                     // tank is empty, and the only fix is the shared tank.
-                    <span className="font-mono text-[10px] text-sky-blue font-bold">💧 DRY</span>
+                    <span className="flex items-center gap-1 font-mono text-[10px] text-status-error font-bold">
+                      <PixelUiIcon name="status_tank_empty" emoji="💧" size={12} />
+                      {tl('dry')}
+                    </span>
                   )}
                   {plot.state === 'TILLED' && (
                     <span className="font-mono text-[10px] text-secondary">{tl('emptySoil')}</span>
@@ -753,6 +859,7 @@ export function FarmScreen() {
                       />
                     </div>
                   )}
+                  </span>
                 </button>
               ))}
             </div>
@@ -1130,11 +1237,10 @@ export function FarmScreen() {
                 >
                   <span className="tsholofelo-idle block" role="img" aria-hidden="true" />
                   {tsholofelo?.giftAvailable && (
-                    <span
-                      className="absolute -top-1 -right-1 text-[10px] animate-bounce"
-                      aria-hidden="true"
-                    >
-                      🎁
+                    // 2.8/V-14 — static gift badge. Tsholofelo already has her own
+                    // idle animation; a second animated element competed with it.
+                    <span className="absolute -top-1 -right-1" aria-hidden="true">
+                      <PixelUiIcon name="social_gift" emoji="🎁" size={14} />
                     </span>
                   )}
                 </button>
@@ -1435,7 +1541,7 @@ export function FarmScreen() {
                   className="w-full py-2 bg-primary-container text-on-primary-container font-mono text-xs font-bold uppercase active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {tl('repair')} — {selMaintPula}P
-                  {selMat ? ` + ${selMat.qty}${MAT_EMOJI[selMat.slug] ?? ''}` : ''}
+                  {selMats.map((m) => ` + ${m.qty}${MAT_EMOJI[m.slug] ?? ''}`).join('')}
                 </button>
               )}
 
@@ -1672,7 +1778,7 @@ export function FarmScreen() {
                   key={row.text}
                   className="flex items-center gap-2 bg-surface-container-high border border-wood-border px-2.5 py-1.5"
                 >
-                  <span className="text-sm">{row.emoji}</span>
+                  <PixelUiIcon name={row.icon} emoji={row.emoji} size={18} />
                   <span className="font-mono text-xs text-cream-surface">{row.text}</span>
                 </div>
               ))}

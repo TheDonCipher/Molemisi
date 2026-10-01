@@ -5,6 +5,7 @@
  * Nothing in application code may hardcode a number that appears in the spec.
  */
 
+export * from './rng';
 export * from './crops';
 export * from './items';
 export * from './itemRelations';

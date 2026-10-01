@@ -1,168 +1,174 @@
 {
-  "tot": 990,
-  "succ": 366,
-  "rej": 624,
+  "tot": 1247,
+  "succ": 443,
+  "rej": 804,
   "errs": 0,
   "byDay": {
-    "1": 205,
-    "2": 185,
-    "3": 187,
-    "4": 185,
-    "5": 186,
-    "6": 26,
-    "7": 16
+    "1": 193,
+    "2": 189,
+    "3": 182,
+    "4": 184,
+    "5": 168,
+    "6": 164,
+    "7": 167
   },
   "byProfile": {
-    "f2p": 990
+    "f2p": 1247
   },
-  "spanSec": 3658.81,
+  "spanSec": 4976.409,
   "rows": [
     {
       "key": "progression/contract-complete",
-      "total": 222,
-      "success": 2,
-      "rejected": 220,
+      "total": 336,
+      "success": 0,
+      "rejected": 336,
       "statuses": {
-        "201": 2,
-        "400": 220
+        "400": 336
       },
       "players": 8
     },
     {
       "key": "bushveld/skip-low-kagiso",
-      "total": 164,
-      "success": 164,
+      "total": 224,
+      "success": 224,
       "rejected": 0,
       "statuses": {},
       "players": 8
     },
     {
       "key": "progression/contract-accept",
-      "total": 132,
-      "success": 11,
-      "rejected": 121,
+      "total": 170,
+      "success": 1,
+      "rejected": 169,
       "statuses": {
-        "201": 11,
-        "400": 121
+        "201": 1,
+        "400": 169
       },
       "players": 8
     },
     {
       "key": "kgotla/turn-in",
-      "total": 120,
-      "success": 0,
-      "rejected": 120,
+      "total": 148,
+      "success": 4,
+      "rejected": 144,
       "statuses": {
-        "400": 120
-      },
-      "players": 8
-    },
-    {
-      "key": "farming/plant",
-      "total": 71,
-      "success": 15,
-      "rejected": 56,
-      "statuses": {
-        "201": 15,
-        "400": 56
-      },
-      "players": 8
-    },
-    {
-      "key": "kgotla/accept",
-      "total": 64,
-      "success": 24,
-      "rejected": 40,
-      "statuses": {
-        "201": 24,
-        "400": 40
+        "201": 4,
+        "400": 144
       },
       "players": 8
     },
     {
       "key": "water/refill",
       "total": 56,
-      "success": 41,
-      "rejected": 15,
+      "success": 32,
+      "rejected": 24,
       "statuses": {
-        "201": 41,
-        "401": 15
+        "201": 32,
+        "400": 24
+      },
+      "players": 8
+    },
+    {
+      "key": "kgotla/accept",
+      "total": 56,
+      "success": 0,
+      "rejected": 56,
+      "statuses": {
+        "400": 56
       },
       "players": 8
     },
     {
       "key": "progression/elder-guidance",
       "total": 56,
-      "success": 40,
-      "rejected": 16,
+      "success": 56,
+      "rejected": 0,
       "statuses": {},
       "players": 8
     },
     {
-      "key": "progression/chapter-claim",
-      "total": 29,
-      "success": 27,
-      "rejected": 2,
+      "key": "farming/plant",
+      "total": 51,
+      "success": 16,
+      "rejected": 35,
       "statuses": {
-        "201": 27,
-        "401": 2
+        "201": 16,
+        "400": 35
+      },
+      "players": 8
+    },
+    {
+      "key": "market/buy",
+      "total": 35,
+      "success": 35,
+      "rejected": 0,
+      "statuses": {
+        "201": 35
+      },
+      "players": 8
+    },
+    {
+      "key": "progression/chapter-claim",
+      "total": 30,
+      "success": 30,
+      "rejected": 0,
+      "statuses": {
+        "201": 30
       },
       "players": 6
     },
     {
-      "key": "market/buy",
-      "total": 21,
-      "success": 21,
+      "key": "kgotla/donate",
+      "total": 27,
+      "success": 27,
       "rejected": 0,
       "statuses": {
-        "201": 21
+        "201": 27
       },
       "players": 8
     },
     {
       "key": "farming/fertilize",
-      "total": 17,
+      "total": 24,
       "success": 0,
-      "rejected": 17,
+      "rejected": 24,
       "statuses": {
-        "400": 17
-      },
-      "players": 7
-    },
-    {
-      "key": "livestock/purchase",
-      "total": 17,
-      "success": 0,
-      "rejected": 17,
-      "statuses": {
-        "400": 17
+        "400": 24
       },
       "players": 8
     },
     {
-      "key": "farming/harvest",
-      "total": 14,
-      "success": 14,
-      "rejected": 0,
+      "key": "livestock/purchase",
+      "total": 16,
+      "success": 0,
+      "rejected": 16,
       "statuses": {
-        "201": 14
+        "400": 16
       },
-      "players": 5
+      "players": 7
     },
     {
       "key": "market/sell",
-      "total": 7,
-      "success": 7,
+      "total": 15,
+      "success": 15,
       "rejected": 0,
       "statuses": {
-        "201": 7
+        "201": 15
       },
-      "players": 4
+      "players": 6
+    },
+    {
+      "key": "farming/harvest",
+      "total": 3,
+      "success": 3,
+      "rejected": 0,
+      "statuses": {
+        "201": 3
+      },
+      "players": 3
     }
   ],
   "rejStatus": {
-    "400": 591,
-    "401": 17,
-    "undefined": 16
+    "400": 804
   }
 }

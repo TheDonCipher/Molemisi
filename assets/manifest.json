@@ -1129,76 +1129,6 @@
     "kind": "pixen",
     "prompt": "small seed packet / seed icon for herbs, single item centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
-  "saffron_stage_1": {
-    "group": "crops",
-    "file": "sprites/crops/saffron/stage_1.png",
-    "size": {
-      "w": 32,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "Young green seedling with two small leaves of a saffron plant. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "saffron_stage_0": {
-    "group": "crops",
-    "file": "sprites/crops/saffron/stage_0.png",
-    "size": {
-      "w": 32,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "Freshly planted seed just sprouting, tiny green shoot breaking through dark soil of a saffron plant. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "saffron_stage_2": {
-    "group": "crops",
-    "file": "sprites/crops/saffron/stage_2.png",
-    "size": {
-      "w": 32,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "Growing vigorously as a healthy medium plant with green leaves of a saffron plant. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "saffron_stage_3": {
-    "group": "crops",
-    "file": "sprites/crops/saffron/stage_3.png",
-    "size": {
-      "w": 32,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "Nearly mature and tall, with the first produce just forming of a saffron plant. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "saffron_stage_4": {
-    "group": "crops",
-    "file": "sprites/crops/saffron/stage_4.png",
-    "size": {
-      "w": 32,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "Fully mature and ready to harvest, saffron crocus flower with purple petals and red stigmas. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "saffron_product": {
-    "group": "crops",
-    "file": "sprites/crops/saffron/product_saffron.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "harvested saffron produce icon, single item centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "saffron_seed": {
-    "group": "crops",
-    "file": "sprites/crops/saffron/seed_saffron.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "small seed packet / seed icon for saffron, single item centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
   "chicken_idle": {
     "group": "animals",
     "file": "sprites/animals/chicken/idle.png",
@@ -1289,96 +1219,6 @@
     "kind": "pixen",
     "prompt": "bottle of fresh milk item icon, single item centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
-  "pig_happy": {
-    "group": "animals",
-    "file": "sprites/animals/pig/happy.png",
-    "size": {
-      "w": 64,
-      "h": 48
-    },
-    "kind": "pixen",
-    "prompt": "happy farm round pink pig with a curly tail, standing side view facing right with a small smile and floating heart above, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "pig_idle": {
-    "group": "animals",
-    "file": "sprites/animals/pig/idle.png",
-    "size": {
-      "w": 64,
-      "h": 48
-    },
-    "kind": "pixen",
-    "prompt": "friendly farm round pink pig with a curly tail, standing side view facing right, full body centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "pig_product": {
-    "group": "animals",
-    "file": "sprites/animals/pig/product.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "brown truffle mushroom item icon, single item centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "well_lvl1": {
-    "group": "buildings",
-    "file": "sprites/buildings/well/lvl1.png",
-    "size": {
-      "w": 96,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "cozy farm round stone well with wooden roof and bucket, warm wooden and stone construction, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "coop_lvl1": {
-    "group": "buildings",
-    "file": "sprites/buildings/coop/lvl1.png",
-    "size": {
-      "w": 96,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "cozy farm small wooden chicken coop with ramp and red roof, warm wooden and stone construction, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "barn_lvl1": {
-    "group": "buildings",
-    "file": "sprites/buildings/barn/lvl1.png",
-    "size": {
-      "w": 96,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "cozy farm large wooden storage barn with corrugated roof, warm wooden and stone construction, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "goat_pen_lvl1": {
-    "group": "buildings",
-    "file": "sprites/buildings/goat_pen/lvl1.png",
-    "size": {
-      "w": 96,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "cozy farm wooden goat pen shelter with fence, warm wooden and stone construction, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "mill_lvl1": {
-    "group": "buildings",
-    "file": "sprites/buildings/mill/lvl1.png",
-    "size": {
-      "w": 96,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "cozy farm small grain mill with turning wooden wheel, warm wooden and stone construction, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "paddock_lvl1": {
-    "group": "buildings",
-    "file": "sprites/buildings/paddock/lvl1.png",
-    "size": {
-      "w": 96,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "cozy farm cattle paddock with wooden post fence, warm wooden and stone construction, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
   "elder_neo": {
     "group": "npcs",
     "file": "sprites/npcs/elder_neo.png",
@@ -1388,16 +1228,6 @@
     },
     "kind": "pixen",
     "prompt": "wise elderly Setswana village elder, grey hair, patterned blanket over shoulder, kind weathered face, full body character sprite, standing front view facing camera, head to toe, entire figure visible from head to feet, arms at sides, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
-  "pig_pen_lvl1": {
-    "group": "buildings",
-    "file": "sprites/buildings/pig_pen/lvl1.png",
-    "size": {
-      "w": 96,
-      "h": 64
-    },
-    "kind": "pixen",
-    "prompt": "cozy farm pig pen with low wooden fence and mud patch, warm wooden and stone construction, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
   "mama_naledi": {
     "group": "npcs",
@@ -1819,16 +1649,6 @@
     "kind": "pixen",
     "prompt": "single small pink flower petal, small particle sprite centered, transparent background, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
-  "snowflake": {
-    "group": "fx",
-    "file": "particles/snowflake.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "small white snowflake, small particle sprite centered, transparent background, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
   "dust_puff": {
     "group": "fx",
     "file": "particles/dust_puff.png",
@@ -2189,16 +2009,6 @@
     "kind": "pixen",
     "prompt": "small paper seed packet with green herb sprigs beside it, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
   },
-  "seed_saffron": {
-    "group": "item-icons",
-    "file": "ui/items/seed_saffron.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "tiny pouch with purple crocus flowers and red stigmas beside it, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
-  },
   "product_maize": {
     "group": "item-icons",
     "file": "ui/items/product_maize.png",
@@ -2299,16 +2109,6 @@
     "kind": "pixen",
     "prompt": "bundle of fresh green herb sprigs tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
   },
-  "product_saffron": {
-    "group": "item-icons",
-    "file": "ui/items/product_saffron.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "small glass jar of red saffron threads with purple flower, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
-  },
   "product_egg": {
     "group": "item-icons",
     "file": "ui/items/product_egg.png",
@@ -2318,16 +2118,6 @@
     },
     "kind": "pixen",
     "prompt": "two brown eggs in a small straw nest, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
-  },
-  "product_wool": {
-    "group": "item-icons",
-    "file": "ui/items/product_wool.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "fluffy white wool fleece bundle tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
   },
   "product_milk": {
     "group": "item-icons",
@@ -2368,26 +2158,6 @@
     },
     "kind": "pixen",
     "prompt": "bundle of dried river reeds tied with twine, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
-  },
-  "material_marula": {
-    "group": "item-icons",
-    "file": "ui/items/material_marula.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "three round marula fruits with one cut open showing flesh, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
-  },
-  "material_salt": {
-    "group": "item-icons",
-    "file": "ui/items/material_salt.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "small pile of coarse white mineral salt crystals, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
   },
   "material_herb_wild": {
     "group": "item-icons",
@@ -2549,26 +2319,6 @@
     "kind": "pixen",
     "prompt": "pig pen with low wooden fence and mud patch, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
   },
-  "building_borehole": {
-    "group": "item-icons",
-    "file": "ui/items/building_borehole.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "modern deep borehole water pump with metal pipe, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
-  },
-  "building_greenhouse": {
-    "group": "item-icons",
-    "file": "ui/items/building_greenhouse.png",
-    "size": {
-      "w": 32,
-      "h": 32
-    },
-    "kind": "pixen",
-    "prompt": "small glass greenhouse with plants inside, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
-  },
   "logo": {
     "group": "branding",
     "file": "branding/logo.png",
@@ -2729,16 +2479,6 @@
     "kind": "pixen",
     "prompt": "sick weak farm dairy cow, tan with dark patches, gentle face, standing side view facing right, drooping head, dull tired eyes, small sweat drop, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   },
-  "pig_sick": {
-    "group": "animals",
-    "file": "sprites/animals/pig/sick.png",
-    "size": {
-      "w": 64,
-      "h": 48
-    },
-    "kind": "pixen",
-    "prompt": "sick weak farm round pink pig with a curly tail, standing side view facing right, drooping head, dull tired eyes, small sweat drop, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
-  },
   "building_fence": {
     "group": "item-icons",
     "file": "ui/items/building_fence.png",
@@ -2868,5 +2608,215 @@
     },
     "kind": "pixen",
     "prompt": "a small friendly black-and-white pied bush bird perched, head turned back over its shoulder preening one wing, tail lifted, cheerful companion bird, single bird centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "morula_product": {
+    "group": "crops",
+    "file": "sprites/crops/morula/product_morula.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "harvested morula produce icon, single item centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "building_kraal": {
+    "group": "item-icons",
+    "file": "ui/items/building_kraal.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "round wooden livestock kraal enclosure with a gate and a small thatch shelter, front view, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "morula_seed": {
+    "group": "crops",
+    "file": "sprites/crops/morula/seed_morula.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small seed packet / seed icon for morula, single item centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "kraal_lvl1": {
+    "group": "buildings",
+    "file": "sprites/buildings/kraal/lvl1.png",
+    "size": {
+      "w": 96,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "cozy farm round wooden livestock kraal enclosure with a gate and a small thatch shelter, warm wooden and stone construction, front view, centered, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "seed_morula": {
+    "group": "item-icons",
+    "file": "ui/items/seed_morula.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "tiny pouch of morula (marula) seeds with a small round green-yellow fruit beside it, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_morula": {
+    "group": "item-icons",
+    "file": "ui/items/product_morula.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small pile of ripe marula fruit, round green-yellow, one cut open showing pale flesh, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_poleto": {
+    "group": "item-icons",
+    "file": "ui/items/product_poleto.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "coiled sisal rope (poleto), pale tan, looped bundle, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_thapo": {
+    "group": "item-icons",
+    "file": "ui/items/product_thapo.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "woven sisal tether rope (thapo), thicker coil, darker tan, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_setena": {
+    "group": "item-icons",
+    "file": "ui/items/product_setena.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "woven reed sleeping mat (setena), rolled, sandy beige, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_bupi": {
+    "group": "item-icons",
+    "file": "ui/items/product_bupi.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small wooden bowl of fine white sorghum flour (bupi) with a spoon, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "product_borotho": {
+    "group": "item-icons",
+    "file": "ui/items/product_borotho.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "freshly baked round loaf of brown sorghum bread (borotho), centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_letsopa": {
+    "group": "item-icons",
+    "file": "ui/items/material_letsopa.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small wedge of grey clay (letsopa) with a thumb imprint, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_mokolwane": {
+    "group": "item-icons",
+    "file": "ui/items/material_mokolwane.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "bundle of dried palm fibre (mokolwane), pale tan strands tied, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_lotlhaka": {
+    "group": "item-icons",
+    "file": "ui/items/material_lotlhaka.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "bundle of dried thatch grass (lotlhaka), golden dried strands tied, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_phane": {
+    "group": "item-icons",
+    "file": "ui/items/material_phane.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "cluster of phane caterpillars, grey-brown mopane worms, a bushveld delicacy, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "material_manyoro": {
+    "group": "item-icons",
+    "file": "ui/items/material_manyoro.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "small heap of dry livestock manure pats (manyoro), dark brown, centered, single flat game-UI icon, ONE compact object only, no scenery, no background, no people, no landscape, no drop shadow, no glow, no text, no letters, no numbers, object centered, drawn LARGE but with a clear margin of empty space on all four sides so the whole silhouette is cut out cleanly, chunky readable 2px dark-brown #3E2723 outline, minimal flat color blocks (max 4 colors + outline), crisp pixel art, flat colors, no gradients, cozy Molemisi farm palette: warm amber #FF8F00, cream #F5E6D3, grass green #5A8F3C, sky blue #87CEEB, terracotta #C05C3C."
+  },
+  "morula_stage_0": {
+    "group": "crops",
+    "file": "sprites/crops/morula/stage_0.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "Freshly planted seed just sprouting, tiny green shoot breaking through dark soil of a morula plant. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "morula_stage_1": {
+    "group": "crops",
+    "file": "sprites/crops/morula/stage_1.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "Young green seedling with two small leaves of a morula plant. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "morula_stage_2": {
+    "group": "crops",
+    "file": "sprites/crops/morula/stage_2.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "Growing vigorously as a healthy medium plant with green leaves of a morula plant. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "morula_stage_3": {
+    "group": "crops",
+    "file": "sprites/crops/morula/stage_3.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "Nearly mature and tall, with the first produce just forming of a morula plant. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "morula_stage_4": {
+    "group": "crops",
+    "file": "sprites/crops/morula/stage_4.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "Fully mature and ready to harvest, marula tree crop \u2014 slender green trunk with round yellow-green fruit, two-day cycle. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   }
 }

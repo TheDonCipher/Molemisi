@@ -77,15 +77,15 @@ These are settled. Reopening one requires an explicit ruling.
 | # | Decision |
 |---|---|
 | D1 | **Marketplace model, not gambling.** Revenue is fees on player-to-player trade. The house never funds withdrawable rewards. (See `02 §2`, the Withdrawal Funding Rule.) |
-| D2 | **Mobile money is the rail.** Orange Money and Mascom MyZaka at launch. Crypto is not part of this plan. |
+| D2 | **Mobile money is the rail.** Orange Money, Mascom MyZaka, and BTC BeMobile Smega. No card-only payment model. Crypto is not part of this plan. |
 | D3 | **React only. No Phaser.** All rendering, including building and storage tier swaps. |
 | D4 | **Menu-driven, no player movement.** Accessibility decision. Do not "fix" it by adding movement. |
 | D5 | **Three Pillars progression:** Pula (infrastructure), Botho (community), Journal (ecological mastery). No player levels, no XP — retired entirely. |
 | D6 | **All crops available from the start.** Progression comes from land, buildings, and seed seasonality — not from a level gate. |
-| D7 | **Three currencies:** Pula (soft), Madi (hard, withdrawable), Chapter Token (seasonal, expires). |
+| D7 | **Three currencies:** Pula (soft, *earned-only — never sold, DECIDED 2026-10-01*), Madi (hard, *spend-only in v1 — DECIDED 2026-10-01*), Chapter Token (seasonal, expires; shown as season stamps). |
 | D8 | **Storage is the only tiered building line** in v1. Water Source, Kraal and Farm Boundary are flat but require ongoing maintenance. |
-| D9 | **Storage:** Basket 24 → Shed 48 → Storehouse 96. Guild subscribers +50%, stacking. |
-| D10 | **Plots:** start 4, max 20. Ladder 4 → 8 → 12 → 20. |
+| D9 | **Storage:** Basket 24 → Shed 48 → Storehouse 96. Village Pass subscribers +50%, stacking. |
+| D10 | **Plots:** start 4, max 20. Ladder 4 → 8 → 12 → 16 → 20. *(DECIDED 2026-10-01, `docs/33` §3.2: 16-plot rung ~P8,000, 20-plot ~P15,000.)* |
 | D11 | **Max plots 20.** Yes, confirmed. |
 | D12 | **Ship v1 closed-loop** (no withdrawals); unlock the Madi layer in v1.1 subject to legal and PSP. |
 | D13 | **PWA distribution.** No Play Store work in v1. |
@@ -101,7 +101,8 @@ These are settled. Reopening one requires an explicit ruling.
 | R5 | **Journal page buffs removed.** The Journal's reward is the restoration of the scene's art (see `03 §7`). |
 | R6 | **`player_wallets.botho_points` is the single canonical Botho number**, created in the first phase that needs it. |
 | R7 | **Guild +50% storage stays**, stacking on tier. |
-| R8 | **Fertility Shell removed.** Three boosts remain: Pula Stone P20, Ancestral Ward P25, Breath of the Land P15. |
+| R8 | **Fertility Shell removed.** Boosts are **cut entirely** from the store (DECIDED 2026-10-01, `docs/33` §2/§9) — they shipped broken and stay out until every effect works. No boost prices are listed. |
+| R9 | **Village Pass replaces the Guild subscription (DECIDED 2026-10-01): M50/month** — helper (waters + collects) · one festival outfit/month · +50% storage. The helper is also earned free at Botho 500. |
 
 ---
 
@@ -113,7 +114,7 @@ These are settled. Reopening one requires an explicit ruling.
 - MARKET: Co-op with dynamic prices and 5% tax
 - KGOTLA: quests, community projects, Botho and its thresholds, Elder's guidance, Almanac (free + Guild track)
 - Live service: chapters, chapter tokens, real-calendar events
-- Monetisation: Guild subscription P49/mo, top-up packs for Pula, three boosts, cosmetics
+- Monetisation: Village Pass M50/mo, top-up packs for Madi, Market/Festival decorations (no boosts; DECIDED 2026-10-01)
 - Auth, PWA, admin
 
 **Out, deliberately:**

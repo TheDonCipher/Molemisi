@@ -80,7 +80,9 @@ function RecipeCard({
   const short = ctx.shortfalls(chosen, batch);
   const fee = recipe.batchFees?.[batch] ?? recipe.feePula;
   const feeOk = fee <= ctx.pula;
-  const isLoss = recipe.economics.profit < 0;
+  // 31 §6.3 — the SERVER decides whether this craft is underwater at today's prices
+  // (the card's numbers are live too). The client never recomputes money (I7).
+  const isLoss = recipe.underwaterNow;
   const noSlot = freeSlots <= 0;
   const canCraft = recipe.isUnlocked && affordable && feeOk && !noSlot && !busy;
 
@@ -119,7 +121,8 @@ function RecipeCard({
       </div>
       {isLoss && (
         <p className="mt-1 font-mono text-[9px] text-status-danger">
-          Underwater at today&apos;s prices — selling the materials beats crafting them.
+          Underwater at today&apos;s prices — you would earn more selling the materials. You can
+          still craft it.
         </p>
       )}
 

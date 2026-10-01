@@ -7,6 +7,7 @@ import {
   DAILY_TOP_UP_CAP_BWP,
   KAGISO,
   PRIZE,
+  VIRTUAL_GOODS,
 } from '@molemisi/game-config';
 
 /**
@@ -104,8 +105,14 @@ describe('P10 — v1 launch readiness (05 §P10)', () => {
       expect(payouts).toEqual([200, 100, 50]);
     });
 
-    it('store carries exactly three boosts and no Fertility Shell (R8)', () => {
-      expect(BOOST_SLUGS).toEqual(['pula_stone', 'ancestral_ward', 'breath_of_the_land']);
+    it('docs/34 §3.3: the store carries NO boosts — they were cut 2026-10-01', () => {
+      // Supersedes R8 ("exactly three boosts remain"). They were sold while no
+      // endpoint applied their effects, so they were withdrawn on 2026-09-11 and
+      // removed from the catalogue on 2026-10-01. Re-adding one is deliberate and
+      // gated on every effect actually working (docs/34 §6).
+      expect(BOOST_SLUGS).toEqual([]);
+      expect(BOOSTS).toHaveLength(0);
+      expect(VIRTUAL_GOODS.filter((g) => g.sku.startsWith('boost_'))).toHaveLength(0);
     });
   });
 
@@ -166,14 +173,19 @@ describe('P10 — v1 launch readiness (05 §P10)', () => {
       expect(KAGISO.max).toBe(6);
     });
 
-    it('Kagiso cannot be bought — no boost grants it', () => {
+    it('Kagiso cannot be bought — nothing in the store grants it', () => {
       // If money could buy stillness, the cap above would be decorative: a
       // spender would gather without limit and the Bushveld would out-earn the
       // Farm. Nothing in the store may hand out Kagiso.
-      const grants = BOOSTS.filter(
-        (b) => /kagiso|stillness|bush/i.test(b.effect) || /kagiso/i.test(b.name),
+      //
+      // docs/34 §3.3 (2026-10-01): boosts were CUT, so there is no boost list to
+      // scan any more. The assertion is kept in its stronger form — no good in
+      // the catalogue may mention Kagiso at all — so a future re-added product
+      // is caught by name even if its category changes.
+      const offenders = VIRTUAL_GOODS.filter((g) =>
+        /kagiso|stillness/i.test(`${g.name} ${g.description}`),
       );
-      expect(grants).toEqual([]);
+      expect(offenders).toEqual([]);
     });
 
       /**

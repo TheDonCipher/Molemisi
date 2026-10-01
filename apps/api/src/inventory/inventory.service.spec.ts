@@ -212,3 +212,27 @@ describe('InventoryService — removal', () => {
     expect(await service.countOwned('p1', 'sorghum')).toBe(7);
   });
 });
+
+describe('InventoryService — Storage tier 3 stack cap ×2 (31 §6.2)', () => {
+  it('lets a tier-3 Storehouse hold double the authored stack', async () => {
+    // sorghum maxStack 50; 60 already held (only reachable at tier 3) -> cap 100.
+    const { service } = buildService([
+      DEF,
+      { data: { id: 'row-1', quantity: 60 }, error: null },
+      { data: { level: 3 }, error: null }, // storage tier 3
+      { data: null, error: null }, // update
+    ]);
+    const res = await service.addItem('p1', 'f1', 'sorghum', 60);
+    expect(res).toEqual({ added: 40, overflow: 20 }); // 100 - 60 = 40
+  });
+
+  it('leaves the authored cap alone at tier 1 (a full stack still overflows)', async () => {
+    const { service } = buildService([
+      DEF,
+      { data: { id: 'row-1', quantity: 60 }, error: null },
+      { data: { level: 1 }, error: null }, // tier 1 -> cap stays 50
+    ]);
+    const res = await service.addItem('p1', 'f1', 'sorghum', 60);
+    expect(res).toEqual({ added: 0, overflow: 60 });
+  });
+});

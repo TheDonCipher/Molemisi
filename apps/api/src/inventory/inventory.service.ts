@@ -1,7 +1,13 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
-import { getItemDef, intentGroup, type IntentGroup } from '@molemisi/game-config';
+import {
+  getItemDef,
+  intentGroup,
+  effectiveSlotCap,
+  effectiveStackCap,
+  type IntentGroup,
+} from '@molemisi/game-config';
 
 export interface InventoryItemView {
   slug: string;
@@ -69,6 +75,10 @@ export class InventoryService {
 
     if (error) throw new Error('Failed to fetch inventory');
 
+    // 31 §6.2 — tier 3 raises every per-type stack cap, so the cap the UI shows must
+    // be the one the server actually enforces, not the item's authored `max_stack`.
+    const tier = await this.getStorageTier(farmId);
+
     const items: InventoryItemView[] = (data ?? []).map((row: Record<string, unknown>) => {
       const d = row.item_definitions as Record<string, unknown>;
       const def = getItemDef(d.slug as string);
@@ -78,7 +88,7 @@ export class InventoryService {
         name: d.name as string,
         category: d.category as string,
         quantity: row.quantity as number,
-        maxStack: d.max_stack as number,
+        maxStack: effectiveStackCap(d.max_stack as number, tier),
         baseValue: d.base_value_pula as number,
         use: (d.use_text as string) ?? '',
         isTool: d.is_tool as boolean,
@@ -88,22 +98,30 @@ export class InventoryService {
     });
 
     const usedSlots = items.filter((i) => !i.isTool).length;
-    const slotCap = await this.getStorageCap(farmId);
+    const slotCap = await this.getStorageCap(farmId, tier);
     return { items, usedSlots, slotCap };
   }
 
-  /** Effective slot cap from the storage building tier + Guild bonus (R7/C8). */
-  async getStorageCap(farmId: string): Promise<number> {
-    const admin = this.client();
-    const { data: building } = await admin
+  /** The storage building's tier (1 Basket / 2 Shed / 3 Storehouse). No building → 1. */
+  async getStorageTier(farmId: string): Promise<number> {
+    const { data } = await this.client()
       .from('buildings')
       .select('level')
       .eq('farm_id', farmId)
       .eq('building_type', 'storage')
       .single();
+    // Clamp to the authored tiers so an out-of-range level can never fall through to
+    // the config's default tier and silently shrink a farm's storage.
+    return Math.min(Math.max((data?.level as number) || 1, 1), 3);
+  }
 
-    // No storage building yet → tier 1 (Basket, 24 slots).
-    const tier = (building?.level as number) || 1;
+  /**
+   * Effective slot cap from the storage building tier + Guild bonus (R7/C8).
+   * `tier` may be passed in when the caller already resolved it, to save a read.
+   */
+  async getStorageCap(farmId: string, tier?: number): Promise<number> {
+    const admin = this.client();
+    const resolvedTier = tier ?? (await this.getStorageTier(farmId));
 
     const { data: walletRow } = await admin
       .from('player_wallets')
@@ -115,9 +133,8 @@ export class InventoryService {
 
     const isGuild = (walletRow?.subscription_status as string) === 'guild';
 
-    // 02 §6.5 tiers + R7 Guild +50%.
-    const cap = [24, 48, 96][Math.min(tier, 3) - 1] ?? 24;
-    return Math.floor(cap * (isGuild ? 1.5 : 1));
+    // 02 §6.5 tiers + R7 Guild +50% — read from config, never restated as a table.
+    return effectiveSlotCap(resolvedTier, isGuild);
   }
 
   /** Count distinct non-tool item types currently held (the slots in use). */
@@ -169,7 +186,14 @@ export class InventoryService {
       .single();
 
     const have = (existing?.quantity as number) ?? 0;
-    const spaceInStack = def.maxStack - have;
+    // 31 §6.2 — tier 3 doubles the per-type stack cap. Only pay for the storage read
+    // when the item would NOT fit under its own base cap, so the hot path (every
+    // harvest, every tap, every craft collect) is unchanged for tiers 1–2.
+    let stackCap = def.maxStack;
+    if (have + qty > stackCap) {
+      stackCap = effectiveStackCap(def.maxStack, await this.getStorageTier(farmId));
+    }
+    const spaceInStack = stackCap - have;
     const toAdd = Math.min(qty, Math.max(0, spaceInStack));
 
     if (toAdd <= 0) {

@@ -7,19 +7,19 @@ import { BOOST_SLUGS } from '@molemisi/game-config';
 import { makeDb, clientFor, type MockDb, type MockClient } from '../test/supabase-mock';
 
 /**
- * P9 — the in-game Pula store (05 §P9; F7 unbounded sink).
+ * P9 — the in-game store (05 §P9; F7 unbounded sink), as decided in docs/33 and
+ * built in docs/34.
  *
  * Proves:
- *   - the shelf carries NO boosts while their effects are deferred (ruling
- *     2026-09-11) and never carries a Fertility Shell (R8)
- *   - the three boost slugs still EXIST in config, so R8/C10 stays satisfied and
- *     restoring them is a one-line change
- *   - buying a cosmetic debits Pula and is idempotent on re-buy — the sink drains
- *   - insufficient Pula is rejected without recording anything
+ *   - the shelf carries NO boosts (cut 2026-10-01, docs/34 §3.3)
+ *   - cosmetics sit on TWO shelves, and each is denominated in its own currency
+ *   - buying a Market-shelf cosmetic debits Pula and is idempotent on re-buy
+ *   - buying a Festival-shelf cosmetic debits MADI — and never Pula
+ *   - insufficient funds are rejected without recording anything
  *   - real-money SKUs are refused here (they go through /payments)
  */
 
-describe('StoreService — P9 in-game Pula store', () => {
+describe('StoreService — P9 in-game store', () => {
   let service: StoreService;
   let db: MockDb;
   let client: MockClient;
@@ -37,37 +37,45 @@ describe('StoreService — P9 in-game Pula store', () => {
     service = module.get(StoreService);
   });
 
-  describe('catalog (R8 — no Fertility Shell, no unwired boosts)', () => {
-    it('sells no boosts at all while their effects are deferred', () => {
-      const boosts = service.getCatalog().filter((i) => i.category === 'boost');
+  describe('catalog (docs/34 §3.1 — two shelves, no boosts)', () => {
+    it('sells no boosts at all', () => {
+      const boosts = service.getCatalog().filter((i) => (i as { category: string }).category === 'boost');
       expect(boosts).toEqual([]);
     });
 
-    it('still defines exactly three boosts in config, none of them a Fertility Shell', () => {
-      // R8/C10 is about what EXISTS, not about what is on the shelf. Keeping the
-      // catalogue entries is what makes restoring them `available: true`.
-      expect([...BOOST_SLUGS].sort()).toEqual([
-        'ancestral_ward',
-        'breath_of_the_land',
-        'pula_stone',
-      ]);
-      expect(BOOST_SLUGS).not.toContain('fertility_shell');
+    it('defines no boosts in config either — they were cut, not just hidden', () => {
+      // Replaces the old "three slugs still EXIST so restoring is one line"
+      // assertion. Keeping the entries is what let them be half-restored before;
+      // removing them is the point.
+      expect([...BOOST_SLUGS]).toEqual([]);
     });
 
-    it('carries a cosmetic line so the sink is not empty (F7)', () => {
+    it('carries a cosmetic line on BOTH shelves so the sink is not empty (F7)', () => {
       const cosmetics = service.getCatalog().filter((i) => i.category === 'cosmetic');
       expect(cosmetics.length).toBeGreaterThan(0);
+      const shelves = new Set(cosmetics.map((i) => i.shelf));
+      expect(shelves).toContain('market');
+      expect(shelves).toContain('festival');
+    });
+
+    it('prices each shelf in its own currency', () => {
+      const cosmetics = service.getCatalog().filter((i) => i.category === 'cosmetic');
+      for (const item of cosmetics) {
+        expect(item.currency).toBe(item.shelf === 'market' ? 'PULA' : 'MADI');
+      }
     });
   });
 
-  describe('boosts are withdrawn (ruling 2026-09-11)', () => {
-    it('refuses to sell a boost, taking no Pula and recording nothing', async () => {
+  describe('boosts are cut (docs/34 §3.3)', () => {
+    it('refuses a legacy boost SKU, taking nothing and recording nothing', async () => {
       const before = db.player_wallets[0].pula_balance;
+      // docs/34 §3.3 — the SKU does not exist at all now, so this is a 404 rather
+      // than a 400. That is the stronger outcome: there is nothing to reject,
+      // because there is nothing to buy.
       await expect(service.purchase('u1', 'boost_pula_stone')).rejects.toBeInstanceOf(
-        BadRequestException,
+        NotFoundException,
       );
-      // The whole point of withdrawing them: no Pula leaves the player in exchange
-      // for an effect that no endpoint applies.
+      // Nothing leaves the player in exchange for an effect that does not exist.
       expect(db.player_wallets[0].pula_balance).toBe(before);
       expect(db.player_boosts.filter((b) => b.player_id === 'u1')).toHaveLength(0);
       expect(db.ledger_entries.filter((l) => l.player_id === 'u1')).toHaveLength(0);
@@ -76,20 +84,20 @@ describe('StoreService — P9 in-game Pula store', () => {
 
   describe('buying a cosmetic', () => {
     it('debits Pula and records ownership; re-buying is a no-op', async () => {
-      await service.purchase('u1', 'cos_scene_frame_open_bush'); // P400
+      await service.purchase('u1', 'cos_market_frame_bush'); // P200
       const owned = db.player_cosmetics.filter((c) => c.player_id === 'u1');
       expect(owned).toHaveLength(1);
       const pulaAfterFirst = db.player_wallets[0].pula_balance;
 
       // Second purchase must not add a row or debit again.
-      await service.purchase('u1', 'cos_scene_frame_open_bush');
+      await service.purchase('u1', 'cos_market_frame_bush');
       expect(db.player_cosmetics.filter((c) => c.player_id === 'u1')).toHaveLength(1);
       expect(db.player_wallets[0].pula_balance).toBe(pulaAfterFirst);
     });
 
     it('rejects when the player cannot afford it, recording nothing', async () => {
-      db.player_wallets[0].pula_balance = 10; // far short of the P400 frame
-      await expect(service.purchase('u1', 'cos_scene_frame_open_bush')).rejects.toBeInstanceOf(
+      db.player_wallets[0].pula_balance = 10; // far short of the P200 frame
+      await expect(service.purchase('u1', 'cos_market_frame_bush')).rejects.toBeInstanceOf(
         BadRequestException,
       );
       expect(db.player_cosmetics.filter((c) => c.player_id === 'u1')).toHaveLength(0);
@@ -97,9 +105,46 @@ describe('StoreService — P9 in-game Pula store', () => {
     });
   });
 
+  // docs/34 §3.1 — the Festival shelf spends MADI and must never touch Pula.
+  // This is the test that would catch a copy-paste in the debit branch.
+  describe('buying a Festival-shelf cosmetic', () => {
+    beforeEach(() => {
+      db.player_wallets[0].madi_balance = 200;
+    });
+
+    it('debits MADI and records ownership', async () => {
+      await service.purchase('u1', 'cos_fest_frame_bush'); // M80
+      expect(db.player_wallets[0].madi_balance).toBe(120);
+      expect(db.player_cosmetics.filter((c) => c.player_id === 'u1')).toHaveLength(1);
+    });
+
+    it('does NOT touch Pula at all', async () => {
+      const pulaBefore = db.player_wallets[0].pula_balance;
+      await service.purchase('u1', 'cos_fest_frame_bush');
+      expect(db.player_wallets[0].pula_balance).toBe(pulaBefore);
+    });
+
+    it('writes a madi_spend ledger row, never a cosmetic_purchase one', async () => {
+      await service.purchase('u1', 'cos_fest_frame_bush');
+      const rows = db.ledger_entries.filter((l) => l.player_id === 'u1');
+      expect(rows).toHaveLength(1);
+      expect(rows[0].currency).toBe('madi');
+      expect(rows[0].source).toBe('madi_spend');
+    });
+
+    it('rejects when the player has Pula but not Madi — the wallets are not fungible', async () => {
+      db.player_wallets[0].pula_balance = 100000;
+      db.player_wallets[0].madi_balance = 0;
+      await expect(service.purchase('u1', 'cos_fest_frame_bush')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(db.player_cosmetics.filter((c) => c.player_id === 'u1')).toHaveLength(0);
+    });
+  });
+
   describe('routing guards', () => {
     it('refuses a real-money SKU (top-up / subscription) — use /payments/create', async () => {
-      await expect(service.purchase('u1', 'subscription_guild')).rejects.toBeInstanceOf(
+      await expect(service.purchase('u1', 'subscription_village_pass')).rejects.toBeInstanceOf(
         BadRequestException,
       );
       await expect(service.purchase('u1', 'topup_farmer')).rejects.toBeInstanceOf(

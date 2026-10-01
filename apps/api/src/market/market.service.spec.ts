@@ -4,7 +4,12 @@ import { MarketService } from './market.service';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import { InventoryService } from '../inventory/inventory.service';
-import { isSeedInSeason, type CropId } from '@molemisi/game-config';
+import {
+  isSeedInSeason,
+  chapterForDate,
+  CHAPTER_MARKET_EVENTS,
+  type CropId,
+} from '@molemisi/game-config';
 
 /**
  * R3a regression cover. The seed calendar is REAL (04 §9.1) — a spec written
@@ -284,6 +289,39 @@ describe('MarketService', () => {
       expect(sale.transaction.totalPrice).toBe(quote.gross);
       expect(sale.transaction.tax).toBe(quote.tax);
       expect(sale.transaction.netProceeds).toBe(quote.netProceeds);
+    });
+  });
+
+  describe('3.3 — chapter-scoped event seeding (fresh install always has one)', () => {
+    it('seeds the CURRENT chapter event when none is active', async () => {
+      const { chain, builder } = createMockClient({
+        gt: jest.fn().mockResolvedValue({ data: [], error: null }),
+      });
+      mockSupabaseService.getAdminClient.mockReturnValue(chain);
+
+      await service.getActiveEvents();
+
+      const chapter = chapterForDate(new Date());
+      const expected = CHAPTER_MARKET_EVENTS[chapter.slug];
+      expect(builder.insert).toHaveBeenCalledTimes(1);
+      const inserted = builder.insert.mock.calls[0][0] as { name: string; effect: string };
+      expect(inserted.name).toBe(expected.name);
+      expect(inserted.effect).toBe(expected.effect);
+    });
+
+    it('does NOT re-seed when the current chapter event is already active', async () => {
+      const chapter = chapterForDate(new Date());
+      const expected = CHAPTER_MARKET_EVENTS[chapter.slug];
+      const { chain, builder } = createMockClient({
+        gt: jest.fn().mockResolvedValue({
+          data: [{ id: 'e1', name: expected.name }],
+          error: null,
+        }),
+      });
+      mockSupabaseService.getAdminClient.mockReturnValue(chain);
+
+      await service.getActiveEvents();
+      expect(builder.insert).not.toHaveBeenCalled();
     });
   });
 

@@ -29,6 +29,10 @@ export interface SimulationSummary {
   weather: string | null;
   /** Botho credited for missed days (03 §9.4 catch-up) — 0 when none. */
   bothoCatchUp: number;
+  /** G-12 — total real time away (uncapped hours), for the "discarded time" line. */
+  awayHours: number;
+  /** G-12 — time actually applied to simulation (capped at MAX_OFFLINE_HOURS). */
+  appliedHours: number;
 }
 
 export interface FarmWithPlots {
@@ -108,11 +112,16 @@ export class FarmsService {
         );
       }
 
+      // G-12 — the 24h cap silently discards any time beyond it. That discard is
+      // itself news worth reporting (30 G-12), so a long absence surfaces the
+      // sheet even when nothing else happened — the numbers must not lie.
+      const discardedTime = sim.appliedHours < sim.awayHours;
       const hasNews =
         sim.cropsReady + sim.livestockProducts + sim.buildingsCompleted + sim.buildingsMaintenance >
           0 ||
         sim.seasonChanged ||
-        bothoCatchUp > 0;
+        bothoCatchUp > 0 ||
+        discardedTime;
       if (awayMinutes >= 30 && hasNews) {
         simulation = {
           awayMinutes: Math.round(awayMinutes),
@@ -124,6 +133,8 @@ export class FarmsService {
           newSeason: sim.newSeason,
           weather: sim.weather?.type ?? null,
           bothoCatchUp,
+          awayHours: Math.round(sim.awayHours),
+          appliedHours: Math.round(sim.appliedHours),
         };
       }
     }

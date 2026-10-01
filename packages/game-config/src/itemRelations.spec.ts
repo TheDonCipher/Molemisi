@@ -58,7 +58,7 @@ describe('sourcesForItem', () => {
       .map((s) => (s.kind === 'raise' ? s.animalId : ''))
       .sort();
     expect(milkAnimals).toEqual(['cow', 'goat']);
-    expect(sourcesForItem('truffle')).toEqual([{ kind: 'raise', animalId: 'pig' }]);
+    expect(sourcesForItem('guinea_fowl_egg')).toEqual([{ kind: 'raise', animalId: 'guinea_fowl' }]);
   });
 
   it('G1: manure comes from every animal — the byproduct of a collect (03 §5)', () => {
@@ -79,7 +79,7 @@ describe('sourcesForItem', () => {
     // The resolved ruling: the AnimalConfig prices won (payback math was tuned on them).
     expect(ITEMS.eggs!.baseValue).toBe(5);
     expect(ITEMS.milk!.baseValue).toBe(15);
-    expect(ITEMS.truffle!.baseValue).toBe(50);
+    expect(ITEMS.guinea_fowl_egg!.baseValue).toBe(12);
   });
 
   it('bushveld materials name their scene, hotspot and tell', () => {
@@ -115,7 +115,7 @@ describe('sourcesForItem', () => {
     );
   });
 
-  it('seasonal loot carries its real-calendar months (phane: Moranang & Sedimonthole)', () => {
+  it('seasonal loot carries its real-calendar months (phane: Moranang, Sedimonthole & Moriti)', () => {
     expect(sourcesForItem('phane')).toEqual([
       {
         kind: 'forage',
@@ -123,6 +123,15 @@ describe('sourcesForItem', () => {
         hotspotId: 'ob_setlhare_sa_phane',
         tell: 'Stripped deadfall',
         months: [4, 12],
+      },
+      // 31 §6.5 / 32 §5 — the dry-season relief route (ruled 2026-09-28): the same
+      // `phane` find, reachable through Moriti so the page is not gated to Apr/Dec.
+      {
+        kind: 'forage',
+        scene: 'open_bush',
+        hotspotId: 'ob_dry_deadfall',
+        tell: 'A deadfall bleached by the sun',
+        months: [5, 6, 7],
       },
     ]);
   });

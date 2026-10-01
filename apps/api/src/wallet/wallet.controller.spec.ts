@@ -37,11 +37,27 @@ describe('WalletController', () => {
       success: true,
       data: {
         pula: 250,
+        // docs/34 §4.2 — absent in the mocked snapshot, so the client is told
+        // "no Madi column yet" (null) rather than "you have 0 Madi".
+        madi: null,
         botho: 40,
         subscriptionStatus: 'free',
         subscriptionExpiresAt: null,
       },
     });
+  });
+
+  it('surfaces a real Madi balance when the column exists', async () => {
+    getWallet.mockResolvedValue({
+      pula_balance: 250,
+      madi_balance: 55,
+      botho_points: 40,
+      subscription_status: 'free',
+      subscription_expires_at: null,
+    });
+
+    const result = await controller.get({ id: 'player-1' } as never);
+    expect((result as { data: { madi: number | null } }).data.madi).toBe(55);
   });
 
   it('never exposes the raw snake_case row — the client maps on camelCase', async () => {

@@ -2,14 +2,16 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { SupabaseService } from '../database/supabase.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { WalletService } from '../wallet/wallet.service';
+import { MarketService } from '../market/market.service';
 import {
   RECIPES,
   RECIPE_SLUGS,
   BATCH_SIZES,
   batchFee,
   defaultInputsFor,
-  recipeEconomics,
+  recipeEconomicsAt,
   BONUS_YIELD_CHANCE,
+  ITEMS,
   type RecipeDef,
   type BatchSize,
   type RecipeEconomics,
@@ -29,7 +31,15 @@ export interface RecipeView {
   durationMinutes: number;
   unlock: { bothoGte: number } | null;
   isUnlocked: boolean;
+  /**
+   * The margin at TODAY's market prices (31 §6.3), not at the catalogue's base values.
+   * Sent down rather than derived on the client, because it is money (I7) — and
+   * because the card's "underwater" warning has to be about the price the player will
+   * actually be paid, or it is a lie. (It was a lie until 2026-09-28.)
+   */
   economics: RecipeEconomics;
+  /** True when crafting now would LOSE Pula at today's prices. WARN, never block. */
+  underwaterNow: boolean;
 }
 
 export interface ActiveJobView {
@@ -56,16 +66,40 @@ export class CraftingService {
     private supabaseService: SupabaseService,
     private inventory: InventoryService,
     private wallet: WalletService,
+    private market: MarketService,
   ) {}
 
   private client() {
     return this.supabaseService.getAdminClient();
   }
 
-  /** GET /recipes — filtered server-side by Botho unlock (I4 / 02 §6.4). */
+  /**
+   * GET /recipes — filtered server-side by Botho unlock (I4 / 02 §6.4).
+   *
+   * 31 §6.3: every recipe is valued at TODAY's prices, not the catalogue's base
+   * values. That is the entire point of the margin warning — a raw band that has
+   * drifted up can push a recipe's inputs above its crafted sell price, and the card
+   * has to be able to see it. One live read per distinct slug the recipes touch.
+   */
   async getRecipes(playerId: string): Promise<RecipeView[]> {
     const botho = await this.wallet.getBotho(playerId);
     const owned = await this.inventory.ownedMap(playerId);
+
+    const slugs = new Set<string>();
+    for (const slug of RECIPE_SLUGS) {
+      const recipe = RECIPES[slug];
+      slugs.add(recipe.output);
+      for (const group of recipe.inputs) for (const s of group.anyOf) slugs.add(s);
+    }
+    const live: Record<string, number> = {};
+    for (const slug of slugs) live[slug] = await this.market.getDynamicPrice(slug);
+
+    // A slug the market does not price (no row, or price 0) falls back to its base
+    // value — a missing price row must never make an input look free.
+    const priceOf = (slug: string): number => {
+      const p = live[slug];
+      return p && p > 0 ? p : ITEMS[slug]?.baseValue ?? 0;
+    };
 
     const feesFor = (recipe: RecipeDef) => {
       const out = {} as Record<BatchSize, number>;
@@ -77,6 +111,7 @@ export class CraftingService {
       const recipe = RECIPES[slug];
       const unlocked = !recipe.unlock || botho >= recipe.unlock.bothoGte;
       const chosen = defaultInputsFor(recipe, owned);
+      const economics = recipeEconomicsAt(recipe, chosen, 1, priceOf);
       return {
         slug,
         name: recipe.name,
@@ -89,7 +124,9 @@ export class CraftingService {
         durationMinutes: recipe.durationMinutes,
         unlock: recipe.unlock,
         isUnlocked: unlocked,
-        economics: recipeEconomics(recipe, chosen, 1),
+        economics,
+        // 31 §6.3 / 03 §3.6 — say so out loud, but never refuse the craft.
+        underwaterNow: economics.profit < 0,
       };
     });
   }

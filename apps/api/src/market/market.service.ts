@@ -10,6 +10,9 @@ import {
   getItemDef,
   isSeedInSeason,
   nextSeasonFor,
+  chapterForDate,
+  CHAPTER_MARKET_EVENTS,
+  type ChapterSlug,
 } from '@molemisi/game-config';
 
 /**
@@ -358,20 +361,37 @@ export class MarketService {
   }
 
   async getActiveEvents(): Promise<MarketEvent[]> {
+    // 3.3 — make sure a fresh install shows a chapter-themed event immediately.
+    await this.ensureActiveChapterEvent();
     const adminClient = this.supabaseService.getAdminClient();
     const now = new Date().toISOString();
     const { data: events } = await adminClient.from('market_events').select('*').gt('ends_at', now);
-    return (events ?? []).map((e: Record<string, unknown>) => ({
-      id: e.id as string,
-      name: e.name as string,
-      description: e.description as string,
-      effect: e.effect as string,
-      multiplier: e.multiplier as number,
-      endsAt: e.ends_at as string,
-    }));
+    const rows = Array.isArray(events) ? events : [];
+    // De-dupe by name so a concurrent double-seed cannot show the same event twice.
+    const seen = new Set<string>();
+    return rows
+      .filter((e: Record<string, unknown>) => {
+        const name = e.name as string;
+        if (name && seen.has(name)) return false;
+        if (name) seen.add(name);
+        return true;
+      })
+      .map((e: Record<string, unknown>) => ({
+        id: e.id as string,
+        name: e.name as string,
+        description: e.description as string,
+        effect: e.effect as string,
+        multiplier: e.multiplier as number,
+        endsAt: e.ends_at as string,
+      }));
   }
 
-  private async getDynamicPrice(itemType: string): Promise<number> {
+  /**
+   * The live per-unit price of one item. Public because the workshop's margin
+   * warning (31 §6.3) needs today's price, not the catalogue's base value, and it
+   * must get it through this same band + event logic rather than re-deriving it.
+   */
+  async getDynamicPrice(itemType: string): Promise<number> {
     const adminClient = this.supabaseService.getAdminClient();
     const { data: priceData } = await adminClient
       .from('market_prices')
@@ -396,14 +416,66 @@ export class MarketService {
     return finalPrice;
   }
 
-  private async getEventModifier(itemType: string): Promise<number> {
+  /**
+   * 3.3 — guarantees a fresh install always has an active, chapter-themed market
+   * event and rotates it when the real Botswana chapter changes (04 §9.1). Idempotent:
+   * if an event already active under the CURRENT chapter's pool name exists, it is a
+   * no-op, so calling it on every event/price read is safe. No schema change — it
+   * writes the existing `market_events` table. The chapter is matched by the pool
+   * `name` (unique per chapter), which avoids needing a chapter column.
+   */
+  private async ensureActiveChapterEvent(): Promise<void> {
+    const chapter = chapterForDate(new Date());
+    const pool = CHAPTER_MARKET_EVENTS[chapter.slug as ChapterSlug];
+    if (!pool) return;
+
     const adminClient = this.supabaseService.getAdminClient();
     const now = new Date().toISOString();
-    const { data: events } = await adminClient.from('market_events').select('effect, multiplier').gt('ends_at', now);
+    const { data: active } = await adminClient
+      .from('market_events')
+      .select('id, name')
+      .gt('ends_at', now);
+
+    const rows = (Array.isArray(active) ? active : []) as Array<{ id: string; name: string }>;
+    // Already running the current chapter's event — nothing to do.
+    if (rows.some((e) => e.name === pool.name)) return;
+
+    // Expire any out-of-chapter or stale active events, then seed the current one.
+    if (rows.length > 0) {
+      const ids = rows.map((e) => e.id);
+      await adminClient.from('market_events').update({ ends_at: now }).in('id', ids);
+    }
+    await adminClient.from('market_events').insert({
+      name: pool.name,
+      description: pool.description,
+      effect: pool.effect,
+      multiplier: pool.multiplier,
+      started_at: now,
+      ends_at: new Date(Date.now() + pool.rotationHours * 3_600_000).toISOString(),
+    });
+  }
+
+  private async getEventModifier(itemType: string): Promise<number> {
+    // 3.3 — keep the price path in step with the displayed chapter event.
+    await this.ensureActiveChapterEvent();
+    const adminClient = this.supabaseService.getAdminClient();
+    const now = new Date().toISOString();
+    const { data: events } = await adminClient
+      .from('market_events')
+      .select('name, effect, multiplier')
+      .gt('ends_at', now);
     if (!events || events.length === 0) return 0;
 
     let modifier = 0;
+    const seen = new Set<string>();
     for (const event of events) {
+      // Guard against a concurrent double-seed (two identical-name rows): a
+      // chapter event must never apply its multiplier twice.
+      const name = event.name as string;
+      if (name) {
+        if (seen.has(name)) continue;
+        seen.add(name);
+      }
       const effect = event.effect as string;
       const multiplier = event.multiplier as number;
       if (

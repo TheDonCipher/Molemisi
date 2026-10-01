@@ -29,9 +29,14 @@ export interface AnimalConfig {
    * R2/30-G3 — the inventory slug `feedAnimal` actually debits. This MUST be a
    * real `ITEMS` slug: the audit found `grain`/`hay`/`mixed_feed` were declared
    * but existed nowhere, so feeding could never be charged. Mapped to the crops
-   * the client's `FEED_INFO` mirror already shows (chicken/pig → sorghum,
-   * goat/cow → herbs) — one source of truth, zero new items, and the feed sink
-   * stays inside the crop economy (docs/31 P0-2's "or map feed to crops" option).
+   * the client's `FEED_INFO` mirror already shows.
+   *
+   * docs/34 §Wave 1.1 (2026-10-01) — ALL FOUR now eat `sorghum` (baseValue P3),
+   * the cheapest and most natural fodder ("the grain that carries a household
+   * through the dry months", crops.ts). They used to be split sorghum/herbs,
+   * which fed the P25 herbs to animals whose goods sell for P5–P15 and made
+   * three of the four permanently loss-making. Herbs keep their livestock role
+   * as MEDICINE instead — `TREATMENT_ITEM` — a better fit than fodder.
    */
   feedType: string;
   productionCycleHours: number;
@@ -90,11 +95,16 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     id: 'goat',
     name: 'Goat',
     description: 'A hardy goat that produces milk.',
-    feedPerDay: 4,
-    feedType: 'herbs',
+    // docs/34 §Wave 1.1 — feed was `herbs` (baseValue P25), so a goat burned
+    // P100/day of fodder to make P15/day of milk: -P85/day, permanently
+    // loss-making. Sorghum (P3) is the natural fodder and keeps the sink
+    // inside the crop economy. Two milk a day gives a P21/day margin, below
+    // the top crops (P26-41) so animals complement rather than dominate.
+    feedPerDay: 3,
+    feedType: 'sorghum',
     productionCycleHours: 24,
     productType: 'goat_milk',
-    productQuantity: 1,
+    productQuantity: 2,
     purchaseCost: 150,
     hungerDecayRate: 0.02,
     healthDecayRate: 0.08,
@@ -106,8 +116,12 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     id: 'cow',
     name: 'Cow',
     description: 'A dairy cow that produces milk.',
-    feedPerDay: 8,
-    feedType: 'herbs',
+    // docs/34 §Wave 1.1 — was 8 herbs/day (P200) for P45/day of milk: -P155/day.
+    // The worst animal in the game by a wide margin. Now P18 of sorghum
+    // against P45 of milk = P27/day, the strongest animal but still under
+    // morula (P40.63) — a late-game earner, not an endgame shortcut.
+    feedPerDay: 6,
+    feedType: 'sorghum',
     productionCycleHours: 24,
     productType: 'cow_milk',
     productQuantity: 3,
@@ -118,21 +132,24 @@ export const ANIMALS: Record<string, AnimalConfig> = {
     buildingRequired: 'kraal',
     spriteSheet: 'animal_cow.png',
   },
-  pig: {
-    id: 'pig',
-    name: 'Pig',
-    description: 'A pig that occasionally finds truffles.',
-    feedPerDay: 6,
+  guinea_fowl: {
+    id: 'guinea_fowl',
+    name: 'Guinea Fowl',
+    description: 'A speckled guinea fowl whose eggs are a bushveld delicacy.',
+    // docs/34 §Wave 1.1 — 6 sorghum/day (P18) against P16 of eggs was P2/day
+    // NEGATIVE. At 3/day it is P7/day positive: the premium-egg bird earns
+    // its keep slowly, which is the point of it.
+    feedPerDay: 3,
     feedType: 'sorghum',
-    productionCycleHours: 48,
-    productType: 'truffle',
-    productQuantity: 1,
+    productionCycleHours: 36,
+    productType: 'guinea_fowl_egg',
+    productQuantity: 2,
     purchaseCost: 300,
     hungerDecayRate: 0.02,
     healthDecayRate: 0.07,
     happinessDecayRate: 0.04,
     buildingRequired: 'kraal',
-    spriteSheet: 'animal_pig.png',
+    spriteSheet: 'animal_guinea_fowl.png',
   },
 };
 
@@ -170,7 +187,7 @@ export const PRODUCT_ITEM: Record<string, string> = {
   egg: 'eggs',
   goat_milk: 'milk',
   cow_milk: 'milk',
-  truffle: 'truffle',
+  guinea_fowl_egg: 'guinea_fowl_egg',
 };
 
 /** The inventory item an animal's product lands in. */
@@ -187,4 +204,26 @@ export function productValuePula(animal: AnimalConfig): number | null {
   const slug = productItemSlug(animal);
   const def = slug ? ITEMS[slug] : undefined;
   return def ? def.baseValue : null;
+}
+
+/**
+ * docs/34 §Wave 1.1 — an animal's margin per day at CATALOGUE prices, before
+ * the 5% Co-op tax: `(24h / cycle) × productQuantity × productValue` minus
+ * `feedPerDay × feedValue`.
+ *
+ * This exists so the "every animal is net-positive" rule is one assertion
+ * rather than a paragraph someone has to re-derive by hand. It was added
+ * *because* the feed map shipped the P25 herbs to animals whose goods sell
+ * for P5–P15: the goat ran at -P85/day and the cow at -P155/day, and nobody
+ * caught it because the number was only ever reasoned about in prose.
+ *
+ * Tax is deliberately excluded from BOTH sides so the figure is the animal's
+ * own economics, not a claim about a particular day's market.
+ */
+export function animalNetPerDay(animal: AnimalConfig): number {
+  const product = productValuePula(animal);
+  const feed = ITEMS[animal.feedType]?.baseValue ?? 0;
+  if (product === null) return Number.NaN; // config error, not an economics result
+  const producesPerDay = (24 / animal.productionCycleHours) * animal.productQuantity;
+  return producesPerDay * product - animal.feedPerDay * feed;
 }

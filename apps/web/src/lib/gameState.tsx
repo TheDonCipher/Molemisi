@@ -98,6 +98,11 @@ export interface InventoryItem {
   /** Pixel-art icon URL (PixelLab) — falls back to emoji `icon` when null. */
   image?: string | null;
   quantity: number;
+  /**
+   * Server-enforced per-type stack cap. Not always the item's authored `maxStack`:
+   * Storage tier 3 doubles it (31 §6.2), so the server's number is the honest one.
+   */
+  maxStack?: number;
   unitValue: number;
   grade: string;
   description: string;
@@ -170,7 +175,6 @@ const CROP_ICONS: Record<string, string> = {
   tomatoes: '🍅',
   pepper: '🌶️',
   herbs: '🌿',
-  saffron: '🌸',
 };
 
 const CROP_NAMES: Record<string, string> = {
@@ -184,7 +188,6 @@ const CROP_NAMES: Record<string, string> = {
   tomatoes: 'Heritage Tomato',
   pepper: 'Pepper',
   herbs: 'Bushveld Herbs',
-  saffron: 'Saffron',
 };
 
 const CATEGORY_MAP: Record<string, 'crops' | 'animal' | 'materials' | 'tools' | 'seed'> = {
@@ -302,6 +305,10 @@ export interface WelcomeBackSummary {
   weather: string | null;
   /** Botho credited for whole missed days (03 §9.4 catch-up) — 0 when none. */
   bothoCatchUp: number;
+  /** G-12 — total real time away (uncapped hours), for the "discarded time" line. */
+  awayHours: number;
+  /** G-12 — time actually applied to simulation (capped at MAX_OFFLINE_HOURS). */
+  appliedHours: number;
 }
 
 /** A farm animal as returned by GET /farms/:id/livestock (03 §5). */
@@ -796,6 +803,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             category?: string;
             quantity: number;
             baseValue?: number;
+            maxStack?: number;
             use?: string | null;
             sprite?: string | null;
             isTool?: boolean;
@@ -806,6 +814,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             category?: string;
             quantity: number;
             baseValue?: number;
+            maxStack?: number;
             use?: string | null;
             sprite?: string | null;
             isTool?: boolean;
@@ -823,6 +832,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
               icon: isSeed ? '🌱' : getCropIcon(slug),
               image: item.sprite || resolveItemIcon(slug),
               quantity: item.quantity,
+              // The server's ENFORCED cap (tier 3 doubles it — 31 §6.2), not the
+              // local item def's, so the detail panel cannot under-report.
+              maxStack: item.maxStack,
               unitValue: item.baseValue ?? 10,
               grade: 'Normal',
               description:
@@ -1038,7 +1050,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     sesame: 'sesame',
     watermelon: 'watermelon',
     pepper: 'pepper',
-    saffron: 'saffron',
     millet: 'millet',
   };
 

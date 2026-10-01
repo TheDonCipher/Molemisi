@@ -375,7 +375,7 @@ export class PaymentsService {
     if (typeof virtualGood.price === 'number' && virtualGood.price > 0) {
       return virtualGood.price;
     }
-    const pack = TOP_UP_PACKS.find((p) => p.grantedPula === fallbackAmount);
+    const pack = TOP_UP_PACKS.find((p) => p.grantedMadi === fallbackAmount);
     return pack?.priceBwp ?? fallbackAmount;
   }
 
@@ -392,7 +392,7 @@ export class PaymentsService {
     const ent = virtualGood.entitlement;
 
     switch (ent.type) {
-      case 'currency': {
+      case 'madi': {
         const amount = ent.amount as number;
 
         // R4 — the daily top-up cap, checked in Botswana time.
@@ -420,37 +420,77 @@ export class PaymentsService {
           );
         }
 
-        await this.wallet.credit(playerId, 'pula', amount, 'topup', paymentId);
+        // docs/34 §2.2 — THE ANTI-PAY-TO-WIN SWITCH.
+        //
+        // Real money credits MADI. It does not credit Pula, and there is no
+        // path anywhere in this codebase that converts one to the other, so no
+        // purchase can shorten the land ladder or buy a seed. This one line is
+        // the whole difference between "we don't sell power" as a policy and as
+        // a property of the system.
+        await this.wallet.creditMadi(playerId, amount, 'madi_topup', paymentId);
 
         // Ledger row is written by wallet_apply(); game_ledger_entries is retired.
-        this.logger.log(`Credited ${amount} Pula to ${playerId} (payment ${paymentId ?? 'n/a'})`);
+        this.logger.log(`Credited ${amount} Madi to ${playerId} (payment ${paymentId ?? 'n/a'})`);
+        break;
+      }
+
+      case 'legacy_pula_topup': {
+        // docs/34 §2.2 — REJECTS the old entitlement outright rather than silently
+        // crediting Pula. A webhooks replay or a stale client that still sends
+        // `type: 'currency'` must not mint Pula from real money. The money is
+        // already taken by the provider at this point, so the loud log + no-op is
+        // the honest outcome: it surfaces as an operational incident instead of
+        // quietly re-opening the model this decision closed.
+        this.logger.error(
+          `REFUSED legacy Pula top-up entitlement — player ${playerId}, ` +
+            `amount ${String(ent.amount)} (payment ${paymentId ?? 'n/a'}). ` +
+            `Money may already have been captured; investigate. Pula is ` +
+            `earned-only as of docs/33 §2 and must never be credited here.`,
+        );
         break;
       }
 
       case 'subscription': {
-        // P9 — a Guild subscription. The entitlement carries the grant length in
-        // days; default 30. We set the wallet column (the load-bearing benefit gate)
-        // rather than a balance, because a subscription is a status, not currency.
+        // docs/34 §3.2 — the Village Pass replaces the Guild subscription. The
+        // wallet column is still `subscription_status = 'guild'` (a schema rename
+        // for a value rename buys nothing and costs a migration, per docs/34 §6);
+        // the SLUG moves, the gate does not.
+        //
+        // This sets the wallet column rather than a balance, because a
+        // subscription is a status, not currency.
         const days = Number((ent as { days?: number }).days ?? 30);
         const expiresAt = new Date(
           Date.now() + days * 24 * 60 * 60 * 1000,
         ).toISOString();
         await this.wallet.setSubscription(playerId, 'guild', expiresAt);
         this.logger.log(
-          `Activated Guild subscription for ${playerId} until ${expiresAt} (payment ${paymentId ?? 'n/a'})`,
+          `Activated Village Pass for ${playerId} until ${expiresAt} (payment ${paymentId ?? 'n/a'})`,
         );
         break;
       }
 
-      case 'boost':
       case 'cosmetic': {
-        // Pula-priced goods are NOT bought through this real-money path — they go
-        // through the MonetisationService store purchase, which debits Pula directly.
-        // If a boost/cosmetic SKU somehow reaches the webhook, refuse loudly rather
+        // Cosmetics are NOT bought through this real-money path. Market-shelf
+        // cosmetics are Pula (StoreService debits the wallet directly) and
+        // Festival-shelf cosmetics are Madi (also StoreService). Neither is BWP.
+        // If a cosmetic SKU somehow reaches the webhook, refuse loudly rather
         // than silently no-op, so the routing bug is caught.
         this.logger.error(
           `Refusing to award ${ent.type} via the real-money webhook for player ${playerId} ` +
-            `(payment ${paymentId ?? 'n/a'}). Pula-priced goods must use POST /store/purchase.`,
+            `(payment ${paymentId ?? 'n/a'}). Cosmetics are bought in-game with ` +
+            `Pula or Madi — use POST /store/purchase.`,
+        );
+        break;
+      }
+
+      case 'boost': {
+        // docs/34 §3.3 — boosts are cut from the catalogue, so this can only be
+        // reached by a stale webhook or an old client. Refuse loudly: if this
+        // ever fires in production, a boost is being sold again.
+        this.logger.error(
+          `Refusing to award a BOOST via the real-money webhook for player ${playerId} ` +
+            `(payment ${paymentId ?? 'n/a'}). Boosts were cut on 2026-10-01 ` +
+            `(docs/34 §3.3) — investigate immediately.`,
         );
         break;
       }

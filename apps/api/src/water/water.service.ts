@@ -9,6 +9,8 @@ import {
   WATER_WHISPERS,
   WATER_WHISPER_CHANCE,
   MAX_OFFLINE_HOURS,
+  chapterForDate,
+  chapterWeather,
 } from '@molemisi/game-config';
 
 export interface TankStatus {
@@ -213,7 +215,11 @@ export class WaterService {
       waterLevel = Math.max(0, waterLevel - waterConsumed);
 
       for (const d of demands) {
-        const advancedHours = factor * d.cropElapsed;
+        // Pass 3.1 — chapter growth modifier (one calendar). rainCoverage already
+        // feeds growth indirectly via rain water credits, so this stays gentle
+        // (0.85–1.09×) to avoid double-counting the same seasonal signal.
+        const chapter = chapterForDate(now);
+        const advancedHours = factor * d.cropElapsed * chapterWeather(chapter).growthModifier;
 
         // G1 (01 §Fertilization) — an active dose adds `bonus` to the progress it
         // is eligible for, only inside its stage window. The window was computed

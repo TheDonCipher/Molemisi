@@ -3,6 +3,7 @@ import { CraftingService } from './crafting.service';
 import { SupabaseService } from '../database/supabase.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { WalletService } from '../wallet/wallet.service';
+import { MarketService } from '../market/market.service';
 import { makeFakeSupabase, type FakeResult } from '../test/fake-supabase';
 import { batchFee, RECIPES, RECIPE_SLUGS } from '@molemisi/game-config';
 
@@ -31,8 +32,13 @@ function buildService(sequence: FakeResult[]) {
     spendPula: jest.fn().mockResolvedValue(1000),
     credit: jest.fn().mockResolvedValue(1000),
   } as unknown as WalletService;
-  const service = new CraftingService(supabaseService, inventory, wallet);
-  return { service, inventory, wallet, from };
+  // 31 §6.3 — the catalogue now values recipes at LIVE prices. Returning 0 means "the
+  // market has no price for this slug", which makes the service fall back to base.
+  const market = {
+    getDynamicPrice: jest.fn().mockResolvedValue(0),
+  } as unknown as MarketService;
+  const service = new CraftingService(supabaseService, inventory, wallet, market);
+  return { service, inventory, wallet, from, market };
 }
 
 describe('batchFee — sub-linear batch pricing (03 §3.2)', () => {
@@ -233,5 +239,27 @@ describe('CraftingService — recipe catalogue', () => {
   it('reports unlocked slot count from the Workshop tier', async () => {
     const { service } = buildService([{ data: { level: 3 }, error: null }]);
     expect(await service.unlockedSlots('f1')).toBe(3);
+  });
+});
+
+describe('CraftingService — live margin, not static (31 §6.3)', () => {
+  it('flags a recipe underwater when today\'s input price exceeds its output', async () => {
+    const { service, market } = buildService([]);
+    // Wood spikes to P10 (base P2): 2 wood now cost 10 x 0.95 x 2 = P19 in opportunity,
+    // plus a P1 fee, against a P7 plank. The craft is a loss — and the card must say so.
+    market.getDynamicPrice = jest.fn(async (slug: string) => (slug === 'wood' ? 10 : 0));
+
+    const recipes = await service.getRecipes('p1');
+    const poleto = recipes.find((r) => r.slug === 'poleto')!;
+    expect(poleto.underwaterNow).toBe(true);
+    expect(poleto.economics.profit).toBeLessThan(0);
+  });
+
+  it('leaves every recipe profitable when the market prices nothing (base fallback)', async () => {
+    const { service } = buildService([]); // default market returns 0 for every slug
+    const recipes = await service.getRecipes('p1');
+    // Base-value economics are all positive by construction (02 §6.3), so a market
+    // that cannot price anything must not invent a loss.
+    expect(recipes.every((r) => !r.underwaterNow)).toBe(true);
   });
 });

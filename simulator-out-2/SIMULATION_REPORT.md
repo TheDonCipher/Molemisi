@@ -1,198 +1,221 @@
 # Molemisi Simulator — Comprehensive Run Report
 
 **Run date:** 2026-09-25 (UTC, from event timestamps)
-**Report status:** *Interim snapshot* — the run was at **day 5 of 7** with **799 events** when this was written. The process is still active; final day 6–7 totals will supersede the per-day counts below. All headline findings (endpoint stability, harness gaps, economy read) are already firm.
+**Report status:** *FINAL — Run 3 (post-fix)*. This report supersedes the prior Run 2 write-up. Run 3 applied the three root-caused fixes, completed all 7 simulated days (**1247 events**), and the post-run safeguard suite executed to completion (no crash).
 **Author:** Belvedere (royal counsel), for Princess Eugenia
-**Data source:** `simulator-out-2/raw_events.jsonl` (live-run event log) + direct API probes.
+**Data sources:** `simulator-out-3/raw_events.jsonl` (1247-event live-run log) + `simulator-out-3/safeguards.json` (42 checks) + direct API probes.
 
 ---
+
+> **Reconciliation addendum — 2026-09-28 (see `docs/32_Sprint_Roadmap_Audit_Reconciliation.md`).**
+> Read before trusting the Run-3 conclusions below.
+>
+> - **API-1 (`/payments/create` malformed → 201) is RESOLVED in code.** `CreatePaymentDto` is now a
+>   decorated **class** (not a bare interface), and `main.ts` sets `whitelist + forbidNonWhitelisted`,
+>   so extraneous fields are stripped and a body with a valid sku is correctly accepted while a
+>   missing/unknown sku is rejected (400/404). The old `SEC-02` check mis-flagged this as a FAIL because
+>   it kept a valid sku alongside the junk; `safeguards.ts` now carries an accurate `ECO-10` check.
+> - **SEC-04 (rate limiter):** results are contradictory between runs — Run 3 (below) reported it NOT
+>   throttling, while `simulator-out-probe/summary.md` (newer) reports PASS (`201x64 429x1`). The limiter
+>   code exists; re-verify against a **non-live** target before trusting either claim.
+> - **LIVE-SIM HAZARD (do not ignore):** the simulator safety rail checks the HOST, not the backend DB.
+>   `localhost` passes even if `apps/api/.env` points at the live Supabase project
+>   `nyapfgawanqvnkkjudxb`. A fresh-cohort run (especially the 30–50 player target) **creates real auth
+>   accounts on the live project**. Validate only against a throwaway local/seed Supabase, never live.
 
 ## 1. Executive Summary
 
-A bounded 9-player cohort (8 `f2p` + 1 `adversary`) was driven against the **live** Supabase project (`nyapfgawanqvnkkjudxb`) through the local API (`http://localhost:3001`, prefix `/api/v1`). The run re-used the existing `--run-token=mufj683f` so no new live accounts were created beyond the 9 provisioned this session.
+A bounded 9-player cohort (8 `f2p` + 1 `adversary`) was driven against the **live** Supabase project (`nyapfgawanqvnkkjudxb`) through the local API (`http://localhost:3001`, prefix `/api/v1`), reusing `--run-token=mufj683f` (the same 9 accounts as Run 2, so **no new live accounts were created**).
 
 **Headline conclusions:**
 
-1. **The API is stable.** Across 799 mutations, **zero server-5xx errors** were observed. Every rejection was a `400` (a legitimate game-state refusal), not a crash. The backend handled a live, multi-day, multi-player load without falling over.
-2. **The simulator — not the game — is the limiting factor.** 61.8% of events were rejected, but *every* rejection is a `400` that reflects the sim's incomplete behavioural modelling (it cannot yet harvest→deliver, build livestock housing, or gather errand goods), **not** a game bug. The six harness fixes applied this session (below) already turned several dead endpoints green.
-3. **The faucet-free economy holds.** No uncapped Pula grant was observed anywhere in the run. Kgotla pays out only through capped Botho/regard; chapter claims return cosmetics/items, not Pula. This matches the normative spec (02 §6).
-4. **Three findings are now root-caused and actionable** — one simulator bug (`arr()` doesn't recognise the `projects` key), and two API-side issues (payment DTO validation bypass; `auth/register {}` → 500).
+1. **All three fixes from the prior report are confirmed working:**
+   - **Token refresh** → the run's tail is clean: **zero `401`s, zero undefined-status events**, and days 6–7 are fully populated (164 + 167 events vs the degraded 26 + 16 in Run 2). No server-5xx across the entire run.
+   - **`safeguards.ts` `arr()` fix** → the post-run safeguard pass completed and wrote `safeguards.json`. (Run 2 crashed there with `TypeError: .filter is not a function`.)
+   - **`actors.ts` `arr()` `projects` fix** → `kgotla/donate` now fires (**27/27**; was 0 events) and `kgotla/turn-in` has **4 successes** (was 0/120) — Elder Neo's `contribute` charge can now pay out.
+2. **The API's anticheat + replay protection are solid:** the full anticheat suite (9/9) passes, webhook replay is idempotent (SEC-03 pass), and ownership/threshold gates hold.
+3. **One API security bug is now confirmed live:** `/payments/create` accepts malformed payloads (negative/zero/absurd/wrong-type/missing-field all return **201**). `CreatePaymentDto` is a TypeScript interface, so `ValidationPipe` cannot validate it (finding API-1). HIGH priority.
+4. **A second API concern surfaced:** the 60/60s rate limiter did not throttle 65 rapid mutations (SEC-04) — needs API-owner confirmation (API-4).
+5. **A confounder to read the economy numbers:** reusing `mufj683f` carried the accounts' prior 7-day state forward, so *stateful* systems (Kgotla accept, contracts) are not cleanly comparable to Run 2. A fresh run-token is needed for a clean economy read (see §9).
 
 ---
 
-## 2. Run Configuration & Safety Posture
+## 2. What Changed Since Run 2
+
+| Fix | File | What it does |
+|---|---|---|
+| F1 | `actors.ts` | Exported `arr()` and added `'projects'` to its key list, so `doKgotla`'s donate step extracts the projects array and actually donates. |
+| F2 | `safeguards.ts` | Replaced both `(npcs.data ?? []).filter(...)` with `arr(npcs.data)` — resilient to the `{npcs:[…]}` shape and to 401 error-object bodies. |
+| F3 | `run.ts` | Tracks token age per player; re-logins when a token is >45 min old (before each day) and force-refreshes all tokens before the safeguard pass. |
+
+Rebuilt `packages/simulator` (tsc, `BUILD_OK`); verified the compiled `dist` carries all three changes.
+
+### 2.1 Fix validation (Run 2 → Run 3)
+
+| Signal | Run 2 (pre-fix) | Run 3 (post-fix) | Verdict |
+|---|---|---|---|
+| `401` / `undefined` rejections | 17 + 16 (days 6–7) | **0** | ✅ F3 fixed |
+| Days 6–7 event volume | 26 + 16 (degraded) | 164 + 167 (full) | ✅ F3 fixed |
+| Post-run safeguards | crashed (`TypeError .filter`) | completed, wrote `safeguards.json` | ✅ F2 fixed |
+| `kgotla/donate` events | 0 | **27/27** | ✅ F1 fixed |
+| `kgotla/turn-in` success | 0/120 | **4/148** | ✅ F1 fixed (contribute pays out) |
+| Server-5xx | 0 | 0 | ✅ unchanged |
+
+---
+
+## 3. Run Configuration & Safety Posture
 
 | Parameter | Value |
 |---|---|
 | Target | `http://localhost:3001` → live Supabase `nyapfgawanqvnkkjudxb` |
-| Global prefix | `/api/v1` (all routes) |
+| Global prefix | `/api/v1` |
 | Cohort | `wide` |
-| Players | 9 registered (8 `f2p`, 1 `adversary`) |
-| Days | 7 (simulated) |
-| Run token | `mufj683f` (re-used — no additional live accounts created) |
+| Players | 9 registered (8 `f2p`, 1 `adversary`) — **reused from Run 2** (`--run-token=mufj683f`) |
+| Days | 7 (simulated) — **all 7 reached, 1247 events** |
 | Mutations/min | 55 |
-| Seed | 1 (deterministic, reproducible) |
-| Safety rail | `SIMULATOR_ALLOW=true` + `NODE_ENV=development` + allow-listed host — **authorised "run against cloud" path, explicitly approved** |
-| Account creation | 9/9 via **service-role provisioning** (not `/auth/register`) |
+| Seed | 1 (deterministic) |
+| Safety rail | `SIMULATOR_ALLOW=true` + `NODE_ENV=development` + allow-listed host |
+| Account creation | 0 new accounts (reused Run 2's 9, service-role provisioned) |
+| Exit code | 1 — **only because 8 safeguard checks failed** (known gaps + the payment bug), *not* a crash. Event data fully captured. |
 
-**Fidelity warning (stamped in run log):** because `mailer_autoconfirm: false` blocks real signups on the live project, all 9 accounts were provisioned through the service-role admin path. **Account *creation* via `/auth/register` was therefore NOT exercised by this run.** All *gameplay* still went through the real, authenticated API.
-
----
-
-## 3. Harness Fixes Applied This Session
-
-These were the six broken actor calls from the prior run, now corrected in `packages/simulator/src/actors.ts` and rebuilt:
-
-1. **`market/sell` & `market/buy` → were 404.** Body omitted `farmId`, so the service threw `Farm not found`. **Fix:** `farmId: player.farmId` added to both bodies. Result: `market/buy` 17/17, `market/sell` 3/3.
-2. **`kgotla/accept` was a silent no-op.** The accept loop filtered NPCs on `questAvailable`/`chargeAvailable` flags that do not exist on `NpcView`, so it broke instantly and **no charge was ever accepted or turned in**. **Fix:** accept from the real NPC list, let the API enforce the 3/day pool. Result: `kgotla/accept` 24/58 (34 rejected = pool exhausted, a *correct* refusal).
-3. **`chapter-claim` → was 404.** Empty body made `getAlmanacTier(undefined)` throw. **Fix:** `{ track: 'free', tier: 1..3 }` sent sequentially, breaking on first miss (sequential unlock). Result: `chapter-claim` 24/24.
-4. **`fertilize` → was 400 on empty plots.** **Fix:** only fires on a planted, non-ready plot (`else if (!isReady(plot) && rng.chance(0.2))`). (Still 0/14 success — see §6; the *remaining* failures are because the sim rarely has fertilizable plots, not a body bug.)
-5. **`kgotla/turn-in` donate step added** to satisfy Elder Neo's `contribute` objective before turn-in. (This step is currently a no-op due to the `arr()` bug in §7.1 — discovered during this analysis.)
-6. **TypeScript build error** (`actors.ts` `c['objective']?.['kind']` implicit-any) fixed by casting `objective` to `Json`.
+**Fidelity warning (stamped in run log):** all 9 accounts were provisioned via service-role (because `mailer_autoconfirm: false` blocks `/auth/register`); account *creation* was not exercised. All gameplay went through the real API.
 
 ---
 
-## 4. Coverage Caveats (read before trusting the numbers)
+## 4. Coverage Caveats
 
-- **8 of 9 registered players produced events.** The single `adversary` player emitted **zero** logged mutations. The adversary behaviour module is not wired into the event-emitting mutation loop (or simply wasn't driven in this cohort window). → *The adversarial/abuse profile is unvalidated this run.*
-- **All 799 events are `f2p` profile.** The roster contained no `whale`/spender actor in this run (the `whale` branch in `actors.ts` exists but wasn't exercised). → *Payment/store monetisation endpoints were not exercised.*
-- **Botho & Letsema not directly exercised.** No `kgotla/letsema` events were recorded (the 0.15-chance gate plus eligibility check rarely fired). The 50-Pula/day Botho cap is *in code* (`creditBothoCapped`) but was not driven to a payout in-sim.
-- **Three core gameplay loops are only partially modelled**, which dominates the rejection count (see §5): harvest→deliver (contracts), build-housing (livestock), and gather-errand-goods / co-op-sale (Kgotla turn-in).
+- **8 of 9 players emitted events**; the `adversary` player emitted 0 (behaviour module not wired into the event loop). → *Abuse profile unvalidated.*
+- **All events are `f2p`**; no `whale`/spender cohort exercised. → *Monetisation endpoints not exercised.*
+- **Account-state carryover (important):** reusing `mufj683f` means these accounts already completed 7 days in Run 2, so their Kgotla/contract state for 2026-09-25…2026-10-01 was pre-populated. This depresses *stateful* accept/complete counts in Run 3 and is **not** a regression in the fixes — it is a confounder. A fresh run-token removes it (§9).
+- **Three core gameplay loops still only partially modelled** (harvest→deliver, livestock housing, gather-errand-goods), driving most `400`s.
+- **Botho/Letsema not driven to a payout** this run.
 
 ---
 
-## 5. Per-System Results (799 events, day 5/7 snapshot)
+## 5. Per-System Results — Run 3 (1247 events, 7 days)
 
 | System / Action | Total | Success | Rejected | Success % | Top status(es) | Reading |
 |---|---:|---:|---:|---:|---|---|
-| progression/contract-complete | 183 | 2 | 181 | 1.1% | 400:181, 201:2 | Sim can't fulfil inventory → legit 400 |
-| bushveld/skip-low-kagiso | 136 | 136 | 0 | 100% | — | Harness no-op (kagiso<2), *not* gameplay |
-| progression/contract-accept | 111 | 9 | 102 | 8.1% | 400:102, 201:9 | Already-active / no eligible → legit 400 |
-| kgotla/turn-in | 102 | 0 | 102 | 0.0% | 400:102 | Objectives unmet (see §7) |
-| farming/plant | 61 | 13 | 48 | 21.3% | 400:48, 201:13 | Sim replants occupied plots → legit 400 |
-| kgotla/accept | 58 | 24 | 34 | 41.4% | 400:34, 201:24 | 34 rej = 3/day pool exhausted (correct) |
-| water/refill | 34 | 34 | 0 | 100% | 201:34 | ✅ Healthy |
-| progression/elder-guidance | 33 | 33 | 0 | 100% | — | ✅ Healthy |
-| progression/chapter-claim | 24 | 24 | 0 | 100% | 201:24 | ✅ Fixed this session |
-| market/buy | 17 | 17 | 0 | 100% | 201:17 | ✅ Fixed this session |
-| farming/fertilize | 14 | 0 | 14 | 0.0% | 400:14 | Wrong plot state (harness gap) |
-| livestock/purchase | 13 | 0 | 13 | 0.0% | 400:13 | No housing built (sim gap) |
-| farming/harvest | 10 | 10 | 0 | 100% | 201:10 | ✅ Healthy (low volume) |
-| market/sell | 3 | 3 | 0 | 100% | 201:3 | ✅ Fixed this session |
+| progression/contract-complete | 336 | 0 | 336 | 0.0% | 400:336 | Sim can't fulfil inventory (carryover + harvest gap) |
+| bushveld/skip-low-kagiso | 224 | 224 | 0 | 100% | — | Harness no-op (kagiso<2), *not* gameplay |
+| progression/contract-accept | 170 | 1 | 169 | 0.6% | 400:169, 201:1 | Already-active (carryover) → legit 400 |
+| kgotla/turn-in | 148 | **4** | 144 | 2.7% | 400:144, 201:4 | **4 succeed (contribute) — F1 working** |
+| water/refill | 56 | 32 | 24 | 57.1% | 201:32, 400:24 | 24×400 = "tank full" (legit, not token) |
+| kgotla/accept | 56 | 0 | 56 | 0.0% | 400:56 | Carryover: already served those days |
+| progression/elder-guidance | 56 | 56 | 0 | 100% | 201:56 | ✅ Healthy |
+| farming/plant | 51 | 16 | 35 | 31.4% | 400:35, 201:16 | Replants occupied plots → legit 400 |
+| market/buy | 35 | 35 | 0 | 100% | 201:35 | ✅ Healthy |
+| progression/chapter-claim | 30 | 30 | 0 | 100% | 201:30 | ✅ Healthy |
+| kgotla/donate | 27 | 27 | 0 | 100% | 201:27 | ✅ **NEW — F1 fixed** |
+| farming/fertilize | 24 | 0 | 24 | 0.0% | 400:24 | Wrong plot state (harness gap) |
+| livestock/purchase | 16 | 0 | 16 | 0.0% | 400:16 | No housing built (sim gap) |
+| market/sell | 15 | 15 | 0 | 100% | 201:15 | ✅ Healthy |
+| farming/harvest | 3 | 3 | 0 | 100% | 201:3 | ✅ Healthy (low volume — carryover) |
 
-**Totals:** 799 events · 305 success (38.2%) · 494 rejected (61.8%) · **0 server-5xx**.
-
-> **How to read the 38.2% "success" rate:** 136 of those 305 "successes" are `bushveld/skip-low-kagiso` — deliberate harness no-ops recorded as `success` (the sim declined to attempt a hotspot because Kagiso < 2). Subtract those and **real gameplay successes = 169**. The 494 rejections are *all* `400` and *all* explainable by the sim's limited modelling (§4, §6). **No API fault is hiding in the rejection pile.**
+**Totals:** 1247 events · 443 success (35.5%) · 804 rejected (64.5%) · **0 server-5xx**.
 
 ### 5.1 Rejection status histogram
-`400: 494` — that is the *entire* rejection set. No 401/403/404/500. (The earlier `market` 404s and `chapter-claim` 404 are gone after the §3 fixes.)
+`400: 804` — **that is the entire rejection set.** No 401, no 404, no 5xx. Every rejection is a legitimate game-state refusal. (Contrast Run 2: `400:591, 401:17, undefined:16`.)
+
+> **Reading the 35.5% "success" rate:** 224 of 443 "successes" are `bushveld/skip-low-kagiso` no-ops. Real gameplay successes = **219**. The 804 rejections are `400`s explained by the sim's modelling limits (§4, §7) and account carryover — **no API fault hides in them.**
+
+### 5.2 Kgotla detail
+`accept` 56 (0 success — carryover), `turn-in` 148 (4 success, 144 rejected), split `errand:105, contribute:8, sell:35`. The 4 turn-in successes are the first time any Kgotla charge has paid out in-sim, and they coincide with the new `donate` events — direct evidence F1 closes the contribute loop.
 
 ---
 
 ## 6. Throughput
 
-- **Wall-clock span:** 3029 s (~50.5 min) for 799 events → **~3.79 s/call**, **0.264 evt/s**.
-- Per-day volume: D1=205, D2=185, D3=187, D4=185, D5=37 (in progress). Steady ~190 events/full day.
-- **Implication:** the bottleneck is latency per API call (~3.8 s), not compute. A 7-day run at this cohort size costs ~80 min. Larger cohorts multiply linearly. **Recommendation:** if we want to validate market dynamics at population scale, either raise `mutations-per-minute` (currently throttled to 55) or run a bigger cohort in the background and collect overnight.
+- **Wall-clock span:** 4976 s (~83 min) for 1247 events → **~3.99 s/call**, 0.251 evt/s.
+- Per-day volume: D1=193, D2=189, D3=182, D4=184, D5=168, **D6=164, D7=167** (full, healthy days — the token fix removed the tail collapse).
+- The ~4 s/call latency (not the 55/min throttle) is the binding constraint. Longer cohorts multiply linearly.
 
 ---
 
 ## 7. Gameplay Feedback
 
-### 7.1 Kgotla loop — root-caused gap (simulator bug)
-The Kgotla *accept* path now works (24 accepts; 34 rejections are the correct "3 charges/farm/day pool exhausted" refusal). But **`kgotla/turn-in` is 0/102**, split as `errand:64`, `contribute:17`, `sell:21`. Investigation found **zero `kgotla/donate` events were ever recorded**, even though `getProjects` returns a non-empty in-memory `PROJECTS` list.
+### 7.1 Kgotla contribute loop — FIXED (F1)
+`kgotla/donate` 27/27 and `kgotla/turn-in` 4/148 confirm Elder Neo's `contribute` charge now pays out when the sim donates. The `arr()` `projects`-key gap is closed.
 
-**Root cause (simulator-side):** in `doKgotla`, the donate branch does
-```ts
-const projects = await api.get(`/farms/${player.farmId}/kgotla/projects`, player.token);
-const list = arr(projects.data);
-if (list.length > 0) { /* donate + record */ }
-```
-The controller returns `getProjectsView(...)` = **`{ projects: [...], contributedToday: n }`** (an object, key `projects`). The `arr()` helper only recognises these keys: `plots, items, jobs, scenes, hotspots, npcs, data, results`. **`projects` is not in that list**, so `arr(projects.data)` returns `[]`, `list.length > 0` is always false, and the donation — which is what would satisfy Elder Neo's `contribute` charge — is **never attempted**.
+### 7.2 Faucet-free economy — confirmed (again)
+No uncapped Pula grant anywhere. Kgotla pays out only via capped Botho/regard; chapter claims return cosmetics/items.
 
-This is a **harness bug, not a game defect.** A real player donates via the UI and the `contribute` charge pays out; the sim simply never reaches that code. **Fix:** either add `'projects'` to `arr()`'s key list, or read `rec(projects.data)['projects']` explicitly in `doKgotla`.
+### 7.3 Correct reject semantics — intact
+`400`s fire where the spec demands: plant-occupied (35×), fertilise-wrong-state (24×), buy-livestock-no-coop (16×), complete-contract-no-inventory (336×), Kgotla pool-exhausted (56×). These are the API correctly enforcing invariants.
 
-### 7.2 Faucet-free economy — confirmed
-No uncapped Pula grant surfaced anywhere. Kgotla charges pay out only via capped Botho/regard; `chapter-claim` returns cosmetics/items. This is consistent with the normative economy (02 §6: Pula is soft/non-withdrawable, Madi is the hard 1:1 currency gated on legal+PSP). The sim gives no evidence of a runaway faucet.
-
-### 7.3 Correct reject semantics (good news)
-The `400`s the sim receives are *honest game refusals*, and they fire exactly where the spec says they should:
-- Planting an already-planted plot → 400. ✅
-- Fertilising an empty / already-fertilised / ready plot → 400. ✅
-- Buying livestock with no coop/pen → 400 "you need a X to house Y". ✅
-- Completing a contract without the inventory → 400. ✅
-- Kgotla accept beyond the 3/day pool → 400. ✅
-
-These are the API *correctly enforcing* invariants. The sim's job now is to model the *success* paths that lead into them.
-
-### 7.4 Harness modelling gaps driving the rejection count
+### 7.4 Harness modelling gaps (still open)
 | Gap | Effect | To fix in sim |
 |---|---|---|
-| Harvest→deliver loop missing | `contract-complete` 2/183 | Harvest more reliably, then deliver required goods |
-| No livestock housing built | `livestock/purchase` 0/13 | Add a coop/pen build step before purchase |
-| Replants occupied plots | `farming/plant` 13/61 | Track plot state; only plant empty plots |
-| Fertilises wrong plot state | `farming/fertilize` 0/14 | Already fixed to plant-only; needs more harvests to have fertilisable plots |
-| Kgotla turn-in objectives unmet | `kgotla/turn-in` 0/102 | Gather errand goods; perform co-op sale after accept; fix `arr()` donate bug (§7.1) |
+| Harvest→deliver loop missing | `contract-complete` 0/336 | Harvest reliably, then deliver required goods |
+| No livestock housing built | `livestock/purchase` 0/16 | Add coop/pen build step |
+| Replants occupied plots | `farming/plant` 16/51 | Track plot state |
+| Kgotla errand/sell objectives unmet | `kgotla/turn-in` 144 rej | Gather errand goods; co-op sale after accept |
+
+### 7.5 Account-state carryover (run-specific)
+`kgotla/accept` 0/56 and `contract-*` collapses vs Run 2 reflect pre-populated state from reusing `mufj683f`, **not** a fix regression. A fresh run-token yields clean stateful counts.
 
 ---
 
-## 8. Economy Feedback
+## 8. Safeguard Suite — Run 3 (42 checks)
 
-- **Market is reactive but flat at this population.** `market/buy` 17 + `market/sell` 3 = 20 price-moving events across 9 players. The supply/demand modifier stays ≈ 0, so prices sit near base. **We have not yet stressed the market enough to observe movement.** To validate §8 market dynamics, run a larger cohort or script a price-pushing burst.
-- **Contract Pula is the main unmeasured inflow.** Per the spec, contracts pay 80–500 Pula. In-sim, `contract-complete` is 2/183 (inventory never met), so **contract Pula generation is essentially unobserved.** This is the single biggest economy-validation gap — fix the harvest→deliver loop (§7.4) and it becomes measurable.
-- **Botho cap (50/day) present but unexercised.** In code; not driven to a payout this run (§4).
-- **No ARPU / per-capita Pula figure is trustworthy yet** because the dominant Pula sources (contracts, Botho) weren't exercised. Reporting a number now would be fabricated — so I am explicitly not doing so.
+| Group | Pass | Fail | Notes |
+|---|---:|---:|---|
+| security | 21 | 8 | Payment validation bypass (5) + rate-limit (1) + inconclusive (1) + expected-config-gap (1) |
+| anticheat | 9 | 0 | **All pass** — idempotency, Botho/Letsema gates, hotspot rest, no-Pula-transfer, top-up cap |
+| deferred | 2 | 0 | Boost purchases & wildlife raids correctly absent (v1-deferred) |
+| gap | 0 | 2 | Multi-accounting (no KYC), bot-speed (no defense) — documented exposures |
+
+**Notable passes:** SEC-01a (cross-player harvest rejected 403), SEC-03 (webhook replay idempotent, ledger entries 0), AC-01a/b/d (concurrent ops credit at most once), AC-04 (hotspot rest collision → 409), AC-05 (no Pula-transfer route → 404).
+
+**Failures that matter:**
+- **SEC-02 `/payments/create` (5 variants) → 201.** Negative/zero/absurd/wrong-type/missing-field payloads are *accepted*. Only `null-body` was rejected (404). **This is API-1, now confirmed live** — a malicious client can drive unintended payment states. (All other SEC-02 targets — market, store — correctly reject malformed input with 404/400.)
+- **SEC-04 rate limiter → not enforced.** 65 mutations in 60s returned `201×65`, `throttled=false`. Either the limiter isn't wired in this environment or the harness's 55/min client pacing masked it; regardless, no 429 was observed. **Flag for API owners (API-4).**
+- **SEC-06 `PUT /config` → 500** (expected known gap; a non-admin must not rewrite live config — 500 denies it, though a clean 403 is preferred).
+- **GAP-01 / GAP-02** — multi-accounting (no KYC/phone field anywhere) and inhuman-pace detection are open legal/abuse exposures; Botho gates a real-money prize, so GAP-01 is the more serious.
 
 ---
 
-## 9. Standing API Findings (for the API owners)
+## 9. Economy Feedback & Recommended Next Run
+
+- **Market flat at 9 players** (35 buys + 15 sells; supply/demand modifier ≈ 0 → prices at base). Unstressed; needs a larger cohort.
+- **Contract Pula unmeasured** (harvest→deliver gap + carryover). Still the biggest economy-validation gap.
+- **Botho cap (50/day) unexercised.**
+- **ARPU intentionally NOT reported** — dominant Pula sources unexercised and days confounded by carryover; a number now would mislead.
+
+**Recommended next run (clean economy read):** a **fresh `--run-token`** (creates 9 new accounts, no carryover) and a **larger cohort (30–50)** with raised `mutations-per-minute`, run in the background. That removes the §4 confounder and actually moves market prices. The three fixes are validated; this is purely to get a clean economy profile.
+
+---
+
+## 10. Standing API Findings (for API owners)
 
 | # | Finding | Severity | Evidence | Status |
 |---|---|---|---|---|
-| 1 | **`CreatePaymentDto` is a TypeScript `interface`, not a class.** `@Body()` binds it with no `ValidationPipe`, so the body is never validated; malformed payloads reach the service. | Medium (validation bypass / abuse surface) | `apps/api/src/payments/payments.service.ts:11` `export interface CreatePaymentDto`; `payments.controller.ts:47` `@Body() dto: CreatePaymentDto`. class-validator `ValidationPipe` cannot act on interfaces (erased at runtime). | Code-confirmed. Live probe blocked by 401 (endpoint requires auth). |
-| 2 | **`POST /auth/register` with `{}` → 500** instead of a 400 Zod validation error. Unmapped `ZodError` escaping as an internal server error. | Medium (poor error contract; launch hygiene) | Live probe: `curl -X POST .../auth/register -d '{}'` → `HTTP 500 {"statusCode":500,"message":"Internal server error"}`. | **Live-confirmed this session.** |
-| 3 | **`mailer_autoconfirm: false` on the live project** forces confirmation emails through rate-limited built-in SMTP → real signups blocked. | High (launch blocker) | `GET {url}/auth/v1/settings` confirmed `mailer_autoconfirm: false`; 6/6 prior registrations hit "email rate limit exceeded". The sim had to provision all 9 accounts via service-role. | Confirmed prior session. |
-| 4 | **`contracts/accept` latency 11–22 s** (suspected N+1 query). | Low/Medium (perf) | Observed in prior runs; not re-measured this session (events carry no latency field). | Carry-over; recommend a timing pass. |
+| **API-1** | **`/payments/create` does not validate input** — accepts negative/zero/absurd/wrong-type/missing-field (all 201). `CreatePaymentDto` is a TS `interface`, so `ValidationPipe` skips it. | **High** | Run 3 SEC-02: 5 variants → 201 (live). Code: `payments.service.ts:11`. | **Live-confirmed this run.** |
+| API-2 | `POST /auth/register {}` → 500 (should be 400 Zod). | Medium | Live probe (Run 2). | Confirmed. |
+| API-3 | `mailer_autoconfirm: false` blocks real signups (launch blocker). | High | Settings probe. | Confirmed. |
+| **API-4** | **60/60s rate limiter not observed** (65 mutations, 0 throttled). | Medium/High | Run 3 SEC-04. | **New this run — investigate.** |
+| API-5 | `contracts/accept` latency 11–22 s (suspected N+1). | Low/Medium | Prior runs. | Carry-over. |
 
-**Recommendation to API owners:** convert `CreatePaymentDto` (and `WebhookDto`) to `class` DTOs with `class-validator` decorators and apply `ValidationPipe({ whitelist: true, transform: true })`; add a global Zod-exception filter that maps `ZodError` → 400; decide the `mailer_autoconfirm` posture before launch (toggle off, or configure custom SMTP).
-
----
-
-## 10. Recommended Next Steps
-
-**Simulator (this package):**
-1. Fix the `arr()` `projects` key gap (§7.1) so the donate→contribute Kgotla path is exercised.
-2. Model the harvest→deliver loop so `contract-complete` becomes measurable (unlocks contract-Pula economy read).
-3. Add a coop/pen build step before `livestock/purchase`.
-4. Track plot state to stop replanting occupied plots.
-5. Wire the `adversary` and `whale` cohorts into the event-emitting loop (§4) so abuse and monetisation paths are validated.
-
-**API (other owners):**
-6. DTO validation classes + global Zod filter (§9 #1, #2).
-7. `mailer_autoconfirm` decision (§9 #3) — launch blocker.
-8. `contracts/accept` latency pass (§9 #4).
-
-**Process:**
-9. Re-run with a larger cohort (e.g. 30–50 players) and `mutations-per-minute` raised, in the background, to actually move market prices and measure ARPU. Current 9-player run is too small to stress §8 dynamics.
+**Recommendation:** convert `CreatePaymentDto`/`WebhookDto` to `class` DTOs + `ValidationPipe({whitelist,transform})`; add a global Zod-exception filter (→400); decide `mailer_autoconfirm`; verify the rate-limiter is actually wired (API-4); `PUT /config` should return 403 not 500.
 
 ---
 
 ## 11. Appendix — Reproducing
 
 ```bash
-# API (against live DB, authorised):
+# API (against live DB, authorised) — must be running at :3001:
 SIMULATOR_ALLOW=true NODE_ENV=development node apps/api/dist/main.js &
 
-# Simulator:
+# Simulator (post-fix rebuild):
 SIMULATOR_ALLOW=true NODE_ENV=development \
   node packages/simulator/dist/cli.js \
   --target=http://localhost:3001 --run-token=mufj683f \
-  --players=9 --days=7 --cohort=wide --out=simulator-out-2 \
+  --players=9 --days=7 --cohort=wide --out=simulator-out-3 \
   --mutations-per-minute=55 \
   --supabase-url=https://nyapfgawanqvnkkjudxb.supabase.co \
   --supabase-key=<service-role>
 ```
 
-Aggregation used: `node simulator-out-2/aggregate.mjs simulator-out-2/raw_events.jsonl` (writes `simulator-out-2/agg.json`).
+Aggregation: `node simulator-out-2/aggregate.mjs simulator-out-3/raw_events.jsonl`.
 
-*Report generated from the live event log; figures are an interim day-5/7 snapshot and will be superseded by the final run totals when the background process completes.*
+*Report: Run 3 (post-fix), 1247 events, days 1–7, all three fixes confirmed. Days 1–7 fully reliable (no token expiry, no crash). Account-state carryover is a confounder for stateful systems only; see §4/§9.*

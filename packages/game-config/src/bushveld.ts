@@ -347,6 +347,70 @@ const OPEN_BUSH: HotspotDef[] = [
       },
     ],
   },
+  {
+    // 31 §6.5 / 32 §5 — the endgame gate relief (ruled 2026-09-28). Open Bush
+    // completion needs `phane`, and the only route was Setlhare sa Phane in
+    // Moranang / Sedimonthole, so a player who started in May waited until December
+    // for a page they could not otherwise finish. This is the second, lean-season
+    // route the audit asked for: a deadfall bleached through the dry Moriti months
+    // (May–Jul) that MIGHT still be holding a few worms.
+    //
+    // Weight 2 against wood's 10 — about one tap in six, against the 60% the April
+    // route gives, which is the "much lower probability" the audit specified. It is
+    // rare enough to stay a find and common enough to be reachable inside one season.
+    //
+    // It reuses the existing `phane` and `dikgong` discoveries and never a new slug,
+    // so `findsForScene` dedupes it away and both the Open Bush page denominator and
+    // the 34-checkmark Journal are unchanged. The journal/name/setswana text is
+    // duplicated verbatim from ob_setlhare_sa_phane for the same reason: JOURNAL_LINES
+    // is keyed by discovery and last-wins, so identical text keeps Mogolo's line
+    // identical whichever route the player happened to take.
+    id: 'ob_dry_deadfall',
+    scene: 'open_bush',
+    tell: 'A deadfall bleached by the sun',
+    x: 88,
+    y: 24,
+    sprite: 'sprites/hotspots/open_bush_deadfall.png',
+    kagisoCost: 2,
+    activeMonths: [5, 6, 7],
+    loot: [
+      {
+        item: 'wood',
+        discovery: 'dikgong',
+        name: 'Wood',
+        setswana: 'Dikgong',
+        rarity: 'common',
+        weight: 10,
+        qty: { min: 2, max: 4 },
+        journal:
+          'Good, dry wood. Mogolo doesn’t waste words on this one — you’ll be collecting a lot of it.',
+      },
+    ],
+    seasonalLoot: [
+      {
+        item: 'phane',
+        discovery: 'phane',
+        name: 'Mophane Worms',
+        setswana: 'Phane',
+        rarity: 'rare',
+        weight: 2,
+        qty: { min: 1, max: 2 },
+        journal:
+          'The branch is stripped bare, and something has been busy. Mogolo’s face changes — this is the one they’ve been waiting all year to see again.',
+      },
+      {
+        item: 'wood',
+        discovery: 'dikgong',
+        name: 'Wood',
+        setswana: 'Dikgong',
+        rarity: 'common',
+        weight: 10,
+        qty: { min: 2, max: 4 },
+        journal:
+          'Good, dry wood. Mogolo doesn’t waste words on this one — you’ll be collecting a lot of it.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------- Riverbank — Fa Nokeng ------------------------- */

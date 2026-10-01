@@ -2,7 +2,14 @@ import { WaterService } from './water.service';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import { makeFakeSupabase, updatesTo, updateTo, FakeResult } from '../test/fake-supabase';
-import { MAX_OFFLINE_HOURS, WATER, WATER_WHISPERS, getCropConfig } from '@molemisi/game-config';
+import {
+  MAX_OFFLINE_HOURS,
+  WATER,
+  WATER_WHISPERS,
+  getCropConfig,
+  chapterForDate,
+  chapterWeather,
+} from '@molemisi/game-config';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 /**
@@ -16,6 +23,10 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 describe('WaterService', () => {
   const NOW = new Date('2026-09-09T12:00:00.000Z');
   const HOUR = 3_600_000;
+  // Pass 3.1 — crop growth is multiplied by the CURRENT chapter's growthModifier
+  // (one calendar, 04 §9.1). `NOW` is fixed, so this is deterministic; the
+  // expectations below scale the growth portion by it. Water demand is unaffected.
+  const GROWTH_MOD = chapterWeather(chapterForDate(NOW)).growthModifier;
 
   function makeService(sequence: FakeResult[]) {
     const { client, calls } = makeFakeSupabase(sequence);
@@ -142,10 +153,10 @@ describe('WaterService', () => {
 
       await svc.advanceFarmGrowth('farm-1', NOW);
 
-      // Sorghum band 0 = 0–6 h. Three elapsed hours x1.2 = 3.6 progress, and
-      // the window (6 h) is not exhausted, so the dose stays armed.
+      // Sorghum band 0 = 0–6 h. Three elapsed hours, chapter-scaled, x1.2 for the
+      // dose; the window (6 h) is not exhausted, so it stays armed.
       const write = updateTo(calls, 'crop_instances')!;
-      expect(write.growth_progress_hours).toBeCloseTo(3.6, 6);
+      expect(write.growth_progress_hours).toBeCloseTo(3.6 * GROWTH_MOD, 6);
       expect(write.fertilizer_active).toBe(true);
     });
 
@@ -169,10 +180,10 @@ describe('WaterService', () => {
 
       await svc.advanceFarmGrowth('farm-1', NOW);
 
-      // Twelve elapsed hours, but only the first six (band 0) earn the bonus:
-      // 12 + 0.2 x 6 = 13.2, and the dose is spent.
+      // Twelve elapsed hours (chapter-scaled), but only the first six (band 0)
+      // earn the bonus: 12*MOD + 0.2 x 6, and the dose is spent.
       const write = updateTo(calls, 'crop_instances')!;
-      expect(write.growth_progress_hours).toBeCloseTo(13.2, 6);
+      expect(write.growth_progress_hours).toBeCloseTo(12 * GROWTH_MOD + 1.2, 6);
       expect(write.fertilizer_active).toBe(false);
     });
   });
@@ -191,8 +202,8 @@ describe('WaterService', () => {
       await dry.svc.advanceFarmGrowth('farm-1', NOW);
       expect(updateTo(dry.calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(9, 6);
 
-      // Second pass: tank refilled, six more hours. 9 + 6 = 15 — the six dry
-      // hours are gone for good, so this can never jump to 21.
+      // Second pass: tank refilled, six more hours (chapter-scaled). 9 + 6*MOD —
+      // the six dry hours are gone for good, so this can never jump to 21.
       const later = new Date(NOW.getTime() + 6 * HOUR);
       const wet = makeService([
         { data: farmRow({ last_simulated_at: NOW.toISOString() }), error: null },
@@ -212,7 +223,7 @@ describe('WaterService', () => {
 
       expect(result.cropsAdvanced).toBe(1);
       const cropWrite = updateTo(wet.calls, 'crop_instances')!;
-      expect(cropWrite.growth_progress_hours).toBeCloseTo(15, 6);
+      expect(cropWrite.growth_progress_hours).toBeCloseTo(9 + 6 * GROWTH_MOD, 6);
       expect(cropWrite.growth_progress_hours).toBeLessThan(16); // not 21
       expect(cropWrite.growth_stage).toBe(2);
       expect(cropWrite.hydration).toBe(1.0);
@@ -296,8 +307,8 @@ describe('WaterService', () => {
       expect(updateTo(calls, 'buildings')!.water_level).toBeCloseTo(0, 6);
 
       for (const write of updatesTo(calls, 'crop_instances')) {
-        // 6 h x (1/12) = 0.5 h of growth each, not 6 h.
-        expect(write.growth_progress_hours).toBeCloseTo(0.5, 6);
+        // 6 h x (1/12), chapter-scaled = 0.5*MOD h of growth each, not 6 h.
+        expect(write.growth_progress_hours).toBeCloseTo(0.5 * GROWTH_MOD, 6);
       }
     });
 
@@ -310,7 +321,10 @@ describe('WaterService', () => {
 
       await svc.advanceFarmGrowth('farm-1', NOW);
 
-      expect(updateTo(calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(8, 6);
+      expect(updateTo(calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(
+        2 + 6 * GROWTH_MOD,
+        6,
+      );
       expect(updateTo(calls, 'crop_instances')!.hydration).toBe(1.0);
     });
   });
@@ -343,7 +357,10 @@ describe('WaterService', () => {
 
       // Rain is 2 units/h x 6 h = 12, plenty for 0.24 of demand: full growth.
       expect(result.cropsAdvanced).toBe(1);
-      expect(updateTo(calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(15, 6);
+      expect(updateTo(calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(
+        9 + 6 * GROWTH_MOD,
+        6,
+      );
       expect(updateTo(calls, 'buildings')!.water_level).toBeCloseTo(12 - 0.24, 6);
     });
 
@@ -374,8 +391,9 @@ describe('WaterService', () => {
     const result = await svc.advanceFarmGrowth('farm-1', NOW);
 
     expect(result.cropsReady).toBe(1);
+    // The cap is on ELAPSED time; the chapter modifier then scales the growth it buys.
     expect(updateTo(calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(
-      MAX_OFFLINE_HOURS,
+      MAX_OFFLINE_HOURS * GROWTH_MOD,
       6,
     );
     expect(updateTo(calls, 'farm_plots')!.state).toBe('READY');
@@ -575,7 +593,7 @@ describe('WaterService', () => {
       slot_index: i,
     }));
 
-    it('neighbours of an ACTIVE tree pay 0.8x — and growth is never slowed', async () => {
+    it('neighbours of an ACTIVE tree pay 0.8x — the tree slows water, never time', async () => {
       const { svc, calls } = makeService([
         { data: farmRow(), error: null },
         { data: [tankRow({ water_level: 30 }), treeRow()], error: null },
@@ -585,8 +603,13 @@ describe('WaterService', () => {
 
       const result = await svc.advanceFarmGrowth('farm-1', NOW);
 
-      // The saving is water, not time: six hours of growth either way.
-      expect(updateTo(calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(6, 6);
+      // The TREE's saving is water, not time — but the chapter modifier (Pass 3.1)
+      // applies to every crop equally, so growth is 6 h scaled by it, not slowed by
+      // the tree.
+      expect(updateTo(calls, 'crop_instances')!.growth_progress_hours).toBeCloseTo(
+        6 * GROWTH_MOD,
+        6,
+      );
       expect(result.waterConsumed).toBeCloseTo(
         0.8 * getCropConfig('sorghum')!.waterPerHour * 6,
         6,

@@ -8,6 +8,7 @@
 
 import { BUILDINGS } from './buildings';
 import { getItemDef } from './items';
+import { type ChapterSlug } from './chapters';
 
 /* ------------------------------------------------------------------ Market */
 /** 02 §4.1 — the Co-op's tax. Applied server-side on every sale. */
@@ -125,6 +126,34 @@ export function effectiveSlotCap(tier: number, isGuildSubscriber: boolean): numb
 }
 
 /**
+ * 31 §6.2 / 32 §5 — Storage tier 3's FUNCTIONAL benefit (ruled 2026-09-28).
+ *
+ * Tier 2's 48 slots already hold every one of the game's 38 item types, so tier 3's
+ * extra 48 slots are pure headroom and the P12,000 price tag bought nothing — the
+ * audit called it a dead sink, correctly. The audit's own first suggestion is a
+ * stack-cap multiplier, and it is the one that turns the tier's value from BREADTH
+ * (saturated) into DEPTH (not): a Storehouse keeps twice as much of every single
+ * thing, so a real harvest can be held back and sold into a market spike — which is
+ * exactly the behaviour the reactive price band rewards (02 §4.1).
+ *
+ * Note the alternative the roadmap floated, "+listing slots", is NOT available: the
+ * listing count belongs to the Madi / P2P Exchange economy, which is outside the v1
+ * Co-op loop (31 §6.2). This benefit changes no income, so `scripts/balance_verify.py`
+ * is untouched by it.
+ */
+export const STORAGE_T3_STACK_MULTIPLIER = 2;
+
+/**
+ * The per-type stack cap actually enforced for a farm's storage tier. Tier 3 doubles
+ * the item's own `maxStack`; tiers 1–2 leave it exactly as authored. It only ever
+ * RAISES a cap, never lowers one — so a player who downgrades (impossible in v1, but
+ * still) can never have stock destroyed by this rule.
+ */
+export function effectiveStackCap(baseMaxStack: number, storageTier: number): number {
+  return Math.floor(baseMaxStack * (storageTier >= 3 ? STORAGE_T3_STACK_MULTIPLIER : 1));
+}
+
+/**
  * G8 — the Pula cost to upgrade TO `tier`, read from the single source
  * (`BUILDINGS.storage.upgradeCosts`). Null for the starter tier and for the
  * top tier (nothing further to buy).
@@ -147,11 +176,36 @@ export const LAND_LADDER: LandTier[] = [
   { plots: 4, costPula: null },
   { plots: 8, costPula: 1200 },
   { plots: 12, costPula: 6000 },
-  { plots: 20, costPula: 30000 },
+  { plots: 16, costPula: 8000 }, // docs/34 §4.1 — was 14,000
+  { plots: 20, costPula: 15000 }, // docs/34 §4.1 — was 30,000
 ];
 export const STARTING_PLOTS = 4;
 export const MAX_PLOTS = 20;
-export const LAND_LADDER_TOTAL = 37200;
+
+export const LAND_LADDER_TOTAL = 31200; // 1200 + 6000 + 8000 + 15000
+
+/**
+ * docs/34 §4.1 (2026-10-01) — the TAIL is retuned, the ladder's shape is not.
+ *
+ * 12→20 used to cost P30,000 for ~+P118/day of marginal income: a ~254-day
+ * payback (docs/31 P2-13) sitting exactly in the window where a player decides
+ * whether to commit. A four-month wall is not aspiration, it is a churn trigger
+ * arriving just before the moment they would have spent.
+ *
+ * The standing rule from here on: **no land rung may exceed ~60 days of marginal
+ * payback.** `landRungPaybackDays` exists so that rule is an assertion in
+ * economy.spec rather than a paragraph someone has to re-derive.
+ */
+export function landRungPaybackDays(
+  fromPlots: number,
+  marginalPulaPerPlotPerDay = 20.4,
+): number | null {
+  const current = nextLandTier(fromPlots);
+  if (!current || current.costPula === null) return null;
+  const newPlots = current.plots - fromPlots;
+  if (newPlots <= 0) return null;
+  return current.costPula / (newPlots * marginalPulaPerPlotPerDay);
+}
 
 /**
  * The next rung of the land ladder above `currentPlots`, or null when maxed.
@@ -167,9 +221,34 @@ export function nextLandTier(currentPlots: number): LandTier | null {
 export const BOTHO_THRESHOLDS = {
   BUPI_RECIPE: 100,
   DEEP_BUSHVELD: 300,
+  /** docs/34 §Wave 1.2 — "bake bread": the first value-add recipe. */
+  AUTO_FEEDER: 300,
   LETSEMA: 500,
+  /** "waters and harvests for you" — the capstone helper. */
+  AUTO_HELPER: 500,
   PRIZE_ELIGIBILITY: 1000,
 } as const;
+
+/**
+ * docs/34 §Wave 1.2 — the earned-helper ladder, as data so the client can
+ * render "unlocks at 300 Botho" without hardcoding the numbers.
+ *
+ * This REPLACES the earlier "Auto-Collector 150 → Auto-Feeder 300 → Irrigation
+ * 500" plan (docs/32 task 3.5). Collector folded into the 500 helper: three
+ * unlock tiers is the friendly number, and a 150-tier told players nothing.
+ *
+ * Every entry is a CHORE REMOVER, never a yield multiplier — which is what lets
+ * the same behaviour also be a paid convenience (Village Pass) without becoming
+ * pay-to-win.
+ */
+export const AUTOMATION_LADDER = [
+  { slug: 'auto_feeder', botho: 300, name: 'Auto-Feeder', setswana: 'Moima o Tima', effect: 'Feed every animal in your kraal in one tap.' },
+  { slug: 'auto_helper', botho: 500, name: 'Auto-Helper', setswana: 'Mpho yo thusa', effect: 'Water and harvest for you while you are away.' },
+] as const;
+
+export function automationUnlockedAt(botho: number): (typeof AUTOMATION_LADDER)[number][] {
+  return AUTOMATION_LADDER.filter((a) => botho >= a.botho);
+}
 
 /**
  * I4 — Botho accrues only from explicit, manual, deliberate acts and is capped per
@@ -251,64 +330,92 @@ export interface TopUpPack {
   slug: string;
   name: string;
   priceBwp: number;
-  grantedPula: number;
+  grantedMadi: number;
 }
-/** 02 §6.6 — Pula is transparent and 1:1. */
+
+/**
+ * docs/33 §2.3 / docs/34 §2.3 (DECIDED 2026-10-01) — packs grant **MADI**, not
+ * Pula. Pula is earned-only (MVP/02 §3.1), which is what makes "a free player
+ * reaches everything" structurally true instead of a promise.
+ *
+ * `1 Madi = BWP 1.00`. The bonus is a FLAT 10% on the three larger packs —
+ * monotonic, capped, and explainable in one sentence ("bigger packs get a 10%
+ * thank-you"). The old ladder rewarded P100/P250/P500, which is what pushed
+ * the flagship to P500 — a purchase no Botswana mobile-money player makes by
+ * accident.
+ */
 export const TOP_UP_PACKS: TopUpPack[] = [
-  { slug: 'starter', name: 'Starter', priceBwp: 5, grantedPula: 5 },
-  { slug: 'farmer', name: 'Farmer', priceBwp: 50, grantedPula: 50 },
-  { slug: 'harvest', name: 'Harvest', priceBwp: 100, grantedPula: 105 },
-  { slug: 'cattle', name: 'Cattle', priceBwp: 250, grantedPula: 265 },
-  { slug: 'export', name: 'Export', priceBwp: 500, grantedPula: 540 },
+  { slug: 'spark', name: 'Spark', priceBwp: 5, grantedMadi: 5 },
+  { slug: 'farmer', name: 'Farmer', priceBwp: 20, grantedMadi: 20 },
+  { slug: 'harvest', name: 'Harvest', priceBwp: 50, grantedMadi: 55 }, // flagship
+  { slug: 'cattle', name: 'Cattle', priceBwp: 100, grantedMadi: 110 },
+  { slug: 'export', name: 'Export', priceBwp: 250, grantedMadi: 275 },
 ];
+
+/** The pack we expect most buyers to take, and the one every UI should feature. */
+export const FLAGSHIP_PACK_SLUG = 'harvest';
+
+/**
+ * The bonus as a fraction, so the storefront can show it and the spec can
+ * assert it: docs/34 §5 requires every pack to sit within 0–10%.
+ */
+export function packBonus(pack: TopUpPack): number {
+  return pack.priceBwp === 0 ? 0 : (pack.grantedMadi - pack.priceBwp) / pack.priceBwp;
+}
 /** R4 / C5 — enforced per player per calendar day in BOTSWANA TIME (UTC+2), not server-local. */
 export const DAILY_TOP_UP_CAP_BWP = 500;
 export const BOTSWANA_UTC_OFFSET = '+02:00';
 
-export const GUILD_SUBSCRIPTION = {
-  slug: 'guild',
-  priceBwp: 49,
-  benefits: [
-    'auto_collector',
-    'storage_bonus_50',
-    'cosmetics',
-    'weekly_pula_stone',
-    'ad_free',
-  ],
+/**
+ * docs/33 §2.2 / docs/34 §3.2 (DECIDED 2026-10-01) — the **Village Pass**
+ * replaces the Guild subscription. One recurring product instead of a
+ * subscription plus three boosts.
+ *
+ * Priced **M50/month**, not P49 BWP, because it is bought with Madi. Two things
+ * were deliberately dropped from the old benefit list:
+ *   - `weekly_pula_stone` — Pula Stone is a cut boost (docs/34 §3.3).
+ *   - the weekly *mechanical* grant entirely, so there is no recurring free
+ *     resource drip to budget around.
+ *
+ * `auto_helper` is the SAME behaviour the Botho-500 ladder grants free
+ * (AUTOMATION_LADDER). Paying gets it early; playing gets it forever. It is a
+ * chore remover, never a yield multiplier, which is what keeps it on the right
+ * side of the no-pay-to-win line.
+ */
+export const VILLAGE_PASS = {
+  slug: 'village_pass',
+  /** Charged monthly, in whole Madi. */
+  priceMadi: 50,
+  days: 30,
+  benefits: ['auto_helper', 'storage_bonus_50', 'monthly_festival_outfit', 'ad_free'],
 } as const;
 
-export interface Boost {
-  slug: string;
-  name: string;
-  setswana: string;
-  pricePula: number;
-  effect: string;
-}
-/** R8 — Fertility Shell is REMOVED. Three boosts, and only three. */
-export const BOOSTS: Boost[] = [
-  {
-    slug: 'pula_stone',
-    name: 'Pula Stone',
-    setswana: 'Lentswe la Pula',
-    pricePula: 20,
-    effect: 'Refill the Jojo tank to 50%, or guarantee rain within 24 hours.',
-  },
-  {
-    slug: 'ancestral_ward',
-    name: 'Ancestral Ward',
-    setswana: 'Thebe ya Badimo',
-    pricePula: 25,
-    effect: 'A three-day shield against wildlife raids.',
-  },
-  {
-    slug: 'breath_of_the_land',
-    name: 'Breath of the Land',
-    setswana: 'Phefo ya Lefatshe',
-    pricePula: 15,
-    effect: 'Instantly complete an active crafting or building timer.',
-  },
-];
-export const BOOST_SLUGS = BOOSTS.map((b) => b.slug);
+/**
+ * @deprecated Renamed by docs/34 §3.2. Kept as an alias so existing callers keep
+ * compiling; `slug` changed with it, so anything comparing to 'guild' must move.
+ */
+export const GUILD_SUBSCRIPTION = {
+  slug: VILLAGE_PASS.slug,
+  priceMadi: VILLAGE_PASS.priceMadi,
+  days: VILLAGE_PASS.days,
+  benefits: VILLAGE_PASS.benefits,
+} as const;
+
+/**
+ * docs/34 §3.3 (DECIDED 2026-10-01) — **BOOSTS ARE CUT.**
+ *
+ * Pula Stone, Ancestral Ward and Breath of the Land were catalogued and sold
+ * while no endpoint applied any of their effects (docs/KNOWN_LIMITATIONS.md).
+ * `available: false` was the withdrawal; this removes them outright, so the
+ * catalogue cannot advertise something that does nothing and cannot be
+ * half-restored by a later merge.
+ *
+ * They are not gone forever — each returns only when EVERY effect in its
+ * description actually works (docs/34 §6 "do-not-do" list). Re-adding one is a
+ * deliberate act with a test, not a revert.
+ */
+export const BOOSTS: readonly never[] = [];
+export const BOOST_SLUGS: readonly string[] = [];
 
 /* ------------------------------------------------------------------ Prize */
 /** 02 §6.7 — monthly Botho EARNED, not lifetime (F16: lifetime totals converge and ties become endemic). */
@@ -329,11 +436,97 @@ export const PRIZE = {
 export const COSMETIC_PRICE_RANGE = { min: 200, max: 2000 } as const;
 export const SINKS = ['seeds', 'water', 'land', 'maintenance', 'coop_tax', 'cosmetics', 'letsema_fund'] as const;
 
-/** Seasonal maintenance — what keeps Poleto, Thapo and Setena alive after the build (03 §3.5). */
+/**
+ * Seasonal maintenance — what keeps Poleto, Thapo and Setena alive after the
+ * build (03 §3.5). A kraal in Botswana is never finished; that is not a chore,
+ * it is the truth of the thing.
+ *
+ * docs/34 §Wave 1.3 (2026-10-01) — interval 90 → 30 days, and the per-cycle
+ * bill is deliberately LEFT ALONE. Those two choices together matter:
+ *
+ *   bill/period is the recurring daily drain, so shortening the period by 3× is
+ *   exactly what triples it (~P3 → ~P9.5/day, closing audit P1-8's "too small"
+ *   finding), while the player's ANNUAL cost is unchanged. It is not more
+ *   expensive — only more often, which is the whole point: a once-a-quarter
+ *   lump followed by three months of nothing left the material economy dead
+ *   between bills.
+ *
+ * (An earlier draft of docs/34 said "⅓ the bill on a 30-day rhythm". That is
+ * self-cancelling — 1/3 bill over 1/3 period is the SAME daily rate, so it
+ * would have fixed the lump while leaving P1-8 unfixed. The spec has been
+ * corrected to match this arithmetic.)
+ */
 export const MAINTENANCE = {
-  intervalDays: 90,
+  intervalDays: 30,
   costs: { kraal: { thapo: 2 }, boundary: { poleto: 3 }, water_source: { setena: 2 } },
+  /** Hours before a due bill that the UI starts warning (never ambush a returner). */
+  warningLeadHours: 24,
 } as const;
+
+/**
+ * 3.8d — maintenance demand rises with the size of the estate (audit P1-8: the
+ * recurring material sink was too small — P3.17/day — and scale-free). Every
+ * building beyond the first adds a small multiple to each maintenance quote, so a
+ * large farm's upkeep grows with the number of structures it must keep standing.
+ * The coefficient is the single tuning knob; keep it small — a nudge, not a tax.
+ */
+export const MAINTENANCE_SCALE_PER_BUILDING = 0.05;
+
+/** Multiplier applied to one maintenance cycle's Pula + material demand. */
+export function maintenanceScaleFor(buildingCount: number): number {
+  return 1 + MAINTENANCE_SCALE_PER_BUILDING * Math.max(0, buildingCount - 1);
+}
+
+/* --------------------------------------------------- Chapter market events */
+/**
+ * 3.3 / 30 §3.5 — every chapter carries a themed Co-op market event so the market
+ * is never dead on a fresh install and the calendar is felt at the stall. The pool
+ * is keyed by the real Botswana chapter slug (04 §9.1); `MarketService` seeds the
+ * current chapter's event on first market read and rotates it when the chapter
+ * changes. No schema change: the row lives in the existing `market_events` table.
+ *
+ * `effect` must match `getEventModifier`'s taxonomy (`grain` | `food` | `materials`
+ * | `all` | <itemType>) and `multiplier` is the price multiplier (1.0 = no effect).
+ */
+export interface ChapterMarketEvent {
+  name: string;
+  description: string;
+  effect: string;
+  multiplier: number;
+  /** How long the event stays live before the next rotation check (hours). */
+  rotationHours: number;
+}
+
+export const CHAPTER_MARKET_EVENTS: Record<ChapterSlug, ChapterMarketEvent> = {
+  pula: {
+    name: 'Pula e tlile',
+    description: 'The rains came — seed and grain demand swells at the Co-op.',
+    effect: 'grain',
+    multiplier: 1.4,
+    rotationHours: 7 * 24,
+  },
+  phane: {
+    name: 'Mophane Window',
+    description: 'The Mophane harvest fills the market with food.',
+    effect: 'food',
+    multiplier: 1.3,
+    rotationHours: 7 * 24,
+  },
+  moriti: {
+    name: 'Moriti Scarcity',
+    description: 'Dry season — water-hungry produce grows dear.',
+    effect: 'food',
+    multiplier: 1.2,
+    rotationHours: 7 * 24,
+  },
+  letlhafula: {
+    name: 'Letlhafula Festival',
+    description: 'Harvest festival — grain and food trade briskly.',
+    effect: 'grain',
+    multiplier: 1.3,
+    rotationHours: 7 * 24,
+  },
+};
 
 /* ------------------------------------------------------------------ Starting state */
 export const STARTING_PULA = 250;

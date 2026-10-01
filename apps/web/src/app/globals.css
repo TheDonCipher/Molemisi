@@ -166,12 +166,81 @@
 }
 .tank-slosh { animation: slosh 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
+/* ---------------------------------------------------------------------------
+   2.9 / doc 30 V-11 — seasonal particle drift (04 §9.1).
+   The chapter decides which two sprites drift; each mote follows the same slow
+   fall-and-sway with a per-index delay/duration so the field never beats in sync.
+   Decorative only: see ChapterParticles.tsx. Killed under reduced-motion below.
+--------------------------------------------------------------------------- */
+@keyframes chapter-drift {
+  0%   { transform: translate3d(0, -10%, 0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate3d(14px, 110%, 0) rotate(35deg); opacity: 0; }
+}
+.chapter-particle {
+  position: absolute;
+  animation-name: chapter-drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
 /* Doc 12 §6.1 — ready plots breathe a soft amber glow (no flashing). */
 @keyframes breathe-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0); }
   50% { box-shadow: 0 0 8px 2px rgba(255, 143, 0, 0.4); }
 }
 .plot-ready { animation: breathe-glow 3s infinite ease-in-out; }
+
+/* ---------------------------------------------------------------------------
+   2.8 / doc 30 V-14 — the ONE attention pulse, in four colours.
+   docs/03 §13 gives a four-level priority queue and says only the highest-priority
+   element pulses at once; everything else shows a static indicator. These four
+   keyframes are the only permitted pulses on a screen, and `<Attention>` decides
+   which single element gets one. Colours are 03 §13's own: red critical, orange
+   high, blue medium, grey low. All breathe (opacity + a soft ring), never flash.
+--------------------------------------------------------------------------- */
+@keyframes attention-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.attention-pulse {
+  animation: attention-breathe 1.6s infinite ease-in-out;
+}
+
+.attention-pulse-critical {
+  animation: attention-breathe 1.1s infinite ease-in-out;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+}
+.attention-pulse-high {
+  animation: attention-breathe 1.4s infinite ease-in-out;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+.attention-pulse-medium {
+  animation: attention-breathe 2s infinite ease-in-out;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+.attention-pulse-low {
+  animation: attention-breathe 2.6s infinite ease-in-out;
+  box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.2);
+}
+
+/* Respect the OS "reduce motion" setting: attention must never be conveyed by
+   motion alone (03 §16). The static box-shadow remains, so the signal survives. */
+@media (prefers-reduced-motion: reduce) {
+  .attention-pulse,
+  .attention-pulse-critical,
+  .attention-pulse-high,
+  .attention-pulse-medium,
+  .attention-pulse-low {
+    animation: none;
+  }
+  .plot-ready { animation: none; }
+  .chapter-particle { animation: none; opacity: 0; }
+  .chapter-particles { display: none; }
+}
 
 /* Doc 12 §4.1 — Water Whisper: fade in ~1s → hold 4s → fade out 2s (7s). */
 @keyframes whisper-fade {

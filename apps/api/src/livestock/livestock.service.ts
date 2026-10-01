@@ -117,7 +117,7 @@ export class LivestockService {
     // Check building capacity. D8 has ONE livestock building (kraal), so every
     // animal shares it — occupancy is the TOTAL livestock on the farm, not a
     // per-type count. The old per-type count let a 4-slot kraal hold 4 chickens
-    // AND 4 goats AND 4 cows AND 4 pigs (4x capacity): a silent overflow.
+    // AND 4 goats AND 4 cows AND 4 guinea fowl (4x capacity): a silent overflow.
     const { count } = await adminClient
       .from('livestock')
       .select('*', { count: 'exact', head: true })

@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { chapterForDate, type ChapterSlug } from '@molemisi/game-config';
 
 export interface WorldEvent {
   id: string;
   name: string;
   description: string;
   type: 'festival' | 'seasonal' | 'market' | 'weather';
-  season: string | null;
+  /** Chapter this event belongs to, or null for an any-chapter event. */
+  chapterSlug: ChapterSlug | null;
   effects: {
     growthModifier?: number;
     priceModifier?: number;
-    xpModifier?: number;
-    energyModifier?: number;
   };
   duration: number; // hours
 }
@@ -30,15 +30,19 @@ export interface ActiveEvent {
 export class WorldEventsService {
   constructor(private supabaseService: SupabaseService) {}
 
-  // Pre-defined world events
+  // Pre-defined world events — keyed to the real Botswana chapter calendar
+  // (Pass 3.2 / 30 N-7). xpModifier/energyModifier were stripped: the game has
+  // no XP/energy economy, so they were dead multipliers. winter_solstice and
+  // frost_warning were dropped — frost is not a Botswana phenomenon and they
+  // carried only the removed xp/energy modifiers.
   private readonly EVENTS: WorldEvent[] = [
-    // Spring Events
+    // Pula (Season of Rain) — planting & growth
     {
       id: 'planting_festival',
       name: 'Planting Festival',
       description: 'A celebration of new beginnings! Crops grow faster.',
       type: 'festival',
-      season: 'spring',
+      chapterSlug: 'pula',
       effects: { growthModifier: 1.5 },
       duration: 24,
     },
@@ -47,18 +51,18 @@ export class WorldEventsService {
       name: 'Rain Season',
       description: 'Heavy rains bring free hydration to all crops.',
       type: 'seasonal',
-      season: 'spring',
+      chapterSlug: 'pula',
       effects: { growthModifier: 1.2 },
       duration: 48,
     },
-    // Summer Events
+    // Phane (Season of Mophane) — harvest & markets
     {
       id: 'harvest_festival',
       name: 'Harvest Festival',
       description: 'A time of plenty! Sell prices are boosted.',
       type: 'festival',
-      season: 'summer',
-      effects: { priceModifier: 1.5, xpModifier: 1.3 },
+      chapterSlug: 'phane',
+      effects: { priceModifier: 1.5 },
       duration: 24,
     },
     {
@@ -66,18 +70,18 @@ export class WorldEventsService {
       name: 'Cattle Fair',
       description: 'Special livestock prices at the market.',
       type: 'market',
-      season: 'summer',
+      chapterSlug: 'phane',
       effects: { priceModifier: 1.3 },
       duration: 12,
     },
-    // Autumn Events
+    // Moriti (Season of Shade) — community & thrift
     {
       id: 'community_day',
       name: 'Community Day',
       description: 'The Kgotla hosts special quests with bonus rewards.',
       type: 'festival',
-      season: 'autumn',
-      effects: { xpModifier: 2.0 },
+      chapterSlug: 'moriti',
+      effects: {},
       duration: 24,
     },
     {
@@ -85,36 +89,17 @@ export class WorldEventsService {
       name: 'Market Day',
       description: 'Special deals at the market! Buy prices reduced.',
       type: 'market',
-      season: 'autumn',
+      chapterSlug: 'moriti',
       effects: { priceModifier: 0.7 },
       duration: 12,
     },
-    // Winter Events
-    {
-      id: 'winter_solstice',
-      name: 'Winter Solstice',
-      description: 'The shortest day brings special blessings.',
-      type: 'festival',
-      season: 'winter',
-      effects: { xpModifier: 1.5, energyModifier: 1.5 },
-      duration: 24,
-    },
-    {
-      id: 'frost_warning',
-      name: 'Frost Warning',
-      description: 'Cold snap! Protect your crops from frost damage.',
-      type: 'weather',
-      season: 'winter',
-      effects: { growthModifier: 0.5 },
-      duration: 36,
-    },
-    // Any Season Events
+    // Any-chapter events
     {
       id: 'traveling_merchant',
       name: 'Traveling Merchant',
       description: 'A rare merchant visits with exclusive items.',
       type: 'market',
-      season: null,
+      chapterSlug: null,
       effects: { priceModifier: 0.8 },
       duration: 6,
     },
@@ -123,7 +108,7 @@ export class WorldEventsService {
       name: 'Drought',
       description: 'Extended dry period. Water your crops carefully!',
       type: 'weather',
-      season: null,
+      chapterSlug: null,
       effects: { growthModifier: 0.7 },
       duration: 24,
     },
@@ -137,7 +122,7 @@ export class WorldEventsService {
       description:
         'The Kgotla is preparing the village feast and asks for 20 Watermelons. Sharing earns Botho and the feast-day fence pattern. Declining costs nothing.',
       type: 'festival',
-      season: null,
+      chapterSlug: null,
       effects: {},
       duration: 72,
     },
@@ -160,20 +145,13 @@ export class WorldEventsService {
     }));
   }
 
-  async getAvailableEvents(farmId: string): Promise<WorldEvent[]> {
-    const adminClient = this.supabaseService.getAdminClient();
+  async getAvailableEvents(_farmId: string): Promise<WorldEvent[]> {
+    // One calendar: events are keyed to the real Botswana chapter for today,
+    // not a simulated season clock (Pass 3.2 / 30 N-7).
+    const current = chapterForDate(new Date());
 
-    // Get current season
-    const { data: farm } = await adminClient
-      .from('farms')
-      .select('season')
-      .eq('id', farmId)
-      .single();
-
-    const currentSeason = (farm?.season as string) || 'spring';
-
-    // Filter events by current season or no season
-    return this.EVENTS.filter((e) => e.season === null || e.season === currentSeason);
+    // Filter events by current chapter or any-chapter events
+    return this.EVENTS.filter((e) => e.chapterSlug === null || e.chapterSlug === current.slug);
   }
 
   async triggerEvent(farmId: string, eventId: string): Promise<ActiveEvent> {
@@ -234,15 +212,11 @@ export class WorldEventsService {
   async getEventEffects(_farmId: string): Promise<{
     growthModifier: number;
     priceModifier: number;
-    xpModifier: number;
-    energyModifier: number;
   }> {
     const activeEvents = await this.getActiveEvents();
 
     let growthModifier = 1.0;
     let priceModifier = 1.0;
-    let xpModifier = 1.0;
-    let energyModifier = 1.0;
 
     for (const event of activeEvents) {
       if (event.effects.growthModifier) {
@@ -251,14 +225,8 @@ export class WorldEventsService {
       if (event.effects.priceModifier) {
         priceModifier *= event.effects.priceModifier;
       }
-      if (event.effects.xpModifier) {
-        xpModifier *= event.effects.xpModifier;
-      }
-      if (event.effects.energyModifier) {
-        energyModifier *= event.effects.energyModifier;
-      }
     }
 
-    return { growthModifier, priceModifier, xpModifier, energyModifier };
+    return { growthModifier, priceModifier };
   }
 }

@@ -4,9 +4,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { apiFetch, useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
 import { CurrencyGuideSection } from '../CurrencyGuide';
+import { PixelUiIcon } from '../PixelUiIcon';
 
 interface WalletSnapshot {
   pula: number;
+  /** docs/34 §4.2 — absent until migration 20261001000003 has run. */
+  madi?: number;
   botho: number;
   subscriptionStatus?: string | null;
   subscriptionExpiresAt?: string | null;
@@ -127,7 +130,7 @@ export function WalletScreen() {
 
       {loading && !snapshot ? (
         <div className="flex flex-col items-center justify-center py-16">
-          <span className="text-3xl animate-pulse mb-2">💰</span>
+          <PixelUiIcon name="currency_pula" emoji="💰" size={32} className="animate-pulse mb-2" />
           <p className="font-mono text-xs text-on-surface-variant">{tl('loadingFarm')}</p>
         </div>
       ) : (
@@ -136,7 +139,7 @@ export function WalletScreen() {
           <section className="mb-6 space-y-3">
             <div className="bg-wood-dark p-4 border border-wood-border flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl">💰</span>
+                <PixelUiIcon name="currency_pula" emoji="💰" size={20} />
                 <span className="font-mono text-xs text-on-surface-variant uppercase">Pula</span>
               </div>
               <span className="font-mono text-lg text-gold-currency font-bold">
@@ -145,13 +148,30 @@ export function WalletScreen() {
             </div>
             <div className="bg-wood-dark p-4 border border-wood-border flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🤝</span>
+                <PixelUiIcon name="social_botho" emoji="🤝" size={20} />
                 <span className="font-mono text-xs text-on-surface-variant uppercase">Botho</span>
               </div>
               <span className="font-mono text-lg text-secondary font-bold">
                 {(snapshot?.botho ?? 0).toLocaleString()} B
               </span>
             </div>
+
+            {/* docs/34 §4.2 — the Madi row. Rendered only once the wallet actually
+                carries a balance: `madi` is undefined on a database that has not
+                yet run 20261001000003_add_madi_balance.sql, and showing a
+                permanent "0 M" to every existing player would advertise a
+                currency they have not bought yet. */}
+            {typeof snapshot?.madi === 'number' && (
+              <div className="bg-wood-dark p-4 border border-wood-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <PixelUiIcon name="currency_pula" emoji="📱" size={20} />
+                  <span className="font-mono text-xs text-on-surface-variant uppercase">Madi</span>
+                </div>
+                <span className="font-mono text-lg text-gold-currency font-bold">
+                  {snapshot.madi.toLocaleString()} M
+                </span>
+              </div>
+            )}
 
             {snapshot?.subscriptionStatus ? (
               <div className="bg-wood-dark p-3 border border-wood-border flex items-center justify-between">
@@ -175,7 +195,7 @@ export function WalletScreen() {
             </h2>
             {ledger.length === 0 ? (
               <div className="bg-wood-dark p-6 border border-wood-border text-center">
-                <span className="text-2xl">📜</span>
+                <PixelUiIcon name="market_contract" emoji="📜" size={24} />
                 <p className="font-mono text-[10px] text-on-surface-variant mt-2">
                   {tl('noHistory') || 'No transactions yet.'}
                 </p>
@@ -213,11 +233,12 @@ export function WalletScreen() {
               Kagiso is a meter, not money (02 §6; Bushveld model). */}
           <CurrencyGuideSection />
 
-          {/* v1 closed-loop note — be honest that hard currency / withdrawal
-              is not part of the snapshot (02 §6: Pula must not imply a Pula↔Madi rate). */}
+          {/* docs/34 §4.2 — the honest closed-loop note. Pula is earned-only and Madi is
+              spend-only: there is no rate between them, and that absence is the
+              promise, so it is stated rather than implied. */}
           <p className="font-mono text-[9px] text-on-surface-variant/70 mt-4 text-center">
             {tl('walletNote') ||
-              'Madi and withdrawals arrive in v1.1. Pula and Botho are the v1 currencies.'}
+              'Pula is earned by playing. Madi is bought with your phone and buys decorations and the Village Pass. One never becomes the other.'}
           </p>
         </>
       )}

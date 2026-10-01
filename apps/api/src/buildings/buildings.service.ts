@@ -7,7 +7,12 @@ import {
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import { InventoryService } from '../inventory/inventory.service';
-import { getBuildingConfig, isBuildingAutomated, type BuildCost } from '@molemisi/game-config';
+import {
+  getBuildingConfig,
+  isBuildingAutomated,
+  maintenanceScaleFor,
+  type BuildCost,
+} from '@molemisi/game-config';
 
 interface BuildingRow {
   id: string;
@@ -365,18 +370,26 @@ export class BuildingsService {
   private maintenanceQuote(
     config: NonNullable<ReturnType<typeof getBuildingConfig>>,
     state: string,
+    scale = 1,
   ): { pula: number; needs: MaterialNeed[] } {
     // Cast so `currency` and the material slugs read uniformly: BuildCost is a
     // fixed-shape type, but maintenanceMaterials is open-ended by design.
     const materials = (config.maintenanceMaterials ?? {}) as Record<string, number | undefined>;
+    // 3.8d — demand scales with the estate's building count (`scale`), so a large
+    // farm's upkeep grows with the number of structures it must keep standing.
+    // Materials round UP to a whole unit and never drop below 1.
     const needs: MaterialNeed[] = Object.entries(materials)
       .filter(([slug, qty]) => slug !== 'currency' && typeof qty === 'number' && qty > 0)
-      .map(([slug, qty]) => ({ slug, qty: qty as number }));
+      .map(([slug, qty]) => ({
+        slug,
+        qty: Math.max(1, Math.round((qty as number) * scale)),
+      }));
 
     const base =
       (config.maintenanceCost ?? Math.floor(config.baseCost.currency * 0.25)) +
       (materials.currency ?? 0);
-    const pula = state === 'DISABLED' ? base * 2 : base;
+    const scaled = Math.round(base * scale);
+    const pula = state === 'DISABLED' ? scaled * 2 : scaled;
 
     return { pula, needs };
   }
@@ -441,7 +454,14 @@ export class BuildingsService {
       throw new BadRequestException('Building does not need maintenance');
     }
 
-    const { pula, needs } = this.maintenanceQuote(config, buildingRow.state);
+    // 3.8d — the estate's size raises each maintenance quote (audit P1-8).
+    const { data: farmBuildings } = await adminClient
+      .from('buildings')
+      .select('id')
+      .eq('farm_id', farmId);
+    const scale = maintenanceScaleFor((farmBuildings ?? []).length);
+
+    const { pula, needs } = this.maintenanceQuote(config, buildingRow.state, scale);
 
     // Check the crafted materials *before* a single thebe moves. Maintenance is
     // meant to be a crafting demand, not a Pula tax, so a player who is short

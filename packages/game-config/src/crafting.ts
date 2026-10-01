@@ -155,18 +155,40 @@ export function recipeEconomics(
   chosenInputs: Record<string, number>,
   qty: BatchSize = 1,
 ): RecipeEconomics {
+  // Base-value economics: the catalogue's own numbers, no market read. This is the
+  // stable reference the spec and the simulator assert against. Anything that talks
+  // to a player about money must use `recipeEconomicsAt` with LIVE prices instead.
+  return recipeEconomicsAt(recipe, chosenInputs, qty, (slug) => ITEMS[slug]?.baseValue ?? 0);
+}
+
+/**
+ * Live economics — the same row, but with inputs and output valued at the price the
+ * market is paying TODAY rather than the catalogue's base value (31 §6.3 / 07 §7.5).
+ *
+ * This exists because the workshop's "underwater at today's prices" warning was
+ * computed from base values, so it could not actually see a spike: a raw band that
+ * drifted up to 2.0× would push a recipe's inputs above its crafted sell price and
+ * the card would still cheerfully say the craft was profitable. `priceOf` returns the
+ * live per-unit SELL price; the Co-op's cut is applied here, once, so no caller has to
+ * remember it. Passing base values reproduces `recipeEconomics` exactly.
+ */
+export function recipeEconomicsAt(
+  recipe: RecipeDef,
+  chosenInputs: Record<string, number>,
+  qty: BatchSize,
+  priceOf: (slug: string) => number,
+): RecipeEconomics {
   let inputValue = 0;
   for (const group of recipe.inputs) {
     for (const [slug, n] of Object.entries(chosenInputs)) {
       if (!group.anyOf.includes(slug)) continue;
-      const item = ITEMS[slug];
-      if (item) inputValue += opportunityCost(item, n);
+      // Opportunity cost = what the input would NET if sold at today's price.
+      inputValue += priceOf(slug) * OPPORTUNITY_COST_FACTOR * n;
     }
   }
   const fee = batchFee(recipe, qty);
-  const out = ITEMS[recipe.output];
   const outputQty = recipe.outputQty * qty;
-  const saleGross = (out?.baseValue ?? 0) * outputQty;
+  const saleGross = priceOf(recipe.output) * outputQty;
   const netAfterTax = saleGross * (1 - COOP_TAX);
   const totalCost = inputValue + fee;
   const profit = netAfterTax - totalCost;
