@@ -156,6 +156,35 @@ describe('P10 — v1 launch readiness (05 §P10)', () => {
     });
   });
 
+  // ----------------------------- C1 — the currency mirror has no writers left
+  describe('C1 — no source file writes the read-only profiles.currency mirror', () => {
+    // Scan implementation source only; this spec file names the pattern in a
+    // comment, and including it would let the scan match itself.
+    const files = collect(SRC, ['.ts']).filter((f) => !f.endsWith('.spec.ts'));
+
+    it('the scan actually reads source files (guard against a vacuous pass)', () => {
+      expect(files.length).toBeGreaterThan(0);
+    });
+
+    it('no source file issues .from(profiles).update(... currency ...)', () => {
+      // `profiles.currency` is a read-only MIRROR of player_wallets.pula_balance
+      // (20260908000017). A direct UPDATE is rejected at runtime by
+      // `trg_profiles_guard_currency` — and because that guard RAISES, the failure
+      // lands *after* a service has already consumed goods. Contracts did exactly
+      // this (C1, security audit 2026-10-02), so a static scan is the cheap,
+      // permanent guard: every balance movement must go through
+      // WalletService/wallet_apply, which writes the ledger row atomically too.
+      const offenders: string[] = [];
+      for (const file of files) {
+        const src = fs.readFileSync(file, 'utf8');
+        const re =
+          /\.from\(\s*['"`]profiles['"`]\s*\)[\s\S]{0,300}?\.update\(\s*\{[\s\S]{0,200}?currency/;
+        if (re.test(src)) offenders.push(path.basename(file));
+      }
+      expect(offenders).toEqual([]);
+    });
+  });
+
   // ------------------------------------------------- Bushveld: bounded supplement
   describe('Bushveld stays a supplement — the structural half (04 §4.2)', () => {
     it('gathering is capped by Kagiso, so the bush cannot be grind-farmed', () => {

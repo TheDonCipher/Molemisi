@@ -295,14 +295,23 @@ export async function runSafeguards(
 
   for (const t of dupTargets) {
     const [a, b] = await Promise.all([t.run(), t.run()]);
-    const oneOk = [a, b].filter((s) => s >= 200 && s < 300).length <= 1;
+    const okCount = [a, b].filter((s) => s >= 200 && s < 300).length;
+    // C3 (security audit 2026-10-02) — a vacuous pass is worse than a failure.
+    // "at most one succeeded" is trivially true when NEITHER succeeded, which is
+    // what happened whenever the probe failed on ownership or a precondition
+    // (both 4xx, e.g. 404). Require at least one REAL success before claiming the
+    // concurrency property, and say INCONCLUSIVE when nothing succeeded.
+    const conclusive = okCount >= 1;
     results.push(
       check(
         'anticheat',
         t.id,
         t.name,
-        oneOk,
-        `Promise.all statuses: ${a}, ${b} — at most one may succeed`,
+        conclusive && okCount <= 1,
+        conclusive
+          ? `Promise.all statuses: ${a}, ${b} — at most one may succeed`
+          : `INCONCLUSIVE — neither request succeeded (${a}, ${b}); no credit/consume ` +
+            'occurred, so this check proved nothing. Fix the probe precondition.',
       ),
     );
   }
@@ -323,13 +332,21 @@ export async function runSafeguards(
     acceptStatuses.push(r.status);
   }
   const accepted = acceptStatuses.filter((s) => s >= 200 && s < 300).length;
+  // C3 — same vacuous-pass guard: `accepted=0` satisfies `<= 3` while proving
+  // nothing (the audit observed exactly that, "AC-02 PASS with accepted=0 of 4").
+  // A meaningful run accepts at least one charge and still stops at the shared
+  // pool of three.
+  const poolConclusive = accepted >= 1;
   results.push(
     check(
       'anticheat',
       'AC-02',
       'at most 3 charges accepted per Botswana day (shared pool)',
-      accepted <= 3,
-      `accepted=${accepted} of 4 attempts; statuses=${acceptStatuses.join(',')}`,
+      poolConclusive && accepted <= 3,
+      poolConclusive
+        ? `accepted=${accepted} of 4 attempts; statuses=${acceptStatuses.join(',')}`
+        : `INCONCLUSIVE — accepted=0 of 4 (statuses=${acceptStatuses.join(',')}); ` +
+          'no accept succeeded, so the pool cap was never exercised.',
     ),
   );
 

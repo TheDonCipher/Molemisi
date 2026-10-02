@@ -434,21 +434,23 @@ export class ContractsService {
     // advertised. `contract.rewards.currency` is the design intent; the cap is
     // what keeps that intent from outbidding the Co-op on identical goods.
     const payout = this.payoutFor(contract);
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('currency')
-      .eq('id', userId)
-      .single();
 
-    const currentCurrency = (profile?.currency as number) || 0;
-
-    await adminClient
-      .from('profiles')
-      .update({
-        currency: currentCurrency + payout,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
+    // C1 (security audit 2026-10-02) — settle through the WALLET, not the mirror.
+    //
+    // This used to read `profiles.currency`, add the payout and write the column
+    // straight back. That bypassed `WalletService` entirely, with three effects:
+    //   1. No `ledger_entries` row — so audit, reconciliation and the active
+    //      anti-cheat rules (`detectRapidGains`/`detectCostBypass`) were blind to
+    //      every Pula a contract ever paid.
+    //   2. A read-modify-write race: two concurrent completions clobbered one another.
+    //   3. Because `profiles.currency` is a read-only MIRROR guarded by
+    //      `trg_profiles_guard_currency` (20260908000017), the UPDATE RAISED — and
+    //      it raised *after* the goods were consumed and the row marked completed,
+    //      so the player lost the goods and received nothing.
+    //
+    // `wallet.credit` moves the balance and writes its ledger row atomically inside
+    // Postgres. `refId` is the active-contract id, so a payout traces back to the job.
+    await this.wallet.credit(userId, 'pula', payout, 'contract_complete', activeContractId);
 
     // Botho pillar — contracts fed only Pula before. Credited through the I4
     // daily-capped wallet path so it can never exceed the Botho ceiling; the
@@ -461,15 +463,6 @@ export class ContractsService {
       .from('active_contracts')
       .update({ completed: true, completed_at: new Date().toISOString() })
       .eq('id', activeContractId);
-
-    // Record ledger entry
-    await adminClient.from('game_ledger_entries').insert({
-      farm_id: farmId,
-      entry_type: 'CONTRACT_COMPLETE',
-      currency_change: payout,
-      currency_balance_after: currentCurrency + payout,
-      description: `Completed contract: ${contract.name}`,
-    });
 
     return {
       currencyReward: payout,

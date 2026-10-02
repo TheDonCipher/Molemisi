@@ -113,7 +113,10 @@ class FakeBuilder {
   }
 }
 
-export function makeFakeSupabase(sequence: FakeResult[] = []) {
+export function makeFakeSupabase(
+  sequence: FakeResult[] = [],
+  rpcResult: FakeResult = { data: null, error: null },
+) {
   const tableRef = { current: '' };
   const builder = new FakeBuilder(sequence, tableRef);
   const client = {
@@ -121,9 +124,17 @@ export function makeFakeSupabase(sequence: FakeResult[] = []) {
       tableRef.current = table;
       return builder;
     }),
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+    // C3 — `rpcResult` is configurable so a spec can simulate a Postgres RPC that
+    // raises (e.g. `inventory_take` on insufficient stock). Defaults to success.
+    rpc: jest.fn().mockResolvedValue(rpcResult),
   };
-  return { client, builder, from: client.from, calls: builder.calls };
+  return {
+    client,
+    builder,
+    from: client.from,
+    rpc: client.rpc,
+    calls: builder.calls,
+  };
 }
 
 /** Convenience: the payload of the first `update` written to `table`. */

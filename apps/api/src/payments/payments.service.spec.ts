@@ -195,4 +195,66 @@ describe('PaymentsService — P9 real-money path', () => {
       expect(wallet).toBeDefined();
     });
   });
+
+  describe('H3 — webhook integrity: the event must belong to the recorded payment', () => {
+    // The signature (verified in the provider) proves WHO sent the event, not
+    // WHICH payment it describes. These pin the row-consistency checks added by
+    // the security audit: provider, amount and currency must all match.
+    function seed(
+      sku: string,
+      providerId: string,
+      entitlementData: any,
+      over: Record<string, unknown> = {},
+    ) {
+      db.payments = [
+        {
+          id: `pay-${providerId}`,
+          player_id: 'u1',
+          sku,
+          status: 'PENDING',
+          entitlement_type: entitlementData.type,
+          entitlement_data: entitlementData,
+          provider_payment_id: providerId,
+          provider: 'stub',
+          amount: 10500,
+          currency: 'BWP',
+          idempotency_key: `ik-${providerId}`,
+          created_at: new Date().toISOString(),
+          ...over,
+        },
+      ];
+    }
+
+    const event = (over: Record<string, unknown> = {}) => ({
+      eventType: 'payment.completed',
+      providerPaymentId: 'prov-h3',
+      status: 'COMPLETED',
+      amount: 10500,
+      currency: 'BWP',
+      payload: {},
+      signature: 'x',
+      ...over,
+    });
+
+    it('rejects an event whose amount does not match the stored payment', async () => {
+      seed('topup_harvest', 'prov-h3', { type: 'madi', amount: 55 });
+      const res = await service.handleWebhook(event({ amount: 1 }));
+      expect(res.processed).toBe(false);
+      expect(db.player_wallets[0].madi_balance).toBe(0);
+    });
+
+    it('rejects an event whose currency does not match', async () => {
+      seed('topup_harvest', 'prov-h3', { type: 'madi', amount: 55 });
+      const res = await service.handleWebhook(event({ currency: 'USD' }));
+      expect(res.processed).toBe(false);
+      expect(db.player_wallets[0].madi_balance).toBe(0);
+    });
+
+    it('rejects an event recorded under a different provider', async () => {
+      seed('topup_harvest', 'prov-h3', { type: 'madi', amount: 55 }, { provider: 'orangemoney' });
+      const res = await service.handleWebhook(event());
+      expect(res.processed).toBe(false);
+      expect(db.player_wallets[0].madi_balance).toBe(0);
+    });
+  });
 });

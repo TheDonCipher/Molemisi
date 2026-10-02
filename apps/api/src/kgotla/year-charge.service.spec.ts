@@ -75,7 +75,7 @@ describe('YearChargeService — the Kgotla Year layer (I-2)', () => {
     expect(view.cycle).toBe('2026/27');
     expect(view.status).toBe('none');
     expect(view.asks.map((a) => a.item)).toEqual(['sorghum']);
-    expect(view.asks[0].met).toBe(false);
+    expect(view.asks[0]?.met).toBe(false);
     expect(view.ready).toBe(false);
     expect(view.rewards).toEqual({
       pula: 40,

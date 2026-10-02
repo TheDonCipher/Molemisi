@@ -32,6 +32,9 @@ export interface MockDb {
   farm_plots: any[];
   crop_instances: any[];
   inventory: any[];
+  /** C2 — the canonical player-scoped store, and the defs that name its items. */
+  player_inventory: any[];
+  item_definitions: any[];
   game_ledger_entries: any[];
   market_prices: any[];
   market_transactions: any[];
@@ -75,6 +78,8 @@ export function makeDb(seed: Partial<MockDb> = {}): MockDb {
     farm_plots: seed.farm_plots ?? [],
     crop_instances: seed.crop_instances ?? [],
     inventory: seed.inventory ?? [],
+    player_inventory: seed.player_inventory ?? [],
+    item_definitions: seed.item_definitions ?? [],
     game_ledger_entries: seed.game_ledger_entries ?? [],
     market_prices: seed.market_prices ?? [],
     market_transactions: seed.market_transactions ?? [],

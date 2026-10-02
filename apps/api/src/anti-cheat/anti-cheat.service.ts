@@ -60,16 +60,37 @@ export class AntiCheatService {
     const now = (opts.now ?? new Date()).toISOString();
     const admin = this.supabase.getAdminClient();
 
+    // C2 (security audit 2026-10-02) — read the CANONICAL store.
+    //
+    // This used to sweep the legacy farm-scoped `inventory` table, which migration
+    // 20260908000020 retired and 20260923000031 emptied of livestock products: no
+    // code has written to it since the P3 cutover, so `detectNegativeInventory` and
+    // `detectResourceWithoutSource` could never fire on real corruption — they were
+    // inert, and their specs passed only because the fixtures matched the wrong
+    // table's shape. `player_inventory` (player-scoped, `item_def_id` FK) is the
+    // store every harvest, tap and craft actually lands in.
+    //
+    // Two extra reads resolve player-scoped rows into the (farmId, itemType) shape
+    // the pure rules judge: item_def_id -> slug, and player -> farm.
     const results = await Promise.all([
       admin.from('player_wallets').select('player_id, pula_balance, botho_points'),
-      admin.from('inventory').select('farm_id, item_type, quantity'),
+      admin.from('player_inventory').select('player_id, item_def_id, quantity'),
       admin.from('farm_plots').select('id, farm_id, state'),
       admin.from('crop_instances').select('id, plot_id'),
+      admin.from('item_definitions').select('id, slug'),
+      admin.from('farms').select('id, user_id'),
     ]);
     const wallets = results[0].data;
     const inventory = results[1].data;
     const plots = results[2].data;
     const crops = results[3].data;
+    const defs = results[4].data;
+    const farms = results[5].data;
+
+    const slugByDefId = new Map<string, string>();
+    for (const d of defs ?? []) slugByDefId.set(d.id as string, d.slug as string);
+    const farmByPlayer = new Map<string, string>();
+    for (const f of farms ?? []) farmByPlayer.set(f.user_id as string, f.id as string);
 
     const walletRows = (wallets ?? []).map((w) => ({
       playerId: w.player_id as string,
@@ -77,8 +98,8 @@ export class AntiCheatService {
       bothoPoints: Number(w.botho_points ?? 0),
     }));
     const inventoryRows = (inventory ?? []).map((r) => ({
-      farmId: r.farm_id as string,
-      itemType: r.item_type as string,
+      farmId: farmByPlayer.get(r.player_id as string) ?? null,
+      itemType: slugByDefId.get(r.item_def_id as string) ?? (r.item_def_id as string),
       quantity: Number(r.quantity ?? 0),
     }));
     const cropPlotIds = new Set((crops ?? []).map((c) => c.plot_id as string));
@@ -154,9 +175,14 @@ export class AntiCheatService {
       createdAt: r.created_at as string,
     }));
 
-    // Resolve farm -> player so market rows carry a playerId.
+    // Resolve farm <-> player so market rows carry a playerId and player-scoped
+    // inventory rows can be attributed back to a farm (C2).
     const farmOwner = new Map<string, string>();
-    for (const f of farms ?? []) farmOwner.set(f.id as string, f.user_id as string);
+    const farmByPlayer = new Map<string, string>();
+    for (const f of farms ?? []) {
+      farmOwner.set(f.id as string, f.user_id as string);
+      farmByPlayer.set(f.user_id as string, f.id as string);
+    }
     const baseByItem = new Map<string, number>();
     for (const p of prices ?? []) baseByItem.set(p.item_type as string, Number(p.base_price ?? 0));
 
@@ -183,15 +209,25 @@ export class AntiCheatService {
     ];
 
     if (opts.creditedByItem) {
-      const observed = await admin
-        .from('inventory')
-        .select('farm_id, item_type, quantity')
-        .gt('quantity', 0);
+      // C2 — the canonical store, same fix as runPassiveChecks. Observed stock is
+      // read from `player_inventory` and resolved to (farm, slug) so it can be
+      // compared against the ledger-backed inflows the caller supplied.
+      const [observed, defs] = await Promise.all([
+        admin.from('player_inventory').select('player_id, item_def_id, quantity').gt('quantity', 0),
+        admin.from('item_definitions').select('id, slug'),
+      ]);
+      const slugByDefId = new Map<string, string>();
+      for (const d of defs.data ?? []) slugByDefId.set(d.id as string, d.slug as string);
+
       const byFarm = new Map<string, Array<{ itemType: string; netGain: number }>>();
       for (const r of observed.data ?? []) {
-        const farmId = r.farm_id as string;
+        const farmId = farmByPlayer.get(r.player_id as string);
+        if (!farmId) continue; // no farm row -> nothing to attribute
         const list = byFarm.get(farmId) ?? [];
-        list.push({ itemType: r.item_type as string, netGain: Number(r.quantity ?? 0) });
+        list.push({
+          itemType: slugByDefId.get(r.item_def_id as string) ?? (r.item_def_id as string),
+          netGain: Number(r.quantity ?? 0),
+        });
         byFarm.set(farmId, list);
       }
       for (const [farmId, observedItems] of byFarm) {

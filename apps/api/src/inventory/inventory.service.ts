@@ -281,27 +281,34 @@ export class InventoryService {
 
   /** Remove items; throws if the player does not hold enough. */
   async removeItem(playerId: string, slug: string, qty: number): Promise<void> {
-    const itemDefId = await this.itemDefId(slug);
-    const { data: existing } = await this.client()
-      .from('player_inventory')
-      .select('id, quantity')
-      .eq('player_id', playerId)
-      .eq('item_def_id', itemDefId)
-      .single();
-
-    const have = (existing?.quantity as number) ?? 0;
-    if (!existing || have < qty) {
-      throw new BadRequestException(`Not enough ${slug} (have ${have}, need ${qty})`);
+    // C3 — reject a nonsense quantity before it can reach the RPC. `qty <= 0` would
+    // ADD stock (quantity - (-n)) and a fractional qty has no meaning for an INT
+    // column; both are bugs, and both are cheaper to catch here.
+    if (!Number.isInteger(qty) || qty <= 0) {
+      throw new BadRequestException(
+        `removeItem requires a positive whole quantity (got ${qty})`,
+      );
     }
+    const itemDefId = await this.itemDefId(slug);
 
-    const remaining = have - qty;
-    if (remaining <= 0) {
-      await this.client().from('player_inventory').delete().eq('id', existing.id as string);
-    } else {
-      await this.client()
-        .from('player_inventory')
-        .update({ quantity: remaining, updated_at: new Date().toISOString() })
-        .eq('id', existing.id as string);
+    // C3 (security audit 2026-10-02) — ATOMIC, conditional decrement.
+    //
+    // The old implementation selected the row, computed `have - qty` in JS, then
+    // wrote the absolute result with no `WHERE quantity >= qty` predicate. Two
+    // concurrent removals both read the same `have`, both wrote the same
+    // `remaining`, and both callers credited — so a market sell could remove the
+    // items once and pay out twice. The predicate now lives inside Postgres
+    // (`inventory_take`), which takes a row lock and raises on insufficient stock,
+    // so a caller can never reach `wallet.credit` without the stock having moved.
+    const { error } = await this.client().rpc('inventory_take', {
+      p_player_id: playerId,
+      p_item_def_id: itemDefId,
+      p_qty: qty,
+    });
+
+    if (error) {
+      // The RPC raises on insufficient stock; surface it as the caller's 400.
+      throw new BadRequestException(`Not enough ${slug} (need ${qty})`);
     }
   }
 

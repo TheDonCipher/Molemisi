@@ -64,6 +64,12 @@ export type LedgerSource =
   | 'village_pass'
   | 'letsema_contribution'
   | 'quest_reward'
+  /**
+   * The Kgotla Year-charge reward (year-charge.service). `ledger_entries.source`
+   * is TEXT, so this needs no migration — but it DOES need to be in this union,
+   * or the call sites fail to compile (pre-existing tsc break fixed 2026-10-02).
+   */
+  | 'year_charge_reward'
   | 'bushveld_forage'
   | 'almanac'
   | 'chapter_spend'
@@ -433,6 +439,28 @@ export class WalletService {
       .eq('player_id', playerId);
 
     if (error) throw new Error(`Failed to record Letsema use: ${error.message}`);
+  }
+
+  /**
+   * Admin-only: force a player's Pula to an exact value (AdminService.resetFarm).
+   *
+   * Moves the balance through `wallet_apply` like every other change, so the reset
+   * is ledgered and the read-only `profiles.currency` mirror is updated by its own
+   * trigger. A direct write to `profiles.currency` is rejected at runtime by
+   * `trg_profiles_guard_currency` — so this method is the sanctioned way for an
+   * admin to SET a balance (every other method only moves it by a delta).
+   */
+  async resetPula(playerId: string, newBalance: number): Promise<number> {
+    if (!Number.isFinite(newBalance) || newBalance < 0) {
+      throw new BadRequestException(
+        `resetPula requires a non-negative, finite balance (got ${newBalance})`,
+      );
+    }
+    const current = await this.getPula(playerId);
+    // Round to the wallet's NUMERIC(12,2) so the delta cannot leave a sub-cent residue.
+    const delta = Math.round((newBalance - current) * 100) / 100;
+    if (delta === 0) return current;
+    return this.apply(playerId, 'pula', delta, 'admin_adjustment');
   }
 
   /**

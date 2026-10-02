@@ -11,12 +11,12 @@ import { makeFakeSupabase, type FakeResult } from '../test/fake-supabase';
  * stack cap and the storage slot cap. Both are enforced in exactly one place — here.
  */
 
-function buildService(sequence: FakeResult[]) {
-  const { client, from } = makeFakeSupabase(sequence);
+function buildService(sequence: FakeResult[], rpcResult?: FakeResult) {
+  const { client, from, rpc } = makeFakeSupabase(sequence, rpcResult);
   const supabaseService = { getAdminClient: () => client } as unknown as SupabaseService;
   const wallet = {} as WalletService; // InventoryService reads wallets via SQL, not the service
   const service = new InventoryService(supabaseService, wallet);
-  return { service, from };
+  return { service, from, rpc };
 }
 
 const DEF = { data: { id: 'def-id' }, error: null };
@@ -186,22 +186,38 @@ describe('InventoryService — tools are equipment, not storage (F15)', () => {
   });
 });
 
-describe('InventoryService — removal', () => {
-  it('throws when the player does not hold enough', async () => {
-    const { service } = buildService([
-      DEF,
-      NO_ROW, // no existing row
-    ]);
+describe('InventoryService — removal is atomic (C3, security audit 2026-10-02)', () => {
+  it('throws when the atomic decrement reports insufficient stock', async () => {
+    // itemDefId -> DEF; then inventory_take raises (zero rows matched).
+    const { service } = buildService(
+      [DEF],
+      { data: null, error: { message: 'inventory_take: insufficient stock' } },
+    );
     await expect(service.removeItem('p1', 'sorghum', 5)).rejects.toThrow('Not enough');
   });
 
-  it('decrements without erroring when enough is held', async () => {
-    const { service } = buildService([
-      DEF,
-      { data: { id: 'row-1', quantity: 5 }, error: null },
-      { data: null, error: null }, // update
-    ]);
+  it('decrements via the inventory_take RPC, not a read-modify-write', async () => {
+    // The whole point of C3: removal is a single conditional SQL statement, so the
+    // two concurrent calls in the market TOCTOU can no longer both succeed. This
+    // asserts the call shape; the atomicity itself is Postgres's job.
+    const { service, rpc } = buildService([DEF]);
     await expect(service.removeItem('p1', 'sorghum', 3)).resolves.toBeUndefined();
+    expect(rpc).toHaveBeenCalledWith('inventory_take', {
+      p_player_id: 'p1',
+      p_item_def_id: 'def-id',
+      p_qty: 3,
+    });
+  });
+
+  it('rejects a non-positive or fractional quantity before any DB round-trip', async () => {
+    // A negative qty would ADD stock (quantity - (-n)); a fractional qty is
+    // meaningless against an INT column. Both must fail before the RPC.
+    const { service, from, rpc } = buildService([]);
+    await expect(service.removeItem('p1', 'sorghum', 0)).rejects.toThrow(BadRequestException);
+    await expect(service.removeItem('p1', 'sorghum', -3)).rejects.toThrow(BadRequestException);
+    await expect(service.removeItem('p1', 'sorghum', 1.5)).rejects.toThrow(BadRequestException);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it('reports the held count via countOwned', async () => {

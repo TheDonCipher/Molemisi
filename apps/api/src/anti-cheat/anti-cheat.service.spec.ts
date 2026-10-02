@@ -34,7 +34,11 @@ describe('AntiCheatService — passive sweep (13 §4)', () => {
         { player_id: 'u1', pula_balance: 100, botho_points: 0 },
         { player_id: 'u2', pula_balance: -9, botho_points: 0 },
       ],
-      inventory: [{ farm_id: 'f1', item_type: 'maize', quantity: -4 }],
+      // C2 — corruption lives in the CANONICAL store (player_inventory, keyed by
+      // item_def_id), resolved to a farm through farms.user_id.
+      player_inventory: [{ player_id: 'u2', item_def_id: 'def-maize', quantity: -4 }],
+      item_definitions: [{ id: 'def-maize', slug: 'maize' }],
+      farms: [{ id: 'f1', user_id: 'u2' }],
       farm_plots: [{ id: 'p1', farm_id: 'f1', state: 'GROWING' }],
       crop_instances: [], // p1 claims GROWING but has no crop row => orphan
     });
@@ -51,10 +55,31 @@ describe('AntiCheatService — passive sweep (13 §4)', () => {
     expect(stored).toEqual(['negative_currency', 'negative_inventory', 'orphan_crop']);
   });
 
+  it('C2 — ignores the retired farm-scoped `inventory` table entirely', async () => {
+    // The defect the audit found: the sweep read `inventory`, which nothing has
+    // written since the P3 cutover, so it could never fire on real corruption.
+    // A negative row THERE must no longer produce a flag; only player_inventory
+    // is authoritative.
+    const { svc } = makeService({
+      player_wallets: [{ player_id: 'u1', pula_balance: 100, botho_points: 0 }],
+      inventory: [{ farm_id: 'f1', item_type: 'maize', quantity: -99 }], // legacy, inert
+      player_inventory: [],
+      item_definitions: [],
+      farms: [{ id: 'f1', user_id: 'u1' }],
+      farm_plots: [],
+      crop_instances: [],
+    });
+
+    const flags = await svc.runPassiveChecks({ now: NOW });
+    expect(flags.map((f) => f.kind)).not.toContain('negative_inventory');
+  });
+
   it('returns an empty pass and writes nothing when the state is clean', async () => {
     const { svc, db } = makeService({
       player_wallets: [{ player_id: 'u1', pula_balance: 250, botho_points: 3 }],
-      inventory: [{ farm_id: 'f1', item_type: 'sorghum', quantity: 0 }],
+      player_inventory: [{ player_id: 'u1', item_def_id: 'def-sorghum', quantity: 0 }],
+      item_definitions: [{ id: 'def-sorghum', slug: 'sorghum' }],
+      farms: [{ id: 'f1', user_id: 'u1' }],
       farm_plots: [
         { id: 'p1', farm_id: 'f1', state: 'EMPTY' },
         { id: 'p2', farm_id: 'f1', state: 'GROWING' },
@@ -139,6 +164,27 @@ describe('AntiCheatService — active scan (13 §9)', () => {
     });
     const flags = await svc.runActiveChecks({ now: NOW });
     expect(flags).toHaveLength(0);
+  });
+
+  it('C2 — flags unexplained inventory growth, read from player_inventory', async () => {
+    // `resource_without_source`: 40 maize held, the ledger accounts for none of it.
+    // Before the fix this read the retired `inventory` table and could never fire.
+    const { svc, db } = makeService({
+      farms: [{ id: 'f1', user_id: 'u1' }],
+      market_prices: [],
+      ledger_entries: [],
+      market_transactions: [],
+      player_inventory: [{ player_id: 'u1', item_def_id: 'def-maize', quantity: 40 }],
+      item_definitions: [{ id: 'def-maize', slug: 'maize' }],
+    });
+
+    const flags = await svc.runActiveChecks({
+      now: NOW,
+      creditedByItem: new Map(), // the ledger accounts for NOTHING
+    });
+
+    expect(flags.map((f) => f.kind)).toContain('resource_without_source');
+    expect(kinds(db)).toContain('resource_without_source');
   });
 });
 

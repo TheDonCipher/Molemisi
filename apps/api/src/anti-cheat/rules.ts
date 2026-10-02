@@ -56,7 +56,13 @@ export interface WalletRow {
 }
 
 export interface InventoryRow {
-  farmId: string;
+  /**
+   * C2 (security audit 2026-10-02) — the canonical store is `player_inventory`,
+   * which is PLAYER-scoped, so a row may not resolve to a farm (a player whose
+   * farm row is missing, or an item held before a farm existed). Nullable rather
+   * than invented.
+   */
+  farmId: string | null;
   itemType: string;
   quantity: number;
 }

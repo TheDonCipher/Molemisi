@@ -236,6 +236,43 @@ export class PaymentsService {
       return { processed: false };
     }
 
+    // H3 (security audit 2026-10-02) — the signature proves WHO sent the event, not
+    // WHICH payment it describes. Confirm the event actually belongs to this row:
+    //   - the provider must be the one the payment was recorded with;
+    //   - the amount and currency must match what was charged.
+    // Without this, a validly signed event for a cheap SKU could be replayed against
+    // the provider_payment_id of an expensive one, or another provider's event could
+    // claim our id. The atomic claim below stops a DOUBLE award; this stops a WRONG one.
+    if (payment.provider !== this.provider.name) {
+      this.logger.error(
+        `Webhook provider mismatch for payment ${payment.id}: recorded '${payment.provider}', ` +
+          `event from '${this.provider.name}'. Refusing.`,
+      );
+      return { processed: false };
+    }
+
+    const eventAmount = Number(webhookPayload.amount);
+    const storedAmount = Number(payment.amount);
+    if (Number.isFinite(eventAmount) && eventAmount > 0 && eventAmount !== storedAmount) {
+      this.logger.error(
+        `Webhook amount mismatch for payment ${payment.id}: event ${eventAmount} ` +
+          `vs stored ${storedAmount}. Refusing.`,
+      );
+      return { processed: false };
+    }
+
+    if (
+      webhookPayload.currency &&
+      payment.currency &&
+      webhookPayload.currency !== payment.currency
+    ) {
+      this.logger.error(
+        `Webhook currency mismatch for payment ${payment.id}: event ` +
+          `'${webhookPayload.currency}' vs stored '${payment.currency}'. Refusing.`,
+      );
+      return { processed: false };
+    }
+
     if (webhookPayload.status === 'COMPLETED') {
       // Claim the completion ATOMICALLY.
       //

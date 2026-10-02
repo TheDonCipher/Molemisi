@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { WalletService } from '../wallet/wallet.service';
+import { STARTING_PULA } from '@molemisi/game-config';
 
 @Injectable()
 export class AdminService {
@@ -9,6 +11,7 @@ export class AdminService {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly notifications: NotificationsService,
+    private readonly wallet: WalletService,
   ) {}
 
   /**
@@ -324,12 +327,22 @@ export class AdminService {
 
     if (farmResetErr) throw new Error(`Farm reset failed: ${farmResetErr.message}`);
 
-    // Reset profile currency and XP
+    // Reset the wallet through WalletService (C1/H5). `profiles.currency` is a
+    // read-only MIRROR of player_wallets.pula_balance, so the old direct write was
+    // rejected at runtime by trg_profiles_guard_currency — the reset would
+    // half-apply. resetPula() moves the balance through wallet_apply, so the mirror
+    // follows via its trigger and the change is ledgered.
+    //
+    // Value: STARTING_PULA (250), not the stale literal 100 that dated from the
+    // initial schema's column default. "Reset to starting state" should mean the
+    // same starting state a new player gets.
+    await this.wallet.resetPula(playerId, STARTING_PULA);
+
+    // Energy is not currency and has no mirror — it stays a direct profile write.
     await this.supabase
       .getClient()
       .from('profiles')
       .update({
-        currency: 100,
         energy: 100,
         updated_at: new Date().toISOString(),
       })

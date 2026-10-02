@@ -27,6 +27,7 @@ describe('ContractsService (R3 economy guards + Botho)', () => {
   };
   const mockWalletService = {
     getBotho: jest.fn().mockResolvedValue(0),
+    credit: jest.fn().mockResolvedValue(136),
     creditBothoCapped: jest.fn().mockResolvedValue(4),
   };
 
@@ -144,23 +145,19 @@ describe('ContractsService (R3 economy guards + Botho)', () => {
     expect(res.contractId).toBe('contract_sorghum_10');
   });
 
-  it('completeContract credits Botho through the I4-capped wallet path', async () => {
+  it('completeContract pays Pula through the wallet and Botho through the I4 cap', async () => {
     // completeContract await order (contract_sorghum_10, 1 requirement):
     // 1. verifyFarmOwnership: farms .single()
     // 2. active_contracts: .select('*').single()
-    // 3. profiles: .select('currency').single()
-    // 4. profiles: .update()
-    // 5. active_contracts: .update()
-    // 6. game_ledger_entries: .insert()
-    // (inventory countOwned/removeItem and creditBothoCapped are mocks, no sequence)
+    // 3. active_contracts: .update()  (mark completed)
+    // (inventory countOwned/removeItem, wallet.credit and creditBothoCapped are
+    //  mocks, so they consume no DB sequence — and C1 removed the profiles
+    //  read/update + game_ledger_entries insert entirely.)
     const expiry = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
     const { client } = makeFakeSupabase([
       { data: { user_id: 'user-1' }, error: null },
       { data: { id: 'active-1', contract_id: 'contract_sorghum_10', completed: false, expires_at: expiry, farm_id: 'farm-1' }, error: null },
-      { data: { currency: 100 }, error: null },
-      { data: { currency: 136 }, error: null },
       { data: { completed: true }, error: null },
-      { data: null, error: null },
     ]);
     mockSupabaseService.getAdminClient.mockReturnValue(client);
     mockInventoryService.countOwned.mockResolvedValue(999);
@@ -172,10 +169,40 @@ describe('ContractsService (R3 economy guards + Botho)', () => {
     const expectedPayout = contractRewardCap([{ itemType: 'sorghum', quantity: 10 }]);
     expect(res.currencyReward).toBe(expectedPayout);
     expect(res.bothoReward).toBe(4);
+
+    // C1 — the Pula payout goes through WalletService, so it lands in the ledger.
+    expect(mockWalletService.credit).toHaveBeenCalledTimes(1);
+    const creditCall = mockWalletService.credit.mock.calls[0];
+    expect(creditCall[0]).toBe('user-1'); // playerId
+    expect(creditCall[1]).toBe('pula'); // currency
+    expect(creditCall[2]).toBe(expectedPayout); // amount
+    expect(creditCall[3]).toBe('contract_complete'); // source
+    expect(creditCall[4]).toBe('active-1'); // refId = the active contract
+
     expect(mockWalletService.creditBothoCapped).toHaveBeenCalledTimes(1);
     const call = mockWalletService.creditBothoCapped.mock.calls[0];
     expect(call[0]).toBe('user-1'); // playerId
     expect(call[2]).toBe('contract_complete'); // source
     expect(call[1]).toBeGreaterThan(0); // requested Botho
+  });
+
+  it('C1 — never writes the profiles.currency mirror directly', async () => {
+    // The audit's static-scan sibling: a behavioural guard. completeContract must
+    // not read or write `profiles` at all — the mirror is read-only and a write
+    // would be rejected by trg_profiles_guard_currency after the goods were spent.
+    const expiry = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const { client, from } = makeFakeSupabase([
+      { data: { user_id: 'user-1' }, error: null },
+      { data: { id: 'active-1', contract_id: 'contract_sorghum_10', completed: false, expires_at: expiry, farm_id: 'farm-1' }, error: null },
+      { data: { completed: true }, error: null },
+    ]);
+    mockSupabaseService.getAdminClient.mockReturnValue(client);
+    mockInventoryService.countOwned.mockResolvedValue(999);
+    mockInventoryService.removeItem.mockResolvedValue(undefined);
+
+    await service.completeContract('farm-1', 'user-1', 'active-1');
+
+    expect(from).not.toHaveBeenCalledWith('profiles');
+    expect(from).not.toHaveBeenCalledWith('game_ledger_entries');
   });
 });
