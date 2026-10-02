@@ -95,7 +95,7 @@ export async function runSafeguards(
   // service. Covers the /payments/create validation gap from docs-29 / summary.md.
   const junkPayment = await api.post(
     '/payments/create',
-    { sku: 'topup_starter', quantity: -5, amount: 9999 },
+    { sku: 'topup_harvest', quantity: -5, amount: 9999 },
     victim.token,
   );
   const missingSku = await api.post('/payments/create', { quantity: 3 }, victim.token);
@@ -405,19 +405,26 @@ export async function runSafeguards(
     ),
   );
 
-  // AC-06: daily top-up cap.
-  const overCap = await api.post(
-    '/payments/create',
-    { sku: 'topup_export', provider: 'simulator', amountBwp: 5000 },
-    victim.token,
-  );
+  // AC-06: daily top-up cap (docs/34 §2.3 — DAILY_TOP_UP_CAP_BWP = 500). The
+  // ValidationPipe strips any injected `amountBwp`, so the only way to exceed the
+  // cap is to actually buy past it. Three Export packs (250 BWP each) sum to 750 >
+  // 500, so at least one must be rejected. Prior top-ups earlier in the run only
+  // make the rejection happen sooner, which the assertion tolerates.
+  let capRejected = false;
+  for (const capSku of ['topup_export', 'topup_export', 'topup_export'] as const) {
+    const r = await api.post('/payments/create', { sku: capSku, provider: 'simulator' }, victim.token);
+    if (r.status >= 400) {
+      capRejected = true;
+      break;
+    }
+  }
   results.push(
     check(
       'anticheat',
       'AC-06',
-      'top-up above the P500/player/day cap is rejected',
-      overCap.status >= 400,
-      `HTTP ${overCap.status}`,
+      'cumulative top-up above the P500/player/day (BWP) cap is rejected',
+      capRejected,
+      'attempted 3x topup_export (250 BWP each); cap = 500 BWP/day',
     ),
   );
 
@@ -434,7 +441,7 @@ export async function runSafeguards(
     ),
   );
 
-  const ward = await api.get('/farms/events/effects', victim.token);
+  const ward = await api.get(`/farms/${victim.farmId}/events/effects`, victim.token);
   results.push(
     check(
       'deferred',

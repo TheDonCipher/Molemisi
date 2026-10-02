@@ -17,6 +17,7 @@ import {
   KGOTLA_DAILY_CHARGE_POOL,
   WATER,
   LAND_LADDER,
+  VILLAGE_PASS,
   type RecipeDef,
 } from '@molemisi/game-config';
 import { ApiClient } from './client';
@@ -612,26 +613,71 @@ async function doSpend(ctx: DayContext): Promise<void> {
   const store = await api.get('/payments/store', player.token);
   const goods = arr(store.raw).length > 0 ? arr(store.raw) : arr(store.data);
 
-  // Boosts are `available: false` — withdrawn from v1. Assert they are absent
-  // from the storefront rather than working around it.
+  // Boosts are CUT in docs/34 §3.3 (not merely withdrawn): BOOSTS=[] and
+  // BOOST_SLUGS=[]. Assert no good of any category is a boost.
   const boosts = goods.filter((g) => str(g['category']) === 'boost');
   ctx.log.record({
     ...ev(ctx, 'economy'),
     action: 'boost-availability',
     result: boosts.length === 0 ? 'success' : 'rejected',
-    metadata: { listed: boosts.length, note: 'boosts withdrawn from v1 (ruling 2026-09-11)' },
+    metadata: { listed: boosts.length, note: 'BOOSTS cut outright in docs/34 §3.3 — no boost category may exist' },
   });
 
+  // Top-up packs credit MADI (docs/34 §2.3), never Pula. This is the structural
+  // anti-pay-to-win switch — verify a real purchase actually moves Madi, not Pula.
   const topUps = goods.filter((g) => str(g['category']) === 'currency' && g['available'] !== false);
   if (topUps.length > 0 && rng.chance(0.3)) {
     const sku = str(rng.pick(topUps)['sku']);
+    const before = rec((await api.get('/wallet', player.token)).data);
+    const beforeMadi = num(before['madi']);
+    const beforePula = num(before['pula']);
     const res = await api.post('/payments/create', { sku, provider: 'simulator' }, player.token);
-    ctx.log.record({
-      ...ev(ctx, 'economy'),
-      action: 'top-up',
-      result: res.ok ? 'success' : 'rejected',
-      metadata: { sku, status: res.status },
-    });
+    if (res.ok) {
+      const after = rec((await api.get('/wallet', player.token)).data);
+      const creditedMadi = num(after['madi']) > beforeMadi;
+      const pulaUnchanged = num(after['pula']) === beforePula;
+      ctx.log.record({
+        ...ev(ctx, 'economy'),
+        action: 'top-up-credits-madi',
+        result: creditedMadi && pulaUnchanged ? 'success' : 'rejected',
+        metadata: {
+          sku,
+          beforeMadi,
+          afterMadi: num(after['madi']),
+          beforePula,
+          afterPula: num(after['pula']),
+          note: 'anti-pay-to-win: top-ups credit Madi, never Pula',
+        },
+      });
+    } else {
+      ctx.log.record({
+        ...ev(ctx, 'economy'),
+        action: 'top-up',
+        result: 'rejected',
+        metadata: { sku, status: res.status },
+      });
+    }
+  }
+
+  // Village Pass (docs/34 §3.2) replaces the Guild subscription: M50/month, bought
+  // with Madi, and it grants NO weekly Pula Stone. Subscribers/whales buy it; if
+  // they lack the Madi, fund a top-up first so the path is actually exercised.
+  if (player.profile === 'subscriber' || player.profile === 'whale') {
+    let madi = num(rec((await api.get('/wallet', player.token)).data)['madi']);
+    if (madi < VILLAGE_PASS.priceMadi && topUps.length > 0) {
+      const fundSku = str(rng.pick(topUps)['sku']);
+      const fund = await api.post('/payments/create', { sku: fundSku, provider: 'simulator' }, player.token);
+      if (fund.ok) madi = num(rec((await api.get('/wallet', player.token)).data)['madi']);
+    }
+    if (madi >= VILLAGE_PASS.priceMadi) {
+      const vp = await api.post('/store/purchase', { sku: 'subscription_village_pass' }, player.token);
+      ctx.log.record({
+        ...ev(ctx, 'economy'),
+        action: 'village-pass-purchase',
+        result: vp.ok ? 'success' : 'rejected',
+        metadata: { sku: 'subscription_village_pass', status: vp.status, madi },
+      });
+    }
   }
 
   if (player.profile === 'whale' && rng.chance(0.2)) {
