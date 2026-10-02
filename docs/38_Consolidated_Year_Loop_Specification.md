@@ -175,19 +175,19 @@ A new farmer arrives in **Pula** (Nov–Jan), when the Botswana rains open the l
 | ID | Where | What | Blocks? |
 | --- | --- | --- | --- |
 | I-1 | `game-config` (new charge-year module) | 12 Charges as data (month, npcId, asks, base) + 4-project schedule (C6). No numeric literal in app code. | No |
-| I-2 | `kgotla.service.ts` + `year-charge.service.ts` | **Errand layer SHIPPED** (Botho + regard only; `pulaReward`/`chapterTokenReward` stripped; `elder_neo`-era Pula retired, NPC rename per I-4). **Year layer SHIPPED** — `YearChargeService` reveals/accepts/turns in the 12 monthly Charges from `chargeYear.ts`; persistence is `kgotla_charges` (unique `(farm, charge, cycle)`, atomic deduction) via migration `20261002000000`. Endpoints: `GET/POST farms/:farmId/kgotla/year-charge(/accept|/turn-in)`. Migration pending push. | Done (migration pending push) |
+| I-2 | `kgotla.service.ts` + `year-charge.service.ts` | **Errand layer SHIPPED** (Botho + regard only; `pulaReward`/`chapterTokenReward` stripped; `elder_neo`-era Pula retired, NPC rename per I-4). **Year layer SHIPPED** — `YearChargeService` reveals/accepts/turns in the 12 monthly Charges from `chargeYear.ts`; persistence is `kgotla_charges` (unique `(farm, charge, cycle)`, atomic deduction) via migration `20261002000000` (**pushed live 2026-10-02**). Endpoints: `GET/POST farms/:farmId/kgotla/year-charge(/accept|/turn-in)`. | Done (live) |
 | I-3 | `kgotla.service.ts` PROJECTS | Reservoir/Festival/Water Store/School = 100/150/150/200, 5/8/8/12; remove `market_square`; only active chapter accepts. | No |
 | I-4 | NPC display data | Elder Neo → **Mogolo**, Oupa Kabelo → **Ntate Kabelo**; Thabo never a rival. Ids unchanged. | No |
 | I-5 | `game-config/chapters.ts` | Stable ids `ch1–ch4` + display names (C8); migrate stored refs **by month range, one txn**. | Schema |
 | I-6 | `almanac.ts` | Pass-track scrub (C5); rename UI "Village Pass track" (key `guild` kept). | No |
 | **I-7** | `chapter.controller.ts` | **DONE** — `POST /chapters/tokens/spend` exists (route + `spendTokens()` service, ledger-recorded, spec green). Remaining: validate 25-stamp souvenir SKU + cosmetic-only `purpose` (R-C3) and add the UI affordance. *`docs/37` E-4 was right; `DEVELOPMENT_STATE.md` was stale — see T-4.* | **No (route built)** |
-| I-8 | progression / `BOTHO_LADDER` | Retire/re-label `PRIZE_ELIGIBILITY = 1000`; eligibility reads monthly delta (E-6). | No |
+| I-8 | progression / `BOTHO_LADDER` | **DONE** — `PRIZE_ELIGIBILITY = 1000` retired from `BOTHO_LADDER` (progression.service.ts). The decided replacement (monthly Botho-delta gate, `PRIZE.minimumBothoInPeriod`) is **not yet wired** — flagged with a TODO. | No (rung retired) |
 | I-9 | Almanac counters (`docs/32` 3.4) | `quests` = Charge deliveries + contracts (E-15). Contract repeat is also gated by a 24 h cooldown (`CONTRACT_RULES.repeatCooldownHours`). Blocked on schema sign-off. | Schema |
 | I-10 | Market events + `docs/33` §5 copy | Ch4 event → ploughing prep (E-14). | No |
 | I-11 | Simulator | Errand/Charge split; assert the **P915** faucet. | No |
 | I-12 | Docs | Point `docs/33` §3.1/§4 "three daily charges" prose here (E-3); mark `docs/29` superseded. | No |
 
-**Schema delta (from `DEVELOPMENT_STATE.md`):** push the **9 pending migrations** (`20260914000022` → `20261001000003`) — the largest remaining delta. These carry the Kgotla charges/decay, deep-time/lore, economy metrics, anti-cheat, and the **Madi** third currency; the chapter-id migration (I-5) rides the same push.
+**Schema delta (from `DEVELOPMENT_STATE.md`):** all migrations through `20261002000000` are **pushed live** (**39 total, 0 pending**). The Kgotla charges/decay, deep-time/lore, economy metrics, anti-cheat, **Madi** third currency and Year-layer `kgotla_charges` tables are all on the remote DB.
 
 **Deferred to v1.1 / future (explicitly out of scope):**
 - Traditional dishes (Dikgobe, Bogobe jwa Lerotse, Ting, Madila, Dried Phane) — `docs/35` §4.3. No Charge may request them until shipped (E-16).

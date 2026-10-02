@@ -9,14 +9,14 @@
 
 ## Headline status
 
-**MVP is code-complete and the four gates are green.** The database is at **38 migrations** and
+**MVP is code-complete and the four gates are green.** The database is at **39 migrations** and
 no longer blocked on the original deploy gap. Four capability areas have landed since the
 2026-09-16 state note, plus the first three Waves of the decided economy:
 
-1. **RESOLVED — the 11-migration deploy gap was pushed on 2026-09-14.** The linked Supabase
-   project `nyapfgawanqvnkkjudxb` is current for the migrations up to that date; `/admin`, `/dev`
-   and P2–P9 all run at runtime. The ten migrations added since then (`20260923000031` →
-   `20261001000003`) are the current pending-push set.
+1. **RESOLVED — the full migration set is pushed live.** The linked Supabase project
+   `nyapfgawanqvnkkjudxb` is current through `20261002000000_kgotla_year_charges` (**39 migrations, 0
+   pending**); `/admin`, `/dev` and P2–P9 all run at runtime. The previously load-bearing gap
+   (`madi_balance`, `20261001000003`) and the Year-layer `kgotla_charges` table are both live.
 2. **NEW — deterministic simulation engine** (`apps/api/src/simulation/engine/`). One pure
    `runSimulation(input) => output`; no clock reads, no global RNG, no I/O. This is where the
    per-system offline time windows now live, in one table (`engine/time.ts`), instead of at
@@ -35,7 +35,7 @@ no longer blocked on the original deploy gap. Four capability areas have landed 
    the **Madi** balance exists (migration `20261001000003`, `wallet_apply()` taught a third
    currency), top-ups grant Madi and never Pula, the store is two cosmetic shelves plus the
    **Village Pass**, and **boosts are cut** (`BOOSTS` is an empty list). **Wave 4 is partial** —
-   the land tail is retuned (`LAND_LADDER_TOTAL` 31,200) and the currency copy landed, but the
+   the land tail is retuned (`LAND_LADDER_TOTAL` 30,200) and the currency copy landed, but the
    store UI has no wired purchase flow and the Botho automation unlocks are still config-only
    (no persistence layer).
 7. **RULING — Bushveld comparative income** is answered by live telemetry, not a model
@@ -51,8 +51,8 @@ Quality gates (run 2026-10-02, clean):
 | --- | --- |
 | `tsc --noEmit -p apps/api` | **0** |
 | `tsc --noEmit -p apps/web` | **0** |
-| `jest` (apps/api) | **411 passed / 27 suites** |
-| `jest` (packages/game-config) | **146 passed / 7 suites** |
+| `jest` (apps/api) | **417 passed / 28 suites** |
+| `jest` (packages/game-config) | **163 passed / 8 suites** |
 | `jest` (packages/validation) | **35 passed / 1 suite** |
 | `python scripts/balance_verify.py` | **PASS** |
 
@@ -205,9 +205,9 @@ tooling. `JWT_SECRET` in `.env.example` is unused. There is **no refresh endpoin
 
 **Not implemented as HTTP:** refresh-token route, analytics query API, production-chain
 endpoints. Simulation has no controller (runs inside `GET /farms/current`). The launch
-readiness check is a Jest spec, not an endpoint. `ChapterService.spendTokens()` exists but
-`ChapterController` exposes **no** spend route, so Chapter Tokens are still unspentable
-(`docs/34` §3.4).
+readiness check is a Jest spec, not an endpoint. `ChapterService.spendTokens()` exists and
+`ChapterController` now exposes `POST /chapters/tokens/spend` (`chapter.controller.ts:56`), so
+Chapter Tokens (season stamps) are spendable on the 25-stamp souvenir sink (`docs/34` §3.4).
 
 **Known auth gap (see KNOWN_LIMITATIONS.md):** `POST /payments/webhook` is documented as
 public but the controller class uses `AuthGuard`, so it currently needs a Bearer token.
@@ -216,8 +216,7 @@ public but the controller class uses `AuthGuard`, so it currently needs a Bearer
 
 ## Database (`supabase/migrations`)
 
-**38 migration files.** Migrations up to `20260916000030` were pushed to the linked project on
-2026-09-14; the nine files below are the current pending-push set.
+**39 migration files.** All migrations through `20261002000000_kgotla_year_charges` are **pushed live** to the linked project `nyapfgawanqvnkkjudxb`; **0 pending**.
 
 | Migration | Summary |
 | --- | --- |
@@ -246,17 +245,18 @@ public but the controller class uses `AuthGuard`, so it currently needs a Bearer
 | 000110 ✅ pushed 2026-09-14 | **P8 chapters + almanac** |
 | 000120 ✅ pushed 2026-09-14 | **P9 monetisation (top-up / subscription / boosts / cosmetics)** |
 | 000021 ✅ pushed 2026-09-14 | **`profiles.role` column + tiers** |
-| 20260914000022 | fix `player_cosmetics.cosmetic_id` UUID → TEXT drift (pending push) |
-| 20260916000030 | drop 2 obsolete `plant_crop_transaction` overloads (pending push) |
-| 20260923000031 | livestock inventory cutover (pending push) |
-| 20260923000032 | Kgotla charges + decay (pending push) |
-| 20260923000033 | deep time & lore content (pending push) |
-| 20260923000034 | batch-2 Deep Bushveld + fertilizer (pending push) |
-| 20260924000000 | **reconcile `market_prices` to the catalogue** (`docs/27`–`28`) (pending push) |
-| 20260928000001 | livestock starvation window — `hunger_zero_since` (pending push) |
-| 20261001000001 | economy metrics — `economy_price_snapshots` (pending push) |
-| 20261001000002 | anti-cheat — `anti_cheat_flags` (pending push) |
-| 20261001000003 | **`madi_balance` + `wallet_apply()` third currency** (`docs/34` §2.1) (pending push) |
+| 20260914000022 | fix `player_cosmetics.cosmetic_id` UUID → TEXT drift ✅ pushed live (2026-10-02) |
+| 20260916000030 | drop 2 obsolete `plant_crop_transaction` overloads ✅ pushed live (2026-10-02) |
+| 20260923000031 | livestock inventory cutover ✅ pushed live (2026-10-02) |
+| 20260923000032 | Kgotla charges + decay ✅ pushed live (2026-10-02) |
+| 20260923000033 | deep time & lore content ✅ pushed live (2026-10-02) |
+| 20260923000034 | batch-2 Deep Bushveld + fertilizer ✅ pushed live (2026-10-02) |
+| 20260924000000 | **reconcile `market_prices` to the catalogue** (`docs/27`–`28`) ✅ pushed live (2026-10-02) |
+| 20260928000001 | livestock starvation window — `hunger_zero_since` ✅ pushed live (2026-10-02) |
+| 20261001000001 | economy metrics — `economy_price_snapshots` ✅ pushed live (2026-10-02) |
+| 20261001000002 | anti-cheat — `anti_cheat_flags` ✅ pushed live (2026-10-02) |
+| 20261001000003 | **`madi_balance` + `wallet_apply()` third currency** (`docs/34` §2.1) ✅ pushed live (2026-10-02) |
+| 20261002000000 | **Year-layer `kgotla_charges` table** (`docs/38` I-2, `docs/36`) ✅ pushed live (2026-10-02) |
 
 > ⚠️ `public.is_admin` is declared as `is_admin(user_id uuid)` in `20260902000015`. RLS policies
 > **must** call it as `is_admin(auth.uid())` — the bare zero-arg form is a `42883` at
@@ -356,14 +356,14 @@ called `backgrounds`; resolve via the manifest's `file` field). Branding lockups
 
 ## Testing and CI
 
-**Unit / package tests — 35 Jest suites, 592 tests, all green:**
+**Unit / package tests — 37 Jest suites, 615 tests, all green:**
 
-`apps/api` (27 suites / 411 tests): `anti-cheat`, `auth`, `bushveld`, `chapters`,
-`contracts`, `crafting`, `crops`, `economy`, `engine`, `health`, `inventory`, `kgotla`,
+`apps/api` (28 suites / 417 tests): `anti-cheat`, `auth`, `bushveld`, `chapters`,
+`contracts`, `crafting`, `crops`, `economy`, `engine`, `health`, `inventory`, `kgotla`, `year-charge`,
 `launch` (readiness gate), `livestock`, `market`, `monetisation` + `store`, `payments`,
 `progression`, `simulation`, `wallet` (controller + service), `water`, `world-events`.
 
-`packages/game-config` (7 suites / 146 tests): `crops`, `economy`, `itemRelations`,
+`packages/game-config` (8 suites / 163 tests): `chargeYear`, `crops`, `economy`, `itemRelations`,
 `livestock`, `rng`, `store`, `weather`. `packages/validation` (1 suite / 35 tests).
 
 `apps/api/test/core-loop.integration.spec.ts` is **not** picked up by Jest (`rootDir: src`). No

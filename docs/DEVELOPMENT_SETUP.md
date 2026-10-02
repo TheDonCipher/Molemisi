@@ -91,12 +91,10 @@ does not exist. Use registration + `supabase:reset`.
 
 > **Deploying to the linked remote project:** the local flow (`supabase:start` +
 > `supabase:reset`) targets a Docker instance. The production-shaped target
-> `nyapfgawanqvnkkjudxb` has everything up to `20260916000030` pushed (the original 11-migration
-> gap went up on 2026-09-14). **Ten migrations are now pending push**
-> (`20260914000022` → `20261001000003`), and one of them matters more than the rest:
-> **`20261001000003` adds `madi_balance`**, which the store and wallet code already use. Until it
-> is applied, Pula paths work and Madi paths fail. See `KNOWN_LIMITATIONS.md` for the full list
-> and `DEVELOPMENT_STATE.md` Headline status.
+> `nyapfgawanqvnkkjudxb` has **all 39 migrations pushed live** (through `20261002000000_kgotla_year_charges`,
+> 0 pending). **`20261001000003` (`madi_balance`)** and **`20261002000000` (`kgotla_charges`)** are applied,
+> so the store, wallet and Year-layer routes resolve against the remote DB. See `DEVELOPMENT_STATE.md`
+> Headline status for the full inventory.
 
 ### 6. Dev servers
 
@@ -167,9 +165,9 @@ Default: `player@molemisi.co` / `Player123!` (overridable via `PLAYER_EMAIL` / `
 ### Tests
 
 ```bash
-pnpm test                        # everything: 35 suites / 592 tests
-pnpm --filter @molemisi/api test        # 27 suites / 411 tests
-pnpm --filter @molemisi/game-config test # 7 suites / 146 tests
+pnpm test                        # everything: 37 suites / 615 tests
+pnpm --filter @molemisi/api test        # 28 suites / 417 tests
+pnpm --filter @molemisi/game-config test # 8 suites / 163 tests
 pnpm --filter @molemisi/validation test  # 1 suite  / 35 tests
 pnpm --filter @molemisi/api test:watch
 ```

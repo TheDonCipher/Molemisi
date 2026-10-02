@@ -270,9 +270,9 @@ No levels, no XP. Any existing level/XP field is **deleted**, not extended.
 | Co-op | 16 | P8,000 | P500 |
 | Export | 20 | P15,000 | P750 |
 
-> *(DECIDED 2026-10-01, `docs/33` §3.2: 16-plot rung fixed at ~P8,000 and 16→20 at ~P15,000 — every rung pays back in ~2 months or less. **Implemented:** `LAND_LADDER` in `packages/game-config/src/economy.ts` now carries exactly these values and `LAND_LADDER_TOTAL = 31200`.)*
+> *(DECIDED 2026-10-01, `docs/33` §3.2: 16-plot rung fixed at ~P8,000 and 16→20 at ~P15,000 — every rung pays back in ~2 months or less. **Implemented:** `LAND_LADDER` in `packages/game-config/src/economy.ts` now carries exactly these values and `LAND_LADDER_TOTAL = 30200`.)*
 
-Total to max: **P31,200.** Payback on the full ladder: **~49 days** playing the best available
+Total to max: **P30,200.** Payback on the full ladder: **~49 days** playing the best available
 crop, **~96 days** at the median, **~173 days** at the worst.
 
 > *(Corrected 2026-10-02. This line previously said "P37,200" and 58/114/205 days, which were

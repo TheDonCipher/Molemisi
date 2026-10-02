@@ -1,6 +1,6 @@
 # Molemisi — MVP Specification
 
-**Status:** implementation complete (code); **deployable** — the schema is at 38 migrations and everything up to `20260916000030` has been pushed, so `/admin`, `/dev` and P2–P9 run at runtime. **Ten migrations are pending push** (see `DEVELOPMENT_STATE.md`); `20261001000003` (`madi_balance`) is load-bearing, because the store already references it. **Last consolidated:** 2026-09-07; status confirmed **2026-10-02**.
+**Status:** implementation complete (code); **deployable** — the schema is at **39 migrations**, all **pushed live** to `nyapfgawanqvnkkjudxb` (0 pending), so `/admin`, `/dev` and P2–P9 run at runtime. `20261001000003` (`madi_balance`) and `20261002000000` (`kgotla_charges`) are live, so the store and Year-layer routes resolve. **Last consolidated:** 2026-09-07; status confirmed **2026-10-02**.
 **Owner of this folder:** Princess Eugenia. **Consolidated by:** Belvedere.
 
 ---
@@ -26,7 +26,7 @@ The authoritative specification for building Molemisi. Read `01` through `06` in
 > decision governs and the affected lines here have been amended in place: **Pula is never sold**
 > and top-ups grant **Madi** (§2, §3.1); the **Village Pass** M50/mo replaced the Guild
 > subscription (§6.6); **boosts are cut from the catalogue entirely** rather than withdrawn
-> (`05`, `06` C10); and the **land tail** is P8,000 / P15,000 with `LAND_LADDER_TOTAL = 31,200`
+> (`05`, `06` C10); and the **land tail** is P8,000 / P15,000 with `LAND_LADDER_TOTAL = 30,200`
 > (§6.5). Known remaining drift is listed in `KNOWN_LIMITATIONS.md`.
 
 **`01`–`06` are normative — build from them.** `07` is the audit record: read it to understand a decision, but it is not a spec in its own right. Where `07` and `01`–`06` disagree, `01`–`06` win (they were updated with the findings).

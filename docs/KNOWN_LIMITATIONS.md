@@ -97,15 +97,15 @@ behind it but the stub.
 
 ## Schema push status
 
-### The original deploy gap is closed (2026-09-14); nine migrations now pending
+### The original deploy gap is closed (2026-09-14); all 39 migrations now pushed live
 
 The 11-migration deploy gap (`000016`–`000120` + `000021`) was pushed to `nyapfgawanqvnkkjudxb`;
 `/admin`, `/dev` and P2–P9 now run at runtime and `/auth/me` resolves roles correctly.
 
-The repo has since grown to **38 migrations**. **Ten** are **not yet pushed**, and this is now the
-largest single schema delta:
+The repo has **39 migrations** and **all are pushed live** to `nyapfgawanqvnkkjudxb` (through
+`20261002000000`); there is no pending schema delta.
 
-| Pending | Summary |
+| Pushed live (2026-10-02) | Summary |
 | --- | --- |
 | `20260914000022` | `player_cosmetics.cosmetic_id` UUID → TEXT drift fix |
 | `20260916000030` | drop 2 obsolete `plant_crop_transaction` overloads |
@@ -119,10 +119,8 @@ largest single schema delta:
 | `20261001000002` | anti-cheat (`anti_cheat_flags`) |
 | `20261001000003` | **`madi_balance` + `wallet_apply()` third currency** |
 
-> ⚠️ Until `20261001000003` is pushed, the **Madi balance does not exist in the database** even
-> though the code and the store catalogue already use it. Pula-spend paths still work; Madi paths
-> will fail. This is the one push-order dependency that matters — Wave 2.1 (the migration) must
-> land before Wave 2.2 (the entitlement change) is exercised against a real database.
+> ✅ **Resolved (pushed 2026-10-02):** `madi_balance` exists in the database and Madi paths resolve;
+> Pula-spend paths continue to work. The Wave 2.1 → 2.2 push-order dependency is satisfied.
 >
 > ⚠️ `20261001000001` must call `public.is_admin(auth.uid())`, never the bare `is_admin()`. The
 > function has no zero-arg overload, so the bare form is a `42883` at `CREATE POLICY` time,
@@ -319,7 +317,7 @@ Not used (ADR-012: optional later). No cache, no distributed rate limit, no job 
 
 ### Unit coverage is broad; integration coverage is narrow
 
-**35 Jest suites / 592 tests** across the workspace (`apps/api` 27 suites / 411 tests;
+**37 Jest suites / 615 tests** across the workspace (`apps/api` 28 suites / 417 tests;
 `packages/game-config` 7 / 146; `packages/validation` 1 / 35) — a real suite, and the new
 `engine`, `economy`, `anti-cheat`, `livestock` and `world-events` suites are the direct
 counter-evidence to the old "thin tests" claim.
@@ -329,7 +327,8 @@ What is still missing:
   **never run**.
 - No Playwright or other E2E. Live coverage is `scripts/test-*.mjs` against a running API.
 - No test exercises the real Supabase schema, so a migration that fails to apply is invisible to
-  `pnpm test`. This is why the pending-push list in this document matters.
+  `pnpm test`. A migration that fails to apply is invisible to the test suite, so schema
+  health still needs an explicit `supabase migration list` / apply check in CI.
 
 ### CI has no database
 

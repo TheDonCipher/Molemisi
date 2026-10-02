@@ -61,7 +61,7 @@ This roadmap is derived by tracing every claim in the two audits to the code on 
 
 ## 4. Four-pass implementation roadmap
 
-Each pass ends on the project gates: `tsc -p apps/api` + `tsc -p apps/web` = 0; `jest` (209 tests *as read on 2026-09-28 — the workspace total is now 35 suites / 592 tests*); `python scripts/balance_verify.py` PASS; `eslint` clean on touched files. **The simulator is NOT run against the live project** (it creates real Supabase auth accounts — see §8). Validate via unit/integration tests and a throwaway local Supabase instead.
+Each pass ends on the project gates: `tsc -p apps/api` + `tsc -p apps/web` = 0; `jest` (209 tests *as read on 2026-09-28 — the workspace total is now 37 suites / 615 tests*); `python scripts/balance_verify.py` PASS; `eslint` clean on touched files. **The simulator is NOT run against the live project** (it creates real Supabase auth accounts — see §8). Validate via unit/integration tests and a throwaway local Supabase instead.
 
 ### Pass 1 — Stop the bleeding (mechanical) — *owner: backend + economy*
 

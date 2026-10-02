@@ -8,7 +8,7 @@
 >
 > **Note (2026-10-02).** This analysis predates the `docs/33` → `docs/34` economy build. The
 > gate counts in §8 read **209/209 tests / 18 suites** and were true on 2026-09-22; they are now
-> **592/592 across 35 suites** (api 27/411, game-config 7/146, validation 1/35), re-verified
+> **615/615 across 37 suites** (api 28/417, game-config 8/163, validation 1/35), re-verified
 > green on 2026-10-02. Three problems this document raises are since **closed**: the livestock
 > soft-lock and free-feeding defects (72 h decay window + 12 h starvation window + `feedAnimal`
 > now debiting rations) and the three-net-negative-animals problem (all four are net-positive
@@ -274,7 +274,7 @@ and the existing spec fixed. Combined with the new analytics events
 - `tsc --noEmit`: web ✅ / api ✅ / game-config build ✅ (71/71 config tests)
 - API suite: 18/18 suites, **209/209 tests** (one spec updated for the new
   `cropsStalled` counter) — *reading as of 2026-09-22; re-verified 2026-10-02 at
-  27/411 for the API and 592/592 across the whole workspace*
+  28/417 for the API and 615/615 across the whole workspace*
 - ESLint: no new issues on touched files (pre-existing useState formatting +
   repo-wide CRLF noise only)
 - The Botho catch-up was routed through `creditBothoCapped` deliberately so

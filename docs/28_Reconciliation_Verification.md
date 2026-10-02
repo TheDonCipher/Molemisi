@@ -13,7 +13,7 @@ fork the document cites). Evidence is `file:line` in this tree.
 - **F4 / F5 (the seed-data drift) — the real, verified bug — is ALREADY fixed** in this
   tree by `supabase/migrations/20260924000000_reconcile_market_prices_to_catalogue.sql`
   + the regenerated `supabase/seed/seed.sql` block + `scripts/generate-market-seed.cjs`.
-  That migration is written but **not yet pushed** to a live DB.
+  That migration is **pushed live** to the linked project `nyapfgawanqvnkkjudxb` (**20260924000000**, applied 2026-10-02).
 - **E1, E2, E3, E4, E5 are NOT implemented**, and **E1/E2/E3/E4 contradict the normative
   `docs/26_Inventory_Crafting_System.md §11.1`** (the detailed market spec). They describe a
   *redesign* of Co-op pricing, not a bug fix. Do not apply them without your ruling.

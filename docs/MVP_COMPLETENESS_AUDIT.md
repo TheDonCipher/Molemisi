@@ -13,16 +13,16 @@
 >
 > | This document says | Reality as of 2026-10-02 |
 > |---|---|
-> | `jest` (apps/api) **209/209, 18 suites** | **35 suites / 592 tests** across the workspace (api 27/411, game-config 7/146, validation 1/35) |
-> | **29** migration files, 11 unpushed | **38** migration files, **10** pending push |
-> | Schema current / deployed | Correct up to `20260916000030`; everything after is local only |
+> | `jest` (apps/api) **209/209, 18 suites** | **37 suites / 615 tests** across the workspace (api 28/417, game-config 8/163, validation 1/35) |
+> | **29** migration files, 11 unpushed | **39** migration files, **0** pending push (all live) |
+> | Schema current / deployed | **All 39 migrations pushed live** through `20261002000000`; remote is current |
 > | Boosts "withdrawn from sale", still catalogued | **Cut from the catalogue entirely** (`docs/34` §3.3); `BOOSTS` is `readonly never[]` |
 > | Pula granted for BWP | **Top-ups grant Madi, never Pula** (`docs/33` §2, implemented) |
 > | Real-money payments a gap | Still true — `StubPaymentProvider` only |
 > | No mention of | Deterministic simulation engine · anti-cheat · state validation/recovery · economy metrics API · livestock 72 h window + 12 h starvation window |
 >
 > Gates were **re-run and re-verified on 2026-10-02** and remain green: `tsc` api 0, `tsc` web 0,
-> `jest` 592/592, `balance_verify.py` PASS.
+> `jest` 615/615, `balance_verify.py` PASS.
 
 ---
 
@@ -35,7 +35,7 @@ One hard blocker (the migration push) and a short list of genuine gaps. The Bush
 **Gates re-run today (all green):**
 
 > *(Counts in this section are as of 2026-09-16 and are superseded by the banner above —
-> currently 35 suites / 592 tests. The gate **method** is what matters here.)*
+> currently 37 suites / 615 tests. The gate **method** is what matters here.)*
 
 | Gate | Result (2026-09-16) |
 |---|---|

@@ -1015,7 +1015,7 @@ Every pass ends with the project's existing gates:
 npx tsc --noEmit -p apps/api          # must be 0
 npx tsc --noEmit -p apps/web          # must be 0
 npx jest                              # apps/api — 18 suites / 209 tests (2026-09-28 reading)
-                                     # 2026-10-02: workspace total is 35 suites / 592 tests
+                                     # 2026-10-02: workspace total is 37 suites / 615 tests
 python scripts/balance_verify.py      # must PASS
 npx eslint <touched files>            # no new issues
 ```

@@ -102,7 +102,7 @@ the repo and the `docs/MVP/` set win.
 | 04 Phaser rendering | Target renderer | **Void** — the standalone Phaser client was deleted 2026-09-11. Nothing in the build follows this document |
 | 05 Art direction | Art bible | **§14/§15 rewritten to the real tree**; the 800×600 figure and the atlas conventions were Phaser leftovers. Backgrounds are in `tiles/sky/`, withdrawn art in `_archive/` |
 | 06 Economy | Balance | Config + market tables (numbers now live in `MVP/02`) |
-| 07 Database | Schema | **38 migrations** (was 16; was 29 as of 2026-09-14) |
+| 07 Database | Schema | **39 migrations** (was 16; was 29 as of 2026-09-14; all pushed live) |
 | 08 API | Endpoint design | Prefix `/api/v1` matches; many paths differ. Now also has `/admin/economy/*` and `/admin/anti-cheat/*`, which this doc never anticipated |
 | 09 Simulation | Offline sim | **§2, §5, §8, §9, §10 rewritten.** Now documents the pure engine, the per-system time-window table, the 12 h starvation window and uncapped building wear |
 | 10 Payments | Monetization | Stub provider only; **boosts cut from the catalogue**; the `PaymentProvider` signature in this doc was wrong and is now corrected |
@@ -111,7 +111,7 @@ the repo and the `docs/MVP/` set win.
 | 13 Security | Controls | JWT localStorage, in-memory throttle, admin flag + role, **`PUT /config` now admin-gated**; anti-cheat + state validation shipped |
 | 14 Configuration | Env + game config | Env is `.env.example`; game config is TS + `game_config` table (an *override* — TS is the source of truth) |
 | 15 Content data | Data-driven content | Crops/buildings/animals/store/crafting yes; NPC/contract/event no |
-| 16 Testing | QA | **35 suites / 592 tests** across the workspace; live scripts |
+| 16 Testing | QA | **37 suites / 615 tests** across the workspace; live scripts |
 | 17 Deployment | DevOps | Local pnpm/supabase only; spec still says npm/Redis |
 | 18 Admin | Ops UI | **Rewritten 2026-10-02** — `/admin` implemented; tier on `profiles`, **no JWT role claim**; economy metrics + anti-cheat review added |
 | 19 Analytics | Metrics | `analytics_events` table exists with no query API; the new `economy/` module is the queryable surface |
@@ -132,7 +132,7 @@ live payment providers (008), fully data-driven content (009).
 3. **Redis** — Specs list Redis. Not in the stack.
 4. **Rate limits** — Spec 08: 100/min global, per-route limits. Code: 60/min flat.
 5. **Versions** — Old docs say `0.1.0` / 16 migrations / 13 SKUs. Code: `game-config`
-   `GAME_VERSION = 1.0.0-mvp`, **38 migrations**, and a store with **no boost SKUs at all**.
+   `GAME_VERSION = 1.0.0-mvp`, **39 migrations** (all pushed live), and a store with **no boost SKUs at all**.
 6. **Admin auth** — Spec 18 said "admin JWT role". Code: no JWT role claim; `profiles.is_admin`
    **or** `profiles.role ∈ {admin, dev}`, queried per request.
 7. **Env files** — Spec: `.env.development`. Repo: `.env.example` → `.env.local`.
@@ -174,8 +174,8 @@ live payment providers (008), fully data-driven content (009).
 - Review / audit / strategy docs: 11 (`24`–`34`)
 - ADRs: 12
 - Screen DESIGN.md: 5 (`docs/Screens/`)
-- Jest: **35 suites / 592 tests** (api 27/411 · game-config 7/146 · validation 1/35)
-- Supabase migrations: **38** (up to `20260916000030` pushed; **10 pending push**)
+- Jest: **37 suites / 615 tests** (api 28/417 · game-config 8/163 · validation 1/35)
+- Supabase migrations: **39** (all pushed live through `20261002000000`; 0 pending)
 - Asset manifest entries: **282** (plus 19 archived files excluded from sync)
 - Store categories: `currency` · `subscription` · `cosmetic` (`boost` **removed**)
 - Currencies: Pula (earned) · Botho (meter) · **Madi** (spend-only premium)
@@ -187,6 +187,5 @@ live payment providers (008), fully data-driven content (009).
 The design suite is still useful as a product bible and the `docs/MVP/` set is the build
 authority. Start at `DEVELOPMENT_STATE.md` and `KNOWN_LIMITATIONS.md`, then open a spec for
 intended behavior. The repo is code-complete for v1 and the `docs/33` → `docs/34` economy is
-landed through Wave 3. The largest remaining risk is not code — it is the **10 pending
-migrations**, of which `20261001000003` (`madi_balance`) is load-bearing: until it is pushed, the
-store references a column the database does not have.
+landed through Wave 3. The schema is fully pushed (**39 migrations, 0 pending**); `madi_balance`
+and `kgotla_charges` are live, so the store and Year-layer routes resolve against the remote DB.

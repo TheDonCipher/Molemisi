@@ -253,7 +253,7 @@ export const LAND_LADDER: LandTier[] = [
 ];
 ```
 
-`LAND_LADDER_TOTAL` → **31,200**. Also update `docs/MVP/02 §6.5` (done) and any test pinning the total.
+`LAND_LADDER_TOTAL` → **30,200**. Also update `docs/MVP/02 §6.5` (done) and any test pinning the total.
 
 **Why:** the old 16→20 rung took **~254 days** of marginal payback — a churn wall sitting right where players decide to commit. **Rule going forward: no land rung may exceed ~60 days of marginal payback.**
 

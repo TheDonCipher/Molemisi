@@ -164,7 +164,7 @@ Prices move with what players actually do: `SUPPLY_IMPACT` 0.002 per unit sold, 
 
 **This is the tool's highest-value emergent check.** A large simulated population is, in effect, a market-moving cartel: if 1,000 players all farm sorghum, the price falls and the "P12.25/plot/day" figure stops holding. The harness must report realized price dispersion per item and flag any item pushed to a band edge — a failure mode no static margin table can reveal and no unit test will ever catch.
 
-> **Environment precondition.** `docs/28` records that 13 catalogue items were unsellable, 23 carried stale prices 4–8× the catalogue, and 14 rows were orphans, fixed by migration `20260924000000_reconcile_market_prices_to_catalogue.sql`. That migration is **not yet pushed**. Against a database where it is missing, market checks will fail for reasons that are environmental, not economic — the harness must detect and say so rather than reporting a game bug.
+> **Environment precondition.** `docs/28` records that 13 catalogue items were unsellable, 23 carried stale prices 4–8× the catalogue, and 14 rows were orphans, fixed by migration `20260924000000_reconcile_market_prices_to_catalogue.sql`. That migration is **pushed live** (`20260924000000`), so market checks no longer need the environmental fallback — but the harness must still detect a missing migration rather than reporting a game bug.
 
 ### 6.2 Monetization
 
