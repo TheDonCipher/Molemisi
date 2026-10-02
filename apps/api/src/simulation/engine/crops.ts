@@ -9,10 +9,14 @@
  *
  *   This module is the deterministic reference model the spec describes:
  *   hydration decay, hydration-gated growth, season + fertilizer multipliers,
- *   disease and pest rolled at STAGE BOUNDARIES, and withering. It is what the
- *   offline simulator and the Game-Simulation test suite (16 §5) run against, so
- *   a "what will this crop do over N hours" question has one pure answer that
- *   needs no database.
+ *   and withering from dehydration. It is what the offline simulator and the
+ *   Game-Simulation test suite (16 §5) run against, so a "what will this crop
+ *   do over N hours" question has one pure answer that needs no database.
+ *
+ *   NOTE — disease and pest were RETIRED by 03 §1.1/§1.3, so this model no
+ *   longer rolls them and never reduces health for any reason other than
+ *   dehydration. The sim is therefore fully deterministic (the injected `Rng`
+ *   is accepted for contract stability but is no longer drawn).
  *
  *   The spec's illustrative vectors in 09 §10 ("4 h fully watered => stage +1")
  *   predate the retuned crop table: no crop matures in <18 h (crops.ts hard rule
@@ -20,8 +24,8 @@
  *   formulas below are correct; the stale vectors are not. Tests assert against
  *   the real config and document the drift.
  *
- * Time is a per-HOUR loop, not a closed form, so order-dependent events (disease
- * contracting on hour 3 vs hour 5) are reproducible. Every draw comes from the
+ * Time is a per-HOUR loop, not a closed form, so order-dependent events (a
+ * stage flip on hour 3 vs hour 5) are reproducible. Every draw comes from the
  * injected seeded `Rng`, so the same (crop, hours, weather, seed) always yields
  * the same outcome (09 §10 / NFR-SIM-009).
  */
@@ -38,17 +42,6 @@ export const CROP_SIM = {
   hydrationGrowthFloor: 0.2,
   /** Consecutive hours at zero hydration before a full-health crop withers. */
   witherHoursAtZeroHydration: 6,
-  /** Base disease chance rolled once per stage boundary. */
-  diseaseChancePerBoundary: 0.06,
-  /** Humidity raises the disease chance: chance x (weight + humidity). */
-  diseaseHumidityWeight: 0.5,
-  /** Base pest chance rolled per stage boundary; drought amplifies it. */
-  pestChancePerBoundary: 0.05,
-  pestDroughtMultiplier: 1.5,
-  /** Health lost per hour while diseased. */
-  diseaseHealthDamagePerHour: 0.05,
-  /** Health lost per hour while infested. */
-  pestHealthDamagePerHour: 0.04,
 } as const;
 
 /** How much hydration this crop loses in one hour. */
@@ -83,8 +76,6 @@ export function simulateCrop(
     growthProgressHours: crop.growthProgressHours,
     hydration: crop.hydration,
     health: crop.health,
-    diseased: crop.diseased,
-    infested: crop.infested,
     ready: false,
     withered: false,
     stalled: false,
@@ -96,19 +87,12 @@ export function simulateCrop(
   let health = clamp01(crop.health);
   let progress = Math.max(0, crop.growthProgressHours);
   let stage = crop.growthStage;
-  let diseased = crop.diseased;
-  let infested = crop.infested;
   let ready = progress >= config.growthHours;
   let withered = false;
 
   const decayPerHour = hydrationDecayPerHour(config);
   const dehydrationDamagePerHour = 1 / CROP_SIM.witherHoursAtZeroHydration;
   const fertilizerMultiplier = crop.fertilizerActive ? 1 + crop.fertilizerBonus : 1;
-  const diseaseChance =
-    CROP_SIM.diseaseChancePerBoundary * (CROP_SIM.diseaseHumidityWeight + clamp01(weather.humidity));
-  const pestChance =
-    CROP_SIM.pestChancePerBoundary *
-    (weather.type === 'drought' ? CROP_SIM.pestDroughtMultiplier : 1);
 
   const wholeHours = Math.floor(elapsedHours);
   const fractionalHours = elapsedHours - wholeHours;
@@ -125,17 +109,14 @@ export function simulateCrop(
       );
     }
 
-    // Disease / pest are rolled at STAGE BOUNDARIES (09 §4–5).
+    // Stage transitions are recorded for the next-tick comparison (09 §4–5).
     const nextStage = stageFor(progress, config.growthHours);
     if (nextStage > stage) {
-      if (!diseased && rng.chance(diseaseChance)) diseased = true;
-      if (!infested && rng.chance(pestChance)) infested = true;
       stage = nextStage;
     }
 
     // Health only moves downhill. Watering a scorched crop does not undo it.
-    if (diseased) health -= CROP_SIM.diseaseHealthDamagePerHour * hoursIncrement;
-    if (infested) health -= CROP_SIM.pestHealthDamagePerHour * hoursIncrement;
+    // (Disease/pest were retired by 03 §1.1/§1.3; only dehydration now harms health.)
     if (hydration <= 0) health -= dehydrationDamagePerHour * hoursIncrement;
     health = Math.max(0, health);
 
@@ -164,9 +145,7 @@ export function simulateCrop(
     stage !== crop.growthStage ||
     !approxEqual(progress, crop.growthProgressHours) ||
     !approxEqual(hydration, crop.hydration) ||
-    !approxEqual(health, crop.health) ||
-    diseased !== crop.diseased ||
-    infested !== crop.infested;
+    !approxEqual(health, crop.health);
 
   return {
     id: crop.id,
@@ -176,8 +155,6 @@ export function simulateCrop(
     growthProgressHours: round6(progress),
     hydration: round6(hydration),
     health: round6(health),
-    diseased,
-    infested,
     ready,
     withered,
     stalled,
@@ -206,4 +183,3 @@ function approxEqual(a: number, b: number): boolean {
 function round6(n: number): number {
   return Math.round(n * 1e6) / 1e6;
 }
-

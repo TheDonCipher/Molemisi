@@ -29,10 +29,6 @@ export interface CropState {
   /** +bonus growth while a fertilizer window is live (G1). */
   fertilizerActive: boolean;
   fertilizerBonus: number;
-  /** True once diseased (sticky until harvest). */
-  diseased: boolean;
-  /** True once infested (sticky until harvest). */
-  infested: boolean;
 }
 
 export interface LivestockState {
@@ -89,8 +85,6 @@ export interface CropTick {
   growthProgressHours: number;
   hydration: number;
   health: number;
-  diseased: boolean;
-  infested: boolean;
   /** True when this tick crossed the maturity line. */
   ready: boolean;
   /** True when this tick killed the crop (hydration starvation). */

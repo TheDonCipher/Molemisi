@@ -61,8 +61,6 @@ const makeCrop = (over: Partial<CropState> = {}): CropState => ({
   health: 1,
   fertilizerActive: false,
   fertilizerBonus: 0,
-  diseased: false,
-  infested: false,
   ...over,
 });
 
@@ -197,15 +195,6 @@ describe('Crop simulation (09 §3)', () => {
     expect(a).toEqual(b);
   });
 
-  it('different seeds can diverge on disease/pest (stochastic but seeded)', () => {
-    const crop = makeCrop({ hydration: 1 });
-    const outcomes = new Set<string>();
-    for (let seed = 0; seed < 60; seed++) {
-      const t = simulateCrop(crop, 60, weather({ humidity: 1 }), createRng(seed), 1);
-      outcomes.add(`${t.diseased}|${t.infested}`);
-    }
-    expect(outcomes.size).toBeGreaterThan(1);
-  });
 
   it('applies fertilizer and season multipliers to growth', () => {
     const plain = simulateCrop(makeCrop(), 4, weather(), createRng(3), 1);
