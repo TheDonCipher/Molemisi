@@ -23,12 +23,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, useGame } from './gameState';
 
-/** A Pula-priced good from GET /store. */
+/** A Pula- or Madi-priced good from GET /store. */
 export interface StoreItem {
   sku: string;
   name: string;
   description: string;
   category: 'boost' | 'cosmetic';
+  /** Which balance this good is charged to — the two-shelf model (docs/34 §3.1). */
+  currency: 'PULA' | 'MADI';
   price: number;
   slug: string;
 }
@@ -40,7 +42,8 @@ export interface RealMoneyItem {
   description: string;
   category: 'currency' | 'subscription' | 'boost' | 'cosmetic';
   price: number;
-  currency: 'BWP' | 'PULA';
+  /** BWP (a top-up pack) or MADI (the Village Pass); PULA never appears here. */
+  currency: 'BWP' | 'PULA' | 'MADI';
   consumable: boolean;
 }
 
@@ -59,6 +62,8 @@ export interface PurchaseResult {
   name: string;
   description: string;
   category: 'boost' | 'cosmetic';
+  /** The balance that was actually spent (docs/34 §3.1 two-shelf model). */
+  currency: 'PULA' | 'MADI';
   price: number;
   slug: string;
 }
@@ -109,7 +114,8 @@ export function useStore() {
       setBusy(sku);
       try {
         const data = await apiFetch<PurchaseResult>('POST', '/store/purchase', { sku });
-        showToast('Purchased', `${data.name} · −${data.price} Pula`, '🛍️', 'success');
+        const spent = data.currency === 'MADI' ? 'Madi' : 'Pula';
+        showToast('Purchased', `${data.name} · −${data.price} ${spent}`, '🛍️', 'success');
         // Re-read the balance from the server instead of subtracting locally.
         await refresh();
         await load();
@@ -140,9 +146,11 @@ export function useStore() {
       try {
         const data = await apiFetch<PaymentResult>('POST', '/payments/create', { sku });
         if (data.status === 'COMPLETED') {
+          // docs/34 §2.2 — real money credits MADI, never Pula. The old copy said
+          // "Pula credited", which was a direct contradiction of the model.
           showToast(
             'Payment complete',
-            `P${data.amount} · Pula credited to your wallet`,
+            `Madi credited to your wallet — spend it on decorations and the Village Pass.`,
             '✅',
             'success',
           );

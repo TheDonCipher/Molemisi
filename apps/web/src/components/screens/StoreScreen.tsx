@@ -33,8 +33,11 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 export function StoreScreen() {
-  const { pula } = useGame();
+  const { pula, madi } = useGame();
   const { boosts, cosmetics, packs, plans, history, loading, busy, buy, startPayment } = useStore();
+
+  const marketCosmetics = cosmetics.filter((c) => c.currency === 'PULA');
+  const festivalCosmetics = cosmetics.filter((c) => c.currency === 'MADI');
 
   const renderPulaRow = (item: StoreItem) => {
     const isBusy = busy === item.sku;
@@ -66,6 +69,39 @@ export function StoreScreen() {
     );
   };
 
+  const renderGoodRow = (item: StoreItem) => {
+    const isBusy = busy === item.sku;
+    const isMadi = item.currency === 'MADI';
+    const affordable = isMadi ? (madi ?? 0) >= item.price : pula >= item.price;
+    return (
+      <div
+        key={item.sku}
+        className="flex items-center gap-3 border-2 border-wood-border bg-wood-dark/90 px-3.5 py-3"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="font-headline text-[15px] font-bold text-cream-surface truncate">
+            {item.name}
+          </div>
+          <div className="font-mono text-[10px] text-cream-surface/70 line-clamp-2">
+            {item.description}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`font-mono text-xs font-bold ${isMadi ? 'text-secondary' : 'text-gold-currency'}`}>
+            {isMadi ? `📱 M${item.price.toLocaleString()}` : `P${item.price.toLocaleString()}`}
+          </span>
+          <button
+            disabled={isBusy || !affordable}
+            onClick={() => buy(item.sku)}
+            className="px-2.5 py-1 font-mono text-[10px] uppercase border-2 border-primary bg-primary-container text-on-primary-container font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isBusy ? '...' : 'Buy'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const renderMoneyRow = (item: RealMoneyItem) => {
     const isBusy = busy === item.sku;
     return (
@@ -84,13 +120,15 @@ export function StoreScreen() {
         <div className="flex items-center gap-2 shrink-0">
           <span
             className={`font-mono text-xs font-bold ${
-              item.currency === 'BWP'
+              item.currency === 'BWP' || item.currency === 'MADI'
                 ? 'text-secondary'
                 : 'text-gold-currency'
             }`}
           >
             {item.currency === 'BWP'
               ? `💸 BWP ${item.price.toLocaleString()}`
+              : item.currency === 'MADI'
+              ? `📱 M${item.price.toLocaleString()}`
               : `P${item.price.toLocaleString()}`}
           </span>
           <button
@@ -115,12 +153,23 @@ export function StoreScreen() {
           </h1>
           <span className="font-mono text-[10px] text-on-surface-variant italic">Lebentlele</span>
         </div>
-        <div className="flex items-center gap-1 bg-wood-dark px-2.5 py-1.5 border-2 border-wood-border">
-          <span className="text-xs">💰</span>
-          <span className="font-mono text-xs text-gold-currency font-bold">
-            {pula.toLocaleString()}
-          </span>
-          <span className="font-mono text-[9px] text-on-surface-variant">Pula</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-wood-dark px-2.5 py-1.5 border-2 border-wood-border">
+            <span className="text-xs">💰</span>
+            <span className="font-mono text-xs text-gold-currency font-bold">
+              {pula.toLocaleString()}
+            </span>
+            <span className="font-mono text-[9px] text-on-surface-variant">Pula</span>
+          </div>
+          {madi !== null && (
+            <div className="flex items-center gap-1 bg-wood-dark px-2.5 py-1.5 border-2 border-wood-border">
+              <span className="text-xs">📱</span>
+              <span className="font-mono text-xs text-secondary font-bold">
+                {madi.toLocaleString()}
+              </span>
+              <span className="font-mono text-[9px] text-on-surface-variant">Madi</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -140,7 +189,7 @@ export function StoreScreen() {
       </section>
 
       <section className="mb-6">
-        <SectionHeading en="Guild" tn="Mokgatlho" />
+        <SectionHeading en="Village Pass" tn="Pase ya Motse" />
         <div className="flex flex-col gap-2">
           {plans.length === 0 ? (
             <Empty>No subscription available</Empty>
@@ -149,7 +198,7 @@ export function StoreScreen() {
           )}
         </div>
         <p className="font-mono text-[9px] text-on-surface-variant/70 mt-1.5">
-          Auto-collect, extra storage and a Pula Stone each week.
+          A helper that waters and collects while you are away, one festival outfit each month, and +50% storage. The same helper is earned free at Botho 500 — paying gets it early.
         </p>
       </section>
 
@@ -162,16 +211,30 @@ export function StoreScreen() {
       </section>
 
       <section className="mb-6">
-        <SectionHeading en="Cosmetics" tn="Mokgabiso" />
+        <SectionHeading en="Market Decor" tn="Mokgabiso wa Pula" />
         <div className="flex flex-col gap-2">
-          {cosmetics.length === 0 ? (
+          {marketCosmetics.length === 0 ? (
             <Empty>Nothing to decorate with yet</Empty>
           ) : (
-            cosmetics.map(renderPulaRow)
+            marketCosmetics.map(renderGoodRow)
           )}
         </div>
         <p className="font-mono text-[9px] text-on-surface-variant/70 mt-1.5">
-          Cosmetics are yours for good — buying one twice costs nothing.
+          Bought with Pula you earn — the everyday look. Yours for good; buying one twice costs nothing.
+        </p>
+      </section>
+
+      <section className="mb-6">
+        <SectionHeading en="Festival Decor" tn="Mokgabiso wa Mokete" />
+        <div className="flex flex-col gap-2">
+          {festivalCosmetics.length === 0 ? (
+            <Empty>No festival looks on offer right now</Empty>
+          ) : (
+            festivalCosmetics.map(renderGoodRow)
+          )}
+        </div>
+        <p className="font-mono text-[9px] text-on-surface-variant/70 mt-1.5">
+          Bought with Madi — the seasonal look. Every Festival piece has a Market cousin in the same slot.
         </p>
       </section>
 

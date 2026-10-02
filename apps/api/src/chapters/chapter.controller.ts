@@ -45,4 +45,24 @@ export class ChapterController {
     const data = await this.chapterService.rolloverChapters(new Date(), Boolean(body?.dryRun));
     return { success: true, data };
   }
+
+  /**
+   * docs/34 §3.4 — the one thing Chapter Tokens are for: buy a season souvenir
+   * (cosmetic) and nothing else. Tokens are NOT money — the sink is cosmetic only,
+   * never seeds, Pula, Botho or water, and the spend is ledger-recorded by the
+   * service. The route existed as a gap; the service method + spec were already
+   * in place.
+   */
+  @Post('tokens/spend')
+  async spendTokens(
+    @CurrentUser('id') userId: string,
+    @Body() body: { amount: number; purpose: string },
+  ) {
+    const remaining = await this.chapterService.spendTokens(
+      userId,
+      body.amount,
+      body.purpose,
+    );
+    return { success: true, data: { remaining } };
+  }
 }

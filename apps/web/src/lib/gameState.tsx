@@ -392,6 +392,12 @@ export interface GameState {
   pula: number;
   botho: number;
   /**
+   * docs/34 §2.1 / §4.2 — the spend-only premium balance. Null until the Madi
+   * migration (20261001000003) has run; the store hides it rather than showing a
+   * permanent "0 M" that implies the player has bought nothing.
+   */
+  madi: number | null;
+  /**
    * Re-fetch farm + wallet state from the server.
    *
    * Any screen that spends or receives value must call this rather than mutating
@@ -530,6 +536,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // --- Profile state ---
   const [pula, setPula] = useState(0);
   const [botho, setBotho] = useState(0);
+  const [madi, setMadi] = useState<number | null>(null);
   const [energy, setEnergy] = useState(100);
   const maxEnergy = 100;
   const [farmId, setFarmId] = useState<string | null>(null);
@@ -639,7 +646,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           energy: number;
           maxEnergy: number;
         }>('GET', '/profile'),
-        apiFetch<{ pula: number; botho: number }>('GET', '/wallet'),
+        apiFetch<{ pula: number; botho: number; madi?: number | null }>('GET', '/wallet'),
         apiFetch<{
           farm: {
             id: string;
@@ -663,6 +670,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (wallet.status === 'fulfilled') {
         setPula(wallet.value.pula ?? 0);
         setBotho(wallet.value.botho ?? 0);
+        setMadi(wallet.value.madi ?? null);
       }
 
       // Apply profile
@@ -1548,6 +1556,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       value={{
         pula,
         botho,
+        madi,
         waterLevel,
         maxWater,
         hasTank,
