@@ -3,21 +3,46 @@
 @tailwind utilities;
 
 :root {
-  --molemisi-earth: #C05C3C;
-  --molemisi-brown: #8B5E3C;
-  --molemisi-sand: #E8D5A3;
-  --molemisi-grass: #5A8F3C;
-  --molemisi-sky: #87CEEB;
-  --molemisi-night: #2C1810;
-  --molemisi-panel: #3E2723;
-  --molemisi-border: #5D4037;
-  --molemisi-text: #F5E6D3;
-  --molemisi-muted: #BCAAA4;
-  --molemisi-accent: #FF8F00;
+  --molemisi-earth: #c05c3c;
+  --molemisi-brown: #8b5e3c;
+  --molemisi-sand: #e8d5a3;
+  --molemisi-grass: #5a8f3c;
+  --molemisi-sky: #87ceeb;
+  --molemisi-night: #2c1810;
+  --molemisi-panel: #3e2723;
+  --molemisi-border: #5d4037;
+  --molemisi-text: #f5e6d3;
+  --molemisi-muted: #bcaaa4;
+  --molemisi-accent: #ff8f00;
+
+  /* Device safe areas. `viewportFit: 'cover'` (app/layout.tsx) is what makes
+     these resolve on notched iPhones; without it every value resolves to 0 and
+     the fixed header/footer sit under the notch and the home indicator. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Shell chrome heights, INCLUDING the safe-area insets. The header and the
+     mobile footer are `position: fixed`, so the scroll container has to
+     reserve exactly this much. Previously these were duplicated magic numbers
+     (pt-16 / top-12 / bottom-16 / calc(100dvh - 7.5rem)) that drifted apart
+     and ignored the notch. One variable, one truth. */
+  --header-h: calc(3rem + var(--safe-top)); /* 48px + inset  */
+  --footer-h: calc(3.5rem + var(--safe-bottom)); /* 56px + inset  */
+  --gutter: 0.75rem; /* main side pad */
+}
+
+@media (min-width: 768px) {
+  :root {
+    /* md: the header grows to 56px and the mobile footer is hidden. */
+    --header-h: calc(3.5rem + var(--safe-top));
+  }
 }
 
 @layer base {
-  html, body {
+  html,
+  body {
     margin: 0;
     padding: 0;
     overscroll-behavior: none;
@@ -55,40 +80,45 @@
 
 .pixel-panel {
   background-color: rgba(62, 39, 35, 0.95);
-  border: 2px solid #5D4037;
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+  border: 2px solid #5d4037;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
 }
 
 .pixel-btn-primary {
-  background-color: #FF8F00;
-  color: #2C1810;
-  border: 1px solid #E65100;
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-  transition: transform 0.05s ease, background-color 0.1s ease;
+  background-color: #ff8f00;
+  color: #2c1810;
+  border: 1px solid #e65100;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.05s ease,
+    background-color 0.1s ease;
 }
 .pixel-btn-primary:hover {
-  background-color: #FFA040;
+  background-color: #ffa040;
 }
 .pixel-btn-primary:active {
   transform: translate(1px, 1px);
-  background-color: #E65100;
-  color: #F5E6D3;
+  background-color: #e65100;
+  color: #f5e6d3;
 }
 
 .pixel-btn-secondary {
-  background-color: #3E2723;
-  color: #F5E6D3;
-  border: 1px solid #5D4037;
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.4);
-  transition: transform 0.05s ease, background-color 0.1s ease, color 0.1s ease;
+  background-color: #3e2723;
+  color: #f5e6d3;
+  border: 1px solid #5d4037;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4);
+  transition:
+    transform 0.05s ease,
+    background-color 0.1s ease,
+    color 0.1s ease;
 }
 .pixel-btn-secondary:hover {
-  background-color: #4E342E;
-  color: #FF8F00;
+  background-color: #4e342e;
+  color: #ff8f00;
 }
 .pixel-btn-secondary:active {
   transform: translate(1px, 1px);
-  background-color: #2C1810;
+  background-color: #2c1810;
 }
 
 /* Touch-friendly targets */
@@ -104,6 +134,62 @@
 }
 
 /* ============================================================
+   Safe-area helpers for the fixed shell.
+   The header (fixed top-0) and footer (fixed bottom-0) are chrome, so
+   they must clear the notch / home indicator on notched devices. Pair
+   with `viewportFit: 'cover'` in app/layout.tsx or these resolve to 0.
+   ============================================================ */
+.safe-pt {
+  padding-top: var(--safe-top);
+}
+.safe-pb {
+  padding-bottom: var(--safe-bottom);
+}
+.safe-px {
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+/* Offset for fixed elements pinned to an edge, without changing their box. */
+.safe-top-offset {
+  top: var(--safe-top);
+}
+.safe-bottom-offset {
+  bottom: var(--safe-bottom);
+}
+
+/* ============================================================
+   Focus visibility. The shell sets `select-none` and most controls are
+   <button>, so the UA focus ring is the ONLY affordance a keyboard player
+   has. It must be clearly visible against the dark wood palette.
+   ============================================================ */
+:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* Suppress the ring for pointer users, keep it for keyboard. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================================
+   Reduced motion. globals.css already kills the decorative keyframes
+   under `prefers-reduced-motion`; this additionally removes the
+   Tailwind transition/animation utilities so nothing animates that
+   CSS did not author (e.g. `animate-bounce` on the loading logo).
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
    Farming activity micro-animations (CSS-only, no new assets)
    Slight, tactile feedback for plant / water / harvest / forage /
    buy / sell / build so the loop "feels" alive. Triggered by a
@@ -111,46 +197,101 @@
    ============================================================ */
 
 @keyframes farm-pop {
-  0%   { transform: scale(0.82); }
-  55%  { transform: scale(1.12); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.82);
+  }
+  55% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes farm-water {
-  0%   { transform: scale(1); filter: brightness(1); }
-  40%  { transform: scale(1.04); filter: brightness(1.45) saturate(1.2); }
-  100% { transform: scale(1); filter: brightness(1); }
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  40% {
+    transform: scale(1.04);
+    filter: brightness(1.45) saturate(1.2);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
 }
 
 @keyframes farm-harvest {
-  0%   { transform: translateY(0) scale(1); opacity: 1; }
-  35%  { transform: translateY(-10px) scale(1.18); opacity: 1; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  35% {
+    transform: translateY(-10px) scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes farm-forage {
-  0%, 100% { transform: translateY(0); }
-  30%      { transform: translateY(-8px) rotate(-4deg); }
-  60%      { transform: translateY(-3px) rotate(3deg); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px) rotate(-4deg);
+  }
+  60% {
+    transform: translateY(-3px) rotate(3deg);
+  }
 }
 
 @keyframes farm-coin {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.25) rotate(-6deg); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25) rotate(-6deg);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes farm-build {
-  0%   { transform: translateY(10px) scale(0.9); opacity: 0.6; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
+  0% {
+    transform: translateY(10px) scale(0.9);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
-.animate-plant   { animation: farm-pop 480ms ease-out; }
-.animate-water   { animation: farm-water 600ms ease-out; }
-.animate-harvest { animation: farm-harvest 560ms ease-out; }
-.animate-forage  { animation: farm-forage 520ms ease-in-out; }
-.animate-coin    { animation: farm-coin 420ms ease-out; }
-.animate-build   { animation: farm-build 520ms ease-out; }
+.animate-plant {
+  animation: farm-pop 480ms ease-out;
+}
+.animate-water {
+  animation: farm-water 600ms ease-out;
+}
+.animate-harvest {
+  animation: farm-harvest 560ms ease-out;
+}
+.animate-forage {
+  animation: farm-forage 520ms ease-in-out;
+}
+.animate-coin {
+  animation: farm-coin 420ms ease-out;
+}
+.animate-build {
+  animation: farm-build 520ms ease-out;
+}
 
 /* ============================================================
    Living Homestead (Doc 12 §6.1) — slosh, whisper fade, wear
@@ -160,11 +301,19 @@
 
 /* Doc 12 §4.2 — tank "slosh": the blue bar overshoots and settles. */
 @keyframes slosh {
-  0% { transform: scaleX(1); }
-  50% { transform: scaleX(1.05); }
-  100% { transform: scaleX(1); }
+  0% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(1.05);
+  }
+  100% {
+    transform: scaleX(1);
+  }
 }
-.tank-slosh { animation: slosh 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.tank-slosh {
+  animation: slosh 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 /* ---------------------------------------------------------------------------
    2.9 / doc 30 V-11 — seasonal particle drift (04 §9.1).
@@ -173,10 +322,20 @@
    Decorative only: see ChapterParticles.tsx. Killed under reduced-motion below.
 --------------------------------------------------------------------------- */
 @keyframes chapter-drift {
-  0%   { transform: translate3d(0, -10%, 0) rotate(0deg); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translate3d(14px, 110%, 0) rotate(35deg); opacity: 0; }
+  0% {
+    transform: translate3d(0, -10%, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(14px, 110%, 0) rotate(35deg);
+    opacity: 0;
+  }
 }
 .chapter-particle {
   position: absolute;
@@ -188,10 +347,17 @@
 
 /* Doc 12 §6.1 — ready plots breathe a soft amber glow (no flashing). */
 @keyframes breathe-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0); }
-  50% { box-shadow: 0 0 8px 2px rgba(255, 143, 0, 0.4); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 143, 0, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(255, 143, 0, 0.4);
+  }
 }
-.plot-ready { animation: breathe-glow 3s infinite ease-in-out; }
+.plot-ready {
+  animation: breathe-glow 3s infinite ease-in-out;
+}
 
 /* ---------------------------------------------------------------------------
    2.8 / doc 30 V-14 — the ONE attention pulse, in four colours.
@@ -202,8 +368,13 @@
    high, blue medium, grey low. All breathe (opacity + a soft ring), never flash.
 --------------------------------------------------------------------------- */
 @keyframes attention-breathe {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .attention-pulse {
@@ -237,46 +408,96 @@
   .attention-pulse-low {
     animation: none;
   }
-  .plot-ready { animation: none; }
-  .chapter-particle { animation: none; opacity: 0; }
-  .chapter-particles { display: none; }
+  .plot-ready {
+    animation: none;
+  }
+  .chapter-particle {
+    animation: none;
+    opacity: 0;
+  }
+  .chapter-particles {
+    display: none;
+  }
 }
 
 /* Doc 12 §4.1 — Water Whisper: fade in ~1s → hold 4s → fade out 2s (7s). */
 @keyframes whisper-fade {
-  0% { opacity: 0; transform: translateY(4px); }
-  14% { opacity: 0.95; transform: translateY(0); }
-  71% { opacity: 0.95; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  14% {
+    opacity: 0.95;
+    transform: translateY(0);
+  }
+  71% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
 }
-.water-whisper { animation: whisper-fade 7s ease-in-out forwards; }
+.water-whisper {
+  animation: whisper-fade 7s ease-in-out forwards;
+}
 
 /* Doc 12 §2.2 — product-collect "pop" on the kraal icon (0.2s). */
 @keyframes product-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.4); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
-.product-pop { animation: product-pop 0.2s ease-out; }
+.product-pop {
+  animation: product-pop 0.2s ease-out;
+}
 
 /* Doc 12 §2.3 — the Feed ritual: a 2-frame bob on the animal plus a scatter of
    grain, 0.5s, played on the slot and in the opened sheet. */
 @keyframes feed-bob {
-  0% { transform: translateY(0); }
-  40% { transform: translateY(-3px) scale(1.04); }
-  70% { transform: translateY(0); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px) scale(1.04);
+  }
+  70% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
-.feed-bob { display: inline-block; animation: feed-bob 0.5s ease-in-out; }
+.feed-bob {
+  display: inline-block;
+  animation: feed-bob 0.5s ease-in-out;
+}
 @keyframes feed-grain {
-  0% { opacity: 0; transform: translate(-6px, -10px) scale(0.8); }
-  35% { opacity: 1; }
-  100% { opacity: 0; transform: translate(2px, 5px) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translate(-6px, -10px) scale(0.8);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(2px, 5px) scale(1);
+  }
 }
-.feed-grain { animation: feed-grain 0.5s ease-out forwards; }
+.feed-grain {
+  animation: feed-grain 0.5s ease-out forwards;
+}
 
 /* Doc 12 §3.2 — repair "shine": a 1s light sweep across the slot. */
-.repair-shine { overflow: hidden; }
+.repair-shine {
+  overflow: hidden;
+}
 .repair-shine::after {
   content: '';
   position: absolute;
@@ -292,21 +513,38 @@
   pointer-events: none;
 }
 @keyframes repair-sweep {
-  to { transform: translateX(120%); }
+  to {
+    transform: translateX(120%);
+  }
 }
 
 /* Doc 12 §5 — Tsholofelo's idle cycle. Three PixelLab frames (perch / weight
    shift / preen) swapped with steps() over a 1.5s loop, plus a small bob so she
    reads as breathing rather than flickering. Sprite art, no canvas. */
 @keyframes tsholofelo-idle {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 @keyframes tsholofelo-frames {
-  0%, 33% { background-image: url('/assets/ui/tsholofelo_f1.png'); }
-  34%, 66% { background-image: url('/assets/ui/tsholofelo_f2.png'); }
-  67%, 100% { background-image: url('/assets/ui/tsholofelo_f3.png'); }
+  0%,
+  33% {
+    background-image: url('/assets/ui/tsholofelo_f1.png');
+  }
+  34%,
+  66% {
+    background-image: url('/assets/ui/tsholofelo_f2.png');
+  }
+  67%,
+  100% {
+    background-image: url('/assets/ui/tsholofelo_f3.png');
+  }
 }
 .tsholofelo-idle {
   display: inline-block;
@@ -323,8 +561,13 @@
 
 /* Doc 11 §6 — golden mist on the plots adjacent to the Heritage Tree. */
 @keyframes mist-pulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 .heritage-mist {
   background: rgba(239, 159, 39, 0.18);
@@ -335,7 +578,9 @@
 /* Doc 12 — chunky pixel 3D button: 4px bottom shadow, presses on tap. */
 .btn-pixel {
   box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.45);
-  transition: transform 60ms ease, box-shadow 60ms ease;
+  transition:
+    transform 60ms ease,
+    box-shadow 60ms ease;
 }
 .btn-pixel:active:not(:disabled) {
   transform: translateY(2px);
@@ -363,4 +608,3 @@
     animation: none !important;
   }
 }
-

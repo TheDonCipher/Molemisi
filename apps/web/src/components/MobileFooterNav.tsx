@@ -26,8 +26,10 @@ export function MobileFooterNav() {
   ];
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-40 bg-wood-medium border-t-2 border-wood-border md:hidden select-none">
-      <nav className="h-14 grid grid-cols-5 items-center px-1">
+    // safe-pb lifts the tab bar clear of the iOS home indicator; --footer-h in
+    // globals.css reserves the same amount so the Farm screen is not covered.
+    <footer className="fixed bottom-0 left-0 right-0 z-40 bg-wood-medium border-t-2 border-wood-border md:hidden select-none safe-px safe-pb">
+      <nav aria-label="Primary" className="h-14 grid grid-cols-5 items-center px-1">
         {PRIMARY_NAV.map((item) => {
           const isActive =
             activeNav.toLowerCase() === item.id ||
@@ -38,14 +40,19 @@ export function MobileFooterNav() {
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => setActiveNav(item.navTarget)}
-              className={`flex flex-col items-center justify-center py-1 transition-colors h-full ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center py-1 transition-colors h-full min-h-[44px] ${
                 isActive
                   ? 'bg-primary-container text-on-primary-container font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
-              <span className="material-symbols-outlined text-[20px] leading-tight">
+              <span
+                className="material-symbols-outlined text-[20px] leading-tight"
+                aria-hidden="true"
+              >
                 {item.icon}
               </span>
               <span className="font-mono text-[10px] uppercase leading-tight mt-0.5">
@@ -54,7 +61,12 @@ export function MobileFooterNav() {
             </button>
           );
         })}
-        <MoreNavMenu items={SECONDARY_NAV} activeNav={activeNav} onSelect={setActiveNav} variant="footer" />
+        <MoreNavMenu
+          items={SECONDARY_NAV}
+          activeNav={activeNav}
+          onSelect={setActiveNav}
+          variant="footer"
+        />
       </nav>
     </footer>
   );

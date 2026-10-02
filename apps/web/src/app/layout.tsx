@@ -61,8 +61,12 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Zoom is intentionally NOT capped. `maximumScale: 1` + `userScalable: false`
+  // is a WCAG 1.4.4 failure and blocks the 200% text-scaling requirement; a
+  // pixel-art game is exactly the case where a low-vision player needs zoom.
+  // `viewportFit: 'cover'` is what makes the safe-area insets in globals.css
+  // resolve on notched iPhones — without it those env() values are always 0.
+  viewportFit: 'cover',
   themeColor: '#FF8F00',
 };
 

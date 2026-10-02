@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Molemisi — Offline</title>
+    <style>
+      /* Standalone doc: no Tailwind, no Next runtime. Colours mirror the
+         Tailwind tokens in globals.css so the offline screen is not a jarring
+         departure from the game it replaces. */
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #210e0b;
+        color: #ffdad4;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        padding: 1.5rem;
+        padding-top: calc(1.5rem + env(safe-area-inset-top));
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+      }
+      .panel {
+        width: 100%;
+        max-width: 30rem;
+        background: #3e2723;
+        border: 2px solid #5d4037;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+        padding: 2rem;
+        text-align: center;
+      }
+      img {
+        image-rendering: pixelated;
+        width: 72px;
+        height: 72px;
+      }
+      h1 {
+        font-size: 1.25rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #ff8f00;
+        margin: 1rem 0 0.5rem;
+      }
+      p {
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        color: #dcc1ae;
+        margin: 0 0 1rem;
+      }
+      .note {
+        font-size: 0.8125rem;
+        color: #a48c7a;
+        border-top: 1px solid #5d4037;
+        padding-top: 1rem;
+        margin-top: 1.25rem;
+      }
+      button {
+        font: inherit;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        background: #ff8f00;
+        color: #2c1810;
+        border: 1px solid #e65100;
+        box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+        padding: 0.875rem 1.5rem;
+        min-height: 48px;
+        cursor: pointer;
+      }
+      button:active {
+        transform: translate(1px, 1px);
+        box-shadow: none;
+      }
+      :focus-visible {
+        outline: 3px solid #ffd700;
+        outline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="panel">
+      <img src="/assets/branding/logo.png" alt="" />
+      <h1>No Connection</h1>
+      <p>
+        The farm can&apos;t reach the server right now, so nothing can change until you&apos;re back
+        online.
+      </p>
+      <button type="button" onclick="window.location.reload()">Try Again</button>
+      <p class="note">
+        Your farm is safe. No sales, plantings or purchases have been queued — they will simply need
+        doing again once you&apos;re connected.
+      </p>
+    </main>
+  </body>
+</html>

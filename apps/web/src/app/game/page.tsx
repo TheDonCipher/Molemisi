@@ -16,6 +16,50 @@ import { SettingsScreen } from '../../components/screens/SettingsScreen';
 import { WalletScreen } from '../../components/screens/WalletScreen';
 import { JournalScreen } from '../../components/screens/JournalScreen';
 import { hydrateTokenFromSession, initAuthSync } from '../../lib/auth';
+import { GameHotkeys } from '../../components/GameHotkeys';
+
+/**
+ * Initial-load skeleton. The old markup was a bouncing logo — a spinner with
+ * no shape hint, which reads as "broken" past ~2s on a slow 4G connect. A
+ * skeleton mirrors the real Farm layout (HUD chips, plot grid, action row) so
+ * the transition into loaded content is a fill, not a jump.
+ */
+function GameSkeleton() {
+  return (
+    <div
+      className="min-h-screen bg-surface px-3 py-4"
+      style={{ paddingTop: 'calc(var(--header-h) + 1rem)' }}
+      role="status"
+      aria-live="polite"
+      aria-label="Loading your farm"
+    >
+      {/* HUD chip row */}
+      <div className="flex gap-2 mb-4">
+        <div className="h-8 flex-1 bg-surface-container border border-wood-border animate-pulse" />
+        <div className="h-8 w-20 bg-surface-container border border-wood-border animate-pulse" />
+        <div className="h-8 w-20 bg-surface-container border border-wood-border animate-pulse" />
+      </div>
+      {/* Plot grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="aspect-square bg-surface-container border border-wood-border animate-pulse"
+            style={{ animationDelay: `${i * 60}ms` }}
+          />
+        ))}
+      </div>
+      {/* Action row */}
+      <div className="mt-4 flex gap-2">
+        <div className="h-12 flex-1 bg-surface-container-high border border-wood-border animate-pulse" />
+        <div className="h-12 w-24 bg-surface-container-high border border-wood-border animate-pulse" />
+      </div>
+      <p className="font-mono text-[11px] text-on-surface-variant mt-4 text-center">
+        Preparing today&apos;s work...
+      </p>
+    </div>
+  );
+}
 
 function GameContent() {
   const { activeNav, loading } = useGame();
@@ -51,39 +95,20 @@ function GameContent() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#210e0b]">
-        <img
-          src="/assets/branding/logo.png"
-          alt="Molemisi"
-          width={96}
-          height={96}
-          className="w-24 h-24 mb-4 animate-bounce"
-          style={{ imageRendering: 'pixelated' }}
-          onError={(e) => {
-            const img = e.target as HTMLImageElement;
-            img.style.display = 'none';
-            const fallback = img.nextElementSibling as HTMLElement | null;
-            if (fallback) fallback.classList.remove('hidden');
-          }}
-        />
-        <div className="hidden text-4xl mb-4 animate-bounce">🌾</div>
-        <p className="font-headline text-sm text-primary uppercase font-bold">Loading Farm...</p>
-        <p className="font-body text-xs text-on-surface-variant mt-1">
-          Preparing today&apos;s work...
-        </p>
-      </div>
-    );
-  }
+  if (loading) return <GameSkeleton />;
 
   return (
     <div className="flex flex-col min-h-screen bg-surface text-on-surface font-body select-none">
       {/* Top Header */}
       <HeaderNav />
 
-      {/* Main Screen Content View */}
-      <main className="w-full pt-16 md:pt-20 flex-1 flex flex-col bg-surface overflow-x-hidden">
+      {/* Main Screen Content View. The padding is `var(--header-h)` rather than
+          a literal `pt-16 md:pt-20` so the fixed header (which now also carries
+          the notch inset) is always cleared by exactly its own height. */}
+      <main
+        className="w-full flex-1 flex flex-col bg-surface overflow-x-hidden"
+        style={{ paddingTop: 'var(--header-h)' }}
+      >
         {renderScreen()}
       </main>
 
@@ -92,6 +117,10 @@ function GameContent() {
 
       {/* Bottom Mobile Navigation */}
       <MobileFooterNav />
+
+      {/* Global keyboard layer (Space/M/I/B/K/X/Esc/1-9/F1). Mounted once, here,
+          so it works from every screen without each screen wiring its own. */}
+      <GameHotkeys />
     </div>
   );
 }
@@ -131,13 +160,17 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (!mounted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#210e0b]">
+      <div
+        className="min-h-screen bg-surface flex flex-col items-center justify-center gap-3"
+        role="status"
+        aria-live="polite"
+      >
         <img
           src="/assets/branding/logo.png"
-          alt="Molemisi"
+          alt=""
           width={96}
           height={96}
-          className="w-24 h-24 mb-4 animate-pulse"
+          className="w-24 h-24 animate-pulse"
           style={{ imageRendering: 'pixelated' }}
           onError={(e) => {
             const img = e.target as HTMLImageElement;
@@ -146,7 +179,9 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
             if (fallback) fallback.classList.remove('hidden');
           }}
         />
-        <div className="hidden text-4xl mb-4 animate-pulse">🌾</div>
+        <div className="hidden text-4xl animate-pulse" aria-hidden="true">
+          🌾
+        </div>
         <p className="font-headline text-sm text-primary uppercase font-bold">
           Checking credentials...
         </p>

@@ -25,6 +25,7 @@ import { WaterWhisperToast } from '../WaterWhisperToast';
 import { currentChapterSlug, groundTileForCell } from '@/lib/groundTiles';
 import { deriveAttention, ownsPulse, ATTENTION_STYLE } from '../Attention';
 import { ChapterParticles } from '../ChapterParticles';
+import { PLOT_SELECT_EVENT, ESCAPE_EVENT } from '../GameHotkeys';
 
 const SEED_OPTIONS = [
   { name: 'Sorghum', cost: 15, icon: '🌾', trait: 'Drought Resistant', itemType: 'sorghum_seed' },
@@ -185,13 +186,33 @@ const BUILDING_EMOJI: Record<string, string> = {
 // Display-only mirror of `maintenanceQuote` in buildings.service.ts: base Pula +
 // the crafted materials, each scaled by the farm's building count (3.8d). Keep the
 // base numbers in step with `BUILDINGS[*].maintenanceCost` / `maintenanceMaterials`.
-const MAINTENANCE_INFO: Record<string, { pula: number; mats: Array<{ slug: string; qty: number }> }> =
-  {
-    water_source: { pula: 60, mats: [{ slug: 'setena', qty: 2 }, { slug: 'thatch', qty: 1 }] },
-    kraal: { pula: 90, mats: [{ slug: 'thapo', qty: 2 }, { slug: 'thatch', qty: 1 }] },
-    farm_boundary: { pula: 90, mats: [{ slug: 'poleto', qty: 3 }, { slug: 'hardwood', qty: 1 }] },
-    crafting: { pula: 45, mats: [{ slug: 'hardwood', qty: 1 }] },
-  };
+const MAINTENANCE_INFO: Record<
+  string,
+  { pula: number; mats: Array<{ slug: string; qty: number }> }
+> = {
+  water_source: {
+    pula: 60,
+    mats: [
+      { slug: 'setena', qty: 2 },
+      { slug: 'thatch', qty: 1 },
+    ],
+  },
+  kraal: {
+    pula: 90,
+    mats: [
+      { slug: 'thapo', qty: 2 },
+      { slug: 'thatch', qty: 1 },
+    ],
+  },
+  farm_boundary: {
+    pula: 90,
+    mats: [
+      { slug: 'poleto', qty: 3 },
+      { slug: 'hardwood', qty: 1 },
+    ],
+  },
+  crafting: { pula: 45, mats: [{ slug: 'hardwood', qty: 1 }] },
+};
 const MAT_EMOJI: Record<string, string> = {
   poleto: '🧱',
   thapo: '🪢',
@@ -441,15 +462,64 @@ export function FarmScreen() {
   const [showCropPicker, setShowCropPicker] = useState(false);
   // Transient per-plot animation: which plot is mid-action and what kind, so we
   // can play a short plant / water / harvest micro-animation. Cleared by timer.
-  const [celebrate, setCelebrate] = useState<{ id: number; kind: 'plant' | 'water' | 'harvest' } | null>(
-    null,
-  );
+  const [celebrate, setCelebrate] = useState<{
+    id: number;
+    kind: 'plant' | 'water' | 'harvest';
+  } | null>(null);
   const triggerCelebrate = (id: number, kind: 'plant' | 'water' | 'harvest') => {
     setCelebrate({ id, kind });
     window.setTimeout(() => {
       setCelebrate((cur) => (cur?.id === id && cur?.kind === kind ? null : cur));
     }, 650);
   };
+
+  // Keyboard: 1–9 selects the nth plot, Esc dismisses the topmost sheet. Both
+  // arrive as CustomEvents from the shell-level GameHotkeys listener, so this
+  // screen keeps ownership of its own selection state and the dependency stays
+  // one-directional (see GameHotkeys for why this is an event, not context).
+  //
+  // This block sits after every state it reads: referencing `showCropPicker`
+  // before its `useState` line would be a temporal-dead-zone crash.
+  const plotsRef = useRef(plots);
+  plotsRef.current = plots;
+  useEffect(() => {
+    const onPlotSelect = (e: Event) => {
+      const index = (e as CustomEvent<{ index: number }>).detail?.index;
+      if (typeof index !== 'number') return;
+      const plot = plotsRef.current[index];
+      if (!plot) return;
+      setSelectedPlotId(plot.id);
+      setSelectedAnimalId(null);
+      setSelectedBuildingId(null);
+    };
+
+    const onEscape = () => {
+      // Dismiss in reverse order of depth so Esc always peels the top layer,
+      // honouring the two-level modal stack limit.
+      if (treeSlotPicker) return setTreeSlotPicker(false);
+      if (showCropPicker) return setShowCropPicker(false);
+      if (showBuyAnimals) return setShowBuyAnimals(false);
+      if (showBuildSheet) return setShowBuildSheet(false);
+      if (selectedBuildingId) return setSelectedBuildingId(null);
+      if (selectedAnimalId) return setSelectedAnimalId(null);
+      if (selectedPlotId) return setSelectedPlotId(null);
+    };
+
+    window.addEventListener(PLOT_SELECT_EVENT, onPlotSelect);
+    window.addEventListener(ESCAPE_EVENT, onEscape);
+    return () => {
+      window.removeEventListener(PLOT_SELECT_EVENT, onPlotSelect);
+      window.removeEventListener(ESCAPE_EVENT, onEscape);
+    };
+  }, [
+    treeSlotPicker,
+    showCropPicker,
+    showBuyAnimals,
+    showBuildSheet,
+    selectedBuildingId,
+    selectedAnimalId,
+    selectedPlotId,
+  ]);
   // Seed picker from inventory
   const availableSeeds = inventory
     .filter((i) => i.itemType?.endsWith('_seed') && i.quantity > 0)
@@ -680,10 +750,20 @@ export function FarmScreen() {
   }
 
   return (
-    <div className="relative w-full flex flex-col overflow-hidden select-none h-[calc(100dvh_-_7.5rem)] md:h-[calc(100dvh_-_5rem)]">
+    // Scene height and the background's top inset both come from the shell
+    // variables, so the notch inset and the mobile footer are accounted for in
+    // one place. The old `calc(100dvh - 7.5rem)` / `top-12 md:top-14` pair
+    // assumed no notch and a fixed 64px footer.
+    <div
+      className="relative w-full flex flex-col overflow-hidden select-none"
+      style={{ height: 'calc(100dvh - var(--header-h) - var(--footer-h))' }}
+    >
       {/* Background — the gradient overlay below is also the fallback backdrop
           if the sprite is missing; no third-party URL is trusted here. */}
-      <div className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-0 bg-wood-dark">
+      <div
+        className="fixed left-0 right-0 bottom-0 z-0 bg-wood-dark"
+        style={{ top: 'var(--header-h)' }}
+      >
         <img
           alt="Botswana Rural Farmstead"
           className="w-full h-full object-cover object-center filter saturate-[1.1]"
@@ -811,54 +891,53 @@ export function FarmScreen() {
                   />
                   {/* Content sits above both ground layers. */}
                   <span className="relative z-10 flex flex-col items-center justify-center gap-1 w-full">
-                  <CropSprite
-                    cropType={plot.cropType}
-                    stageProgress={plot.stageProgress}
-                    emoji={plot.icon}
-                    size={44}
-                  />
-                  <span className="font-headline text-[11px] sm:text-xs text-cream-surface font-bold leading-tight">
-                    {plot.cropName}
-                  </span>
-                  {blessedSlots.has(plot.id - 1) && (
-                    // Doc 11 §6 — the Heritage Tree's shade. A gift, never a
-                    // requirement: the plot grows fine without it.
-                    <span
-                      aria-hidden
-                      className="absolute top-1 right-1 leading-none opacity-90"
-                    >
-                      <PixelUiIcon name="status_healthy" emoji="🌳" size={14} />
+                    <CropSprite
+                      cropType={plot.cropType}
+                      stageProgress={plot.stageProgress}
+                      emoji={plot.icon}
+                      size={44}
+                    />
+                    <span className="font-headline text-[11px] sm:text-xs text-cream-surface font-bold leading-tight">
+                      {plot.cropName}
                     </span>
-                  )}
-                  {plot.canHarvest && (
-                    // 2.8/V-14 — static badge. All N ready crops would otherwise
-                    // bounce at once; the pulse belongs to the one top-priority
-                    // element only (03 §13).
-                    <span className="font-mono text-[10px] text-gold-currency font-bold tracking-wider">
-                      {tl('ready')}
-                    </span>
-                  )}
-                  {plot.stalled && (
-                    // Not a water level — a stall. The crop stopped because the
-                    // tank is empty, and the only fix is the shared tank.
-                    <span className="flex items-center gap-1 font-mono text-[10px] text-status-error font-bold">
-                      <PixelUiIcon name="status_tank_empty" emoji="💧" size={12} />
-                      {tl('dry')}
-                    </span>
-                  )}
-                  {plot.state === 'TILLED' && (
-                    <span className="font-mono text-[10px] text-secondary">{tl('emptySoil')}</span>
-                  )}
-                  {plot.state === 'GROWING' && (
-                    <div className="w-full h-2 bg-surface-container-high overflow-hidden">
-                      <div
-                        className={`h-full transition-all ${
-                          plot.stalled ? 'bg-sky-blue/50' : 'bg-status-success'
-                        }`}
-                        style={{ width: `${plot.stageProgress}%` }}
-                      />
-                    </div>
-                  )}
+                    {blessedSlots.has(plot.id - 1) && (
+                      // Doc 11 §6 — the Heritage Tree's shade. A gift, never a
+                      // requirement: the plot grows fine without it.
+                      <span aria-hidden className="absolute top-1 right-1 leading-none opacity-90">
+                        <PixelUiIcon name="status_healthy" emoji="🌳" size={14} />
+                      </span>
+                    )}
+                    {plot.canHarvest && (
+                      // 2.8/V-14 — static badge. All N ready crops would otherwise
+                      // bounce at once; the pulse belongs to the one top-priority
+                      // element only (03 §13).
+                      <span className="font-mono text-[10px] text-gold-currency font-bold tracking-wider">
+                        {tl('ready')}
+                      </span>
+                    )}
+                    {plot.stalled && (
+                      // Not a water level — a stall. The crop stopped because the
+                      // tank is empty, and the only fix is the shared tank.
+                      <span className="flex items-center gap-1 font-mono text-[10px] text-status-error font-bold">
+                        <PixelUiIcon name="status_tank_empty" emoji="💧" size={12} />
+                        {tl('dry')}
+                      </span>
+                    )}
+                    {plot.state === 'TILLED' && (
+                      <span className="font-mono text-[10px] text-secondary">
+                        {tl('emptySoil')}
+                      </span>
+                    )}
+                    {plot.state === 'GROWING' && (
+                      <div className="w-full h-2 bg-surface-container-high overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${
+                            plot.stalled ? 'bg-sky-blue/50' : 'bg-status-success'
+                          }`}
+                          style={{ width: `${plot.stageProgress}%` }}
+                        />
+                      </div>
+                    )}
                   </span>
                 </button>
               ))}
@@ -1312,13 +1391,14 @@ export function FarmScreen() {
 
       {/* Animal action sheet — Feed / Pet / Collect */}
       {selectedAnimal && !showBuyAnimals && (
-        <div className="fixed inset-x-0 bottom-16 md:bottom-0 z-30 flex justify-center px-4 pb-2">
+        <div
+          className="fixed inset-x-0 z-30 flex justify-center px-4 pb-2"
+          style={{ bottom: 'calc(var(--footer-h) + 0.5rem)' }}
+        >
           <div className="w-full max-w-sm bg-wood-dark/95 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] p-4 animate-slide-up">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span
-                  className={`relative ${feedingId === selectedAnimal.id ? 'feed-bob' : ''}`}
-                >
+                <span className={`relative ${feedingId === selectedAnimal.id ? 'feed-bob' : ''}`}>
                   <AnimalSprite
                     type={selectedAnimal.animalType}
                     mood={animalMood(selectedAnimal)}
@@ -1414,7 +1494,10 @@ export function FarmScreen() {
 
       {/* Buy animal sheet — list is server-driven (config = authority) */}
       {showBuyAnimals && (
-        <div className="fixed inset-x-0 bottom-16 md:bottom-0 z-30 flex justify-center px-4 pb-2">
+        <div
+          className="fixed inset-x-0 z-30 flex justify-center px-4 pb-2"
+          style={{ bottom: 'calc(var(--footer-h) + 0.5rem)' }}
+        >
           <div className="w-full max-w-sm bg-wood-dark/95 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] p-4 animate-slide-up">
             <div className="flex items-center justify-between mb-2">
               <span className="font-headline text-sm text-cream-surface font-bold">
@@ -1480,7 +1563,10 @@ export function FarmScreen() {
 
       {/* Building sheet — status, wear, repair */}
       {selectedBuilding && !showBuildSheet && (
-        <div className="fixed inset-x-0 bottom-16 md:bottom-0 z-30 flex justify-center px-4 pb-2">
+        <div
+          className="fixed inset-x-0 z-30 flex justify-center px-4 pb-2"
+          style={{ bottom: 'calc(var(--footer-h) + 0.5rem)' }}
+        >
           <div className="w-full max-w-sm bg-wood-dark/95 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] p-4 animate-slide-up">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -1571,7 +1657,10 @@ export function FarmScreen() {
 
       {/* Build sheet — server-driven list; cost in Pula + crafted materials */}
       {showBuildSheet && (
-        <div className="fixed inset-x-0 bottom-16 md:bottom-0 z-30 flex justify-center px-4 pb-2">
+        <div
+          className="fixed inset-x-0 z-30 flex justify-center px-4 pb-2"
+          style={{ bottom: 'calc(var(--footer-h) + 0.5rem)' }}
+        >
           <div className="w-full max-w-sm bg-wood-dark/95 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] p-4 animate-slide-up">
             <div className="flex items-center justify-between mb-2">
               <span className="font-headline text-sm text-cream-surface font-bold">
@@ -1675,7 +1764,10 @@ export function FarmScreen() {
           server re-checks the Guardian title, that the plot exists, is EMPTY and
           carries no other building, so this list is a convenience, not the gate. */}
       {treeSlotPicker && (
-        <div className="fixed inset-x-0 bottom-16 md:bottom-0 z-30 flex justify-center px-4 pb-2">
+        <div
+          className="fixed inset-x-0 z-30 flex justify-center px-4 pb-2"
+          style={{ bottom: 'calc(var(--footer-h) + 0.5rem)' }}
+        >
           <div className="w-full max-w-sm bg-wood-dark/95 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] p-4 animate-slide-up">
             <div className="flex items-center justify-between mb-2">
               <span className="font-headline text-sm text-cream-surface font-bold">

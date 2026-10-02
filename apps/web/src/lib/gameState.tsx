@@ -10,7 +10,7 @@ import React, {
   useRef,
 } from 'react';
 import { resolveItemIcon, pixelItemIcon } from './pixelIcons';
-import { notifyIfEnabled, registerServiceWorker } from './notifications';
+import { notifyIfEnabled } from './notifications';
 import { recordAction } from './playerActions';
 import { hapticStrong, hapticTap } from '../utils/haptics';
 
@@ -20,7 +20,31 @@ import { hapticStrong, hapticTap } from '../utils/haptics';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
-export async function apiFetch<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
+/** Abort a request that has hung. Mobile networks drop silently rather than
+ *  erroring, and without this a dead connection leaves the UI spinning forever
+ *  instead of rolling the optimistic update back. */
+const REQUEST_TIMEOUT_MS = 15000;
+
+export class ApiError extends Error {
+  status: number;
+  body: unknown;
+  /** True when the request never reached the API (offline, DNS, timeout). */
+  isNetwork: boolean;
+
+  constructor(message: string, status: number, body: unknown, isNetwork = false) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.body = body;
+    this.isNetwork = isNetwork;
+  }
+}
+
+export async function apiFetch<T = unknown>(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
   const token =
     typeof window !== 'undefined'
       ? localStorage.getItem('molemisi_token') || localStorage.getItem('token')
@@ -30,23 +54,67 @@ export async function apiFetch<T = unknown>(method: string, path: string, body?:
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json();
+  // `fetch` only rejects on a real network failure; a stalled socket is
+  // invisible to it. AbortController is what turns "hangs forever" into a
+  // catchable error so the caller's rollback path actually runs.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    // AbortError (our timeout) or TypeError (offline / DNS / CORS).
+    const aborted = (err as { name?: string })?.name === 'AbortError';
+    throw new ApiError(
+      aborted
+        ? 'The farm took too long to answer. Check your connection and try again.'
+        : 'Cannot reach the farm right now. Check your connection and try again.',
+      0,
+      null,
+      true,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+
+  // A proxy or load balancer in front of the API can answer 502/504 with an
+  // HTML error page. `res.json()` would then throw a bare SyntaxError and the
+  // status code would be lost, so the caller's structured-error branch (e.g.
+  // Bushveld's 409 { reason, etaSeconds }) could never run.
+  let json: unknown = null;
+  try {
+    json = await res.json();
+  } catch {
+    if (!res.ok) {
+      throw new ApiError(
+        `The farm could not answer (HTTP ${res.status}). Please try again.`,
+        res.status,
+        null,
+      );
+    }
+  }
+
+  // Narrow once, at the boundary, so the rest of the function stays typed.
+  const payload = (json ?? {}) as {
+    error?: { message?: unknown };
+    message?: unknown;
+    data?: T;
+  };
+
   if (!res.ok) {
-    const msg = json?.error?.message || json?.message || `API error ${res.status}`;
+    const msg = payload.error?.message || payload.message || `API error ${res.status}`;
     // Attach status + raw body so callers can branch on structured errors
     // (e.g. Bushveld's 409 { reason, etaSeconds }).
-    const err = new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
-    (err as any).status = res.status;
-    (err as any).body = json;
-    throw err;
+    throw new ApiError(typeof msg === 'string' ? msg : JSON.stringify(msg), res.status, json);
   }
   // API wraps in { success, data } — unwrap
-  return (json?.data ?? json) as T;
+  return (payload.data ?? (json as T)) as T;
 }
 
 // ============================================================
@@ -244,14 +312,12 @@ function mapServerPlotToUI(slotIndex: number, serverPlot: ServerPlot): Plot {
   // the crop's configured total — never a 0-4 stage bucket, which would jump
   // in four lumps and hide whether a crop is nearly ready.
   const stageProgress = hasCrop
-    ? Math.min(
-        100,
-        Math.round(((crop!.growthProgressHours ?? 0) / (crop!.growthHours || 1)) * 100),
-      )
+    ? Math.min(100, Math.round(((crop!.growthProgressHours ?? 0) / (crop!.growthHours || 1)) * 100))
     : 0;
 
   const isReady = serverPlot.state === 'READY';
-  const uiState = hasCrop && crop!.stalled && !isReady ? 'THIRSTY' : stateMap[serverPlot.state] || 'TILLED';
+  const uiState =
+    hasCrop && crop!.stalled && !isReady ? 'THIRSTY' : stateMap[serverPlot.state] || 'TILLED';
 
   return {
     id: slotIndex + 1,
@@ -352,7 +418,13 @@ export interface FarmBuilding {
   /** Tiers this line has (only Storage and Workshop grow past 1). */
   maxTier: number;
   /** Cost of the NEXT tier from the server config, or null when maxed. */
-  nextUpgradeCost: { currency: number; poleto?: number; thapo?: number; setena?: number; thatch?: number } | null;
+  nextUpgradeCost: {
+    currency: number;
+    poleto?: number;
+    thapo?: number;
+    setena?: number;
+    thatch?: number;
+  } | null;
   /** Minutes the next tier takes, or null when maxed. */
   nextUpgradeTime: number | null;
   /**
@@ -836,7 +908,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               name: item.name || (isSeed ? `${getCropName(cropType)} Seeds` : getCropName(slug)),
               category: item.isTool
                 ? 'tools'
-                : (CATEGORY_MAP[item.category ?? ''] || (isSeed ? 'seed' : 'crops')),
+                : CATEGORY_MAP[item.category ?? ''] || (isSeed ? 'seed' : 'crops'),
               icon: isSeed ? '🌱' : getCropIcon(slug),
               image: item.sprite || resolveItemIcon(slug),
               quantity: item.quantity,
@@ -945,8 +1017,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Load on mount
   useEffect(() => {
-    // Best-effort: the SW is the receiver for future server push (03 §12).
-    void registerServiceWorker();
+    // NOTE: the service worker is registered once from the root layout's inline
+    // bootstrap (app/layout.tsx), which covers every route. Registering it here
+    // too was a duplicate — the second call is a no-op at best and races the
+    // first install at worst.
     refreshFarmData();
   }, [refreshFarmData]);
 
@@ -989,7 +1063,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           (a) => (a.hunger < 0.3 || a.isSick) && !prev.animals.split(',').includes(a.id),
         ).length;
         if (newlyHungry > 0) {
-          notifyIfEnabled('animalsHungry', 'Molemisi', `${newlyHungry} animal(s) need attention 🐔`);
+          notifyIfEnabled(
+            'animalsHungry',
+            'Molemisi',
+            `${newlyHungry} animal(s) need attention 🐔`,
+          );
         }
       }
       notifSigRef.current.animals = animalSig || '__seen__';
@@ -1149,12 +1227,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (whisperTimer.current) clearTimeout(whisperTimer.current);
         whisperTimer.current = setTimeout(() => setWaterWhisper(null), 7000);
       }
-      showToast(
-        'Tank Filled',
-        `+${result.added}L for ${result.cost} Pula.`,
-        '💧',
-        'success',
-      );
+      showToast('Tank Filled', `+${result.added}L for ${result.cost} Pula.`, '💧', 'success');
       await refreshFarmData();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Refill failed';
@@ -1278,7 +1351,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...(slotIndex == null ? {} : { slotIndex }),
         });
         hapticStrong();
-        showToast('Construction Started', `Your ${buildingType.replace(/_/g, ' ')} is going up.`, '🏗️', 'success');
+        showToast(
+          'Construction Started',
+          `Your ${buildingType.replace(/_/g, ' ')} is going up.`,
+          '🏗️',
+          'success',
+        );
         await refreshFarmData();
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Could not build.';
@@ -1388,7 +1466,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         });
         recordAction('sell');
         const earnings = result.transaction?.netProceeds ?? sellQty * item.unitValue;
-        showToast('Sold!', `Sold ${sellQty}x ${item.name} for +${earnings} Pula after 5% Co-op tax.`, '💰', 'success');
+        showToast(
+          'Sold!',
+          `Sold ${sellQty}x ${item.name} for +${earnings} Pula after 5% Co-op tax.`,
+          '💰',
+          'success',
+        );
         await refreshFarmData();
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Sell failed';
@@ -1457,7 +1540,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
     if (count > 0) {
       recordAction('sell');
-      showToast('Quick Sell', `Sold ${count} items for +${sold} Pula (incl. 5% Co-op tax).`, '💰', 'success');
+      showToast(
+        'Quick Sell',
+        `Sold ${count} items for +${sold} Pula (incl. 5% Co-op tax).`,
+        '💰',
+        'success',
+      );
       await refreshFarmData();
     } else {
       showToast('Nothing to Sell', 'No crops in inventory.', '📦', 'info');
