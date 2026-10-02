@@ -4,6 +4,7 @@ import { WalletService } from '../wallet/wallet.service';
 import {
   CHAPTERS,
   ALMANAC,
+  SEASON_SOUVENIRS,
   chapterForDate,
   getChapter,
   daysUntilChapterEnd,
@@ -250,6 +251,17 @@ export class ChapterService implements OnModuleInit {
     if (!(amount > 0)) {
       throw new BadRequestException(`spendTokens requires a positive amount (got ${amount})`);
     }
+    const souvenir = SEASON_SOUVENIRS.find((s) => s.sku === purpose);
+    if (!souvenir) {
+      throw new BadRequestException(
+        `Unknown season-souvenir SKU: "${purpose}". Season stamps may only be spent on a known cosmetic souvenir.`,
+      );
+    }
+    if (amount !== souvenir.stamps) {
+      throw new BadRequestException(
+        `Souvenir "${souvenir.sku}" costs exactly ${souvenir.stamps} stamps (got ${amount}).`,
+      );
+    }
     const chapter = await this.getCurrentChapter(now);
     const state = await this.getOrCreateState(playerId, chapter.id);
     const have = state.chapter_tokens ?? 0;
@@ -356,6 +368,34 @@ export class ChapterService implements OnModuleInit {
     if (error) throw new Error(`Failed to record Almanac claim: ${error.message}`);
 
     return this.getAlmanac(playerId, now);
+  }
+
+  /**
+   * docs/36 §5.2 / chargeYear.ts — a completed Charge (the 12 monthly Year
+   * Charges) increments the player's Almanac `quests` counter. The counter lives
+   * in `player_chapter_state.almanac_progress['quests']` as a JSONB running total,
+   * scoped per chapter like the rest of the Almanac.
+   *
+   * NOTE: the progress-collection system that would *gate* Almanac tiers on this
+   * count does not exist yet (almanac.ts documents this) — this method only
+   * records the count so it is never lost. Returns the new running total.
+   */
+  async recordQuests(playerId: string, n: number, now = new Date()): Promise<number> {
+    if (!(n > 0)) return 0;
+    const chapter = await this.getCurrentChapter(now);
+    const state = await this.getOrCreateState(playerId, chapter.id);
+    const progress = (state.almanac_progress ?? {}) as Record<string, number[]>;
+    const prev = progress['quests']?.[0] ?? 0;
+    const next = prev + n;
+    const newProgress = { ...progress, quests: [next] };
+    const { error } = await this.supabase
+      .getAdminClient()
+      .from('player_chapter_state')
+      .update({ almanac_progress: newProgress })
+      .eq('player_id', playerId)
+      .eq('chapter_id', chapter.id);
+    if (error) throw new Error(`Failed to record Almanac quests: ${error.message}`);
+    return next;
   }
 
   // ---------------------------------------------------------------------------

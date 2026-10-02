@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { KgotlaService } from './kgotla.service';
+import { YearChargeService } from './year-charge.service';
 import { FarmsService } from '../farms/farms.service';
 
 /**
@@ -15,6 +16,7 @@ import { FarmsService } from '../farms/farms.service';
 export class KgotlaController {
   constructor(
     private kgotlaService: KgotlaService,
+    private yearCharge: YearChargeService,
     private farmsService: FarmsService,
   ) {}
 
@@ -97,5 +99,30 @@ export class KgotlaController {
   async getFeastStatus(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
     return this.kgotlaService.getFeastStatus(userId);
+  }
+
+  /**
+   * docs/37/38 I-2 — the Year layer. Reveal the current month's Charge with
+   * derived progress and claim state (no farm-ownership check here; the service
+   * enforces it).
+   */
+  @Get('year-charge')
+  async getYearCharge(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
+    return this.yearCharge.getYearCharge(farmId, userId);
+  }
+
+  /** Accept the current month's Charge (opens its cycle-scoped claim row). */
+  @Post('year-charge/accept')
+  async acceptYearCharge(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
+    return this.yearCharge.acceptYearCharge(farmId, userId);
+  }
+
+  /**
+   * Turn in the current month's Charge. Verified against inventory (every ask
+   * satisfied outside the Kgotla); goods consumed, rewards granted, claimed once.
+   */
+  @Post('year-charge/turn-in')
+  async turnInYearCharge(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
+    return this.yearCharge.turnInYearCharge(farmId, userId);
   }
 }

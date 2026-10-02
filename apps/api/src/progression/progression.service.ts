@@ -95,7 +95,14 @@ export const BOTHO_LADDER: Array<{ key: string; value: number }> = [
   { key: 'BUPI_RECIPE', value: BOTHO_THRESHOLDS.BUPI_RECIPE },
   { key: 'DEEP_BUSHVELD', value: BOTHO_THRESHOLDS.DEEP_BUSHVELD },
   { key: 'LETSEMA', value: BOTHO_THRESHOLDS.LETSEMA },
-  { key: 'PRIZE_ELIGIBILITY', value: BOTHO_THRESHOLDS.PRIZE_ELIGIBILITY },
+  // NOTE (audit §4.5, ruled "retire rung only"): the legacy `PRIZE_ELIGIBILITY`
+  // rung (lifetime Botho ≥ 1000) is intentionally REMOVED from the ladder. The
+  // decided prize gate is now a MONTHLY Botho delta ≥ 150
+  // (`PRIZE.minimumBothoInPeriod` in game-config) — but that gate is NOT yet
+  // wired into the reward path. TODO(kgotla/year-loop): implement the monthly-delta
+  // eligibility check and surface it on the progression view before any prize is
+  // grantable. `BOTHO_THRESHOLDS.PRIZE_ELIGIBILITY` still exists as a constant so
+  // the value remains referenceable, but it is no longer a climbable rung.
 ];
 
 @Injectable()

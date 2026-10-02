@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { KgotlaController } from './kgotla.controller';
 import { KgotlaService } from './kgotla.service';
+import { YearChargeService } from './year-charge.service';
 import { DatabaseModule } from '../database/database.module';
 import { FarmsModule } from '../farms/farms.module';
 import { WalletModule } from '../wallet/wallet.module';
@@ -12,7 +13,7 @@ import { ChapterModule } from '../chapters/chapter.module';
   // (errands are consumed at turn-in) and pay Chapter Tokens (02 §3.3).
   imports: [DatabaseModule, FarmsModule, WalletModule, InventoryModule, ChapterModule],
   controllers: [KgotlaController],
-  providers: [KgotlaService],
-  exports: [KgotlaService],
+  providers: [KgotlaService, YearChargeService],
+  exports: [KgotlaService, YearChargeService],
 })
 export class KgotlaModule {}

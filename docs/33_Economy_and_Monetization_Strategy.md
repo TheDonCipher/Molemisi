@@ -94,19 +94,21 @@ No crops · no animals · no land · no water · no seeds · **no Pula** · **no
 **Comes from:** selling at the Co-op, the three daily Kgotla charges, contracts, a bit of foraging.
 **Goes to:** seeds (the big one), water — then the next plot or animal.
 
-### 3.2 Your first month
+### 3.2 The land ladder
 
-| Day | You… | Cost |
+The cost of each rung, in the order you unlock it. These are **costs**, not a calendar you are expected to hit — at starter income (60–120 Pula/day) the first expansion (P1,200) is a week-or-two goal, and the full 20-plot farm is a *multi-month* arc. The 500–900/day band (month 2+) is what eventually makes the upper rungs reachable.
+
+| Step | You… | Cost |
 | --- | --- | ---: |
 | 1 | First harvest | — |
 | 2 | Get your first animal | P50 |
-| 5 | Field grows to **8 plots** | P1,200 |
-| 10 | Build the **Workshop** | P600 |
-| 14 | Field grows to **12 plots** (target) | P6,000 |
-| month 2 | Field grows to **16 plots** | P8,000 |
-| month 3 | Field grows to **20 plots** — full farm | P15,000 |
+| 3 | Build the **Workshop** | P600 |
+| 4 | Field grows to **8 plots** | P1,200 |
+| 5 | Field grows to **12 plots** | P6,000 |
+| 6 | Field grows to **16 plots** | P8,000 |
+| 7 | Field grows to **20 plots** — full farm | P15,000 |
 
-The last two fields are **much cheaper than the old plan**, on purpose. The old final rung took **254 real days** to pay for itself — that isn't cozy, it's a reason to quit. Now every rung pays back in **about two months or less**.
+The last two fields are **much cheaper than the old plan**, on purpose. The old final rung took **254 real days** to pay for itself — that isn't cozy, it's a reason to quit. Now every rung pays back in **about two months or less** once you are earning the upper income band.
 
 ### 3.3 You can't go broke
 
@@ -182,7 +184,7 @@ Assumptions: **3% of players buy something each month** (cozy games beat the cas
 | 1 | **Goats and cows lose money.** They were fed `herbs` at P25 each: a goat burned **P100/day** of fodder for P15 of milk, a cow **P200/day** for P45. Guinea fowl ran at **-P2/day** on sorghum. | Feed them cheap sorghum; the goat gives 2 milk a day. | **SHIPPED** - now chicken **+P14**, fowl **+P7**, goat **+P21**, cow **+P27** a day. Locked by `livestock.spec.ts`. |
 | 2 | **Season stamps cannot be spent** - you earn them, then they vanish. | Add a "buy the souvenir" button, or hide the currency until it exists. | **UI renamed, route still missing** - `POST /chapters/tokens/spend` is not wired. |
 | 3 | **The last field upgrade took 254 days to pay back.** | Fixed above (3.2): P15,000. | **SHIPPED** - 92.3 days at morula density. |
-| 4 | **Maintenance arrives all at once every 90 days.** | Monthly bill, with a day of warning. | **SHIPPED - but "a third the size" was wrong.** A third-size bill on a third-length period is the *same daily rate*: it would have smoothed the lump and fixed nothing. The bill is held and the period cut, which triples the daily drain and leaves the player annual cost unchanged. |
+| 4 | **Maintenance arrives all at once every 90 days.** | Monthly bill, with a day of warning, every 30 days (`MAINTENANCE.intervalDays`). | **SHIPPED - but "a third the size" was wrong.** A third-size bill on a third-length period is the *same daily rate*: it would have smoothed the lump and fixed nothing. The bill is held at full size and the period cut 90→30 days, which triples the daily drain **and triples the annual cost** (same bill, ~3× as many per year) — not "unchanged". |
 
 ---
 
