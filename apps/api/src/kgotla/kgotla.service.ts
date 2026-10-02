@@ -13,6 +13,8 @@ import {
   KGOTLA_DAILY_CHARGE_POOL,
   REGARD_PER_CHARGE,
   REGARD_DECAY,
+  BOTHO_PER_PULA_DONATED,
+  COUNCIL_PROJECTS,
 } from '@molemisi/game-config';
 
 /* ============================================================================
@@ -25,6 +27,20 @@ import {
  * bounded only by the 60 req/min rate limit. That is why `completeQuest` is gone
  * and the loop is now offer → accept → objective (elsewhere) → turn in.
  * ========================================================================== */
+
+/**
+ * Council-project copy (docs/38 I-3 / C6). Module-level so it is initialised at
+ * load and needs no `this.`/class-binding resolution — a `private static` field
+ * referenced from the `PROJECTS` instance-field initializer emitted a `ReferenceError`
+ * under `useDefineForClassFields`. The four slugs are sourced from `COUNCIL_PROJECTS`
+ * in game-config; only the prose lives here.
+ */
+const KGOTLA_PROJECT_DESCRIPTIONS: Record<string, string> = {
+  water_reservoir: 'Dig your share of the council’s borehole — the first spadeful.',
+  mophane_festival: 'Bring what you can to the fire; the feast is the ward’s, not the market’s.',
+  water_store: 'Haul stone and clay for the ward’s water store — what the sky is silent, the ward drinks.',
+  school: 'Carry clay for the school wall; leave something behind for those who follow.',
+};
 
 export interface NPC {
   id: string;
@@ -156,10 +172,8 @@ interface QuestRow {
 
 @Injectable()
 export class KgotlaService {
-  // Tuning defaults. The spec fixes the 50/day Botho cap (I4) but does not state the
-  // quantum per act. These are flagged for Princess Eugenia to confirm.
-  private static readonly BOTHO_PER_PULA_DONATED = 1;
-
+  // I4 — Botho quantum per Pula donated, sourced from game-config (R-C4) so the
+  // number lives in one place. The 50/day cap still governs every grant.
   private static readonly DAY_MS = 24 * 60 * 60 * 1000;
 
   /**
@@ -177,7 +191,15 @@ export class KgotlaService {
    * loaded bushveld material (thatch feeds roof upkeep, whereas palm fiber feeds
    * Thapo — the best craft margin in the game), and keeps the three errands spread
    * across three systems: craft (poleto) · bushveld (thatch) · farm (crop).
+   *
+   * Per docs/38 I-2 / E-3 the ward errands pay **Botho +10 and regard only** — all
+   * Pula, stamp and Almanac reward moved to the 12 month-long Charges (chargeYear.ts),
+   * so these errands are a free-Botho pillar, not a faucet. The Auto-Collector can
+   * never serve them (I4): they require a manual, deliberate act.
    */
+  // Ward errands (docs/38 I-2 / E-3): Botho +10 and regard only. All quest Pula
+  // moved into the 12 month-long Charges (chargeYear.ts), so these can never be
+  // farmed for the Botho prize and stay inside the 50/day cap.
   private static readonly CHARGES: ChargeDef[] = [
     {
       npcId: 'elder_neo',
@@ -186,14 +208,14 @@ export class KgotlaService {
       targetQty: 25,
       pulaReward: 0,
       bothoReward: 10,
-      chapterTokenReward: 2,
+      chapterTokenReward: 0,
     },
     {
       npcId: 'mama_naledi',
       questType: 'trade',
       kind: 'sell',
       targetQty: 60,
-      pulaReward: 12,
+      pulaReward: 0,
       bothoReward: 10,
       chapterTokenReward: 0,
     },
@@ -203,7 +225,7 @@ export class KgotlaService {
       kind: 'errand',
       itemSlug: 'poleto',
       targetQty: 6,
-      pulaReward: 12,
+      pulaReward: 0,
       bothoReward: 10,
       chapterTokenReward: 0,
     },
@@ -213,7 +235,7 @@ export class KgotlaService {
       kind: 'errand',
       itemSlug: 'thatch',
       targetQty: 4,
-      pulaReward: 8,
+      pulaReward: 0,
       bothoReward: 10,
       chapterTokenReward: 0,
     },
@@ -223,7 +245,7 @@ export class KgotlaService {
       kind: 'errand',
       rotate: ['sorghum', 'maize', 'cowpeas', 'millet'],
       targetQty: 6,
-      pulaReward: 8,
+      pulaReward: 0,
       bothoReward: 10,
       chapterTokenReward: 0,
     },
@@ -233,8 +255,8 @@ export class KgotlaService {
   private readonly NPCS: NPC[] = [
     {
       id: 'elder_neo',
-      name: 'Elder Neo',
-      role: 'Community Leader',
+      name: 'Mogolo',
+      role: 'The Elder',
       personality: 'Wise, patient',
       greeting:
         'Welcome, young farmer. The Kgotla is always open to those who serve the community.',
@@ -250,9 +272,9 @@ export class KgotlaService {
     },
     {
       id: 'oupa_kabelo',
-      name: 'Oupa Kabelo',
+      name: 'Ntate Kabelo',
       role: 'Builder',
-      personality: 'Hardworking, gruff',
+      personality: 'Slow, careful, few words',
       greeting: 'If you need something built, I am your man. But do not waste my time.',
       questType: 'construction',
     },
@@ -268,8 +290,8 @@ export class KgotlaService {
       id: 'thabo',
       name: 'Thabo',
       role: 'Farmer',
-      personality: 'Competitive, ambitious',
-      greeting: 'Another farmer? Show me what you can grow. I will be watching.',
+      personality: 'Proud of his rows, generous with knowledge — never a rival',
+      greeting: 'My rows are straighter than yours — but I will show you how. We learn by planting side by side.',
       questType: 'farming',
     },
   ];
@@ -282,36 +304,20 @@ export class KgotlaService {
    * "All farmers gain +10% water efficiency" and friends — all three were fiction
    * over a solo bar, and none of the effects was ever wired. Rewards are now
    * Chapter Tokens, which ChapterService actually grants, named to the farmer.
+   *
+   * Numbers (thresholds 100/150/150/200, stamps 5/8/8/12) and the four-chapter
+   * schedule are sourced from `COUNCIL_PROJECTS` in game-config (docs/38 I-3 / C6)
+   * so the Kgotla can never drift from the year spec. `market_square` is retired.
    */
-  private readonly PROJECTS: KgotlaProject[] = [
-    {
-      id: 'water_reservoir',
-      name: 'Water Reservoir',
-      description: 'Build a community water reservoir for all farmers.',
-      requiredContributions: 100,
-      currentContributions: 0,
-      reward: 'You gain 5 Chapter Tokens to spend in this chapter.',
-      chapterTokenReward: 5,
-    },
-    {
-      id: 'school',
-      name: 'Community School',
-      description: 'Build a school to educate the next generation.',
-      requiredContributions: 200,
-      currentContributions: 0,
-      reward: 'You gain 12 Chapter Tokens to spend in this chapter.',
-      chapterTokenReward: 12,
-    },
-    {
-      id: 'market_square',
-      name: 'Market Square',
-      description: 'Expand the market for better prices.',
-      requiredContributions: 150,
-      currentContributions: 0,
-      reward: 'You gain 8 Chapter Tokens to spend in this chapter.',
-      chapterTokenReward: 8,
-    },
-  ];
+  private readonly PROJECTS: KgotlaProject[] = COUNCIL_PROJECTS.map((p) => ({
+    id: p.projectId,
+    name: p.name,
+    description: KGOTLA_PROJECT_DESCRIPTIONS[p.projectId] ?? p.name,
+    requiredContributions: p.thresholdPula,
+    currentContributions: 0,
+    reward: `You gain ${p.stampReward} Chapter Tokens to spend in this chapter.`,
+    chapterTokenReward: p.stampReward,
+  }));
 
   constructor(
     private supabaseService: SupabaseService,
@@ -722,7 +728,7 @@ export class KgotlaService {
 
     // Botho from donating is capped per day like every manual act (I4). The rate is
     // a tuning default (flagged): 1 Botho per Pula donated.
-    const bothoRequested = Math.floor(amount * KgotlaService.BOTHO_PER_PULA_DONATED);
+    const bothoRequested = Math.floor(amount * BOTHO_PER_PULA_DONATED);
     const bothoReward = await this.wallet.creditBothoCapped(
       userId,
       bothoRequested,

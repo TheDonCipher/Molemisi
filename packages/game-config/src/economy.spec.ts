@@ -108,7 +108,7 @@ describe('docs/34 §4.1 — no land rung is a churn wall', () => {
       [16, 8000],
       [20, 15000],
     ]);
-    expect(LAND_LADDER_TOTAL).toBe(31200);
+    expect(LAND_LADDER_TOTAL).toBe(30200);
     // The retune must never make land MORE expensive.
     expect(LAND_LADDER_TOTAL).toBeLessThanOrEqual(31200);
   });

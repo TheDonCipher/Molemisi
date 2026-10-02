@@ -299,7 +299,7 @@ describe('Economy — 02 §6', () => {
     // P30,000 for ~+P118/day — a ~254-day payback that docs/31 P2-13 called a
     // "severe pacing tail". Shape unchanged; only the tail's price moved.
     expect(LAND_LADDER.map((l) => l.costPula)).toEqual([null, 1200, 6000, 8000, 15000]);
-    expect(LAND_LADDER_TOTAL).toBe(31200);
+    expect(LAND_LADDER_TOTAL).toBe(30200);
     expect(STARTING_PLOTS).toBe(4);
     expect(MAX_PLOTS).toBe(20);
   });

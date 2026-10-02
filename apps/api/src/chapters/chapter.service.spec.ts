@@ -172,10 +172,10 @@ function clientFor(db: MockDb) {
 }
 
 const SEEDED_CHAPTERS = [
-  { id: 'c-pula', slug: 'pula', name: 'Season of Rain', setswana: 'Sekala sa Pula', starts_on: '2026-11-01', ends_on: '2027-01-31' },
-  { id: 'c-phane', slug: 'phane', name: 'Season of Mophane', setswana: 'Sekala sa Phane', starts_on: '2026-02-01', ends_on: '2026-04-30' },
-  { id: 'c-moriti', slug: 'moriti', name: 'Season of Shade', setswana: 'Sekala sa Moriti', starts_on: '2026-05-01', ends_on: '2026-07-31' },
-  { id: 'c-letlhafula', slug: 'letlhafula', name: 'Season of Harvest', setswana: 'Sekala sa Letlhafula', starts_on: '2026-08-01', ends_on: '2026-10-31' },
+  { id: 'c-pula', slug: 'pula', name: 'Pula', setswana: 'Pula', starts_on: '2026-11-01', ends_on: '2027-01-31' },
+  { id: 'c-phane', slug: 'phane', name: 'Letlhafula', setswana: 'Letlhafula', starts_on: '2026-02-01', ends_on: '2026-04-30' },
+  { id: 'c-moriti', slug: 'moriti', name: 'Mariga', setswana: 'Mariga', starts_on: '2026-05-01', ends_on: '2026-07-31' },
+  { id: 'c-letlhafula', slug: 'letlhafula', name: 'Dikgakologo', setswana: 'Dikgakologo', starts_on: '2026-08-01', ends_on: '2026-10-31' },
 ];
 
 function withState(db: MockDb) {
@@ -275,17 +275,20 @@ describe('ChapterService — P8', () => {
       );
       expect(state!.chapter_tokens).toBe(100);
 
-      const left = await service.spendTokens('user-1', 40, 'cosmetic', NOW);
-      expect(left).toBe(60);
+      const left = await service.spendTokens('user-1', 25, 'season_souvenir', NOW);
+      expect(left).toBe(75);
       expect(db.ledger_entries).toHaveLength(1);
       expect(db.ledger_entries[0]).toMatchObject({
         currency: 'chapter_token',
-        amount: -40,
-        balance_after: 60,
+        amount: -25,
+        balance_after: 75,
         source: 'chapter_spend',
       });
 
-      await expect(service.spendTokens('user-1', 999, 'cosmetic', NOW)).rejects.toBeInstanceOf(
+      await expect(service.spendTokens('user-1', 999, 'season_souvenir', NOW)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(service.spendTokens('user-1', 25, 'not_a_sku', NOW)).rejects.toBeInstanceOf(
         BadRequestException,
       );
     });

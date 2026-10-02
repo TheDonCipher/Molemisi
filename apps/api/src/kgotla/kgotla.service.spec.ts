@@ -273,7 +273,7 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
   // AC-03 — the objective must be satisfied by state recorded elsewhere.
   // ------------------------------------------------------------------
   describe('AC-03 — turn-in settles against the outside world', () => {
-    it('consumes the errand goods and pays Pula + capped Botho', async () => {
+    it('consumes the errand goods and pays capped Botho only (no Pula, docs/38 I-2)', async () => {
       await service.acceptCharge('farm-1', 'user-1', 'oupa_kabelo', NOW);
       inventory.countOwned.mockResolvedValue(6);
 
@@ -281,9 +281,9 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
 
       expect(inventory.removeItem).toHaveBeenCalledWith('user-1', 'poleto', 6);
       expect(result.consumed).toEqual({ slug: 'poleto', qty: 6 });
-      expect(result.pulaReward).toBe(12);
+      expect(result.pulaReward).toBe(0);
       expect(result.bothoReward).toBe(10);
-      expect(pula()).toBe(12);
+      expect(pula()).toBe(0);
       expect(botho()).toBe(10);
       expect(result.reputationGain).toBe(10);
     });
@@ -305,8 +305,8 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
       await expect(
         service.turnInCharge('farm-1', 'user-1', 'oupa_kabelo', NOW),
       ).rejects.toBeInstanceOf(BadRequestException);
-      // Pula must not double.
-      expect(pula()).toBe(12);
+      // Pula must not have been paid at all (errands are Botho-only, docs/38 I-2).
+      expect(pula()).toBe(0);
     });
 
     it('a volume charge is measured from the ledger, not from the bag', async () => {
@@ -328,7 +328,9 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
         'mama_naledi',
         NOW,
       );
-      expect(result.pulaReward).toBe(12);
+      // The objective is still measured from the ledger, but the ward errand pays
+      // no Pula (docs/38 I-2) — only capped Botho.
+      expect(result.pulaReward).toBe(0);
       expect(inventory.removeItem).not.toHaveBeenCalled();
     });
 

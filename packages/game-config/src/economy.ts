@@ -182,7 +182,7 @@ export const LAND_LADDER: LandTier[] = [
 export const STARTING_PLOTS = 4;
 export const MAX_PLOTS = 20;
 
-export const LAND_LADDER_TOTAL = 31200; // 1200 + 6000 + 8000 + 15000
+export const LAND_LADDER_TOTAL = 30200; // 1200 + 6000 + 8000 + 15000 (= 30,200)
 
 /**
  * docs/34 §4.1 (2026-10-01) — the TAIL is retuned, the ladder's shape is not.
@@ -226,6 +226,13 @@ export const BOTHO_THRESHOLDS = {
   LETSEMA: 500,
   /** "waters and harvests for you" — the capstone helper. */
   AUTO_HELPER: 500,
+  /**
+   * @deprecated Lifetime value retained ONLY for backward compatibility. The real
+   * prize gate is `PRIZE.minimumBothoInPeriod` — a MONTHLY Botho delta ≥ 150
+   * (docs/38 T-5 / I-8 / MVP/02 §6.7), NOT this lifetime 1000. Do not use for
+   * eligibility; the monthly-delta path is the one that keeps a payment from buying
+   * the prize.
+   */
   PRIZE_ELIGIBILITY: 1000,
 } as const;
 
@@ -259,6 +266,26 @@ export function automationUnlockedAt(botho: number): (typeof AUTOMATION_LADDER)[
 export const BOTHO_DAILY_CAP = 50;
 /** Letsema: Botho >= 500 AND not used in 7 days. */
 export const LETSEMA_COOLDOWN_DAYS = 7;
+
+/**
+ * R-C4 / docs/38 A3 — Botho granted per Pula donated to a Council Project, through
+ * the capped credit path (I4). 1 is the decided rate; 2/Pula would let a funded
+ * player hit the 50/day cap for P25, which reads as "buying standing". KgotlaService
+ * imports this instead of redeclaring its own private copy.
+ */
+export const BOTHO_PER_PULA_DONATED = 1;
+
+/**
+ * docs/37 §6.3 / 38 A4 / R-C3 — the ONE sink for season stamps: a cosmetic
+ * souvenir, bought only with stamps, never seeds/Pula/Botho/water/gameplay.
+ * `chapter.service.spendTokens()` enforces that `purpose` is one of these SKUs
+ * and `amount` equals its `stamps` price, so the price is server-authoritative.
+ * Default (R-C3): one souvenir at 25 stamps — ~half a free-path chapter, so an
+ * engaged player buys one per chapter and a completionist must choose.
+ */
+export const SEASON_SOUVENIRS: ReadonlyArray<{ sku: string; stamps: number; type: 'cosmetic' }> = [
+  { sku: 'season_souvenir', stamps: 25, type: 'cosmetic' },
+];
 
 /* ------------------------------------------------------------- Fertilizer (G1) */
 /**
@@ -520,8 +547,11 @@ export const CHAPTER_MARKET_EVENTS: Record<ChapterSlug, ChapterMarketEvent> = {
     rotationHours: 7 * 24,
   },
   letlhafula: {
-    name: 'Letlhafula Festival',
-    description: 'Harvest festival — grain and food trade briskly.',
+    // docs/38 T-3 / E-14 — Act IV (Dikgakologo) is ploughing PREPARATION, not a
+    // festival. The festival lives in Act II (phane). Re-scoped copy-only; the
+    // grain-demand shape is unchanged.
+    name: 'Ploughing Preparation',
+    description: 'The ploughing season is declared — seed and grain demand swells for the scattering.',
     effect: 'grain',
     multiplier: 1.3,
     rotationHours: 7 * 24,

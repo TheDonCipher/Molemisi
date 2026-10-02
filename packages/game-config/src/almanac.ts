@@ -29,11 +29,19 @@ export type AlmanacRequirementKind =
 export interface AlmanacReward {
   pula?: number;
   botho?: number;
-  /** Chapter Tokens (02 §3.3) — the in-chapter currency. */
+  /** Chapter Tokens (02 §3.3) — the in-chapter currency (season stamps). */
   chapterTokens?: number;
   /** A cosmetic unlock key (resolved by the cosmetics catalogue, P9). */
   cosmetic?: string;
 }
+
+/**
+ * Village Pass (internal key `guild`) reward policy — docs/38 T-7 / I-6.
+ * The Pass track confers **stamps + cosmetics only**: NO Pula, NO Botho, NO gameplay
+ * power. This is a hard legal control (I4): a subscription must never reach
+ * `creditBothoCapped`, or a payment could buy the real-money Botho prize. The free
+ * track remains a legitimate Pula/Botho faucet because it is earned, not bought.
+ */
 
 export interface AlmanacTier {
   /** 1-based, sequential. Tiers must be claimed in order. */
@@ -56,13 +64,15 @@ export const ALMANAC: AlmanacConfig = {
     { tier: 4, requirement: { kind: 'bushveld', count: 5 }, reward: { chapterTokens: 20 } },
     { tier: 5, requirement: { kind: 'harvest', count: 10 }, reward: { pula: 80, chapterTokens: 20 } },
   ],
-  // Guild track — subscriber-only, richer, includes a cosmetic.
+  // Village Pass track (key `guild`) — stamps + cosmetics ONLY (docs/38 T-7 / I-6).
+  // No Pula, no Botho, no gameplay power. Totals 170 season stamps/chapter, matching
+  // docs/38 A5; the cosmetics are cosmetic-only unlocks (P9 catalogue).
   guildTrack: [
-    { tier: 1, requirement: { kind: 'logins', count: 5 }, reward: { pula: 60 } },
+    { tier: 1, requirement: { kind: 'logins', count: 5 }, reward: { chapterTokens: 20 } },
     { tier: 2, requirement: { kind: 'quests', count: 4 }, reward: { chapterTokens: 30 } },
-    { tier: 3, requirement: { kind: 'community', count: 2 }, reward: { pula: 100, botho: 10 } },
-    { tier: 4, requirement: { kind: 'bushveld', count: 10 }, reward: { chapterTokens: 50, cosmetic: 'guild_frame_1' } },
-    { tier: 5, requirement: { kind: 'harvest', count: 20 }, reward: { pula: 150, chapterTokens: 50 } },
+    { tier: 3, requirement: { kind: 'community', count: 2 }, reward: { chapterTokens: 50 } },
+    { tier: 4, requirement: { kind: 'bushveld', count: 10 }, reward: { chapterTokens: 50, cosmetic: 'village_pass_frame_1' } },
+    { tier: 5, requirement: { kind: 'harvest', count: 20 }, reward: { chapterTokens: 20, cosmetic: 'village_pass_outfit_1' } },
   ],
 };
 
