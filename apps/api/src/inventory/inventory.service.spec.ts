@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
@@ -226,6 +226,62 @@ describe('InventoryService — removal is atomic (C3, security audit 2026-10-02)
       { data: { quantity: 7 }, error: null },
     ]);
     expect(await service.countOwned('p1', 'sorghum')).toBe(7);
+  });
+});
+
+/**
+ * A2 (security audit 2026-10-03) — `resolvePlayerId` is no longer a lookup.
+ *
+ * The signature used to be `resolvePlayerId(farmId)`, which made it a
+ * farm→player LOOKUP with no authorisation in it at all. `CraftingController`
+ * then resolved the JWT identity and threw it away (`void userId;`), so any
+ * authenticated player could point `:farmId` at somebody else's farm and spend
+ * their inputs and their Pula fee. The `expectedUserId` parameter is required
+ * and the resolution is refused unless the farm actually belongs to it.
+ */
+describe('InventoryService — resolvePlayerId is a CHECKED lookup (A2)', () => {
+  it('returns the player id when the farm is the caller’s own', async () => {
+    const { service } = buildService([{ data: { user_id: 'owner-1' }, error: null }]);
+    await expect(service.resolvePlayerId('farm-1', 'owner-1')).resolves.toBe('owner-1');
+  });
+
+  it('refuses to resolve a farm owned by somebody else', async () => {
+    // THE IDOR. Before A2 this returned 'victim' for any caller, and every
+    // caller used it to read or spend the VICTIM's inventory.
+    const { service } = buildService([{ data: { user_id: 'victim' }, error: null }]);
+    await expect(service.resolvePlayerId('farm-1', 'attacker')).rejects.toThrow(NotFoundException);
+  });
+
+  it('answers 404, not 403, so a probe cannot enumerate other players’ farms', async () => {
+    // A 403 would confirm "this farm exists, it just isn't yours", which is
+    // itself a leak. Matching `verifyFarmOwnership`, a stranger's farm is
+    // indistinguishable from a farm that does not exist.
+    const { service } = buildService([{ data: { user_id: 'victim' }, error: null }]);
+    await expect(service.resolvePlayerId('farm-1', 'attacker')).rejects.toThrow('Farm not found');
+  });
+
+  it('refuses when no identity is offered at all, rather than resolving anything', async () => {
+    // Reaching this means a call site was written against the pre-A2 signature.
+    // Failing loudly here is the point: a permissive default is how the IDOR
+    // comes back. Asserted for both the empty string and `undefined`, since a
+    // controller that forgot to decorate the handler yields the latter.
+    const { service, from } = buildService([]);
+    await expect(
+      service.resolvePlayerId('farm-1', '' as unknown as string),
+    ).rejects.toThrow(BadRequestException);
+    await expect(
+      service.resolvePlayerId('farm-1', undefined as unknown as string),
+    ).rejects.toThrow(BadRequestException);
+    // It fails BEFORE the lookup, so there is no round trip at all.
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('is the only sanctioned farm→player resolution', () => {
+    // A structural guard, in the spirit of the static-scan tests in
+    // launch-readiness.spec.ts: the parameter is not optional in the type, so a
+    // call site cannot compile without passing one.
+    const arity = InventoryService.prototype.resolvePlayerId.length;
+    expect(arity).toBe(2);
   });
 });
 

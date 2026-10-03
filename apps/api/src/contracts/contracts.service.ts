@@ -240,8 +240,15 @@ export class ContractsService {
     return Math.max(2, Math.round(this.payoutFor(contract) / 10));
   }
 
-  async getActiveContracts(farmId: string): Promise<ActiveContract[]> {
+  async getActiveContracts(farmId: string, userId: string): Promise<ActiveContract[]> {
     const adminClient = this.supabaseService.getAdminClient();
+
+    // A2 — the controller already calls verifyFarmOwnership, but the SERVICE is
+    // the reusable unit and this method reads the caller's inventory to show
+    // progress. Without an identity here the check lived only in the controller,
+    // so any future caller (a task, an admin tool) would silently regain the
+    // cross-tenant read. `userId` is therefore part of the signature.
+    await this.verifyFarmOwnership(farmId, userId);
 
     const { data: active } = await adminClient
       .from('active_contracts')
@@ -255,7 +262,7 @@ export class ContractsService {
     // G4 — progress reads the canonical player_inventory store, not the legacy
     // farm-scoped `inventory` table (which post-cutover no longer receives
     // livestock products and never received anything else).
-    const playerId = await this.inventory.resolvePlayerId(farmId);
+    const playerId = await this.inventory.resolvePlayerId(farmId, userId);
 
     return await Promise.all(
       (active ?? []).map(async (a: Record<string, unknown>) => {
@@ -414,8 +421,9 @@ export class ContractsService {
       throw new BadRequestException('Contract definition not found');
     }
 
-    // Check if all requirements met (G4: canonical store)
-    const playerId = await this.inventory.resolvePlayerId(farmId);
+    // Check if all requirements met (G4: canonical store). A2 — `userId` makes
+    // the resolution checked; `verifyFarmOwnership` above is the primary guard.
+    const playerId = await this.inventory.resolvePlayerId(farmId, userId);
     for (const req of contract.requirements) {
       const current = await this.inventory.countOwned(playerId, req.itemType);
       if (current < req.quantity) {
@@ -458,11 +466,26 @@ export class ContractsService {
     const bothoReward = this.bothoRewardFor(contract);
     const awardedBotho = await this.wallet.creditBothoCapped(userId, bothoReward, 'contract_complete');
 
-    // Mark contract as completed
-    await adminClient
+    // H4-shaped guard — claim the completion ATOMICALLY as the last state change.
+    // Two concurrent completions of the same row must not both pay: the
+    // predicate lives in the UPDATE (the pattern the payments webhook uses), so
+    // Postgres decides who wins and the loser gets zero rows back instead of a
+    // second payout.
+    const { data: claimed, error: claimErr } = await adminClient
       .from('active_contracts')
       .update({ completed: true, completed_at: new Date().toISOString() })
-      .eq('id', activeContractId);
+      .eq('id', activeContractId)
+      .eq('completed', false)
+      .select('id');
+
+    if (claimErr) {
+      throw new Error(`Failed to complete contract: ${claimErr.message}`);
+    }
+    if (!claimed || claimed.length === 0) {
+      // Zero rows: somebody else already completed this one. Doing nothing is
+      // the whole point — awarding twice is what the predicate exists to stop.
+      throw new BadRequestException('Contract already completed');
+    }
 
     return {
       currencyReward: payout,

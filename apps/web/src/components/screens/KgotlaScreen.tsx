@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getItemDef } from '@molemisi/game-config';
+import { getItemDef, SEASON_SOUVENIRS } from '@molemisi/game-config';
 import { useKgotla } from '../../lib/kgotla';
-import type { ChargeBoardRow, ChargeView, KgotlaNpc } from '../../lib/kgotla';
+import type {
+  ChargeBoardRow,
+  ChargeView,
+  KgotlaNpc,
+  SouvenirView,
+} from '../../lib/kgotla';
 import { useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
 
@@ -215,6 +220,10 @@ export function KgotlaScreen() {
     elder,
     contribution,
     feastStatus,
+    yearCharge,
+    yearChargeError,
+    chapterStanding,
+    souvenirError,
     loading,
     councilError,
     busyId,
@@ -223,6 +232,9 @@ export function KgotlaScreen() {
     turnIn,
     donate,
     donateVillageFeast,
+    acceptYearCharge,
+    turnInYearCharge,
+    spendSouvenir,
     reload,
   } = useKgotla();
 
@@ -311,6 +323,27 @@ export function KgotlaScreen() {
   const melons = inventory.find((i) => i.itemType === 'watermelon')?.quantity ?? 0;
   const feastBusy = busyId === 'feast';
   const canFeast = melons >= 20 && !feastBusy && !loading;
+
+  /* ---- the Year layer (docs/36 §5) + the souvenir sink (docs/34 §3.4) ----
+   *
+   * Every number below comes from the server view. The client computes no
+   * reward, no readiness and no balance of its own.
+   */
+  const yearBusy = busyId === 'year-charge';
+  const hasCharge = !!yearCharge && !!yearCharge.chargeId;
+  const chargeDone = yearCharge?.status === 'claimed';
+
+  /**
+   * The one souvenir SKU, straight from game-config. `chapterTokens` is the
+   * server's balance and the price is the config's, so the button can be
+   * disabled honestly without the client inventing a cost.
+   */
+  const souvenir: SouvenirView | null = SEASON_SOUVENIRS[0] ?? null;
+  const stamps = chapterStanding?.almanac.chapterTokens ?? null;
+  const souvenirBusy = !!souvenir && busyId === `souvenir:${souvenir.sku}`;
+  const canBuySouvenir =
+    !!souvenir && !!stamps && stamps >= souvenir.stamps && !souvenirBusy && !loading;
+
   const showSkeleton = loading && npcs.length === 0;
 
   /** One row of the quest board (AC-16). */
@@ -513,6 +546,178 @@ export function KgotlaScreen() {
           </div>
         )}
       </div>
+
+      {/* 0) THE CHARGE OF THE MONTH — docs/36 §5, R-C1. This marquee sits
+            ABOVE the errand board on purpose: the daily errands below pay Botho
+            and regard only, and this card is the only place the year's Pula is
+            earned. It was missing entirely, which made the P915/year faucet
+            unreachable by any player. */}
+      <section className="relative z-10 px-4 pt-3">
+        <div className="mx-auto max-w-2xl bg-gradient-to-b from-primary-container/90 to-wood-dark/90 border-2 border-gold-currency px-3 py-2.5 shadow-[3px_3px_0_rgba(0,0,0,0.5)]">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="font-headline text-xs text-on-primary-container uppercase font-bold tracking-wide">
+              {tl('yearChargeBoard')}
+            </h2>
+            {yearCharge?.cycle && (
+              <span className="font-mono text-[10px] text-cream-surface/90 shrink-0">
+                {tl('yearChargeCycle')} {yearCharge.cycle}
+              </span>
+            )}
+          </div>
+          <p className="font-mono text-[9px] text-cream-surface/90 mt-0.5 leading-snug">
+            {tl('yearChargeHint')}
+          </p>
+
+          {/* A failed Year read is its own row. It never blanks the council. */}
+          {yearChargeError && (
+            <div className="mt-2 px-2 py-1.5 border border-status-danger bg-wood-dark/80">
+              <p className="font-body text-[11px] text-cream-surface/90 leading-snug">
+                {tl('yearChargeUnavailable')}
+              </p>
+              <button
+                onClick={() => reload()}
+                className="mt-1 px-2 py-1 bg-primary text-wood-dark font-mono text-[10px] uppercase font-bold active:translate-y-0.5"
+              >
+                {tl('retry')}
+              </button>
+            </div>
+          )}
+
+          {!yearChargeError && !hasCharge && !loading && (
+            <p className="mt-2 font-body text-[11px] text-cream-surface/90">
+              {tl('yearChargeNone')}
+            </p>
+          )}
+{yearCharge && hasCharge && (
+            <>
+              <div className="mt-2 flex items-baseline justify-between gap-2">
+                <span className="font-headline text-sm text-cream-surface font-bold truncate">
+                  {yearCharge.name}
+                </span>
+                {chargeDone && (
+                  <span className="font-mono text-[10px] text-status-success font-bold uppercase shrink-0">
+                    {tl('yearChargeClaimed')}
+                  </span>
+                )}
+              </div>
+
+              {/* Every ask with what is held against it. `met` is derived by the
+                  server from the player's real inventory, never by the client. */}
+              <ul className="mt-1.5 space-y-0.5">
+                {yearCharge.asks.map((a) => {
+                  const def = getItemDef(a.item);
+                  return (
+                    <li
+                      key={a.item}
+                      className="flex items-center justify-between gap-2 font-mono text-[11px]"
+                    >
+                      <span className="text-cream-surface/90 truncate">
+                        {a.qty} × {def?.name ?? a.item}
+                      </span>
+                      <span
+                        className={`shrink-0 ${a.met ? 'text-status-success' : 'text-status-warning'}`}
+                      >
+                        {a.met ? '✓' : `${a.have}/${a.qty}`}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] text-gold-currency truncate">
+                  {tl('questReward')}:{' '}
+                  {[
+                    yearCharge.rewards.pula > 0 ? `${yearCharge.rewards.pula} Pula` : null,
+                    yearCharge.rewards.botho > 0 ? `${yearCharge.rewards.botho} Botho` : null,
+                    yearCharge.rewards.chapterTokens > 0
+                      ? `${yearCharge.rewards.chapterTokens} ${tl('rewardTokens')}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+
+                {yearCharge.status === 'none' && (
+                  <button
+                    disabled={yearBusy}
+                    onClick={() => acceptYearCharge()}
+                    className="shrink-0 px-3 py-1.5 bg-primary text-wood-dark font-mono text-[10px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+                  >
+                    {yearBusy ? '…' : tl('yearChargeAccept')}
+                  </button>
+                )}
+                {yearCharge.status === 'active' && yearCharge.ready && (
+                  <button
+                    disabled={yearBusy}
+                    onClick={() => turnInYearCharge()}
+                    className="shrink-0 px-3 py-1.5 bg-gold-currency text-wood-dark font-mono text-[10px] uppercase font-bold active:translate-y-0.5 disabled:opacity-40"
+                  >
+                    {yearBusy ? '…' : tl('yearChargeTurnIn')}
+                  </button>
+                )}
+                {/* Accepted but short: the button is absent, not disabled-and-
+                    silent, so the player is never offered a turn-in the server
+                    will refuse. */}
+                {yearCharge.status === 'active' && !yearCharge.ready && (
+                  <span className="shrink-0 font-mono text-[10px] text-cream-surface/80">
+                    {tl('yearChargeNeeds')}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Season souvenir — the ONLY sink for Chapter Tokens (docs/34 §3.4).
+          DEPENDENCY: the spend route needs the atomic `spend_chapter_tokens`
+          RPC (migration 20261003000020), which is written but NOT applied to the
+          live DB. Until it is, this button returns a server error; the error is
+          rendered in place and the rest of the screen keeps working. See the
+          note on `spendSouvenir` in lib/kgotla.ts. */}
+      <section className="relative z-10 px-4 mt-2">
+        <div className="mx-auto max-w-2xl bg-wood-dark/80 px-3 py-2 border border-wood-border">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <span className="font-mono text-[10px] uppercase text-primary font-bold block">
+                {tl('seasonSouvenir')}
+              </span>
+              <p className="font-body text-[11px] text-cream-surface/90 leading-snug">
+                {tl('seasonSouvenirHint')}
+              </p>
+            </div>
+            {souvenir && (
+              <button
+                disabled={!canBuySouvenir}
+                onClick={() => spendSouvenir(souvenir)}
+                className={`shrink-0 px-3 py-2 border font-mono text-[10px] uppercase font-bold ${
+                  canBuySouvenir
+                    ? 'bg-primary-container text-on-primary-container border-primary active:translate-y-0.5'
+                    : 'bg-surface-container-high/50 border-wood-border opacity-50 cursor-not-allowed'
+                }`}
+              >
+                {souvenirBusy ? '…' : `${tl('souvenirBuy')} · ${souvenir.stamps}`}
+              </button>
+            )}
+          </div>
+          <p className="font-mono text-[9px] text-on-surface-variant mt-1">
+            🎫 {tl('rewardTokens')}: {stamps ?? '—'}
+            {chapterStanding
+              ? ` · ${chapterStanding.chapter.name} · ${chapterStanding.chapter.daysLeft}d`
+              : ''}
+          </p>
+          {souvenir && stamps !== null && stamps < souvenir.stamps && !souvenirError && (
+            <p className="font-mono text-[9px] text-status-warning mt-0.5">
+              {tl('souvenirLocked')}
+            </p>
+          )}
+          {souvenirError && (
+            <p className="font-mono text-[9px] text-status-danger mt-0.5 leading-snug">
+              {souvenirError}
+            </p>
+          )}
+        </div>
+      </section>
 
       {/* 1) THE COUNCIL — portraits centre-stage in carved seats. Elder Neo heads
             the council on its own raised row (AC-12). */}

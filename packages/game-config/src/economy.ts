@@ -444,6 +444,27 @@ export const GUILD_SUBSCRIPTION = {
 export const BOOSTS: readonly never[] = [];
 export const BOOST_SLUGS: readonly string[] = [];
 
+/**
+ * WILDLIFE RAIDS ARE DEFERRED FROM v1 (product ruling 2026-09-11).
+ *
+ * There is no raid system: no raid table, no raid tick in the simulation, no
+ * damage path, no threat model. The simulation (`simulation/engine/`) advances
+ * crops, weather, buildings and livestock and never once produces an animal
+ * loss, so nothing can be raided.
+ *
+ * This flag exists so that "raids are deferred" is an ASSERTED invariant rather
+ * than a comment that quietly stops being true. `store.spec.ts` reads it to
+ * prove no player-facing string advertises a raid, and it is the one place a
+ * future raid feature has to consciously flip: build the tick, flip this to
+ * true, THEN restore the copy. Nothing in the codebase may set it true on its
+ * own.
+ *
+ * It is a literal rather than a computed probe of the engine because a probe
+ * would be true-by-default the moment someone renamed a function — the flag is
+ * only useful if flipping it is a deliberate, reviewable act.
+ */
+export const RAID_SYSTEM_IMPLEMENTED = false as const;
+
 /* ------------------------------------------------------------------ Prize */
 /** 02 §6.7 — monthly Botho EARNED, not lifetime (F16: lifetime totals converge and ties become endemic). */
 export const PRIZE = {

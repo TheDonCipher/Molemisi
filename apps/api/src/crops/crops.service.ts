@@ -33,6 +33,12 @@ export interface HarvestResult {
     quantity: number;
     quality: string;
   };
+  /**
+   * A3 — units the storage cap REFUSED, so `inventoryAddition.quantity` is what
+   * was actually banked. Surfaced rather than swallowed (03 §3.4: never a silent
+   * loss) so the client can tell the player their store was full.
+   */
+  overflow: number;
 }
 
 export interface LetsemaStatus {
@@ -149,7 +155,13 @@ export class CropsService {
     farmId: string,
     plotId: string,
     fertilizerType: string,
+    userId: string,
   ): Promise<FertilizeResult> {
+    // A2 — the identity is part of the signature now, not just the controller's
+    // local. This method CONSUMES an item from the caller's inventory, so
+    // "which player" is load-bearing rather than incidental.
+    await this.verifyFarmOwnership(farmId, userId);
+
     const cfg = FERTILIZERS[fertilizerType];
     if (!cfg) {
       throw new BadRequestException(`Fertilizer '${fertilizerType}' is not available`);
@@ -171,7 +183,7 @@ export class CropsService {
       throw new BadRequestException('Crop is ready to harvest');
     }
 
-    const playerId = await this.inventory.resolvePlayerId(farmId);
+    const playerId = await this.inventory.resolvePlayerId(farmId, userId);
 
     // Consume first (the balance check), arm second; if the write fails the item
     // goes back rather than vanishing (never a partial loss — 03 §3.4).
@@ -197,7 +209,11 @@ export class CropsService {
     return { plotId, fertilizerType, item: cfg.item, bonus: cfg.bonus, untilStage };
   }
 
-  async harvestCrop(farmId: string, plotId: string): Promise<HarvestResult> {
+  async harvestCrop(farmId: string, plotId: string, userId: string): Promise<HarvestResult> {
+    // A2 — harvesting banks goods into the caller's inventory, so ownership is
+    // checked here as well as in the controller.
+    await this.verifyFarmOwnership(farmId, userId);
+
     // Server-authoritative: advance growth first so READY reflects real elapsed time
     // gated by the tank, not whatever the client last saw (03 §8).
     await this.water.advanceFarmGrowth(farmId);
@@ -207,7 +223,7 @@ export class CropsService {
       throw new BadRequestException('Crop is not ready for harvest');
     }
 
-    return this.collectCrop(farmId, plot);
+    return this.collectCrop(farmId, plot, userId);
   }
 
   // ==================================================================
@@ -316,7 +332,9 @@ export class CropsService {
 
     const harvests: HarvestResult[] = [];
     for (const plot of ready) {
-      harvests.push(await this.collectCrop(farmId, plot));
+      // A2/A3 — `userId` is threaded into `collectCrop` for the checked
+      // farm→player resolution; `letsemaStatus` above already verified ownership.
+      harvests.push(await this.collectCrop(farmId, plot, userId));
     }
 
     await this.wallet.markLetsemaUsed(userId, now);
@@ -352,10 +370,40 @@ export class CropsService {
   /**
    * Roll the yield, clear the plot, bank the crop. Shared by a single harvest and
    * by Letsema so the two can never disagree about what a harvest is worth.
+   *
+   * A3 (security audit 2026-10-03) — three defects, all in this one method:
+   *
+   *   1. THE YIELD ROLLED WITH `Math.random()`. That is the same bug the whole
+   *      simulation engine was rebuilt to remove (09 §10, packages/game-config
+   *      `RngSource`): an unreproducible, unauditable draw. A harvest that
+   *      reported 4 units and banked 2 could never be re-derived from its inputs,
+   *      so neither a bug report nor an anti-cheat review could reconstruct it.
+   *      Worse, it was called on the *server* with no seed at all, which made the
+   *      result untestable — the old spec could only assert the output was
+   *      inside the band, never what it *was*.
+   *      It is now derived deterministically from the crop instance row itself
+   *      (crop id + planted_at), so the same crop always yields the same amount
+   *      and the value is reproducible from the record.
+   *
+   *   2. THE THREE STEPS WERE NOT ORDERED. The old code emptied the plot and
+   *      deleted the crop instance BEFORE banking the goods. If `addItem` then
+   *      failed — a full store, a DB blip — the crop was destroyed and the
+   *      player got nothing: unrecoverable data loss on a transient error. The
+   *      bank step now goes first; only once the goods are safely stored is the
+   *      plot cleared. A failure in the clearing steps leaves the player holding
+   *      the goods AND the crop, which is recoverable, and the store caps make
+   *      the duplicate harmless.
+   *
+   *   3. `stored` was computed as `yieldAmount - overflow` while the caller was
+   *      told `yield: stored` — but the plot was already cleared before the
+   *      overflow was known, so the overflow was silently destroyed. Overflow is
+   *      now REPORTED explicitly in the result so the UI can tell the player,
+   *      rather than the crop quietly vanishing (03 §3.4: never a silent loss).
    */
   private async collectCrop(
     farmId: string,
     plotRow: Record<string, unknown>,
+    userId: string,
   ): Promise<HarvestResult> {
     const adminClient = this.supabaseService.getAdminClient();
     const plotId = plotRow.id as string;
@@ -371,10 +419,22 @@ export class CropsService {
     const cropType = crop.crop_type as string;
     const cropConfig = getCropConfig(cropType);
 
-    const yieldAmount =
-      Math.floor(
-        Math.random() * ((cropConfig?.yield.max ?? 5) - (cropConfig?.yield.min ?? 3) + 1),
-      ) + (cropConfig?.yield.min ?? 3);
+    // A3 — deterministic yield. The band comes from config exactly as before;
+    // only the DRAW changed. Mixing the stable crop instance id is enough to
+    // spread yields across a field (two sorghum planted together still differ)
+    // while being fully reproducible from the stored row. `>>> 0` keeps the
+    // accumulation in the unsigned 32-bit range so it cannot overflow into a
+    // negative or NaN band index on a long string.
+    const seedSource = `${String(crop.id ?? plotId)}:${String(crop.planted_at ?? '')}`;
+    let hash = 2166136261;
+    for (let i = 0; i < seedSource.length; i++) {
+      hash ^= seedSource.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    const min = cropConfig?.yield.min ?? 3;
+    const max = cropConfig?.yield.max ?? 5;
+    const span = Math.max(0, max - min + 1);
+    const yieldAmount = span === 0 ? min : min + ((hash >>> 0) % span);
 
     const health = crop.health as number;
     const qualityScore = health;
@@ -382,16 +442,30 @@ export class CropsService {
 
     const now = new Date().toISOString();
 
-    // Clear plot
-    await adminClient.from('farm_plots').update({ state: 'EMPTY', updated_at: now }).eq('id', plotId);
-    // Delete crop instance
-    await adminClient.from('crop_instances').delete().eq('id', crop.id);
-
-    // Add to the canonical inventory store (handles stack + slot caps). Items go to
-    // player_inventory, never the legacy `inventory` table.
-    const playerId = await this.inventory.resolvePlayerId(farmId);
+    // BANK FIRST. The goods must exist before the crop that produced them is
+    // destroyed, or a storage-cap rejection costs the player the whole harvest.
+    // Items go to player_inventory, never the legacy `inventory` table.
+    // A2 — `userId` makes the farm→player resolution a CHECKED lookup.
+    const playerId = await this.inventory.resolvePlayerId(farmId, userId);
     const { overflow } = await this.inventory.addItem(playerId, farmId, cropType, yieldAmount);
     const stored = yieldAmount - overflow;
+
+    // Only now is it safe to consume the crop. Check the errors: an ignored
+    // failure here would leave a harvested READY plot that can be farmed again.
+    const { error: clearErr } = await adminClient
+      .from('farm_plots')
+      .update({ state: 'EMPTY', updated_at: now })
+      .eq('id', plotId);
+    if (clearErr) {
+      throw new Error(`Failed to clear plot after harvest: ${clearErr.message}`);
+    }
+    const { error: deleteErr } = await adminClient
+      .from('crop_instances')
+      .delete()
+      .eq('id', crop.id);
+    if (deleteErr) {
+      throw new Error(`Failed to remove harvested crop: ${deleteErr.message}`);
+    }
 
     return {
       plot: { id: plotId, state: 'EMPTY' },
@@ -407,6 +481,9 @@ export class CropsService {
         quantity: stored,
         quality,
       },
+      // A3 — surface what the storage cap refused so the client can tell the
+      // player rather than the units silently disappearing.
+      overflow,
     };
   }
 

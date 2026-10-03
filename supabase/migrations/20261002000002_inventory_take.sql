@@ -1,32 +1,37 @@
 -- ============================================================================
--- C3 — atomic inventory removal (security audit 2026-10-02)
+-- SECURITY C3 — atomic inventory consumption (fixes the market-sell TOCTOU)
 --
--- THE BUG
---   `InventoryService.removeItem` read the row, computed `quantity - qty` in JS,
---   then wrote the absolute result back with `.eq('id', ...)` and NO predicate on
---   the current quantity. Two concurrent removals both read the same `quantity`,
---   both computed the same `remaining`, and both wrote it. The items left the bag
---   ONCE while every caller (market sell, contract turn-in, Kgotla turn-in, feast,
---   crafting) credited as though they had left twice. For market sell that is
---   unbounded Pula minting — a classic TOCTOU double-credit.
+-- THE HOLE
+--   InventoryService.removeItem() is read-modify-write in application code:
+--       SELECT id, quantity ... ; then
+--       UPDATE player_inventory SET quantity = <have - qty> WHERE id = ...
+--   The UPDATE carries no `quantity >= qty` predicate, so two concurrent calls
+--   both read `have`, both compute the same `remaining`, and both succeed. Only
+--   one unit leaves the bag but every caller proceeds to credit Pula.
+--   Callers affected: market.sellItem, contracts.completeContract,
+--   kgotla.turnInCharge, kgotla.donateVillageFeast, buildings maintenance,
+--   crafting consumption.
 --
 -- THE FIX
---   One SQL function that decrements CONDITIONALLY:
---       UPDATE ... WHERE player_id = ? AND item_def_id = ? AND quantity >= qty
---   Postgres takes a row lock for the duration of the statement, so a second
---   concurrent call re-reads the committed value and either succeeds against the
---   real remainder or matches zero rows. Zero rows = insufficient stock, raised as
---   an exception so the caller cannot go on to credit. This mirrors
---   `plant_crop_transaction` and `wallet_apply` — the two other places the codebase
---   already trusts the database, not the application, to arbitrate.
+--   One SECURITY DEFINER function that performs the check and the decrement in
+--   a single statement. `WHERE ... AND quantity >= p_qty` makes the predicate
+--   part of the write, so Postgres serialises concurrent callers on the row
+--   lock: the loser matches zero rows and raises. This is the same shape as
+--   wallet_apply(), which is what makes the wallet safe.
+--
+-- Also adds a non-negative CHECK (NOT VALID, so it does not fail the migration
+-- on pre-existing corrupt rows) — new writes are enforced immediately.
 -- ============================================================================
 
 BEGIN;
 
+-- ---------------------------------------------------------------------------
+-- 1. The atomic taker
+-- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.inventory_take(
-  p_player_id   UUID,
+  p_player_id  UUID,
   p_item_def_id UUID,
-  p_qty         INT
+  p_qty        INT
 ) RETURNS INT
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -35,32 +40,36 @@ AS $$
 DECLARE
   v_remaining INT;
 BEGIN
-  IF p_player_id IS NULL OR p_item_def_id IS NULL THEN
-    RAISE EXCEPTION 'inventory_take: player_id and item_def_id are required';
+  IF p_player_id IS NULL THEN
+    RAISE EXCEPTION 'inventory_take: player_id is required';
   END IF;
   IF p_qty IS NULL OR p_qty <= 0 THEN
-    RAISE EXCEPTION 'inventory_take: qty must be a positive integer (got %)', p_qty;
+    RAISE EXCEPTION 'inventory_take: qty must be positive (got %)', p_qty
+      USING ERRCODE = '22023';
   END IF;
 
+  -- The predicate lives INSIDE the UPDATE, so two concurrent takers cannot both
+  -- pass a pre-check. Zero rows matched == insufficient stock.
   UPDATE public.player_inventory
      SET quantity   = quantity - p_qty,
          updated_at = NOW()
-   WHERE player_id   = p_player_id
+   WHERE player_id  = p_player_id
      AND item_def_id = p_item_def_id
-     AND quantity    >= p_qty
+     AND quantity   >= p_qty
   RETURNING quantity INTO v_remaining;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION
-      'inventory_take: insufficient stock (player %, item_def %, qty %)',
-      p_player_id, p_item_def_id, p_qty;
+    RAISE EXCEPTION 'inventory_take: insufficient items (player %, need %)',
+      p_player_id, p_qty
+      USING ERRCODE = '23514';
   END IF;
 
-  -- Preserve the old delete-on-empty behaviour so the table never accumulates
-  -- zero-quantity rows that would consume a storage slot.
-  IF v_remaining = 0 THEN
+  -- An emptied stack is deleted, matching the old removeItem() contract, so the
+  -- storage-slot count stays honest.
+  IF v_remaining <= 0 THEN
     DELETE FROM public.player_inventory
-     WHERE player_id = p_player_id AND item_def_id = p_item_def_id;
+     WHERE player_id = p_player_id AND item_def_id = p_item_def_id AND quantity <= 0;
+    v_remaining := 0;
   END IF;
 
   RETURN v_remaining;
@@ -68,10 +77,36 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.inventory_take IS
-  'C3 — the only sanctioned way to remove player_inventory stock. Decrements atomically with WHERE quantity >= qty and raises on insufficient stock.';
+  'C3 — the ONLY sanctioned way to remove items. Check and decrement are one '
+  'statement, so concurrent callers cannot double-spend the same stack.';
 
--- Clients may never call it directly; only the service role (InventoryService).
-REVOKE EXECUTE ON FUNCTION public.inventory_take(UUID, UUID, INT)
+-- Only the service role may call it (matches set_role / set_admin).
+REVOKE EXECUTE ON FUNCTION public.inventory_take(uuid, uuid, int)
   FROM PUBLIC, anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 2. Quantity can never go negative
+--    NOT VALID: enforced on every new write, but does not abort the migration
+--    if pre-existing corrupt rows exist. Run the validation block below after
+--    cleaning any rows the anti-cheat sweep reports.
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.player_inventory
+  DROP CONSTRAINT IF EXISTS player_inventory_quantity_nonneg;
+ALTER TABLE public.player_inventory
+  ADD CONSTRAINT player_inventory_quantity_nonneg CHECK (quantity >= 0) NOT VALID;
+
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE public.player_inventory
+      VALIDATE CONSTRAINT player_inventory_quantity_nonneg;
+    RAISE NOTICE 'player_inventory.quantity validated: no negative rows.';
+  EXCEPTION WHEN check_violation THEN
+    RAISE WARNING
+      'player_inventory has negative-quantity rows; constraint left NOT VALID. '
+      'Run: SELECT player_id, item_def_id, quantity FROM public.player_inventory '
+      'WHERE quantity < 0; and reconcile via inventory_take/top-up before re-running.';
+  END;
+END $$;
 
 COMMIT;

@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { BOTHO_DAILY_CAP } from '@molemisi/game-config';
 import { WalletService } from './wallet.service';
 
 /**
@@ -122,16 +123,34 @@ describe('WalletService — server authority (05 §P2)', () => {
   });
 
   // ------------------------------------------------------------ I4 daily cap
+  /**
+   * H1 (security audit 2026-10-03) — the cap moved INTO Postgres.
+   *
+   * These three tests used to drive a two-statement read-then-credit: the
+   * service summed the day's positive Botho rows itself, then called
+   * `wallet_apply`. That is exactly the shape a scripted burst could race —
+   * two concurrent acts both read a pre-cap total and both awarded, overshooting
+   * the 50/day legal cap. The service now delegates the whole sum-and-cap to
+   * `botho_credit_capped`, which takes a `SELECT ... FOR UPDATE` row lock on the
+   * wallet so concurrent callers serialise and the second one sees the cap
+   * already consumed (migration 20261002000003).
+   *
+   * The contract the service must honour is therefore much simpler, and these
+   * tests now assert THAT: it passes the player's request and the day window to
+   * the atomic RPC, and returns whatever the database awarded. The arithmetic
+   * itself is tested where it now lives — in the SQL — not by re-deriving it in
+   * a spec that would only be testing its own mock.
+   */
   describe('I4 — Botho accrual is capped per player per Botswana day (creditBothoCapped)', () => {
-    function buildWith(ledgerRows: { amount: number }[], rpcReturn = 0) {
+    function buildWith(award: number | null, error: any = null) {
       const admin = {
         from: jest.fn(() => ({
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
           gt: jest.fn().mockReturnThis(),
-          gte: jest.fn().mockResolvedValue({ data: ledgerRows, error: null }),
+          gte: jest.fn().mockResolvedValue({ data: [], error: null }),
         })),
-        rpc: jest.fn().mockResolvedValue({ data: rpcReturn, error: null }),
+        rpc: jest.fn().mockResolvedValue({ data: award, error }),
       };
       const svc = Object.create(WalletService.prototype) as WalletService;
       (svc as unknown as { supabase: unknown }).supabase = {
@@ -140,35 +159,58 @@ describe('WalletService — server authority (05 §P2)', () => {
       return { svc, admin };
     }
 
-    it('awards the full request when under the cap', async () => {
-      const { svc, admin } = buildWith([]);
+    it('delegates the cap to the atomic RPC and returns what the database awarded', async () => {
+      const { svc, admin } = buildWith(10);
       const awarded = await svc.creditBothoCapped('p1', 10, 'quest_reward');
       expect(awarded).toBe(10);
       expect(admin.rpc).toHaveBeenCalledWith(
-        'wallet_apply',
-        expect.objectContaining({ p_currency: 'botho', p_amount: 10 }),
+        'botho_credit_capped',
+        expect.objectContaining({
+          p_player_id: 'p1',
+          p_requested: 10,
+          p_source: 'quest_reward',
+          p_cap: BOTHO_DAILY_CAP,
+        }),
       );
     });
 
-    it('awards only the remaining daily budget when partially used', async () => {
-      const { svc, admin } = buildWith([{ amount: 45 }]); // 45 Botho already earned today
-      const awarded = await svc.creditBothoCapped('p1', 20, 'letsema_contribution');
-      expect(awarded).toBe(5); // 50 - 45
-      expect(admin.rpc).toHaveBeenCalledWith(
-        'wallet_apply',
-        expect.objectContaining({ p_currency: 'botho', p_amount: 5 }),
+    it('returns the PARTIAL award the database granted when the cap is nearly spent', async () => {
+      // The DB returns 5 for a request of 20 against 45 already earned. The
+      // service must report 5, not 20 and not throw — this is what the Kgotla
+      // turn-in response and the Botho objective progress both read.
+      const { svc } = buildWith(5);
+      await expect(
+        svc.creditBothoCapped('p1', 20, 'letsema_contribution'),
+      ).resolves.toBe(5);
+    });
+
+    it('returns 0 and does not fall back to a raw credit when the cap is met', async () => {
+      const { svc, admin } = buildWith(0);
+      await expect(svc.creditBothoCapped('p1', 10, 'quest_reward')).resolves.toBe(0);
+      // Exactly ONE rpc call. A raw `wallet_apply` fallback here would silently
+      // reintroduce the uncapped path this change removed.
+      expect(admin.rpc).toHaveBeenCalledTimes(1);
+      expect(admin.rpc).toHaveBeenCalledWith('botho_credit_capped', expect.anything());
+    });
+
+    it('passes a BOTSWANA day start, not a UTC one, so the window rolls over at local midnight', async () => {
+      const { svc, admin } = buildWith(5);
+      // 21:30 UTC on the 1st is already 23:30 in Botswana, so the day start
+      // handed to the RPC must be that same date's local midnight (22:00 UTC on
+      // the 31st) rather than 00:00 UTC on the 1st.
+      await svc.creditBothoCapped(
+        'p1',
+        5,
+        'quest_reward',
+        undefined,
+        new Date('2026-02-01T21:30:00.000Z'),
       );
+      const call = admin.rpc.mock.calls.find((c) => c[0] === 'botho_credit_capped');
+      expect(call?.[1]?.p_day_start).toBe('2026-01-31T22:00:00.000Z');
     });
 
-    it('awards nothing and does not call apply when the cap is already met', async () => {
-      const { svc, admin } = buildWith([{ amount: 50 }]);
-      const awarded = await svc.creditBothoCapped('p1', 10, 'quest_reward');
-      expect(awarded).toBe(0);
-      expect(admin.rpc).not.toHaveBeenCalled();
-    });
-
-    it('awards nothing for a non-positive request', async () => {
-      const { svc, admin } = buildWith([]);
+    it('awards nothing for a non-positive request without touching the database', async () => {
+      const { svc, admin } = buildWith(10);
       expect(await svc.creditBothoCapped('p1', 0, 'quest_reward')).toBe(0);
       expect(await svc.creditBothoCapped('p1', -5, 'quest_reward')).toBe(0);
       expect(admin.rpc).not.toHaveBeenCalled();

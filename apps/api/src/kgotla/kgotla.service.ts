@@ -15,6 +15,9 @@ import {
   REGARD_DECAY,
   BOTHO_PER_PULA_DONATED,
   COUNCIL_PROJECTS,
+  chapterForDate,
+  cycleKey,
+  type ChapterSlug,
 } from '@molemisi/game-config';
 
 /* ============================================================================
@@ -140,6 +143,14 @@ export interface KgotlaProject {
   reward: string;
   /** Chapter Tokens granted once, when the farm's own bar first fills (AC-04). */
   chapterTokenReward: number;
+  /**
+   * The chapter this project belongs to (`COUNCIL_PROJECTS[].chapter`). One
+   * project per chapter, per docs/36 K9 / docs/38 I-3. Donation is gated on it
+   * server-side — see `donateToProject`. The client also uses it to grey out the
+   * three projects that are not the current chapter's, so a refusal is never a
+   * surprise.
+   */
+  chapter: ChapterSlug;
 }
 
 export interface DonationResult {
@@ -317,6 +328,7 @@ export class KgotlaService {
     currentContributions: 0,
     reward: `You gain ${p.stampReward} Chapter Tokens to spend in this chapter.`,
     chapterTokenReward: p.stampReward,
+    chapter: p.chapter,
   }));
 
   constructor(
@@ -700,11 +712,54 @@ export class KgotlaService {
       throw new NotFoundException('Project not found');
     }
 
+    // L2 — chapter gating (docs/36 K9 / §4: the four Council Projects follow the
+    // chapter arc, one per chapter; docs/38 I-3: "only active chapter accepts").
+    //
+    // This is 403 Forbidden, not 400 BadRequest, on purpose: the donation amount
+    // is perfectly well-formed, the player simply may not fund THIS project yet.
+    // A 400 would tell them to fix their input, which is not the problem. Template
+    // is `buildings.service.ts` (the Guardian-of-Sesana gate): check the
+    // eligibility rule before spending anything, and never after.
+    //
+    // Ordering matters: this runs BEFORE `spendPula`, so a refused donation can
+    // never debit the wallet. It also runs before the daily-cap accounting, so a
+    // wrong-chapter attempt does not consume the day's allowance.
+    const activeChapter = chapterForDate(now).slug;
+    if (project.chapter !== activeChapter) {
+      const active = this.PROJECTS.find((p) => p.chapter === activeChapter);
+      throw new ForbiddenException(
+        `'${project.name}' belongs to a different chapter. ` +
+          (active
+            ? `This chapter the council is building '${active.name}' — fund that one instead.`
+            : 'The council has no project open this chapter.'),
+      );
+    }
+
     // 02 §9 — contribution is capped per day so the thing the design pays best for
     // cannot be multiplied by grinding. A spreadsheet must not beat a loyal player.
-    // Like creditBothoCapped, this is read-then-write: two simultaneous donations
-    // could in principle overrun by a little, which is acceptable for a manually
-    // triggered, non-financial cap. Fold it into the ledger if that ever changes.
+    //
+    // THIS CAP IS ON REAL PULA. The old comment here called it a
+    // "non-financial cap", which is simply wrong and was dangerous: Pula is the
+    // only spendable currency in v1 (02 §6), `spendPula` debits a real ledger
+    // balance, and this is a limit on how fast real money can be moved into a
+    // community project. Describing a real-money limit as non-financial invites
+    // exactly the shortcut the cap exists to prevent — "it's only a game balance
+    // knob, a concurrent write is harmless here" — and the caps are the primary
+    // anti-inflation defence, not a courtesy.
+    //
+    // KNOWN TOCTOU WEAKNESS — this one is NOT yet fixed, unlike creditBothoCapped.
+    // `contributedToday` (line 756) and `spendPula` (line 775) are two separate
+    // round trips, so N simultaneous donations can all read the same pre-donation
+    // total and each be allowed the full remaining allowance. The over-contribution
+    // is bounded by min(remaining, one donation) * (concurrent - 1).
+    //
+    // The fix already exists for the Botho case: `creditBothoCapped` was moved
+    // into Postgres as `botho_credit_capped` behind `SELECT ... FOR UPDATE` on the
+    // wallet row (migration 20261002000003, H1 security audit 2026-10-03). This
+    // Pula cap needs the same treatment — a `pula_contribute_capped` RPC that
+    // locks the wallet row, re-reads the day's contribution total, debits, and
+    // returns the new total in one statement. Until that lands, the cap is
+    // soft under concurrency.
     const contributed = await this.wallet.contributedToday(userId, now);
     const remaining = KGOTLA_DAILY_CONTRIBUTION_CAP - contributed;
 
@@ -736,12 +791,41 @@ export class KgotlaService {
     );
 
     // Community progress (not a balance).
-    const { data: existing } = await adminClient
-      .from('kgotla_projects')
-      .select('*')
-      .eq('farm_id', farmId)
-      .eq('project_id', projectId)
-      .single();
+    //
+    // L3 — CYCLE SCOPING. `kgotla_projects` is UNIQUE(farm_id, project_id) with
+    // NO chapter/cycle column, so `current_contributions` and `reward_claimed_at`
+    // are all-time: the four per-chapter thresholds are paid ONCE EVER and the
+    // bar never resets at the chapter turn. `kgotla_charges` already scopes by
+    // `cycle`; projects do not.
+    //
+    // The fix is a `cycle_key` column (the migration is being written by another
+    // agent and CANNOT be applied from here — no DB credentials). Until it lands
+    // the column does not exist, so this read degrades to the legacy
+    // farm+project lookup rather than throwing: the game must keep working on
+    // the schema as it is today, and cycle-correct the moment the column exists.
+    const cycle = cycleKey(now);
+    let existing: Record<string, unknown> | null = null;
+    {
+      const scoped = await adminClient
+        .from('kgotla_projects')
+        .select('*')
+        .eq('farm_id', farmId)
+        .eq('project_id', projectId)
+        .eq('cycle_key', cycle)
+        .maybeSingle();
+      if (!scoped.error) {
+        existing = (scoped.data as Record<string, unknown> | null) ?? null;
+      } else {
+        // Column absent (Postgres 42703 / PostgREST PGRST204). Legacy path.
+        const legacy = await adminClient
+          .from('kgotla_projects')
+          .select('*')
+          .eq('farm_id', farmId)
+          .eq('project_id', projectId)
+          .maybeSingle();
+        existing = (legacy.data as Record<string, unknown> | null) ?? null;
+      }
+    }
 
     const newTotal = ((existing?.current_contributions as number) || 0) + amount;
     const wasComplete = newTotal - amount >= project.requiredContributions;
@@ -763,17 +847,33 @@ export class KgotlaService {
     if (chapterTokens > 0) patch.reward_claimed_at = new Date().toISOString();
 
     if (existing) {
-      await adminClient
+      const updated = await adminClient
         .from('kgotla_projects')
-        .update(patch)
+        .update({ ...patch, cycle_key: cycle })
         .eq('id', existing.id);
+      if (updated.error) {
+        // Column not present yet — write the legacy shape so progress is not lost.
+        await adminClient.from('kgotla_projects').update(patch).eq('id', existing.id);
+      }
     } else {
-      await adminClient.from('kgotla_projects').insert({
+      const inserted = await adminClient.from('kgotla_projects').insert({
         farm_id: farmId,
         project_id: projectId,
         current_contributions: newTotal,
         ...(chapterTokens > 0 ? { reward_claimed_at: patch.reward_claimed_at } : {}),
       });
+      if (inserted.error) {
+        // Retry WITH cycle_key. On the post-migration schema the first insert can
+        // fail for any reason and this must not mask it, so this is the legacy
+        // shape first and the cycle-aware shape second — not the other way round.
+        await adminClient.from('kgotla_projects').insert({
+          farm_id: farmId,
+          project_id: projectId,
+          cycle_key: cycle,
+          current_contributions: newTotal,
+          ...(chapterTokens > 0 ? { reward_claimed_at: patch.reward_claimed_at } : {}),
+        });
+      }
     }
 
     return {
@@ -791,17 +891,37 @@ export class KgotlaService {
 
   async getProjects(
     farmId: string,
+    now = new Date(),
   ): Promise<Array<KgotlaProject & { completed: boolean; rewardClaimed: boolean }>> {
     const adminClient = this.supabaseService.getAdminClient();
+    // L3 — cycle-scoped, same fallback contract as `donateToProject`: prefer the
+    // `cycle_key` column, fall back to the legacy farm+project read when the
+    // column is not present yet. Without this the bar is all-time and the
+    // per-chapter reward can only ever be claimed once, ever.
+    const cycle = cycleKey(now);
 
     return await Promise.all(
       this.PROJECTS.map(async (project) => {
-        const { data: contribution } = await adminClient
+        const scoped = await adminClient
           .from('kgotla_projects')
           .select('current_contributions, reward_claimed_at')
           .eq('farm_id', farmId)
           .eq('project_id', project.id)
-          .single();
+          .eq('cycle_key', cycle)
+          .maybeSingle();
+
+        let contribution: Record<string, unknown> | null = null;
+        if (!scoped.error) {
+          contribution = (scoped.data as Record<string, unknown> | null) ?? null;
+        } else {
+          const legacy = await adminClient
+            .from('kgotla_projects')
+            .select('current_contributions, reward_claimed_at')
+            .eq('farm_id', farmId)
+            .eq('project_id', project.id)
+            .maybeSingle();
+          contribution = (legacy.data as Record<string, unknown> | null) ?? null;
+        }
 
         const current = (contribution?.current_contributions as number) || 0;
         return {
@@ -835,7 +955,7 @@ export class KgotlaService {
     contribution: { contributedToday: number; dailyCap: number; remainingToday: number };
   }> {
     const [projects, contributedToday] = await Promise.all([
-      this.getProjects(farmId),
+      this.getProjects(farmId, now),
       this.wallet.contributedToday(userId, now),
     ]);
 

@@ -17,6 +17,7 @@
  */
 
 import { chapterForMonth, type ChapterSlug } from './chapters';
+import { botswanaMonth, botswanaYear } from './botswanaTime';
 
 /* ----------------------------------------------------------------- Coherence */
 
@@ -140,8 +141,15 @@ const CHARGE_YEAR_RAW: Omit<ChargeYearEntry, 'pulaReward'>[] = [
     npcId: 'oupa_kabelo',
     name: 'The Kraal Gate',
     asks: [
-      { item: 'plank', qty: 4, base: 7, category: 'crafted' },
-      { item: 'rope', qty: 2, base: 18, category: 'crafted' },
+      // Slugs are REAL ITEMS keys. This said 'plank' and 'rope', which exist
+      // nowhere in items.ts — the crafted goods are 'poleto' (P7) and 'thapo'
+      // (P18). Since every ask must be satisfied from inventory before the
+      // Charge pays out, these asks were literally un-completable, and P165 of
+      // the P915/year faucet (kraal_gate P70 + ropes_ploughing P95) was
+      // unobtainable. Base values are unchanged (7 / 18 / 11), so the annual
+      // total is still exactly P915.
+      { item: 'poleto', qty: 4, base: 7, category: 'crafted' },
+      { item: 'thapo', qty: 2, base: 18, category: 'crafted' },
     ],
     botho: 10,
     stamp: 1,
@@ -206,8 +214,10 @@ const CHARGE_YEAR_RAW: Omit<ChargeYearEntry, 'pulaReward'>[] = [
     npcId: 'oupa_kabelo',
     name: 'Ropes for the Ploughing',
     asks: [
-      { item: 'rope', qty: 3, base: 18, category: 'crafted' },
-      { item: 'brick', qty: 3, base: 11, category: 'crafted' },
+      // 'brick' does not exist in items.ts; the brick is 'setena' (P11, R2).
+      // Same unobtainable-P165 defect as kraal_gate above.
+      { item: 'thapo', qty: 3, base: 18, category: 'crafted' },
+      { item: 'setena', qty: 3, base: 11, category: 'crafted' },
     ],
     botho: 10,
     stamp: 1,
@@ -284,11 +294,18 @@ export function chargesForChapter(slug: ChapterSlug): ChargeYearEntry[] {
  * The game year begins 1 November; the cycle is named for that start year.
  *   2026-11-01 → '2026/27'   2027-01-15 → '2026/27'
  *   2027-10-31 → '2026/27'   2027-11-01 → '2027/28'
- * Must use UTC so it agrees with chapter boundaries (00:00 Gaborone = 22:00 UTC prev day).
+ *
+ * Read on the BOTSWANA calendar via `botswanaMonth`/`botswanaYear`, because the
+ * cycle boundary IS a Botswana midnight (00:00 Africa/Gaborone = 22:00 UTC the
+ * previous day, 38 §"chapter boundaries"). The old comment here claimed UTC was
+ * used "so it agrees with chapter boundaries", which is backwards: using
+ * `getUTCMonth()` meant the cycle rolled over 22 hours BEFORE the year did, so
+ * for most of 31 October a player was already keyed to '2027/28' while still
+ * playing the 2026/27 cycle. Both sides now read the same calendar.
  */
 export function cycleKey(date: Date): string {
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth() + 1;
+  const year = botswanaYear(date);
+  const month = botswanaMonth(date);
   const startYear = month >= 11 ? year : year - 1;
   // docs/36 §5.5 style: full start year, two-digit end year (2026/27, 2027/28).
   const endYear = String(startYear + 1).slice(-2);

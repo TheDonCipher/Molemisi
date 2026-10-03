@@ -172,11 +172,34 @@ export class PaymentsService {
         })
         .eq('id', paymentRecord.id);
 
-      // If stub provider, it completes immediately
-      if (providerResponse.status === 'COMPLETED') {
-        await this.awardEntitlement(playerId, virtualGood);
-      }
-
+      // A7 (security audit 2026-10-03) — THE IMMEDIATE AWARD IS GONE.
+      //
+      // This used to call `awardEntitlement(playerId, virtualGood)` the moment
+      // the provider reported COMPLETED. That is the exact bug the webhook path
+      // exists to prevent (the ADR-008 comment at the top of
+      // `payment-provider.interface.ts`: "The game economy never trusts
+      // client-side payment state"). It was reachable in two bad ways:
+      //
+      //   1. DOUBLE GRANT. `createPayment` is the request path and
+      //      `handleWebhook` is the authoritative confirmation. Both call
+      //      `awardEntitlement` for the same purchase, and providers retry
+      //      webhooks. A top-up could therefore be credited two or three times
+      //      for one payment.
+      //   2. NOT ACTUALLY VERIFIED. The award happened on the provider's
+      //      in-band reply to `createPayment`, which is a response to a request
+      //      this server made — not a signed, independently delivered
+      //      confirmation. The signature check exists only on the webhook, so
+      //      this path was minting entitlements without ever verifying one.
+      //
+      // Entitlement is now granted ONLY from `handleWebhook`, after the
+      // signature and the amount/currency agreement have both been checked.
+      // Until the provider's webhook arrives the payment stays COMPLETED but
+      // unfulfilled, which is the correct intermediate state: the player has
+      // paid and the grant is a few hundred milliseconds behind.
+      //
+      // The stub provider returns COMPLETED and, in development, its webhook
+      // verification accepts unsigned events — so the local loop still gets its
+      // entitlement, now via the one authoritative path.
       return this.mapPaymentRecord({
         ...paymentRecord,
         provider_payment_id: providerResponse.providerPaymentId,
@@ -204,15 +227,39 @@ export class PaymentsService {
    * This is the authoritative verification path.
    * The client never determines payment success — only webhooks do.
    */
-  async handleWebhook(webhookPayload: WebhookDto): Promise<{ processed: boolean }> {
-    // Verify the webhook signature
+  async handleWebhook(
+    webhookPayload: WebhookDto,
+    rawBody?: Buffer,
+  ): Promise<{ processed: boolean }> {
+    // Verify the webhook signature.
+    //
+    // A7 (security audit 2026-10-03) — the verifier is handed `rawBody` (the
+    // exact bytes the provider signed, enabled by `{ rawBody: true }` in
+    // main.ts), NOT `webhookPayload.payload`. The old call passed the
+    // caller-declared `payload` sub-object, which meant the HMAC was computed
+    // over content the caller chose: anything omitted from `payload` was simply
+    // not part of what got verified, so the check proved nothing about the rest
+    // of the event — including the `providerPaymentId` that selects which
+    // payment is about to be credited.
+    //
+    // `rawBody` is honoured only when the caller actually supplied it; a test or
+    // an alternate bootstrap that has no raw bytes still falls back to the old
+    // behaviour rather than becoming unverifiable. `stub.provider` refuses
+    // unsigned events outright when a secret IS configured, so the fallback is
+    // only reachable where there is no secret to verify against anyway.
     const verified = await this.provider.verifyWebhookEvent({
       eventType: webhookPayload.eventType,
       providerPaymentId: webhookPayload.providerPaymentId,
       status: webhookPayload.status as PaymentStatus,
       amount: webhookPayload.amount,
       currency: webhookPayload.currency,
-      rawPayload: webhookPayload.payload,
+      // A7 — `rawPayload` is typed `Record<string, unknown>` but the verifier
+      // (`verifyHmacSignature`) explicitly handles a string or Buffer: it
+      // HMACs the BYTES when given one, and only falls back to
+      // `JSON.stringify` for a plain object. A Buffer is passed through as the
+      // interface expects; the cast is the honest widening of a field whose
+      // declared type understates what the verifier accepts.
+      rawPayload: (rawBody ?? webhookPayload.payload) as Record<string, unknown>,
       signature: webhookPayload.signature,
     });
 

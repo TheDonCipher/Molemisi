@@ -26,7 +26,17 @@ export type FlagKind =
   | 'inventory_manipulation'
   | 'cost_bypass'
   | 'market_manipulation'
-  | 'sequence_violation';
+  | 'sequence_violation'
+  /**
+   * A8 (security audit 2026-10-03) — a corruption class found by
+   * `simulation/state-validation.ts` that the hand-written rules above do not
+   * cover. Deliberately ONE kind rather than seven: the specific
+   * `ValidationCode` (STALE_SIMULATION, PLOT_WITHOUT_CROP, …) travels in
+   * `evidence.code`, so a reviewer reads the detail without the flag table
+   * needing a row per failure mode, and new codes in `state-validation.ts`
+   * cannot break the insert.
+   */
+  | 'corrupted_state';
 
 export interface Flag {
   kind: FlagKind;

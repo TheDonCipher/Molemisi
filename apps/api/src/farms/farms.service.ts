@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { SimulationService } from '../simulation/simulation.service';
 import { WalletService } from '../wallet/wallet.service';
@@ -102,8 +102,18 @@ export class FarmsService {
       // *earning*, so absence shouldn't erase community standing. Missed days
       // credit 25% of the daily cap each, at most 3 days, still through
       // creditBothoCapped so today's legal cap (I4) is never bypassed.
+      //
+      // L5 FIX (was `Math.floor(awayMinutes / 1440)`): floor UNDER-CREDITED every
+      // 24h–48h return. A player away exactly 24h got floor(1.0) = 1 day (fine),
+      // but away 23h59m got 0 and away 47h got 1 instead of 2 — so the catch-up
+      // silently lost a day for almost every real return, which is exactly the
+      // population the feature exists for (someone who closed the tab and came
+      // back the next evening). Math.round is the honest reading of "missed
+      // days": it credits a day at 12h and never exceeds the 3-day cap.
+      // Both directions stay bounded — `creditBothoCapped` still clamps to
+      // today's legal cap, and the 3-day ceiling below bounds the total.
       let bothoCatchUp = 0;
-      const missedDays = Math.min(3, Math.floor(awayMinutes / 1440));
+      const missedDays = Math.min(3, Math.max(0, Math.round(awayMinutes / 1440)));
       if (missedDays > 0) {
         bothoCatchUp = await this.wallet.creditBothoCapped(
           userId,

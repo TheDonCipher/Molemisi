@@ -95,6 +95,18 @@ export const BuyItemSchema = z.object({
   quantity: z.number().int().positive('Quantity must be positive'),
 });
 
+// M5 — sale/buy bodies carry farmId alongside the DTO fields. The schemas
+// above only constrain the economic payload; compose them here so the whole
+// request is validated in one gate (farmId is a UUID, so a garbage id fails
+// closed before any ownership query runs).
+export const SellItemRequestSchema = SellItemSchema.extend({
+  farmId: z.string().uuid('Farm ID must be a UUID'),
+});
+
+export const BuyItemRequestSchema = BuyItemSchema.extend({
+  farmId: z.string().uuid('Farm ID must be a UUID'),
+});
+
 // ============================================
 // CONTRACT VALIDATION
 // ============================================

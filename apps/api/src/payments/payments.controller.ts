@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Req, UseGuards, Logger } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
+import type { Request } from 'express';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PaymentsService, CreatePaymentDto } from './payments.service';
@@ -105,7 +107,10 @@ export class PaymentsController {
    * IMPORTANT: This endpoint is NOT authenticated with JWT.
    * It is verified through the payment provider's webhook signature.
    *
-   * In production, add webhook signature verification middleware.
+   * A7 — the request's EXACT bytes (`req.rawBody`, enabled in main.ts) are passed
+   * through to the verifier. The signature covers bytes on the wire; verifying
+   * `body.payload` instead would let the caller declare which content gets
+   * signed, which is not verification at all.
    */
   @Post('webhook')
   async handleWebhook(
@@ -119,10 +124,19 @@ export class PaymentsController {
       payload: Record<string, unknown>;
       signature?: string;
     },
+    @Req() req: RawBodyRequest<Request>,
   ) {
     this.logger.log(`Webhook received: ${body.eventType} for payment ${body.providerPaymentId}`);
 
-    const result = await this.paymentsService.handleWebhook(body);
+    // A7 — `rawBody` may be absent if the app was created without
+    // `{ rawBody: true }` (a test harness, a different bootstrap). Fall back to
+    // the parsed body rather than passing `undefined`, and let the signature
+    // check decide: a missing raw body must never mean "skip verification".
+    const rawBody =
+      req.rawBody ??
+      (Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body ?? {})));
+
+    const result = await this.paymentsService.handleWebhook(body, rawBody);
 
     return { received: result.processed };
   }

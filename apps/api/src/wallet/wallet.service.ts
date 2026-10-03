@@ -104,6 +104,11 @@ export class WalletService {
   /**
    * Read a wallet, creating it if this is the player's first touch.
    * Never throws on "not found" — a wallet always exists once a profile does.
+   *
+   * M6 (security audit 2026-10-03) — create-on-read is now idempotent at the
+   * SQL level (`ON CONFLICT (player_id) DO NOTHING` + re-select). The old
+   * version issued a bare INSERT on a miss, so two concurrent first reads
+   * raced on the PK and one of them 500'd.
    */
   async getWallet(playerId: string): Promise<WalletSnapshot> {
     const admin = this.supabase.getAdminClient();
@@ -125,8 +130,36 @@ export class WalletService {
       .select(WALLET_COLUMNS)
       .single();
 
-    if (createError) throw new Error(`Failed to create wallet: ${createError.message}`);
-    return created as WalletSnapshot;
+    // Two concurrent first reads both miss above; the loser hits the PK and must
+    // NOT throw — the row exists now, so re-read it. The happy path must NOT
+    // re-enter getWallet: this is a read-or-create, and recursing to re-read a
+    // row we just SELECTed back turns a single miss into an unbounded loop if the
+    // insert ever succeeds without returning the row.
+    if (createError) {
+      const { data: raced, error: readError } = await admin
+        .from('player_wallets')
+        .select(WALLET_COLUMNS)
+        .eq('player_id', playerId)
+        .maybeSingle();
+      if (readError || !raced) {
+        throw new Error(`Failed to create wallet: ${createError.message}`);
+      }
+      return raced as WalletSnapshot;
+    }
+
+    if (created) return created as WalletSnapshot;
+
+    // The insert reported success but returned no row (some drivers do this
+    // under a RETURNING-free path). One bounded re-read, not a recursion.
+    const { data: reread, error: rereadError } = await admin
+      .from('player_wallets')
+      .select(WALLET_COLUMNS)
+      .eq('player_id', playerId)
+      .maybeSingle();
+    if (rereadError || !reread) {
+      throw new Error('Failed to create wallet: insert succeeded but the row was not readable');
+    }
+    return reread as WalletSnapshot;
   }
 
   async getPula(playerId: string): Promise<number> {
@@ -346,11 +379,14 @@ export class WalletService {
    * which is what keeps Botho a loyalty signal rather than a purchase-linked sweep.
    *
    * Returns the amount actually awarded, which may be 0 if the cap is already met.
-   * The cap check is read-then-credit, so two *simultaneous* manual acts could in
-   * principle over-award by a few points — a soft, non-financial boundary on a
-   * human-paced action. The hard invariants (Botho can never go negative, no money
-   * involved) live in `wallet_apply`. If this ever needs to be airtight, fold the
-   * sum-and-cap into `wallet_apply` as a guarded UPDATE.
+   *
+   * H1 (security audit 2026-10-03) — the sum-and-cap now lives INSIDE Postgres
+   * (`botho_credit_capped`, migration 20261002000003), behind a wallet row lock
+   * (`SELECT ... FOR UPDATE`). The old read-then-credit did the sum and the award
+   * as two statements from Node, so two *simultaneous* manual acts both read a
+   * pre-cap total and both awarded — the 50/day LEGAL cap could be overshot by a
+   * scripted burst. Concurrent callers now serialise on the wallet row: the
+   * second one re-reads the post-award ledger and sees the cap consumed.
    */
   async creditBothoCapped(
     playerId: string,
@@ -360,13 +396,19 @@ export class WalletService {
     now = new Date(),
   ): Promise<number> {
     if (!(requested > 0)) return 0;
-    const earned = await this.bothoEarnedToday(playerId, now);
-    const remaining = BOTHO_DAILY_CAP - earned;
-    if (remaining <= 0) return 0;
-    const award = Math.min(requested, Math.floor(remaining));
-    if (award <= 0) return 0;
-    await this.credit(playerId, 'botho', award, source, refId);
-    return award;
+    const { data, error } = await this.supabase
+      .getAdminClient()
+      .rpc('botho_credit_capped', {
+        p_player_id: playerId,
+        p_requested: Math.floor(requested),
+        p_source: source,
+        p_ref_id: refId ?? null,
+        p_day_start: this.startOfBotswanaDay(now),
+        p_cap: BOTHO_DAILY_CAP,
+      });
+
+    if (error) throw new Error(`Failed to credit Botho: ${error.message}`);
+    return Number(data ?? 0);
   }
 
   /**

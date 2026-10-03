@@ -329,6 +329,57 @@ function runWalletApply(db: MockDb, params: any): { data: number | null; error: 
   return { data: next, error: null };
 }
 
+/**
+ * H1 — mirror of `botho_credit_capped` (migration 20261002000003).
+ *
+ * The whole point of moving the cap into Postgres was that the old
+ * read-then-credit could be raced. The mock has to reproduce the SAME contract
+ * or the specs would prove nothing: sum the day's positive Botho, award
+ * `min(requested, cap - earned)`, and return the award (possibly 0) rather than
+ * erroring. `wallet.service.spec.ts` asserts exactly that shape.
+ *
+ * Day boundary is compared on the ISO string the service passes as
+ * `p_day_start`, matching the SQL's `created_at >= p_day_start` filter.
+ */
+function runBothoCreditCapped(db: MockDb, params: any): { data: number | null; error: any } {
+  const { p_player_id, p_requested, p_source, p_ref_id, p_day_start, p_cap } = params;
+  const requested = Math.floor(Number(p_requested));
+  const cap = Number(p_cap);
+  if (!(requested > 0)) return { data: 0, error: null };
+
+  let w = db.player_wallets.find((r) => r.player_id === p_player_id);
+  if (!w) {
+    w = PLAYER_WALLET_DEFAULT({ player_id: p_player_id });
+    db.player_wallets.push(w);
+  }
+
+  const since = String(p_day_start ?? '');
+  const earned = db.ledger_entries
+    .filter(
+      (r) =>
+        r.player_id === p_player_id &&
+        r.currency === 'botho' &&
+        Number(r.amount) > 0 &&
+        String(r.created_at ?? '') >= since,
+    )
+    .reduce((sum, r) => sum + Math.abs(Number(r.amount)), 0);
+
+  const award = Math.min(requested, Math.floor(cap - earned));
+  if (award <= 0) return { data: 0, error: null };
+
+  w.botho_points = Number(w.botho_points) + award;
+  db.ledger_entries.push({
+    player_id: p_player_id,
+    currency: 'botho',
+    amount: award,
+    balance_after: w.botho_points,
+    source: p_source,
+    ref_id: p_ref_id ?? null,
+    created_at: new Date().toISOString(),
+  });
+  return { data: award, error: null };
+}
+
 export interface MockClient {
   from: (table: string) => MockBuilder;
   rpc: (name: string, params: any) => Promise<{ data: any; error: any }>;
@@ -345,6 +396,9 @@ export function clientFor(db: MockDb): MockClient {
       if (name === 'wallet_apply') {
         const res = runWalletApply(db, params);
         return Promise.resolve(res);
+      }
+      if (name === 'botho_credit_capped') {
+        return Promise.resolve(runBothoCreditCapped(db, params));
       }
       return Promise.resolve({ data: null, error: null });
     },

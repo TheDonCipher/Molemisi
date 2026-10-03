@@ -199,38 +199,61 @@ print("\n  Every row closes (Total + Profit == Net) at opportunity cost, all pro
 
 # ---------------------------------------------------------------- 8. bushveld
 rule("8. BUSHVELD vs FARM  (04 §1 — the bush must never out-earn the fields)")
-# Kagiso: max 6 per scene, +1 per 4h -> 6/day per scene. Three scenes ship in v1
-# (04 §5), so the ceiling is 18 pips/day across the Bushveld (04 §4.3).
-SCENE_COUNT = 3
+# Kagiso: max 6 per scene, +1 per 4h -> 6/day per scene. FOUR scenes ship in v1
+# (04 §5): open_bush, riverbank, rocky_outcrop and deep_bushveld. Deep Bushveld
+# shipped hotspots in batch 2 (G5, 2026-09-23) — `SCENES` in bushveld.ts has four
+# entries and `DEEP_BUSHVELD_HOTSPOTS` carries four. This script modelled only 3,
+# so it has been UNDERSTATING Bushveld income by exactly the deep scene.
+SCENE_COUNT = 4
 PIPS_PER_SCENE = 6
-# Only hotspots carrying a saleable ITEM can produce Pula. Of the 19 v1 hotspots
-# only 6 do — the other 13 are journal Discoveries, which never enter inventory
-# (R3, 04 §6). Five of the six cost 1 pip and are always available:
-#   open_bush  ob_deadfall        -> wood       P2
-#   riverbank  rv_palm            -> palm_fiber P4   (best cost-1 material)
-#   rocky      ro_glint           -> stone      P3
-# The sixth (ob_setlhare_sa_phane) costs 2 and is seasonal (Apr/Dec only).
+# Only hotspots carrying a saleable ITEM can produce Pula. Of the 23 v1 hotspots
+# only 7 do — the rest are journal Discoveries, which never enter inventory (R3,
+# 04 §6). The best COST-1 material tap per scene:
+#   open_bush  ob_deadfall   -> wood       P2   qty 2-4 -> avg 3
+#   riverbank  rv_palm       -> palm_fiber P4   qty 2-4 -> avg 3   (best cost-1)
+#   rocky      ro_glint      -> stone      P3   qty 2-4 -> avg 3
+#   deep       db_heartwood  -> hardwood   P8   qty 1-3 -> avg 2   (G5, 04 §5)
+# The remaining material hotspots are cost-1 too but strictly worse per pip
+# (rv_driftwood wood P2, rv_clay P3, rv_reeds P3, db_kopje P3), and
+# ob_setlhare_sa_phane costs 2 and is seasonal (Apr/Dec only), so none of them
+# beats the row above. `db_spoor` costs 2 and is Discovery-only.
+#
+# The yield averages are per-tap and DIFFER between scenes: hardwood drops 1-3
+# (avg 2) where every other material drops 2-4 (avg 3). Using one global AVG_QTY
+# would overstate the deep scene by 50% (6x3xP8 = P144 instead of P96).
 BEST_MATERIAL_PER_SCENE = [
-    ("open_bush",     "wood",       2),
-    ("riverbank",     "palm_fiber", 4),
-    ("rocky_outcrop", "stone",      3),
+    ("open_bush",     "ob_deadfall",  "wood",       2, 3),
+    ("riverbank",     "rv_palm",      "palm_fiber", 4, 3),
+    ("rocky_outcrop", "ro_glint",     "stone",      3, 3),
+    ("deep_bushveld", "db_heartwood", "hardwood",   8, 2),
 ]
-AVG_QTY = 3          # 04 §4.2: material yield 2-4 units per tap
 BAND_LO, BAND_HI = 0.5, 2.0   # 02 §4.1: raw/foraged goods drift 0.5x-2.0x base
 
-bush_gross = sum(PIPS_PER_SCENE * AVG_QTY * value for _, _, value in BEST_MATERIAL_PER_SCENE)
+bush_gross = sum(PIPS_PER_SCENE * qty * value for _, _, _, value, qty in BEST_MATERIAL_PER_SCENE)
 bush_base = bush_gross * (1 - TAX)
+# The three always-open scenes, kept so the report shows the change rather than
+# replacing the old figure: Deep Bushveld is gated at Botho 300 (04 §5), so a
+# sub-Botho-300 player genuinely cannot earn it.
+ALWAYS_OPEN = 3
+three_gross = sum(
+    PIPS_PER_SCENE * qty * value
+    for _, _, _, value, qty in BEST_MATERIAL_PER_SCENE[:ALWAYS_OPEN]
+)
+three_base = three_gross * (1 - TAX)
+
 print(f"  Kagiso ceiling: {PIPS_PER_SCENE} pips/scene x {SCENE_COUNT} scenes = "
       f"{PIPS_PER_SCENE * SCENE_COUNT} pips/day")
 print(f"  Worst case for the invariant: every pip spent on a cost-1 material tap")
-for scene, item, value in BEST_MATERIAL_PER_SCENE:
-    u = PIPS_PER_SCENE * AVG_QTY
-    print(f"    {scene:<14} {PIPS_PER_SCENE} taps x {AVG_QTY} = {u:>2} {item:<11} "
+for scene, hotspot, item, value, qty in BEST_MATERIAL_PER_SCENE:
+    u = PIPS_PER_SCENE * qty
+    print(f"    {scene:<14} {hotspot:<14} {PIPS_PER_SCENE} taps x {qty} = {u:>2} {item:<11} "
           f"@ P{value} = P{u * value:>4}")
-print(f"\n  Bushveld gross/day            P{bush_gross:>7.2f}")
+print(f"\n  Bushveld gross/day            P{bush_gross:>7.2f}   (all {SCENE_COUNT} scenes)")
 print(f"    x band floor ({BAND_LO}x)         P{bush_gross*BAND_LO*(1-TAX):>7.2f}")
 print(f"    x base (1.0x)              P{bush_base:>7.2f}")
 print(f"    x band ceiling ({BAND_HI}x)      P{bush_gross*BAND_HI*(1-TAX):>7.2f}")
+print(f"    (was P{three_base:.2f} on 3 scenes; Deep Bushveld adds "
+      f"P{bush_base - three_base:.2f}/day, Botho 300-gated)")
 
 starter = M['Sorghum']['net_d']   # 02 §6.8's "starter crops (sorghum/millet)" basis
 print(f"\n  {'Farm':<10}{'starter P/d':>13}{'Bush/Farm':>11}   {'median P/d':>11}{'Bush/Farm':>11}")
@@ -245,6 +268,19 @@ for plots in (4, 8, 12, 20):
     print(f"  {plots:>2} plots{'':<2}{f_starter:>13.2f}{r_starter:>10.2f}x"
           f"{f_med:>13.2f}{r_med:>10.2f}x")
 
+# The same table on the three always-open scenes, so the Deep Bushveld effect is
+# visible as a delta rather than asserted. Before batch 2 this was the whole
+# model, and every figure quoted in 04 §1 / KNOWN_LIMITATIONS was the 3-scene one.
+print(f"\n  Sub-Botho-300 player (3 always-open scenes only, P{three_base:.2f}/day):")
+inv3 = []
+for plots in (4, 8, 12, 20):
+    r_starter = three_base / (plots * starter)
+    r_med = three_base / (plots * med)
+    if r_starter > 1.0:
+        inv3.append(plots)
+    print(f"  {plots:>2} plots{'':<2}{plots * starter:>13.2f}{r_starter:>10.2f}x"
+          f"{plots * med:>13.2f}{r_med:>10.2f}x")
+
 if inversion:
     print(f"\n  !! 04 §1 COMPARATIVE INVARIANT — ACCEPTED STATE (ruled 2026-09-11):")
     print(f"     at {', '.join(str(p) for p in inversion)} plots a material-maximising player")
@@ -257,6 +293,18 @@ if inversion:
     print(f"     If live data shows gathering is the optimal route, fix the economy spec")
     print(f"     (Kagiso regen / tap cost / material value / farm income), never this script.")
     print(f"     See 04 §1, 05 §P10, and docs/KNOWN_LIMITATIONS.md.")
+    if set(inversion) != set(inv3):
+        gained = [p for p in inversion if p not in inv3]
+        print(f"\n  !! SCENE-COUNT CORRECTION (this run): modelling all {SCENE_COUNT} scenes WIDENS")
+        print(f"     the inversion. It now covers {', '.join(str(p) for p in inversion)} plots;")
+        print(f"     the old 3-scene model covered {', '.join(str(p) for p in inv3)}.")
+        if gained:
+            print(f"     Newly inverted: {', '.join(str(p) for p in gained)} plot(s) — a player at")
+            print(f"     that size used to break even on the fields and now does not.")
+        print(f"     Bushveld base P{three_base:.2f} -> P{bush_base:.2f} "
+              f"(+{bush_base - three_base:.2f}/day, x{bush_base / three_base:.2f}).")
+        print(f"     The Deep Bushveld scene is Botho 300-gated, so this is the post-ladder")
+        print(f"     figure; the sub-300 table above is the launch figure.")
 else:
     print("\n  -> PASS: the Bushveld stays a supplement at every farm size modelled.")
 
@@ -269,7 +317,8 @@ print(f"  thirst spread        : {ratio:.1f}x      (target >= 4x)")
 print(f"  best-crop rotation   : {' -> '.join(best_per_chapter)}")
 print(f"  crafting             : 5 recipes, all close horizontally and profitable")
 print(f"  bushveld supplement  : "
-      f"{'SUPPLEMENT at every farm size' if not inversion else 'INVERSION at ' + ', '.join(str(p) for p in inversion) + ' plots — RULED: telemetry (P10 by data)'}")
+      f"{'SUPPLEMENT at every farm size' if not inversion else 'INVERSION at ' + ', '.join(str(p) for p in inversion) + ' plots — RULED: telemetry (P10 by data)'}"
+      f"  [{SCENE_COUNT} scenes, P{bush_base:.2f}/day]")
 ok = (not bad) and total_dom <= 3 and 3.0 <= spread <= 4.0 and ratio >= 4
 print(f"\n  {'PASS — doc and model agree, and the model is sound' if ok else 'FAIL — see above'}")
 if inversion:

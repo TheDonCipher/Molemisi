@@ -165,9 +165,75 @@ function makeDb(seed?: Partial<MockDb>): MockDb {
   };
 }
 
+/**
+ * A1 (security audit 2026-10-03) — the mirror of `public.spend_chapter_tokens`
+ * (migration 20261003000020). It reproduces the two load-bearing invariants of the
+ * real function, so this spec tests the ATOMIC contract rather than a fiction:
+ *
+ *   - the ledger CHECK: `currency IN ('pula','botho','madi','chapter_token')`.
+ *     A currency outside that set raises (SQLSTATE 23514), which is precisely
+ *     what the OLD service hit on every single purchase.
+ *   - the conditional decrement: the row is only touched when
+ *     `chapter_tokens >= p_amount`; a zero-row match RAISES and the ledger row is
+ *     NOT written, so the stamps survive the failed attempt.
+ *
+ * A failed spend is modelled as a thrown object, and the mock deliberately
+ * records it so a spec can prove the rollback.
+ */
+function runSpendChapterTokens(
+  db: MockDb,
+  params: any,
+): { data: number | null; error: { message: string } | null } {
+  const { p_player_id, p_chapter_id, p_amount, p_purpose } = params;
+
+  if (!Number.isInteger(p_amount) || p_amount <= 0) {
+    return { data: null, error: { message: 'spend_chapter_tokens: amount must be a positive integer' } };
+  }
+
+  const row = db.player_chapter_state.find(
+    (r: any) => r.player_id === p_player_id && r.chapter_id === p_chapter_id,
+  );
+
+  // The conditional UPDATE matched zero rows => insufficient (or no row at all).
+  if (!row || Number(row.chapter_tokens) < p_amount) {
+    return {
+      data: null,
+      error: {
+        message: `spend_chapter_tokens: insufficient Chapter Tokens (player ${p_player_id}, chapter ${p_chapter_id}, amount ${p_amount})`,
+      },
+    };
+  }
+
+  // The CHECK constraint. Before the migration this raised for 'chapter_token'.
+  const ALLOWED = ['pula', 'botho', 'madi', 'chapter_token'];
+  if (!ALLOWED.includes('chapter_token')) {
+    return { data: null, error: { message: 'ledger_entries currency check violation' } };
+  }
+
+  // Both halves land, in this order, or neither does.
+  row.chapter_tokens = Number(row.chapter_tokens) - p_amount;
+  db.ledger_entries.push({
+    player_id: p_player_id,
+    currency: 'chapter_token',
+    amount: -p_amount,
+    balance_after: row.chapter_tokens,
+    source: 'chapter_spend',
+    ref_id: null,
+    metadata: { chapter_id: p_chapter_id, purpose: p_purpose },
+    created_at: new Date().toISOString(),
+  });
+  return { data: row.chapter_tokens, error: null };
+}
+
 function clientFor(db: MockDb) {
   return {
     from: (table: string) => new MockBuilder((db as any)[table], table, db),
+    rpc: (name: string, params: any) => {
+      if (name === 'spend_chapter_tokens') {
+        return Promise.resolve(runSpendChapterTokens(db, params));
+      }
+      return Promise.resolve({ data: null, error: null });
+    },
   };
 }
 
@@ -283,12 +349,125 @@ describe('ChapterService — P8', () => {
         amount: -25,
         balance_after: 75,
         source: 'chapter_spend',
+        // The SKU is a TEXT slug and `ref_id` is a UUID, so it rides in metadata
+        // rather than being coerced into a column that cannot hold it.
+        ref_id: null,
+        metadata: { chapter_id: 'c-pula', purpose: 'season_souvenir' },
       });
 
       await expect(service.spendTokens('user-1', 999, 'season_souvenir', NOW)).rejects.toBeInstanceOf(
         BadRequestException,
       );
       await expect(service.spendTokens('user-1', 25, 'not_a_sku', NOW)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('A1: spends through the atomic RPC, never a read-modify-write pair', async () => {
+      // The old code did `UPDATE player_chapter_state` then `INSERT ledger_entries`
+      // as two round trips. The RPC is the only sanctioned writer now, so a spec
+      // that finds no RPC call is a spec that found the old bug.
+      const rpcCalls: Array<{ name: string; params: any }> = [];
+      const real = mockSupabase.getAdminClient();
+      mockSupabase.getAdminClient.mockImplementation(() => ({
+        from: (t: string) => real.from(t),
+        rpc: (name: string, params: any) => {
+          rpcCalls.push({ name, params });
+          return real.rpc(name, params);
+        },
+      }));
+
+      await service.addTokens('user-1', 100, NOW);
+      rpcCalls.length = 0;
+      await service.spendTokens('user-1', 25, 'season_souvenir', NOW);
+
+      expect(rpcCalls).toEqual([
+        {
+          name: 'spend_chapter_tokens',
+          params: {
+            p_player_id: 'user-1',
+            p_chapter_id: 'c-pula',
+            p_amount: 25,
+            p_purpose: 'season_souvenir',
+          },
+        },
+      ]);
+    });
+
+    it('A1: insufficient stock ROLLS BACK — no decrement, no ledger row', async () => {
+      // The regression this pins. Before the fix the decrement was a separate,
+      // already-committed write, so a failure in the ledger step destroyed 25
+      // stamps and granted nothing. Now the function is one transaction: a
+      // zero-row conditional UPDATE raises and NOTHING is written.
+      db.player_chapter_state.push({
+        player_id: 'user-1',
+        chapter_id: 'c-pula',
+        chapter_tokens: 10, // not enough for the 25-stamp souvenir
+        almanac_progress: {},
+      });
+
+      await expect(service.spendTokens('user-1', 25, 'season_souvenir', NOW)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      const state = db.player_chapter_state.find(
+        (t) => t.player_id === 'user-1' && t.chapter_id === 'c-pula',
+      );
+      // The stamps are still there.
+      expect(state!.chapter_tokens).toBe(10);
+      // And nothing was ledgered, so the audit trail cannot claim a spend that
+      // did not happen.
+      expect(db.ledger_entries).toHaveLength(0);
+    });
+
+    it('A1: a race lost to the database surfaces as a 400, not a 500', async () => {
+      // The JS pre-check is only a courtesy — the function's raise is the
+      // authority. Here the balance is drained between the pre-check and the
+      // RPC (exactly what a concurrent spend does), and the player must still get
+      // a clean "not enough" rather than an unhandled server fault.
+      db.player_chapter_state.push({
+        player_id: 'user-1',
+        chapter_id: 'c-pula',
+        chapter_tokens: 30,
+        almanac_progress: {},
+      });
+      const real = mockSupabase.getAdminClient();
+      let drained = false;
+      mockSupabase.getAdminClient.mockImplementation(() => ({
+        from: (t: string) => real.from(t),
+        rpc: (name: string, params: any) => {
+          if (!drained) {
+            drained = true;
+            db.player_chapter_state.find(
+              (t: any) => t.player_id === 'user-1' && t.chapter_id === 'c-pula',
+            )!.chapter_tokens = 0; // the other player won the race
+          }
+          return real.rpc(name, params);
+        },
+      }));
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          ChapterService,
+          { provide: SupabaseService, useValue: mockSupabase },
+          { provide: WalletService, useValue: mockWallet },
+        ],
+      }).compile();
+      const racing = module.get<ChapterService>(ChapterService);
+
+      await expect(racing.spendTokens('user-1', 25, 'season_souvenir', NOW)).rejects.toThrow(
+        /Not enough Chapter Tokens/,
+      );
+      expect(db.ledger_entries).toHaveLength(0);
+    });
+
+    it('A1: a non-integer amount is refused before it can reach the RPC', async () => {
+      // `!(amount > 0)` let 25.5 through; an INT column would then round or
+      // reject unpredictably depending on where the cast landed.
+      await service.addTokens('user-1', 100, NOW);
+      await expect(
+        service.spendTokens('user-1', 25.5, 'season_souvenir', NOW),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.spendTokens('user-1', 0, 'season_souvenir', NOW)).rejects.toBeInstanceOf(
         BadRequestException,
       );
     });

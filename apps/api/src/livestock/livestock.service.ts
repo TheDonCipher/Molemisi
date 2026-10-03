@@ -202,7 +202,11 @@ export class LivestockService {
     // client rendered "2 sorghum" on the button. The debit happens BEFORE the
     // hunger write: if the larder is short the whole feed fails with a clear
     // 4xx and hunger is untouched (no free partial feeds on retry).
-    const playerId = await this.inventory.resolvePlayerId(farmId);
+    // A2 — the resolution is CHECKED against the authenticated identity, not a
+    // bare farm→player lookup. `verifyFarmOwnership` above is the primary guard;
+    // this second check means the shared helper can never hand back a stranger's
+    // farm even from a future call site that forgets it.
+    const playerId = await this.inventory.resolvePlayerId(farmId, userId);
     const owned = await this.inventory.countOwned(playerId, config.feedType);
     if (owned < config.feedPerDay) {
       throw new BadRequestException(
@@ -271,7 +275,7 @@ export class LivestockService {
 
     // Consume the treatment BEFORE the cure lands (G1/G4 pattern): a missing
     // herb fails here and the animal stays sick, so nothing is ever cured free.
-    const playerId = await this.inventory.resolvePlayerId(farmId);
+    const playerId = await this.inventory.resolvePlayerId(farmId, userId);
     const owned = await this.inventory.countOwned(playerId, TREATMENT_ITEM);
     if (owned < 1) {
       throw new BadRequestException(
@@ -334,7 +338,7 @@ export class LivestockService {
       cost.set(config.feedType, (cost.get(config.feedType) ?? 0) + config.feedPerDay);
     }
 
-    const playerId = await this.inventory.resolvePlayerId(farmId);
+    const playerId = await this.inventory.resolvePlayerId(farmId, userId);
     for (const [slug, qty] of cost) {
       const owned = await this.inventory.countOwned(playerId, slug);
       if (owned < qty) {
@@ -416,7 +420,7 @@ export class LivestockService {
     if (!itemSlug) {
       throw new BadRequestException(`No inventory item for product '${config.productType}'`);
     }
-    const playerId = await this.inventory.resolvePlayerId(farmId);
+    const playerId = await this.inventory.resolvePlayerId(farmId, userId);
     // G1 — the muck-out: every collect also brings manure (03 §5). Product and
     // byproduct are granted in ONE combined slot check, so a store that cannot
     // take both fails the whole collect (nothing duplicated on retry, nothing
@@ -438,13 +442,41 @@ export class LivestockService {
       })
       .eq('id', animalId);
 
-    // Record ledger entry
+    // Record ledger entry.
+    //
+    // A4 (security audit 2026-10-03) — this INSERT COULD NOT SUCCEED. It wrote
+    // `user_id` and `quantity`, neither of which is a column on
+    // `game_ledger_entries` (20260902000000 §"GAME LEDGER ENTRIES"). The live
+    // shape is:
+    //   id, farm_id, entry_type, reference_type, reference_id,
+    //   currency_change, currency_balance_after, item_type,
+    //   item_quantity_change, item_quality, description, metadata, created_at
+    // PostgREST rejects an unknown column outright (PGRST204 "Could not find the
+    // column"), so every single livestock collect logged an error and wrote
+    // NO audit row at all — the one place an operator would look to answer
+    // "where did this milk come from".
+    //
+    // Two further traps, both of which would have kept it broken even with the
+    // names right:
+    //   - `farm_id` is NOT NULL. There is no player_id on this table; a farm is
+    //     the only unit of account. The farm is already in scope and already
+    //     ownership-verified above, so it is used directly.
+    //   - `currency_balance_after` is NOT NULL too. Nothing moves the Pula
+    //     balance on a collect (the product goes to the store, not the wallet),
+    //     so there is no meaningful balance to record — 0 is the honest value
+    //     and is paired with `currency_change: 0` so a reader summing the column
+    //     is not misled into thinking Pula moved here.
+    //   - The quantity column is `item_quantity_change`; `item_type` is the
+    //     PRODUCT TYPE (e.g. 'milk'), not the inventory slug.
     await adminClient.from('game_ledger_entries').insert({
-      user_id: userId,
+      farm_id: farmId,
       entry_type: 'COLLECT',
-      item_type: config.productType,
-      quantity: config.productQuantity,
+      reference_type: 'livestock',
+      reference_id: animalId,
       currency_change: 0,
+      currency_balance_after: 0,
+      item_type: config.productType,
+      item_quantity_change: config.productQuantity,
       description: `Collected ${config.productQuantity} ${config.productType} from ${config.name}`,
     });
 
@@ -491,7 +523,7 @@ export class LivestockService {
     return { happiness: newHappiness, xpGained: 1 };
   }
 
-  async getAvailableAnimals(farmId: string): Promise<
+  async getAvailableAnimals(farmId: string, userId?: string): Promise<
     Array<{
       id: string;
       name: string;
@@ -507,8 +539,31 @@ export class LivestockService {
   > {
     const adminClient = this.supabaseService.getAdminClient();
 
-    // Get owned animal counts
-    const { data: ownedAnimals } = await adminClient.from('livestock').select('animal_type');
+    // A6 (security audit 2026-10-03) — THE SCOPE WAS MISSING ENTIRELY.
+    // `.from('livestock').select('animal_type')` with no filter reads EVERY
+    // animal row in the table, so the `owned` / `count` fields were the sum over
+    // the whole install. Two consequences, both real:
+    //   - LEAK. A brand-new player's animal shop said "you already own 4 goats"
+    //     because some other player owned 4 goats. Animal counts and unlocks are
+    //     a read of another tenant's progress.
+    //   - WRONG GAMEPLAY. Capacity checks and "do I already own one of these"
+    //     affordances read the global number, so the shop lied upward for a new
+    //     player and hid real stock from an established one.
+    // The filter is added here rather than in the controller, because the
+    // CONTROLLER-level `verifyFarmOwnership` guards the route but the SERVICE is
+    // the reusable unit (the same A2 argument as `getActiveContracts`).
+    // The ownership re-check is only run when an identity was supplied, so the
+    // one caller that has none can be found and fixed rather than silently
+    // continuing to resolve an arbitrary farm.
+    if (userId) {
+      await this.verifyFarmOwnership(farmId, userId);
+    }
+
+    // Get owned animal counts — SCOPED to this farm.
+    const { data: ownedAnimals } = await adminClient
+      .from('livestock')
+      .select('animal_type')
+      .eq('farm_id', farmId);
 
     const counts = new Map<string, number>();
     (ownedAnimals ?? []).forEach((a: Record<string, unknown>) => {

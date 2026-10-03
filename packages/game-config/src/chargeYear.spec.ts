@@ -19,6 +19,7 @@ import {
   type GoodCategory,
 } from './chargeYear';
 import { CHAPTERS, chapterForMonth, type ChapterSlug } from './chapters';
+import { ITEMS } from './items';
 
 const CHAPTER_SLUGS: ChapterSlug[] = ['pula', 'phane', 'moriti', 'letlhafula'];
 
@@ -104,6 +105,48 @@ describe('serial structure (docs/36 §4, K1)', () => {
 });
 
 describe('in-chapter feasibility (docs/36 §8.2, K5)', () => {
+  /**
+   * THE TEST THAT WAS MASKING THE P165 DEFECT.
+   *
+   * This used to assert `expect(['plank','rope','brick']).toContain(a.item)` —
+   * i.e. it asserted the ask was one of three slugs that DO NOT EXIST in
+   * items.ts. That is worse than no test: it looked like feasibility coverage,
+   * passed green, and permanently blessed three typos. The crafted goods are
+   * `poleto`, `thapo`, `setena` (items.ts:247/258/269).
+   *
+   * The real invariant is "an ask names an item the player can actually hold",
+   * so it now resolves against ITEMS. Any future invented slug fails here.
+   */
+  it('asks only for items that EXIST in ITEMS — no invented slugs', () => {
+    CHARGE_YEAR.forEach((c: ChargeYearEntry) => {
+      c.asks.forEach((a) => {
+        expect(`${c.chargeId}:${a.item}`).toBe(
+          `${c.chargeId}:${a.item}`,
+        ); // readability anchor
+        expect(ITEMS[a.item]).toBeDefined();
+      });
+    });
+  });
+
+  it("keeps each ask's declared base equal to the ITEMS price of record", () => {
+    // A correct slug with a stale base value is the same class of bug: the
+    // player hands over goods and the reward is computed off a fiction.
+    CHARGE_YEAR.forEach((c: ChargeYearEntry) => {
+      c.asks.forEach((a) => {
+        expect(`${c.chargeId}:${a.item}:${a.base}`).toBe(
+          `${c.chargeId}:${a.item}:${ITEMS[a.item]!.baseValue}`,
+        );
+      });
+    });
+  });
+
+  it('never names the slugs that do not exist (plank/rope/brick)', () => {
+    const slugs = new Set(CHARGE_YEAR.flatMap((c: ChargeYearEntry) => c.asks.map((a) => a.item)));
+    for (const ghost of ['plank', 'rope', 'brick']) {
+      expect(slugs.has(ghost)).toBe(false);
+    }
+  });
+
   it('requests only goods obtainable in the Charge’s own chapter', () => {
     CHARGE_YEAR.forEach((c: ChargeYearEntry) => {
       const chapter = chapterForMonth(c.month);
@@ -117,8 +160,9 @@ describe('in-chapter feasibility (docs/36 §8.2, K5)', () => {
           expect(a.item).toBe('phane');
           expect(c.month).toBe(12);
         } else {
-          // Crafted (plank/rope/brick) — ungated, obtainable in any chapter.
-          expect(['plank', 'rope', 'brick']).toContain(a.item);
+          // Crafted — ungated, obtainable in any chapter. Asserted against the
+          // real catalogue, not a hardcoded list of English nouns.
+          expect(ITEMS[a.item]?.category).toBe('DITSALO');
         }
       });
     });

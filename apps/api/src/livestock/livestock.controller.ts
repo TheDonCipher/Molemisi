@@ -30,7 +30,9 @@ export class LivestockController {
   @Get('available')
   async getAvailableAnimals(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
-    return this.livestockService.getAvailableAnimals(farmId);
+    // A6 — the identity is passed through so the service can scope the owned-
+    // animals count to this farm and re-check ownership itself.
+    return this.livestockService.getAvailableAnimals(farmId, userId);
   }
 
   @Post('purchase')

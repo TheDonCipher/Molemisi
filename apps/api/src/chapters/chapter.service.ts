@@ -238,9 +238,29 @@ export class ChapterService implements OnModuleInit {
   }
 
   /**
-   * Spend Chapter Tokens within the current chapter. Tokens are NOT money — they are
-   * recorded in the ledger for audit (currency 'chapter_token') but never touch the
-   * Pula/Madi wallets (02 §3.3: never convertible to Madi, never withdrawable).
+   * Spend Chapter Tokens within the current chapter. Tokens are NOT money — they
+   * are recorded in the ledger for audit but never touch the Pula/Madi wallets
+   * (02 §3.3: never convertible to Madi, never withdrawable).
+   *
+   * A1 (security audit 2026-10-03) — ATOMIC, and the previous version was a
+   * guaranteed data-loss bug on two counts:
+   *
+   *   1. `ledger_entries.currency` is CHECKed against
+   *      ('pula','botho','madi'), so the audit row carrying 'chapter_token' was
+   *      rejected with SQLSTATE 23514 on EVERY purchase. Proven against the live
+   *      database, not inferred.
+   *   2. The decrement happened FIRST and the ledger write SECOND, as two
+   *      separate round trips. So the order of failure was: stamps destroyed,
+   *      souvenir never granted, and the exception surfaced to the player as a
+   *      generic 500 with the stamps already gone.
+   *
+   * Both halves now live in one Postgres function (`spend_chapter_tokens`,
+   * migration 20261003000020) that decrements CONDITIONALLY
+   * (`WHERE chapter_tokens >= amount`) and writes the audit row in the same
+   * transaction — the `inventory_take` / `wallet_apply` pattern this codebase
+   * already trusts. The pre-check below is kept ONLY to turn the common case
+   * into a friendly message; the database is what actually decides, so two
+   * concurrent spends of the last 25 stamps cannot both succeed.
    */
   async spendTokens(
     playerId: string,
@@ -248,7 +268,7 @@ export class ChapterService implements OnModuleInit {
     purpose: string,
     now = new Date(),
   ): Promise<number> {
-    if (!(amount > 0)) {
+    if (!Number.isInteger(amount) || amount <= 0) {
       throw new BadRequestException(`spendTokens requires a positive amount (got ${amount})`);
     }
     const souvenir = SEASON_SOUVENIRS.find((s) => s.sku === purpose);
@@ -263,6 +283,10 @@ export class ChapterService implements OnModuleInit {
       );
     }
     const chapter = await this.getCurrentChapter(now);
+
+    // The row must EXIST for the conditional UPDATE to match; creating it here
+    // (never a balance — a brand-new holder has zero, so a spend correctly
+    // raises) is what makes "no row yet" and "not enough stamps" the same 400.
     const state = await this.getOrCreateState(playerId, chapter.id);
     const have = state.chapter_tokens ?? 0;
     if (have < amount) {
@@ -270,25 +294,39 @@ export class ChapterService implements OnModuleInit {
         `Not enough Chapter Tokens: have ${have}, need ${amount}`,
       );
     }
-    const next = have - amount;
-    const admin = this.supabase.getAdminClient();
-    const { error } = await admin
-      .from('player_chapter_state')
-      .update({ chapter_tokens: next })
-      .eq('player_id', playerId)
-      .eq('chapter_id', chapter.id);
-    if (error) throw new Error(`Failed to spend tokens: ${error.message}`);
 
-    const { error: ledErr } = await admin.from('ledger_entries').insert({
-      player_id: playerId,
-      currency: 'chapter_token',
-      amount: -amount,
-      balance_after: next,
-      source: 'chapter_spend',
-      ref_id: purpose,
+    // ONE round trip for the decrement AND the audit row. Nothing is written
+    // unless both land.
+    const { data, error } = await this.supabase.getAdminClient().rpc('spend_chapter_tokens', {
+      p_player_id: playerId,
+      p_chapter_id: chapter.id,
+      p_amount: amount,
+      p_purpose: purpose,
     });
-    if (ledErr) throw new Error(`Failed to record token spend: ${ledErr.message}`);
-    return next;
+
+    if (error) {
+      // The function RAISES on insufficient stock, and that raise is the
+      // authoritative answer (the JS pre-check above is only a courtesy). So an
+      // "insufficient" raise is a legitimate 400, not a server fault.
+      if (/insufficient/i.test(error.message)) {
+        const { data: fresh } = await this.supabase
+          .getAdminClient()
+          .from('player_chapter_state')
+          .select('chapter_tokens')
+          .eq('player_id', playerId)
+          .eq('chapter_id', chapter.id)
+          .maybeSingle();
+        const left = (fresh as { chapter_tokens?: number } | null)?.chapter_tokens ?? 0;
+        throw new BadRequestException(
+          `Not enough Chapter Tokens: have ${left}, need ${amount}`,
+        );
+      }
+      // Anything else (function missing, schema drift) is a real fault. Say so
+      // loudly — the transaction rolled back, so no stamps were lost either way.
+      throw new Error(`Failed to spend chapter tokens: ${error.message}`);
+    }
+
+    return Number(data);
   }
 
   // ---------------------------------------------------------------------------

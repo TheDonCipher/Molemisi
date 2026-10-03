@@ -42,7 +42,7 @@ export class ContractsController {
   @Get('active')
   async getActiveContracts(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
-    return this.contractsService.getActiveContracts(farmId);
+    return this.contractsService.getActiveContracts(farmId, userId);
   }
 
   @Post('accept')

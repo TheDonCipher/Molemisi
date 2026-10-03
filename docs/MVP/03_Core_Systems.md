@@ -38,6 +38,20 @@ This gives the flat single-tier buildings an ongoing purpose and makes the night
 > **Ruling (2026-09-11): not in v1.** No raid mechanic is implemented anywhere in `apps/api/src`. Building one touches the growth simulation, the building-effect table, and the offline-elapsed-time pass — the highest-risk surface in the codebase — for a feature that no longer has a v1 done-criterion (`06` has been amended to match). Deferred to a post-launch phase and recorded in `docs/KNOWN_LIMITATIONS.md`.
 >
 > **Consequence, and the reason this needed a ruling rather than a shrug:** the Ancestral Ward was being *sold* as "a three-day shield against wildlife raids" while protecting nothing. It has been withdrawn from the store (`packages/game-config/src/store.ts`, `available: false`) rather than left on the shelf as a lie. Restore it in the same commit that implements raids.
+>
+> **The two paragraphs above are the HISTORICAL SPEC and are deliberately retained, not
+> deleted** — `03` is the normative source and the ruling belongs beside the text it rules on,
+> so a reader can see what was specified and what was cut.
+>
+> **Hardened 2026-10-03.** The ruling was originally enforced only on the boosts. The two
+> building `benefit` strings that advertised raids were also live player-facing copy:
+> `kraal` said "Protects livestock from overnight raids." and `farm_boundary` said
+> "Protects crops from overnight wildlife raids." Both now describe what those buildings
+> actually do. `store.spec.ts` asserts, from both directions, that no building benefit string
+> mentions a raid / wildlife / predator / stolen / thieves / burglar, nor an overnight /
+> at-night / while-you-sleep threat, and that `RAID_SYSTEM_IMPLEMENTED` is still `false`.
+> The copy now cannot outrun the mechanic: build the raid tick, flip the flag, *then* restore
+> the copy, in one reviewable commit.
 
 ---
 

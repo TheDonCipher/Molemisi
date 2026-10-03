@@ -412,6 +412,43 @@ export const translations = {
     tn: 'Go na le se se sa tsamayang sentle',
   },
 
+  // ---- Kgotla Year layer (docs/36 §5) + season souvenirs (docs/34 §3.4) ----
+  yearCharge: { en: "This month's Charge", tn: 'Tiro ya kgwedi e jelang' },
+  yearChargeBoard: { en: 'The Charge of the month', tn: 'Tiro ya kgwedi' },
+  yearChargeHint: {
+    en: 'The council sets one Charge a month. This is the year\u2019s only Pula-paying work.',
+    tn: 'Lekgotla le beileng tiro ya kgwedi mo dingwaga. Eno ke tiro e e payang Pula.',
+  },
+  yearChargeAccept: { en: 'Accept the Charge', tn: 'Amogela tiro' },
+  yearChargeTurnIn: { en: 'Hand it over', tn: 'Neela' },
+  yearChargeNeeds: { en: 'Still needed', tn: 'O setsha' },
+  yearChargeNone: { en: 'No Charge this month', tn: 'Ga go tiro mo kgwedi eno' },
+  yearChargeClaimed: { en: 'Delivered this year', tn: 'O ruletso ka ngwaga eno' },
+  yearChargeUnavailable: {
+    en: 'The Charge could not be read. The rest of the Kgotla is unaffected.',
+    tn: 'Tiro ya kgwedi e neng e ka bola. Go sala ga Kgotla ga tsena.',
+  },
+  yearChargeCompleteTitle: { en: 'Charge delivered', tn: 'Tiro e neetswe' },
+  yearChargeFailedTitle: { en: 'Charge not accepted', tn: 'Tiro ga e a amogelwa' },
+  yearChargeCycle: { en: 'Year', tn: 'Ngwaga' },
+
+  // ---- Season souvenirs — the only sink for Chapter Tokens (docs/34 §3.4) ----
+  seasonSouvenir: { en: 'Season souvenir', tn: 'Khumamo ya lewatlo' },
+  seasonSouvenirHint: {
+    en: 'Chapter Tokens buy a keepsake and nothing else. They expire when the chapter turns.',
+    tn: 'Dithokisi tsa Kgaolo dika reka khumago fela. Di hwetsa fa kgaolo e fetoga.',
+  },
+  souvenirBuy: { en: 'Buy the souvenir', tn: 'Reka khumago' },
+  souvenirBought: { en: 'Souvenir bought', tn: 'Khumago go reka' },
+  souvenirLocked: {
+    en: 'Not enough Chapter Tokens yet.',
+    tn: 'Ga a lekane gotlha. Dithokisi di tsetsa.',
+  },
+  souvenirError: {
+    en: 'The souvenir could not be bought. Your Chapter Tokens were not spent.',
+    tn: 'Khumago e neng e ka reka. Dithokisi tsa gago di neng di sa tshwame.',
+  },
+
   // ---- Settings Screen ----
   settings: { en: 'Settings', tn: 'Peakanyo' },
   audio: { en: 'Audio', tn: 'Molumo' },

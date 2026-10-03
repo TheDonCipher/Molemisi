@@ -346,6 +346,18 @@ This single change does more than any other: it makes the setting **load-bearing
 
 Ancestral Ward implies a wildlife-damage system, but it's barely in the loop. Make it real: jackals and baboons raid plots overnight; the kraal protects livestock; the boundary protects crops. Now those flat single-tier buildings have ongoing purpose, and it dovetails with C21's maintenance idea.
 
+> **HISTORICAL PROPOSAL — DEFERRED FROM v1 (ruling 2026-09-11). NOT IMPLEMENTED, AND NOT
+> RECOMMENDED FOR v1.** Retained verbatim because the archive is the record of what was
+> proposed, not of what shipped. No raid mechanic exists anywhere in `apps/api/src`; see
+> `docs/MVP/03_Core_Systems.md §1.3` and `docs/KNOWN_LIMITATIONS.md`. Note the Ancestral
+> Ward was the only thing that made this proposal attractive, and it is one of the three
+> boosts **cut from the catalogue** (`docs/34` §3.3), so there is no longer a product to
+> sell even if raids were built. The raid-advertising copy this proposal would have
+> justified ("Kraal protects livestock from overnight raids") was **removed** from
+> `buildings.ts` on 2026-10-03 precisely because no mechanic backs it;
+> `store.spec.ts` asserts no building benefit may advertise a raid. The *maintenance*
+> half of this section (7.3, C21) DID ship and is unrelated.
+
 ### 7.3 C21 — maintenance, so three recipes don't die
 
 Flat, build-once buildings mean Poleto, Thapo, and Setena have **no sustained demand**. After the last building, they're dead content.

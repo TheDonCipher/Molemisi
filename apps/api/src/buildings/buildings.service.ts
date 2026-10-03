@@ -468,7 +468,12 @@ export class BuildingsService {
     // of Setena gets told to go and make some — not charged and then shrugged at.
     let playerId: string | null = null;
     if (needs.length > 0) {
-      playerId = await this.inventory.resolvePlayerId(farmId);
+      // A2 — `userId` is threaded in so the farm→player resolution is CHECKED,
+      // not a bare lookup. `verifyFarmOwnership` above already established that
+      // this farm belongs to this caller, but the helper is a shared utility used
+      // from several services, so it must not be able to resolve a stranger's
+      // farm even if a future call site forgets that first step.
+      playerId = await this.inventory.resolvePlayerId(farmId, userId);
       const has = await this.inventory.hasItems(playerId, needs);
       if (!has) {
         const missing = needs.map((n) => `${n.qty} × ${n.slug}`).join(', ');

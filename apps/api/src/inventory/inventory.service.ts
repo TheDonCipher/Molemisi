@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
 import {
@@ -42,6 +42,9 @@ export interface AddResult {
  */
 @Injectable()
 export class InventoryService {
+  /** A2 — cross-tenant attempts are worth a line in the log, not just a 404. */
+  private readonly logger = new Logger(InventoryService.name);
+
   constructor(
     private supabaseService: SupabaseService,
     private wallet: WalletService,
@@ -51,15 +54,50 @@ export class InventoryService {
     return this.supabaseService.getAdminClient();
   }
 
-  /** farm_id → player_id (auth.users). One farm per player. */
-  async resolvePlayerId(farmId: string): Promise<string> {
+  /**
+   * farm_id → player_id (auth.users). One farm per player.
+   *
+   * A2 (security audit 2026-10-03) — `expectedUserId` is REQUIRED, not optional.
+   *
+   * This helper used to take only a `farmId`, which made it a farm→player
+   * LOOKUP with no authorisation in it at all. `CraftingController` then did
+   * `const playerId = await resolvePlayerId(farmId); void userId;` — the JWT
+   * identity was resolved and then thrown away — so any authenticated player
+   * could `POST /farms/:victimFarmId/crafting/start` and spend the VICTIM's
+   * inputs and Pula fee. A cross-tenant IDOR across the entire crafting surface.
+   *
+   * Making the caller state who it believes it is converts an unchecked lookup
+   * into a checked one: the function now refuses to hand back a player id that
+   * is not the authenticated user, and refuses outright when no identity is
+   * offered at all. A cron or boot sweep with no caller identity must therefore
+   * do its own resolution deliberately rather than inherit a permissive default.
+   *
+   * The error is 404-shaped (`NotFoundException`) rather than 403, matching
+   * `CropsService.verifyFarmOwnership`: a probe must not be able to distinguish
+   * "farm exists, not yours" from "farm does not exist".
+   */
+  async resolvePlayerId(farmId: string, expectedUserId: string): Promise<string> {
+    if (expectedUserId === undefined || expectedUserId === null || expectedUserId === '') {
+      // Reaching here means a call site was written against the pre-A2
+      // signature. Fail loudly rather than silently resolving a stranger's farm.
+      throw new BadRequestException(
+        'resolvePlayerId requires the authenticated userId — an unresolved farm is never a safe default',
+      );
+    }
     const { data, error } = await this.client()
       .from('farms')
       .select('user_id')
       .eq('id', farmId)
       .single();
     if (error || !data) throw new NotFoundException('Farm not found');
-    return data.user_id as string;
+    const owner = data.user_id as string;
+    if (owner !== expectedUserId) {
+      this.logger.warn(
+        `A2 cross-tenant access blocked: farm ${farmId} belongs to ${owner}, not ${expectedUserId}`,
+      );
+      throw new NotFoundException('Farm not found');
+    }
+    return owner;
   }
 
   async getInventory(
@@ -291,15 +329,16 @@ export class InventoryService {
     }
     const itemDefId = await this.itemDefId(slug);
 
-    // C3 (security audit 2026-10-02) — ATOMIC, conditional decrement.
+    // C3 (security audit 2026-10-03) — ATOMIC, conditional decrement.
     //
-    // The old implementation selected the row, computed `have - qty` in JS, then
-    // wrote the absolute result with no `WHERE quantity >= qty` predicate. Two
-    // concurrent removals both read the same `have`, both wrote the same
-    // `remaining`, and both callers credited — so a market sell could remove the
-    // items once and pay out twice. The predicate now lives inside Postgres
-    // (`inventory_take`), which takes a row lock and raises on insufficient stock,
-    // so a caller can never reach `wallet.credit` without the stock having moved.
+    // The 2026-10-02 implementation selected the row, computed `have - qty` in
+    // JS, then wrote the absolute result with no `WHERE quantity >= qty`
+    // predicate. Two concurrent removals both read the same `have`, both wrote
+    // the same `remaining`, and both callers credited — so a market sell could
+    // remove the items once and pay out twice. The predicate now lives inside
+    // Postgres (`inventory_take`, migration 20261002000002), which takes a row
+    // lock and raises on insufficient stock, so a caller can never reach
+    // `wallet.credit` without the stock having moved.
     const { error } = await this.client().rpc('inventory_take', {
       p_player_id: playerId,
       p_item_def_id: itemDefId,

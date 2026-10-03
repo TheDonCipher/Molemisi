@@ -67,6 +67,9 @@ export class CropsController {
       farmId,
       plotId,
       parsed.data.fertilizerType,
+      // A2 — the identity is threaded into the service so the item it consumes
+      // is resolved from a CHECKED farm→player lookup.
+      user.id,
     );
     return { success: true, data: result };
   }
@@ -78,7 +81,9 @@ export class CropsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     await this.farmsService.verifyFarmOwnership(farmId, user.id);
-    const result = await this.cropsService.harvestCrop(farmId, plotId);
+    // A2 — the identity is threaded into the service so `collectCrop`'s
+    // farm→player resolution is a CHECKED lookup, not a bare one.
+    const result = await this.cropsService.harvestCrop(farmId, plotId, user.id);
     return { success: true, data: result };
   }
 }

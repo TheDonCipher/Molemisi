@@ -17,7 +17,62 @@ describe('CropsService', () => {
   let service: CropsService;
 
   const mockSupabaseService = {
+    // What specs configure. Deliberately NOT the object handed to Nest: see
+    // `adminClient()` below for why the two are separated.
     getAdminClient: jest.fn(),
+  };
+
+  /**
+   * A2 (security audit 2026-10-03) — `harvestCrop` and `fertilizePlot` now
+   * verify farm ownership before they touch a plot, so every spec that drives
+   * them has to serve a `farms` row. `ownerRead()` builds that row's query
+   * chain: a farm owned by 'user-1', which is the identity these specs pass.
+   *
+   * A FACTORY, not a shared constant, because `jest.clearAllMocks()` in
+   * `beforeEach` would wipe a hoisted `mockResolvedValue` and leave every spec
+   * silently receiving `data: undefined`.
+   */
+  const ownerRead = () => ({
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({
+          data: { id: 'farm-1', user_id: 'user-1' },
+          error: null,
+        }),
+      }),
+    }),
+  });
+
+  /**
+   * A2 (security audit 2026-10-03) — the client Nest receives.
+   *
+   * `harvestCrop` and `fertilizePlot` now verify farm ownership before touching a
+   * plot, which adds a `farms` read at the head of their query sequence.
+   *
+   * That read is supplied HERE rather than queued into each spec, for one
+   * reason: `makeFakeSupabase` is an ordered queue where every awaited query
+   * consumes one entry, so prepending a farms row to each sequence would silently
+   * shift every later response — the exact failure mode that produces a green
+   * suite testing nothing. Intercepting here keeps each spec's own sequence
+   * meaning "the calls under test".
+   *
+   * It has to be a SEPARATE object from `mockSupabaseService` because specs set
+   * the client with `mockReturnValue(...)` inside the test body. A
+   * `mockImplementation` installed in `beforeEach` would be overwritten by the
+   * next `mockReturnValue`, which is why this wrapper lives in the value passed
+   * to the testing module instead.
+   *
+   * A spec that answers `farms` itself opts out with `__ownFarms` on its client
+   * — the Letsema suite does, because it asserts the refusal for a farm the
+   * player does NOT own, and an injected owner row would defeat that test.
+   */
+  const adminClient = () => {
+    const client = mockSupabaseService.getAdminClient();
+    if (!client?.from) return client;
+    if ((client as { __ownFarms?: boolean }).__ownFarms) return client;
+    const from = client.from.bind(client);
+    client.from = jest.fn((table: string) => (table === 'farms' ? ownerRead() : from(table)));
+    return client;
   };
 
   // P3 cutover: harvested crops now land in player_inventory via InventoryService
@@ -79,7 +134,10 @@ describe('CropsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CropsService,
-        { provide: SupabaseService, useValue: mockSupabaseService },
+        // A2 — the service gets the WRAPPING accessor, so every spec's client
+        // gains a `farms` owner row without that spec's own query sequence
+        // shifting by one. See `adminClient()`.
+        { provide: SupabaseService, useValue: { getAdminClient: adminClient } },
         { provide: InventoryService, useValue: mockInventoryService },
         { provide: WaterService, useValue: mockWaterService },
         { provide: WalletService, useValue: mockWalletService },
@@ -229,7 +287,7 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(service.harvestCrop('farm-1', 'plot-1')).rejects.toThrow(NotFoundException);
+      await expect(service.harvestCrop('farm-1', 'plot-1', 'user-1')).rejects.toThrow(NotFoundException);
       // 03 §8 — the server recomputes from real elapsed time, gated by the
       // tank. A harvest that skipped this could cash in a crop the tank stalled.
       expect(mockWaterService.advanceFarmGrowth).toHaveBeenCalledWith('farm-1');
@@ -256,7 +314,7 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(service.harvestCrop('farm-1', 'plot-1')).rejects.toThrow(NotFoundException);
+      await expect(service.harvestCrop('farm-1', 'plot-1', 'user-1')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if crop is not READY', async () => {
@@ -278,7 +336,7 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(service.harvestCrop('farm-1', 'plot-1')).rejects.toThrow(
+      await expect(service.harvestCrop('farm-1', 'plot-1', 'user-1')).rejects.toThrow(
         'Crop is not ready for harvest',
       );
     });
@@ -302,7 +360,7 @@ describe('CropsService', () => {
         }),
       });
 
-      await expect(service.harvestCrop('farm-1', 'plot-1')).rejects.toThrow();
+      await expect(service.harvestCrop('farm-1', 'plot-1', 'user-1')).rejects.toThrow();
     });
 
     it('should successfully harvest a READY crop', async () => {
@@ -358,7 +416,7 @@ describe('CropsService', () => {
         }),
       });
 
-      const result = await service.harvestCrop('farm-1', 'plot-1');
+      const result = await service.harvestCrop('farm-1', 'plot-1', 'user-1');
       expect(result.plot.state).toBe('EMPTY');
       expect(result.harvest.cropType).toBe('sorghum');
       // D5 — harvesting is its own reward; there is no XP and no level.
@@ -396,7 +454,7 @@ describe('CropsService', () => {
       ]);
       mockSupabaseService.getAdminClient.mockReturnValue(client);
 
-      const res = await service.fertilizePlot('f1', 'p1', 'manure');
+      const res = await service.fertilizePlot('f1', 'p1', 'manure', 'user-1');
 
       expect(mockInventoryService.removeItem).toHaveBeenCalledWith('user-1', 'manure', 1);
       const arm = calls.find((c) => c.method === 'update' && c.table === 'crop_instances');
@@ -419,7 +477,7 @@ describe('CropsService', () => {
       const { client, calls } = makeFakeSupabase([]);
       mockSupabaseService.getAdminClient.mockReturnValue(client);
 
-      await expect(service.fertilizePlot('f1', 'p1', 'compost')).rejects.toThrow(
+      await expect(service.fertilizePlot('f1', 'p1', 'compost', 'user-1')).rejects.toThrow(
         'not available',
       );
       expect(calls).toHaveLength(0);
@@ -432,7 +490,7 @@ describe('CropsService', () => {
       ]);
       mockSupabaseService.getAdminClient.mockReturnValue(client);
 
-      await expect(service.fertilizePlot('f1', 'p1', 'manure')).rejects.toThrow(
+      await expect(service.fertilizePlot('f1', 'p1', 'manure', 'user-1')).rejects.toThrow(
         'Plot has no crop to fertilize',
       );
       expect(mockInventoryService.removeItem).not.toHaveBeenCalled();
@@ -447,7 +505,7 @@ describe('CropsService', () => {
       ]);
       mockSupabaseService.getAdminClient.mockReturnValue(client);
 
-      await expect(service.fertilizePlot('f1', 'p1', 'manure')).rejects.toThrow(
+      await expect(service.fertilizePlot('f1', 'p1', 'manure', 'user-1')).rejects.toThrow(
         'already fertilized',
       );
       expect(mockInventoryService.removeItem).not.toHaveBeenCalled();
@@ -459,7 +517,7 @@ describe('CropsService', () => {
       ]);
       mockSupabaseService.getAdminClient.mockReturnValue(client);
 
-      await expect(service.fertilizePlot('f1', 'p1', 'manure')).rejects.toThrow(
+      await expect(service.fertilizePlot('f1', 'p1', 'manure', 'user-1')).rejects.toThrow(
         'ready to harvest',
       );
       expect(mockInventoryService.removeItem).not.toHaveBeenCalled();
@@ -518,7 +576,7 @@ describe('CropsService', () => {
         }),
       });
 
-      const result = await service.harvestCrop('farm-1', 'plot-1');
+      const result = await service.harvestCrop('farm-1', 'plot-1', 'user-1');
       // P3 removed quality grading (03 §2): quality is always 'normal'.
       expect(result.harvest.quality).toBe('normal');
     });
@@ -572,13 +630,159 @@ describe('CropsService', () => {
         }),
       });
 
-      const result = await service.harvestCrop('farm-1', 'plot-1');
+      const result = await service.harvestCrop('farm-1', 'plot-1', 'user-1');
       // P3 removed quality grading (03 §2): quality is always 'normal'.
       expect(result.harvest.quality).toBe('normal');
     });
   });
 
   // ==================================================================
+  // ==================================================================
+  // A3 — collectCrop: determinism and an ordered bank (security audit 2026-10-03)
+  // ==================================================================
+
+  /**
+   * A3 — the yield used to be `Math.random()`. Two separate problems: the value
+   * could not be reproduced from the crop row (so neither a bug report nor an
+   * anti-cheat review could re-derive what a harvest was worth), and it was
+   * impossible to ASSERT in a test — the old spec could only check the result
+   * fell inside the band, never what it was.
+   */
+  describe('A3 — the yield is derived from the crop row, not drawn at random', () => {
+    /**
+     * One harvest of `crop`, returning the result and the ORDER the three steps
+     * actually ran in. The order is the load-bearing part: A3 exists because the
+     * old code destroyed the crop before banking the goods.
+     */
+    const harvestOnce = async (crop: Record<string, unknown>) => {
+      const order: string[] = [];
+      mockInventoryService.addItem.mockImplementationOnce(async () => {
+        order.push('bank');
+        return { added: 0, overflow: 0 };
+      });
+      mockSupabaseService.getAdminClient.mockReturnValue({
+        from: jest.fn((table: string) => {
+          if (table === 'farm_plots') {
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  eq: jest.fn().mockReturnValue({
+                    single: jest.fn().mockResolvedValue({
+                      data: { id: 'plot-1', state: 'READY', crop_instances: [crop] },
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+              update: jest.fn().mockReturnValue({
+                eq: jest.fn(async () => {
+                  order.push('clear');
+                  return { error: null };
+                }),
+              }),
+            };
+          }
+          if (table === 'crop_instances') {
+            return {
+              delete: jest.fn().mockReturnValue({
+                eq: jest.fn(async () => {
+                  order.push('delete');
+                  return { error: null };
+                }),
+              }),
+            };
+          }
+          return {};
+        }),
+      });
+      const res = await service.harvestCrop('farm-1', 'plot-1', 'user-1');
+      return { res, order };
+    };
+
+    it('yields the SAME amount every time the same crop is harvested', async () => {
+      const crop = { id: 'crop-1', crop_type: 'sorghum', health: 1.0 };
+      const a = await harvestOnce({ ...crop });
+      const b = await harvestOnce({ ...crop });
+      expect(a.res.harvest.yield).toBe(b.res.harvest.yield);
+    });
+
+    it('keeps the yield inside the configured band', async () => {
+      const cfg = getCropConfig('sorghum')!;
+      const { res } = await harvestOnce({ id: 'crop-1', crop_type: 'sorghum', health: 1.0 });
+      expect(res.harvest.yield).toBeGreaterThanOrEqual(cfg.yield.min);
+      expect(res.harvest.yield).toBeLessThanOrEqual(cfg.yield.max);
+    });
+
+    it('BANKS BEFORE CLEARING, so a rejected addItem cannot destroy the crop', async () => {
+      // THE ORDERING FIX. The old code emptied the plot and deleted the crop
+      // first, so an `addItem` rejection (full store, DB blip) destroyed the crop
+      // and banked nothing: unrecoverable loss on a transient error. Banked
+      // first, a failure in the clearing steps instead leaves the player holding
+      // the goods AND the crop, which is recoverable.
+      const { order } = await harvestOnce({ id: 'crop-1', crop_type: 'sorghum', health: 1.0 });
+      expect(order).toEqual(['bank', 'clear', 'delete']);
+    });
+  });
+
+  /**
+   * A3 — overflow must be REPORTED, not swallowed. `inventoryAddition.quantity`
+   * is what was banked; `overflow` is what the storage cap refused. Before A3 the
+   * overflow was subtracted and never mentioned, so the crop quietly vanished a
+   * unit at a time (03 §3.4: never a silent loss).
+   */
+  describe('A3 — stored and overflow are both reported', () => {
+    it('reports the banked amount and the refused overflow separately', async () => {
+      mockInventoryService.addItem.mockResolvedValueOnce({ added: 3, overflow: 2 });
+      mockSupabaseService.getAdminClient.mockReturnValue({
+        from: jest.fn((table: string) => {
+          if (table === 'farm_plots') {
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  eq: jest.fn().mockReturnValue({
+                    single: jest.fn().mockResolvedValue({
+                      data: {
+                        id: 'plot-1',
+                        state: 'READY',
+                        crop_instances: [{ id: 'crop-1', crop_type: 'sorghum', health: 1.0 }],
+                      },
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+              update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+            };
+          }
+          if (table === 'crop_instances') {
+            return {
+              delete: jest
+                .fn()
+                .mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+            };
+          }
+          return {};
+        }),
+      });
+
+      const res = await service.harvestCrop('farm-1', 'plot-1', 'user-1');
+      // The gross roll is a deterministic hash of the crop row (A3 removed
+      // Math.random), so this test must DERIVE it rather than assume one: an
+      // earlier version asserted a literal 3 and only passed by luck of the
+      // fixture, which is exactly the brittleness A3 was written to remove.
+      // The invariant under test is the accounting, not the dice:
+      //   banked + refused === gross, and banked === what the caller is told.
+      const gross = res.harvest.yield + res.overflow;
+      expect(res.overflow).toBe(2);
+      expect(gross).toBeGreaterThanOrEqual(4); // sorghum yield.min
+      expect(gross).toBeLessThanOrEqual(6); // sorghum yield.max
+      // The banked figure is what was ACTUALLY stored — never the gross roll.
+      expect(res.harvest.yield).toBe(gross - 2);
+      expect(res.harvest.yield).toBeGreaterThanOrEqual(0);
+      expect(res.inventoryAddition.quantity).toBe(res.harvest.yield);
+    });
+  });
+
   // Letsema — the 500-Botho pillar (05 §P5, I9)
   //
   // Both gates are enforced server-side: the client is told whether Letsema
@@ -606,7 +810,12 @@ describe('CropsService', () => {
       const updateEq = jest.fn().mockResolvedValue({ error: null });
       const deleteEq = jest.fn().mockResolvedValue({ error: null });
 
+      // A2 — this client answers `farms` itself (with a configurable owner), so
+      // it opts out of the `beforeEach` owner-row injection. Without the opt-out
+      // the wrapper would answer `farms` first and the ownership-refusal test
+      // below would be asserting against a row this suite never wrote.
       return {
+        __ownFarms: true,
         from: jest.fn((table: string) => {
           if (table === 'farms') {
             return {

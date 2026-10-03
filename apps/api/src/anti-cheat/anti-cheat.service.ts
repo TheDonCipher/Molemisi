@@ -16,6 +16,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { SupabaseService } from '../database/supabase.service';
+import { InventoryService } from '../inventory/inventory.service';
 import {
   detectCostBypass,
   detectMarketManipulation,
@@ -29,6 +30,12 @@ import {
   type LedgerRow,
   type MarketTrade,
 } from './rules';
+import {
+  describeIssues,
+  planRecovery,
+  validateGameState,
+  type GameStateSnapshot,
+} from '../simulation/state-validation';
 
 /** Default tuning. Raised above anything legal play produces, so flags mean review. */
 export const ANTICHEAT_THRESHOLDS = {
@@ -305,6 +312,177 @@ export class AntiCheatService {
       nowIso,
     );
     await this.persist(flags, nowIso);
+  }
+
+  /**
+   * A8 (security audit 2026-10-03) — run the pure state validator over live
+   * farm state and turn every finding into a review flag.
+   *
+   * WHY THIS EXISTS. `simulation/state-validation.ts` was written, specified in
+   * 11 §5, and given its own passing spec — but nothing in the running service
+   * ever CALLED it. Its module docstring says both halves are pure "so they can
+   * run inside the anti-cheat pass"; that never happened. The result was a
+   * validation module that was green in CI and inert in production: a farm whose
+   * `last_simulated_at` had drifted years into the future, or that carried a
+   * crop row on an EMPTY plot, produced no flag and no incident note, because
+   * nothing looked.
+   *
+   * WHY IT IS A SEPARATE METHOD rather than folded into `runPassiveChecks`. The
+   * passive sweep answers "is this state impossible?" from the rule module's own
+   * rows. This one answers 11 §5's question — "is this state VALID, and what
+   * should be done about it?" — and, uniquely, it produces a RECOVERY PLAN via
+   * `planRecovery`, which the flag row carries so a reviewer (or a future
+   * automated repair job) knows the corrective action without re-deriving it.
+   * Keeping it separate also means the existing passive specs keep asserting
+   * exactly what they asserted before.
+   *
+   * NOTHING IS MUTATED. 13 §9 is explicit that flags are review signals, never
+   * verdicts, and `planRecovery` output is deliberately NOT applied here. A
+   * `SET_CURRENCY_ZERO` action executed automatically would destroy a player's
+   * balance on the strength of one bad row — detection and action must stay
+   * separate, and the plan travels in the evidence so the decision is made where
+   * a human makes it.
+   */
+  async runStateValidation(opts: RunOptions = {}): Promise<Flag[]> {
+    const now = opts.now ?? new Date();
+    const nowIso = now.toISOString();
+    const admin = this.supabase.getAdminClient();
+
+    // The same six reads the passive sweep makes, deliberately: the validator
+    // judges exactly the tables the corruption rules judge, so reading anything
+    // else would either miss corruption or invent it.
+    const results = await Promise.all([
+      admin.from('player_wallets').select('player_id, pula_balance, botho_points'),
+      admin.from('player_inventory').select('player_id, item_def_id, quantity'),
+      admin.from('farm_plots').select('id, farm_id, state'),
+      admin.from('crop_instances').select('id, plot_id'),
+      admin.from('item_definitions').select('id, slug'),
+      admin.from('farms').select('id, user_id, last_simulated_at'),
+    ]);
+    const wallets = results[0].data;
+    const inventory = results[1].data;
+    const plots = results[2].data;
+    const crops = results[3].data;
+    const defs = results[4].data;
+    const farms = results[5].data;
+
+    const slugByDefId = new Map<string, string>();
+    for (const d of defs ?? []) slugByDefId.set(d.id as string, d.slug as string);
+
+    const walletByPlayer = new Map<string, { currency: number; botho: number }>();
+    for (const w of wallets ?? []) {
+      walletByPlayer.set(w.player_id as string, {
+        currency: Number(w.pula_balance ?? 0),
+        botho: Number(w.botho_points ?? 0),
+      });
+    }
+
+    const plotsByFarm = new Map<string, Array<Record<string, unknown>>>();
+    for (const p of plots ?? []) {
+      const farmId = p.farm_id as string;
+      if (!plotsByFarm.has(farmId)) plotsByFarm.set(farmId, []);
+      plotsByFarm.get(farmId)!.push(p as Record<string, unknown>);
+    }
+
+    const cropIdByPlot = new Map<string, string>();
+    for (const c of crops ?? []) cropIdByPlot.set(c.plot_id as string, c.id as string);
+
+    const inventoryByPlayer = new Map<string, Array<{ itemType: string; quantity: number }>>();
+    for (const r of inventory ?? []) {
+      const playerId = r.player_id as string;
+      if (!inventoryByPlayer.has(playerId)) inventoryByPlayer.set(playerId, []);
+      inventoryByPlayer.get(playerId)!.push({
+        itemType: slugByDefId.get(r.item_def_id as string) ?? (r.item_def_id as string),
+        quantity: Number(r.quantity ?? 0),
+      });
+    }
+
+    const flags: Flag[] = [];
+    for (const farm of farms ?? []) {
+      flags.push(
+        ...this.validateOneFarm(farm as Record<string, unknown>, {
+          plotsByFarm,
+          cropIdByPlot,
+          inventoryByPlayer,
+          walletByPlayer,
+          now,
+          nowIso,
+        }),
+      );
+    }
+
+    return this.persist(flags, nowIso);
+  }
+
+  /**
+   * A8 — the per-farm half of `runStateValidation`, split out so the snapshot
+   * assembly above stays readable and so the decision "is this farm corrupt,
+   * and how badly" lives in one place.
+   */
+  private validateOneFarm(
+    farm: Record<string, unknown>,
+    ctx: {
+      plotsByFarm: Map<string, Array<Record<string, unknown>>>;
+      cropIdByPlot: Map<string, string>;
+      inventoryByPlayer: Map<string, Array<{ itemType: string; quantity: number }>>;
+      walletByPlayer: Map<string, { currency: number; botho: number }>;
+      now: Date;
+      nowIso: string;
+    },
+  ): Flag[] {
+    const farmId = farm.id as string;
+    const playerId = farm.user_id as string;
+    const wallet = ctx.walletByPlayer.get(playerId);
+
+    // One snapshot PER FARM. Most of the validator's codes are cross-field: a
+    // plot is corrupt only in relation to its crop row, and a farm is stale only
+    // in relation to `last_simulated_at`. A merged global view would judge every
+    // plot on the install against every crop row anywhere.
+    const snapshot: GameStateSnapshot = {
+      farmId,
+      playerId,
+      // A farm with no wallet row is a corrupt balance of 0 rather than a skip:
+      // the player exists and holds no Pula, and the validator's job is to
+      // describe the state as found, not to normalise it first.
+      currency: wallet?.currency ?? 0,
+      botho: wallet?.botho ?? 0,
+      plots: (ctx.plotsByFarm.get(farmId) ?? []).map((p) => ({
+        id: p.id as string,
+        state: (p.state as string) ?? 'EMPTY',
+        cropId: ctx.cropIdByPlot.get(p.id as string) ?? null,
+      })),
+      inventory: ctx.inventoryByPlayer.get(playerId) ?? [],
+      lastSimulatedAt: (farm.last_simulated_at as string | null) ?? null,
+    };
+
+    const result = validateGameState(snapshot, ctx.now);
+    if (result.valid) return [];
+
+    // The recovery plan is what makes this more than a duplicate of the passive
+    // sweep: it names the corrective action for each finding, so a reviewer does
+    // not have to know what STALE_SIMULATION implies.
+    const recovery = planRecovery(result);
+
+    return [
+      {
+        kind: 'corrupted_state',
+        // A future-dated sim clock is a tamper signal, not a glitch, so it is
+        // rated with the severity the passive sweep gives an impossible balance.
+        // Everything else here is degradation.
+        severity: result.issues.some((i) => i.code === 'FUTURE_SIMULATION')
+          ? 'critical'
+          : 'high',
+        playerId,
+        farmId,
+        evidence: {
+          code: result.issues.map((i) => i.code).join(','),
+          issues: result.issues.map((i) => ({ code: i.code, entity: i.entity ?? null })),
+          recovery: recovery.map((a) => a.kind),
+          report: describeIssues(result),
+        },
+        detectedAt: ctx.nowIso,
+      },
+    ];
   }
 
   /** Cost-bypass sweep: build/craft events with no matching debit row. */

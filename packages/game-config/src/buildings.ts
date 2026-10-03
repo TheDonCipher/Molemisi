@@ -146,7 +146,17 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     // 3.8d — the kraal shelter roof is re-thatched as often as its poles are reset.
     maintenanceMaterials: { currency: 0, thapo: 2, thatch: 1 },
     spriteSheet: 'ui/items/building_paddock.png',
-    benefit: 'Protects livestock from overnight raids.',
+    // WILDLIFE RAIDS ARE DEFERRED FROM v1 (ruling 2026-09-11). There is no raid
+    // system in the shipped game — no raid table, no raid tick, no damage path.
+    // This string used to advertise a threat the player is never actually exposed
+    // to, which is the worst kind of empty promise: it implies a defensive
+    // mechanic that a player could pay Pula to insure against and then never
+    // see. The benefit now describes what the building ACTUALLY does.
+    //
+    // If raids are ever built, restore raid copy here AND add a regression test
+    // asserting the raid tick exists, so the copy can never again outrun the
+    // mechanic. See docs/KNOWN_LIMITATIONS.md.
+    benefit: 'A shelter for your animals — better housing, and the start of your kraal.',
   },
   farm_boundary: {
     id: 'farm_boundary',
@@ -168,7 +178,11 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     // 3.8d — a hardwood gate-post outlasts the poles it braces (audit P1-8).
     maintenanceMaterials: { currency: 0, poleto: 3, hardwood: 1 },
     spriteSheet: 'ui/items/building_fence.png',
-    benefit: 'Protects crops from overnight wildlife raids.',
+    // WILDLIFE RAIDS ARE DEFERRED FROM v1 (ruling 2026-09-11) — see the kraal
+    // note above. The fence's real, implemented job is the `capacityType:
+    // 'protection'` slot count and the wear/maintenance loop; the old string
+    // promised raid protection that no code path could deliver.
+    benefit: 'A boundary that keeps the livestock in and the weather out.',
   },
   crafting: {
     id: 'crafting',

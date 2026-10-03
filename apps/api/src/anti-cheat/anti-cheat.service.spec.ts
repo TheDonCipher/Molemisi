@@ -93,6 +93,113 @@ describe('AntiCheatService — passive sweep (13 §4)', () => {
   });
 });
 
+/**
+ * A8 (security audit 2026-10-03) — `simulation/state-validation.ts` is now WIRED
+ * IN, not just written.
+ *
+ * The module was specified (11 §5), implemented, and given its own passing spec —
+ * and nothing in the running service ever called it. Its own docstring says both
+ * halves are pure "so they can run inside the anti-cheat pass"; that never
+ * happened, so the validator was green in CI and inert in production.
+ */
+describe('AntiCheatService — state validation is wired in (A8, 11 §5)', () => {
+  /** A farm whose simulation clock is recent enough not to be stale. */
+  const FRESH_SIM = hoursAgo(2);
+
+  it('flags a farm whose simulation clock is stale past the offline cap', async () => {
+    // 72 h > MAX_OFFLINE_HOURS (24). The sim would silently stop advancing for
+    // this player; before A8 nothing reported it.
+    const { svc, db } = makeService({
+      player_wallets: [{ player_id: 'u1', pula_balance: 250, botho_points: 0 }],
+      player_inventory: [],
+      item_definitions: [],
+      farms: [{ id: 'f1', user_id: 'u1', last_simulated_at: hoursAgo(72) }],
+      farm_plots: [{ id: 'p1', farm_id: 'f1', state: 'EMPTY' }],
+      crop_instances: [],
+    });
+
+    const flags = await svc.runStateValidation({ now: NOW });
+    expect(flags).toHaveLength(1);
+    expect(flags[0]!.kind).toBe('corrupted_state');
+    expect(flags[0]!.farmId).toBe('f1');
+    expect(String(flags[0]!.evidence.code)).toContain('STALE_SIMULATION');
+    expect(kinds(db)).toEqual(['corrupted_state']);
+  });
+
+  it('escalates a FUTURE-dated simulation clock to critical', async () => {
+    // A clock ahead of the server is a tamper signal, not degradation — the sim
+    // would compute a negative elapsed time from it.
+    const { svc } = makeService({
+      player_wallets: [{ player_id: 'u1', pula_balance: 250, botho_points: 0 }],
+      farms: [{ id: 'f1', user_id: 'u1', last_simulated_at: hoursAgo(-48) }],
+      farm_plots: [],
+      crop_instances: [],
+      player_inventory: [],
+      item_definitions: [],
+    });
+
+    const flags = await svc.runStateValidation({ now: NOW });
+    expect(flags[0]!.severity).toBe('critical');
+    expect(String(flags[0]!.evidence.code)).toContain('FUTURE_SIMULATION');
+  });
+
+  it('flags an EMPTY plot that still carries a crop row', async () => {
+    const { svc } = makeService({
+      player_wallets: [{ player_id: 'u1', pula_balance: 250, botho_points: 0 }],
+      farms: [{ id: 'f1', user_id: 'u1', last_simulated_at: FRESH_SIM }],
+      farm_plots: [{ id: 'p1', farm_id: 'f1', state: 'EMPTY' }],
+      crop_instances: [{ id: 'c1', plot_id: 'p1' }],
+      player_inventory: [],
+      item_definitions: [],
+    });
+
+    const flags = await svc.runStateValidation({ now: NOW });
+    expect(flags).toHaveLength(1);
+    expect(String(flags[0]!.evidence.code)).toContain('PLOT_WITHOUT_CROP');
+  });
+
+  it('carries the RECOVERY PLAN, not just the finding', async () => {
+    // The point of wiring in `state-validation.ts` rather than re-writing its
+    // checks: `planRecovery` names the corrective action, so a reviewer does not
+    // have to know what STALE_SIMULATION implies. The plan is reported, NOT
+    // applied — 13 §9: flags are review signals, never verdicts.
+    const { svc, db } = makeService({
+      player_wallets: [{ player_id: 'u1', pula_balance: 250, botho_points: 0 }],
+      farms: [{ id: 'f1', user_id: 'u1', last_simulated_at: hoursAgo(72) }],
+      farm_plots: [],
+      crop_instances: [],
+      player_inventory: [],
+      item_definitions: [],
+    });
+
+    await svc.runStateValidation({ now: NOW });
+    const evidence = (db.anti_cheat_flags[0] as Record<string, any>).evidence;
+    expect(evidence.recovery).toContain('RERUN_SIMULATION');
+
+    // NOTHING was mutated — the wallet still reads what it read before.
+    expect(db.player_wallets[0]!.pula_balance).toBe(250);
+  });
+
+  it('says nothing at all about a healthy farm', async () => {
+    // A validator that fires on everything trains reviewers to ignore it.
+    const { svc, db } = makeService({
+      player_wallets: [{ player_id: 'u1', pula_balance: 250, botho_points: 3 }],
+      player_inventory: [{ player_id: 'u1', item_def_id: 'def-maize', quantity: 4 }],
+      item_definitions: [{ id: 'def-maize', slug: 'maize' }],
+      farms: [{ id: 'f1', user_id: 'u1', last_simulated_at: FRESH_SIM }],
+      farm_plots: [
+        { id: 'p1', farm_id: 'f1', state: 'EMPTY' },
+        { id: 'p2', farm_id: 'f1', state: 'GROWING' },
+      ],
+      crop_instances: [{ id: 'c1', plot_id: 'p2' }],
+    });
+
+    const flags = await svc.runStateValidation({ now: NOW });
+    expect(flags).toHaveLength(0);
+    expect(kinds(db)).toHaveLength(0);
+  });
+});
+
 describe('AntiCheatService — active scan (13 §9)', () => {
   it('flags a rapid Pula gain inside the window and persists it', async () => {
     const { svc, db } = makeService({

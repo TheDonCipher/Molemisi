@@ -15,7 +15,8 @@ export class InventoryController {
   @Get()
   async getInventory(@Param('farmId') farmId: string, @CurrentUser('id') userId: string) {
     await this.farmsService.verifyFarmOwnership(farmId, userId);
-    const playerId = await this.inventoryService.resolvePlayerId(farmId);
+    // A2 — the expected identity is passed through, so the lookup is checked.
+    const playerId = await this.inventoryService.resolvePlayerId(farmId, userId);
     const { items, usedSlots, slotCap } = await this.inventoryService.getInventory(playerId, farmId);
     return { success: true, data: { items, usedSlots, slotCap } };
   }

@@ -183,6 +183,74 @@ export interface DonationResult {
   remainingToday: number;
 }
 
+/* ---------------------------------------------------- the Kgotla YEAR layer */
+
+/**
+ * docs/36 §5 — one monthly Charge, revealed by the Gaborone date.
+ *
+ * This is the ONLY Pula-bearing Kgotla path: the daily ward errands above pay
+ * Botho + regard only (`kgotla.service.ts` CHARGES, `pulaReward: 0`). Before
+ * this type existed the whole Year layer was server-only and no player could
+ * reach the P915/year faucet at all.
+ */
+export interface YearChargeAskProgress {
+  item: string;
+  qty: number;
+  /** Derived from the server-side inventory at read time — never stored. */
+  have: number;
+  met: boolean;
+}
+
+export interface YearChargeView {
+  chargeId: string | null;
+  month: number;
+  /** `2026/27` — the game year the Charge belongs to (chargeYear.ts). */
+  cycle: string;
+  npcId: string;
+  name: string;
+  status: 'none' | 'active' | 'claimed';
+  asks: YearChargeAskProgress[];
+  ready: boolean;
+  rewards: {
+    pula: number;
+    botho: number;
+    chapterTokens: number;
+    almanacQuests: number;
+  };
+}
+
+export interface YearChargeTurnInResult {
+  chargeId: string;
+  status: 'claimed';
+  pulaReward: number;
+  bothoReward: number;
+  chapterTokens: number;
+  almanacQuests: number;
+  consumed: Array<{ item: string; qty: number }>;
+}
+
+/**
+ * The player's chapter standing, as `GET /chapters/current` returns it. Read
+ * here only so the season-souvenir affordance can show the balance it spends.
+ */
+export interface ChapterStanding {
+  chapter: {
+    slug: string;
+    name: string;
+    tokenName: string;
+    /** Days until this chapter ends — stamps expire to zero at the boundary. */
+    daysLeft: number;
+  };
+  almanac: { chapterTokens: number };
+}
+
+/** The single season-souvenir SKU (SEASON_SOUVENIRS in game-config). */
+export interface SouvenirView {
+  sku: string;
+  stamps: number;
+  type: 'cosmetic';
+}
+
 /* ------------------------------------------------------------------- hook */
 
 export function useKgotla() {
@@ -198,6 +266,17 @@ export function useKgotla() {
   const [contribution, setContribution] = useState<ContributionView | null>(null);
   const [feastStatus, setFeastStatus] = useState<FeastStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  /**
+   * The month's Charge (docs/36 §5). `null` until the read resolves, and a
+   * separate `yearChargeError` on failure so a broken Year layer cannot blank
+   * the council, the errand board or the projects below it.
+   */
+  const [yearCharge, setYearCharge] = useState<YearChargeView | null>(null);
+  const [yearChargeError, setYearChargeError] = useState<string | null>(null);
+  /** Chapter standing — read for the souvenir balance + the expiry countdown. */
+  const [chapterStanding, setChapterStanding] = useState<ChapterStanding | null>(null);
+  /** Non-null only when the souvenir spend itself failed (see `spendSouvenir`). */
+  const [souvenirError, setSouvenirError] = useState<string | null>(null);
   /** Non-null only when the COUNCIL itself failed — drives the Retry row (AC-09). */
   const [councilError, setCouncilError] = useState<string | null>(null);
   /** The elder whose action is in flight, so only that control shows a spinner (AC-08). */
@@ -215,15 +294,40 @@ export function useKgotla() {
     if (!farmId) return;
     setLoading(true);
     try {
-      const [prog, elderRes, npcRes, projRes, boardRes, feastRes] = await Promise.allSettled([
-        apiFetch<{ botho: BothoView; journal: JournalView }>('GET', '/progression'),
-        apiFetch<ElderGuidance>('GET', '/progression/elder'),
-        apiFetch<KgotlaNpc[]>('GET', `/farms/${farmId}/kgotla/npcs`),
-        apiFetch<ProjectsResponse>('GET', `/farms/${farmId}/kgotla/projects`),
-        apiFetch<ChargeBoard>('GET', `/farms/${farmId}/kgotla/charges`),
-        // Doc 11 §4 — feast standing (fence + Friend of the Feast), read-only.
-        apiFetch<FeastStatus>('GET', `/farms/${farmId}/kgotla/feast-status`),
-      ]);
+      const [prog, elderRes, npcRes, projRes, boardRes, feastRes, yearRes, chapRes] =
+        await Promise.allSettled([
+          apiFetch<{ botho: BothoView; journal: JournalView }>('GET', '/progression'),
+          apiFetch<ElderGuidance>('GET', '/progression/elder'),
+          apiFetch<KgotlaNpc[]>('GET', `/farms/${farmId}/kgotla/npcs`),
+          apiFetch<ProjectsResponse>('GET', `/farms/${farmId}/kgotla/projects`),
+          apiFetch<ChargeBoard>('GET', `/farms/${farmId}/kgotla/charges`),
+          // Doc 11 §4 — feast standing (fence + Friend of the Feast), read-only.
+          apiFetch<FeastStatus>('GET', `/farms/${farmId}/kgotla/feast-status`),
+          // docs/36 §5 — the month's Charge. This is the ONLY Pula-bearing
+          // Kgotla route; without it the P915/year faucet is unreachable.
+          apiFetch<YearChargeView>('GET', `/farms/${farmId}/kgotla/year-charge`),
+          // Chapter standing for the souvenir balance and its expiry countdown.
+          apiFetch<ChapterStanding>('GET', '/chapters/current'),
+        ]);
+
+      // The Year layer fails independently of everything else: a 403 on a stale
+      // farm, or any transient error, must not take the council down with it.
+      if (yearRes.status === 'fulfilled') {
+        setYearCharge(yearRes.value);
+        setYearChargeError(null);
+      } else {
+        setYearCharge(null);
+        const reason = yearRes.reason as { message?: unknown };
+        setYearChargeError(
+          typeof reason?.message === 'string' && reason.message
+            ? reason.message
+            : tl('somethingWentWrong'),
+        );
+      }
+
+      if (chapRes.status === 'fulfilled' && chapRes.value) {
+        setChapterStanding(chapRes.value);
+      }
 
       if (prog.status === 'fulfilled') {
         setBotho(prog.value.botho);
@@ -255,7 +359,10 @@ export function useKgotla() {
     } finally {
       setLoading(false);
     }
-  }, [farmId]);
+    // `tl` is a fresh closure each render (see the file header), so it is listed
+    // for correctness only — adding it cannot cause a loop, because `load` is
+    // keyed on `farmId`/`tl` identity alone and nothing it sets feeds back in.
+  }, [farmId, tl]);
 
   const talk = useCallback(
     async (npcId: string): Promise<TalkResult | null> => {
@@ -390,6 +497,105 @@ export function useKgotla() {
     if (farmId) load();
   }, [farmId, load]);
 
+  /* ------------------------------------------------------------- the Year layer */
+
+  /**
+   * docs/36 §5 — take this month's Charge. Opens the cycle-scoped claim row;
+   * re-accepting is a no-op the server resolves to the current view.
+   */
+  const acceptYearCharge = useCallback(async () => {
+    if (!farmId) return null;
+    setBusyId('year-charge');
+    try {
+      const res = await apiFetch<YearChargeView>(
+        'POST',
+        `/farms/${farmId}/kgotla/year-charge/accept`,
+      );
+      setYearCharge(res);
+      return res;
+    } catch (e) {
+      showToast(tl('yearChargeFailedTitle'), errText(e), '⚠️', 'error');
+      return null;
+    } finally {
+      setBusyId(null);
+    }
+  }, [farmId, showToast, tl, errText]);
+
+  /**
+   * docs/36 §5 — hand the goods over. The server verifies every ask against the
+   * player's own inventory, consumes them and pays once per cycle.
+   */
+  const turnInYearCharge = useCallback(async () => {
+    if (!farmId) return null;
+    setBusyId('year-charge');
+    try {
+      const res = await apiFetch<YearChargeTurnInResult>(
+        'POST',
+        `/farms/${farmId}/kgotla/year-charge/turn-in`,
+      );
+      const parts = [
+        res.pulaReward > 0 ? `+${res.pulaReward} Pula` : null,
+        res.bothoReward > 0 ? `+${res.bothoReward} Botho` : null,
+        res.chapterTokens > 0 ? `+${res.chapterTokens} ${tl('rewardTokens')}` : null,
+      ].filter(Boolean);
+      showToast(tl('yearChargeCompleteTitle'), parts.join(' · '), '🏛️', 'success');
+      await load();
+      return res;
+    } catch (e) {
+      showToast(tl('yearChargeFailedTitle'), errText(e), '⚠️', 'error');
+      return null;
+    } finally {
+      setBusyId(null);
+    }
+  }, [farmId, load, showToast, tl, errText]);
+
+  /**
+   * docs/34 §3.4 — the ONE thing Chapter Tokens are for: a season souvenir.
+   *
+   * DEPENDENCY (do not remove without re-testing): this route is
+   * `POST /chapters/tokens/spend` (chapter.controller.ts), which delegates to
+   * `ChapterService.spendTokens`. That method is correct only once the atomic
+   * `spend_chapter_tokens` Postgres function exists — migration
+   * `20261003000020`, which is written but NOT applied to the live database.
+   * Until it lands, the call fails server-side and the player keeps their
+   * stamps, but this button will show an error. It is deliberately isolated
+   * here so that failure cannot take the council, the errand board, the Year
+   * Charge or the project donation down with it: the error is rendered inline
+   * (`souvenirError`) rather than thrown, and `load()` is not awaited on it.
+   *
+   * The server is authoritative on both the SKU and the price
+   * (`SEASON_SOUVENIRS`); the client sends the SKU it was configured with and
+   * never computes a cost of its own.
+   */
+  const spendSouvenir = useCallback(
+    async (souvenir: SouvenirView) => {
+      setSouvenirError(null);
+      setBusyId(`souvenir:${souvenir.sku}`);
+      try {
+        const res = await apiFetch<{ remaining: number }>('POST', '/chapters/tokens/spend', {
+          amount: souvenir.stamps,
+          purpose: souvenir.sku,
+        });
+        showToast(
+          tl('souvenirBought'),
+          `${tl('rewardTokens')}: ${res.remaining}`,
+          '🎁',
+          'success',
+        );
+        await load();
+        return res;
+      } catch (e) {
+        // Rendered in place, NOT a toast: a broken sink must be visible as a
+        // broken sink on the souvenir row, and must not spam a global toast.
+        setSouvenirError(errText(e));
+        return null;
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [load, showToast, tl, errText],
+  );
+
   return {
     npcs,
     projects,
@@ -399,6 +605,10 @@ export function useKgotla() {
     elder,
     contribution,
     feastStatus,
+    yearCharge,
+    yearChargeError,
+    chapterStanding,
+    souvenirError,
     loading,
     councilError,
     busyId,
@@ -407,6 +617,9 @@ export function useKgotla() {
     turnIn,
     donate,
     donateVillageFeast,
+    acceptYearCharge,
+    turnInYearCharge,
+    spendSouvenir,
     reload: load,
   };
 }

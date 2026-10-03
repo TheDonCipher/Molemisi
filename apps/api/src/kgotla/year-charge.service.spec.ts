@@ -6,6 +6,8 @@ import { WalletService } from '../wallet/wallet.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { ChapterService } from '../chapters/chapter.service';
 import { makeDb, clientFor, type MockDb } from '../test/supabase-mock';
+import { CHARGE_YEAR } from '@molemisi/game-config';
+import { ITEMS } from '@molemisi/game-config';
 
 /**
  * YearChargeService — docs/37/38 I-2 (the Kgotla Year layer).
@@ -150,22 +152,43 @@ describe('YearChargeService — the Kgotla Year layer (I-2)', () => {
   });
 
   it('turns in a multi-ask Charge (kraal_gate), consuming each ask once', async () => {
+    // The slugs are the REAL catalogue ones. This spec used to name 'plank' and
+    // 'rope', which do not exist in ITEMS at all — so it passed while asserting
+    // a Charge that no player could ever complete. kraal_gate asks for `poleto`
+    // (the plank) and `thapo` (the rope).
     await service.acceptYearCharge('farm-1', 'user-1', NOW_MAR);
     inventory.countOwned.mockImplementation(
-      async (_u: string, slug: string) => (slug === 'plank' ? 4 : slug === 'rope' ? 2 : 0),
+      async (_u: string, slug: string) => (slug === 'poleto' ? 4 : slug === 'thapo' ? 2 : 0),
     );
     const view = await service.getYearCharge('farm-1', 'user-1', NOW_MAR);
     expect(view.chargeId).toBe('kraal_gate');
-    expect(view.asks.map((a) => a.item).sort()).toEqual(['plank', 'rope']);
+    expect(view.asks.map((a) => a.item).sort()).toEqual(['poleto', 'thapo']);
     expect(view.ready).toBe(true);
 
     const result = await service.turnInYearCharge('farm-1', 'user-1', NOW_MAR);
     expect(result.pulaReward).toBe(70); // 4·7·1.1 + 2·18·1.1 = 70.4 → nearest P5 = 70
     expect(result.consumed).toEqual([
-      { item: 'plank', qty: 4 },
-      { item: 'rope', qty: 2 },
+      { item: 'poleto', qty: 4 },
+      { item: 'thapo', qty: 2 },
     ]);
-    expect(inventory.removeItem).toHaveBeenCalledWith('user-1', 'plank', 4);
-    expect(inventory.removeItem).toHaveBeenCalledWith('user-1', 'rope', 2);
+    expect(inventory.removeItem).toHaveBeenCalledWith('user-1', 'poleto', 4);
+    expect(inventory.removeItem).toHaveBeenCalledWith('user-1', 'thapo', 2);
+  });
+
+  /**
+   * The bug this guards against is expensive and silent: a Year Charge that asks
+   * for a slug absent from ITEMS is permanently uncompletable, so P165 of the
+   * P915 annual faucet simply never pays out — and the spec suite still goes
+   * green, because the spec asserts the same wrong slug.
+   *
+   * So assert the catalogue, not the fixture: every item any charge can ask for
+   * must be a real, craftable or growable item.
+   */
+  it('every Charge ask names a real catalogue item', () => {
+    for (const charge of CHARGE_YEAR) {
+      for (const ask of charge.asks) {
+        expect(Object.keys(ITEMS)).toContain(ask.item);
+      }
+    }
   });
 });

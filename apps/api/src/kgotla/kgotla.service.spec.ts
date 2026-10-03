@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { KgotlaService } from './kgotla.service';
 import { SupabaseService } from '../database/supabase.service';
 import { WalletService } from '../wallet/wallet.service';
@@ -13,6 +13,8 @@ import {
   CROP_IDS,
   getItemDef,
   sourcesForItem,
+  chapterForDate,
+  type ChapterSlug,
 } from '@molemisi/game-config';
 
 /**
@@ -37,6 +39,20 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
 
   /** Fixed instant: 12:00 CAT on 2026-09-23. The Botswana day is 2026-09-23. */
   const NOW = new Date('2026-09-23T10:00:00.000Z');
+  /**
+   * 2026-01-15 — inside the PULA chapter (Nov/Dec/Jan, slug 'pula'), which is
+   * the chapter the Water Reservoir belongs to. Council-Project donation is
+   * chapter-gated (L2), so the September instant `NOW` cannot fund it: `NOW` is
+   * Dikgakologo, whose project is `school`. Tests that fund the reservoir must
+   * therefore stamp a Pula-chapter date.
+   *
+   * January, not November: `wallet.contributedToday` sums ledger rows written
+   * at real wall-clock time since the START of the Botswana day of `now`, so a
+   * test date in the FUTURE would count zero prior donations and the daily-cap
+   * assertion could not see the first one. 2026-01-15 is Pula chapter AND in
+   * the past, which is what both the chapter gate and the cap need.
+   */
+  const NOW_PULA = new Date('2026-01-15T10:00:00.000Z');
   const daysAgo = (n: number) => new Date(NOW.getTime() - n * 24 * 60 * 60 * 1000);
 
   const inventory = {
@@ -490,11 +506,11 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
         botho_points: 0,
       });
 
-      await service.donateToProject('farm-1', 'user-1', 'water_reservoir', 100, NOW);
-      expect(chapters.addTokens).toHaveBeenCalledWith('user-1', 5, NOW);
+      await service.donateToProject('farm-1', 'user-1', 'water_reservoir', 100, NOW_PULA);
+      expect(chapters.addTokens).toHaveBeenCalledWith('user-1', 5, NOW_PULA);
 
       // A second donation past the threshold must not pay out again.
-      await service.donateToProject('farm-1', 'user-1', 'water_reservoir', 50, NOW);
+      await service.donateToProject('farm-1', 'user-1', 'water_reservoir', 50, NOW_PULA);
       expect(chapters.addTokens).toHaveBeenCalledTimes(1);
     });
 
@@ -505,7 +521,7 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
         botho_points: 0,
       });
 
-      await service.donateToProject('farm-1', 'user-1', 'water_reservoir', 30, NOW);
+      await service.donateToProject('farm-1', 'user-1', 'water_reservoir', 30, NOW_PULA);
       expect(chapters.addTokens).not.toHaveBeenCalled();
     });
   });
@@ -530,9 +546,9 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
         pula_balance: 1000,
         botho_points: 0,
       });
-      await service.donateToProject('farm-1', 'user-1', 'water_reservoir', 30, NOW);
+      await service.donateToProject('farm-1', 'user-1', 'water_reservoir', 30, NOW_PULA);
 
-      const view = await service.getProjectsView('farm-1', 'user-1', NOW);
+      const view = await service.getProjectsView('farm-1', 'user-1', NOW_PULA);
       expect(view.contribution.contributedToday).toBe(30);
       expect(view.contribution.remainingToday).toBe(
         KGOTLA_DAILY_CONTRIBUTION_CAP - 30,
@@ -556,7 +572,7 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
         'user-1',
         'water_reservoir',
         30,
-        NOW,
+        NOW_PULA,
       );
       expect(result.bothoReward).toBe(30);
       expect(botho()).toBe(30);
@@ -583,10 +599,12 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
         'user-1',
         'water_reservoir',
         KGOTLA_DAILY_CONTRIBUTION_CAP,
-        NOW,
+        NOW_PULA,
       );
+      // Same chapter as the first donation, so the refusal can ONLY be the daily
+      // cap — not the chapter gate, which would fire first and hide it.
       await expect(
-        service.donateToProject('farm-1', 'user-1', 'school', 1, NOW),
+        service.donateToProject('farm-1', 'user-1', 'water_reservoir', 1, NOW_PULA),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
@@ -599,9 +617,78 @@ describe('KgotlaService — charges, pool and decay (SPEC §4.1, §5, §6)', () 
       ['a string', '50' as unknown as number],
     ])('rejects %s and never touches the wallet', async (_label, amount) => {
       await expect(
-        service.donateToProject('farm-1', 'user-1', 'water_reservoir', amount, NOW),
+        service.donateToProject('farm-1', 'user-1', 'water_reservoir', amount, NOW_PULA),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(botho()).toBe(0);
+    });
+  });
+
+  // ------------------------------------------------------------------
+  // L2 — chapter gating. A Council Project may only be funded in ITS OWN
+  // chapter (docs/36 K9 / §4, docs/38 I-3 "only active chapter accepts").
+  // The refusal is 403 Forbidden, not 400 BadRequest, and nothing is spent.
+  // ------------------------------------------------------------------
+  describe('chapter gating (L2 — docs/36 K9, docs/38 I-3)', () => {
+    beforeEach(() => {
+      (db.player_wallets as any[]).push({
+        player_id: 'user-1',
+        pula_balance: 5000,
+        botho_points: 0,
+      });
+    });
+
+    it('refuses a project from another chapter with Forbidden (not BadRequest)', async () => {
+      // 2026-01-15 is Pula, whose project is the Water Reservoir. The School
+      // belongs to Dikgakologo (Aug-Oct), so it must be refused here.
+      await expect(
+        service.donateToProject('farm-1', 'user-1', 'school', 10, NOW_PULA),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('spends nothing when the chapter gate refuses', async () => {
+      await expect(
+        service.donateToProject('farm-1', 'user-1', 'school', 10, NOW_PULA),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(pula()).toBe(5000);
+      expect(db.kgotla_projects).toHaveLength(0);
+    });
+
+    it('accepts the current chapter project on the same date', async () => {
+      await expect(
+        service.donateToProject('farm-1', 'user-1', 'water_reservoir', 10, NOW_PULA),
+      ).resolves.toBeDefined();
+    });
+
+    it('gates each chapter to its own project across the year', async () => {
+      // One instant per chapter, each paired with the project config says
+      // belongs to it. This is the whole of docs/38 I-3 in one table.
+      const cases: Array<[string, string, ChapterSlug]> = [
+        ['2026-11-15T10:00:00.000Z', 'water_reservoir', 'pula'],
+        ['2026-03-15T10:00:00.000Z', 'mophane_festival', 'phane'],
+        ['2026-06-15T10:00:00.000Z', 'water_store', 'moriti'],
+        ['2026-09-15T10:00:00.000Z', 'school', 'letlhafula'],
+      ];
+      for (const [iso, projectId, slug] of cases) {
+        expect(chapterForDate(new Date(iso)).slug).toBe(slug);
+        // Another chapter's project is always refused on this date.
+        const other = cases.find(([, pid]) => pid !== projectId)![1];
+        await expect(
+          service.donateToProject('farm-1', 'user-1', other, 1, new Date(iso)),
+        ).rejects.toBeInstanceOf(ForbiddenException);
+      }
+    });
+
+    it('still names the project of the current chapter in the refusal', async () => {
+      await expect(
+        service.donateToProject('farm-1', 'user-1', 'school', 10, NOW_PULA),
+      ).rejects.toThrow(/Water Reservoir/);
+    });
+
+    it('every project carries the chapter the config assigns it', async () => {
+      const projects = await service.getProjects('farm-1');
+      expect(projects.map((p) => p.chapter).sort()).toEqual(
+        ['letlhafula', 'moriti', 'phane', 'pula'],
+      );
     });
   });
 

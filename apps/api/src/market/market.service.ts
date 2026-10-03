@@ -58,6 +58,29 @@ function bandFor(itemType: string): { min: number; max: number } {
     : { min: PRICE_BAND.min, max: PRICE_BAND.max };
 }
 
+/**
+ * Sale inputs come straight off the request body, so they are re-validated
+ * here as well as in the controller (M5 — defence in depth: a future caller
+ * that skips the Zod gate must still never reach `inventory.removeItem` with
+ * a fractional or negative quantity, which previously wrote fractional
+ * inventory rows and `Math.round(price * -n)` credits).
+ */
+export class SellItemInput {
+  itemType!: string;
+  quantity!: number;
+}
+
+export class BuyItemInput {
+  itemType!: string;
+  quantity!: number;
+}
+
+/** Parse a positive integer quantity or throw the caller's 400 for them. */
+export function parseQuantity(value: unknown): number {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) return value;
+  throw new BadRequestException('quantity must be a positive whole number');
+}
+
 export interface SellResult {
   transaction: {
     itemType: string;
@@ -155,13 +178,49 @@ export class MarketService {
   }
 
   /**
+   * Reject a quantity that is not a whole, positive, finite number.
+   *
+   * A5 (security audit 2026-10-03) — this guard did not exist. `@Body()` gives
+   * whatever JSON the client sent, so `quantity` could be `0`, `-5`, `1.5`,
+   * `"3"`, `null`, or `1e9`. Two of those are directly exploitable:
+   *
+   *   - NEGATIVE on buy. `totalPrice = price * quantity` goes negative, so
+   *     `wallet.spendPula` is asked to spend a NEGATIVE amount — it would
+   *     CREDIT the player rather than debit them, and `inventory.addItem` with a
+   *     negative quantity would likewise move the wrong way. The seeds-only
+   *     gate (R3a) means the attacker needs an in-season seed, which every
+   *     player has, so this was a free-money route.
+   *   - FRACTIONAL quantities. Pula is NUMERIC(12,2) but the stack caps and item
+   *     quantities are whole numbers; a fractional write leaves rows no other
+   *     code path can produce, and rounding at the DB boundary makes the credited
+   *     amount disagree with the debited one.
+   *
+   * `quoteSale` had a `quantity <= 0` check but no integer check, so it happily
+   * quoted a fractional sale that `sellItem` would then refuse — the quote sheet
+   * and the sale could disagree. One validator, called by all three, is what
+   * makes "the quote matches the sale" (07 §7.5) actually true.
+   *
+   * No upper bound is imposed here: the per-item stack cap and the daily cap are
+   * enforced by the stores that actually know them, and inventing a second limit
+   * here would just be a number that drifts out of step with the real one.
+   */
+  private requireWholeQuantity(quantity: number): number {
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new BadRequestException(
+        `quantity must be a positive whole number (got ${JSON.stringify(quantity)})`,
+      );
+    }
+    return quantity;
+  }
+
+  /**
    * Preview a sale without writing anything: price today, gross, the Co-op's 5%
    * and the net the player would receive. Reuses `computeSale`, so it is exact.
    */
   async quoteSale(itemType: string, quantity: number): Promise<SaleQuote> {
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      throw new BadRequestException('quantity must be a positive number');
-    }
+    // A5 — the same validator the real sale uses, so a quote can never describe
+    // a transaction `sellItem` would refuse.
+    this.requireWholeQuantity(quantity);
 
     const pricePerUnit = await this.getDynamicPrice(itemType);
     if (pricePerUnit <= 0) {
@@ -189,10 +248,23 @@ export class MarketService {
     farmId: string,
     userId: string,
     itemType: string,
-    quantity: number,
+    rawQuantity: number,
     _quality: string = 'normal',
   ): Promise<SellResult> {
     const adminClient = this.supabaseService.getAdminClient();
+
+    // M5 — re-validated at the service boundary (defence in depth), in addition
+    // to the Zod gate in the controller. `removeItem` and `computeSale` must
+    // never see a fractional, zero, or negative quantity.
+    const quantity = parseQuantity(rawQuantity);
+
+    // A5 — validate BEFORE the ownership read and before any write. The old code
+    // went straight to the inventory check, where `owned < quantity` is FALSE for
+    // a negative quantity (`0 < -5` is false) — so a negative sale passed the
+    // only gate there was, then `removeItem(player, item, -5)` ADDED five units
+    // and `wallet.credit(..., netProceeds)` paid the Pula that came with them.
+    // That is a money printer: sell -5 of anything you own and get paid for it.
+    this.requireWholeQuantity(quantity);
 
     // 1. Verify farm ownership
     const { data: farm } = await adminClient
@@ -264,9 +336,21 @@ export class MarketService {
     farmId: string,
     userId: string,
     itemType: string,
-    quantity: number,
+    rawQuantity: number,
   ): Promise<BuyResult> {
     const adminClient = this.supabaseService.getAdminClient();
+
+    // M5 — same service-boundary validation as the sell path.
+    const quantity = parseQuantity(rawQuantity);
+
+    // A5 — the buy path had NO quantity validation at all, and this is the worse
+    // of the two directions. `totalPrice = pricePerUnit * quantity` was computed
+    // unchecked, so a negative quantity produced a negative `spendPula` — a debit
+    // request for a negative amount, which the wallet's conditional-update
+    // arithmetic turns into a CREDIT — while `inventory.addItem(..., negative)`
+    // removed units instead of adding them. Guarded first, before the ownership
+    // read and before any spend.
+    this.requireWholeQuantity(quantity);
 
     // 1. Verify farm ownership
     const { data: farm } = await adminClient
