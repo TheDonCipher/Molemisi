@@ -39,6 +39,8 @@
 -- ----------------------------------------------------------------------------
 -- 3. The one sanctioned way to spend Chapter Tokens
 -- ----------------------------------------------------------------------------
+BEGIN;
+
 CREATE OR REPLACE FUNCTION public.spend_chapter_tokens(
   p_player_id UUID,
   p_chapter_id UUID,
@@ -99,10 +101,6 @@ COMMENT ON FUNCTION public.spend_chapter_tokens(UUID, UUID, INT, TEXT) IS
 REVOKE EXECUTE ON FUNCTION public.spend_chapter_tokens(UUID, UUID, INT, TEXT)
   FROM PUBLIC, anon, authenticated;
 
-COMMIT;
-
-BEGIN;
-
 -- ----------------------------------------------------------------------------
 -- 1. Widen the currency CHECK
 -- ----------------------------------------------------------------------------
@@ -125,3 +123,5 @@ ALTER TABLE public.ledger_entries ADD COLUMN IF NOT EXISTS metadata JSONB;
 COMMENT ON COLUMN public.ledger_entries.metadata IS
   'Free-form context for rows whose `ref_id` (UUID) cannot express the reference '
   '— e.g. a chapter-souvenir SKU.';
+
+COMMIT;
