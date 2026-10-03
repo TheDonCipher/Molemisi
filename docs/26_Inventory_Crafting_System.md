@@ -5,7 +5,7 @@ Status: **inspection document**. Every data table below is generated from
 `scripts/generate-inventory-reference.cjs` — regenerate with:
 
 ```bash
-cd packages/game-config && npm run build && cd ../..
+cd packages/game-config && pnpm build && cd ../..
 node scripts/generate-inventory-reference.cjs
 ```
 
@@ -650,6 +650,6 @@ route: the parallel Heritage-Tree edit left two template literals mangled in
 ---
 
 *Regenerate every table: `node scripts/generate-inventory-reference.cjs`
-(after `npm run build` in `packages/game-config`). If the doc and the script
+(after `pnpm build` in `packages/game-config`). If the doc and the script
 output ever disagree, the script is right.*
 

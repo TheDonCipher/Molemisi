@@ -4,6 +4,8 @@
 **Status:** **Draft for ruling.** Nothing in this document is implemented. Four items in §7 need an explicit ruling; each carries a default so that work can proceed.
 **Scope:** The annual calendar and its chapters; the eleven crops and the seasonal seed calendar; the meals (crafted food) and the profitability rules that govern every recipe.
 **Authority:** On adoption, this document replaces every earlier statement on the calendar, seed stocking and recipes. It is written to stand alone: every figure it depends on is reproduced here.
+
+> **Hierarchy note:** this is a *domain* spec for the annual-year system. Where any statement here conflicts with the normative `docs/MVP/` set — in particular `MVP/02` (economy numbers of record), `MVP/05` (phase done-criteria) and `MVP/06` (verification rubric) — **`docs/MVP/` governs**. `scripts/balance_verify.py` remains the economy gate; resolved conflicts are recorded in `docs/37`.
 **Consolidated 2026-10-02 → `docs/37_Consolidated_Playable_Year_Specification.md`:** joined with `docs/36` and the decided economy (`docs/33`/`docs/34`) into a single gameplay spec. On shared points — the chapter rename (R-1/§2.7), the Letsema declaration beat trigger, the Flour gate (R-4), festival placement, and season-stamp sinks — `docs/37` §2 governs; calendar, seed and recipe detail remains here.
 
 ---

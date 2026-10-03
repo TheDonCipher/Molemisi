@@ -1,6 +1,6 @@
 # Architecture Overview
 
-As-built. Design intent that differs is called out. **Last updated 2026-10-02.**
+As-built. Design intent that differs is called out. **Last updated 2026-10-03.**
 
 ## System
 
@@ -82,7 +82,7 @@ The engine (`simulation/engine/`) is pure — instant from `input.now`, randomne
 | Progression | yes | Elder tip + scene access |
 | Kgotla | yes | NPCs + projects hardcoded; charge progress bug fixed |
 | Bushveld | yes | Kagiso-driven scenes/hotspots |
-| Chapters | yes | rollover + claim. ⚠️ **no token-spend route** |
+| Chapters | yes | rollover + claim + **token spend** (`POST /chapters/tokens/spend`, live) |
 | WorldEvents | yes | events hardcoded |
 | Wallet | yes | ledger endpoint; **Pula / Botho / Madi** |
 | Payments | yes | stub provider; ⚠️ webhook behind class-level `AuthGuard` |

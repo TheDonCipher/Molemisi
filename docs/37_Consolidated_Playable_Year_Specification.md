@@ -14,7 +14,7 @@
 | `docs/35` | Calendar, seeds, crops, recipes — detail unchanged here; its rulings R-1…R-4 are carried into §11. |
 | `docs/36` | Quest copy, cast, lore, returning years, the Reading of Names — unchanged here except where §2 says otherwise; its rulings R-Q1…R-Q4 are carried into §11. |
 
-On adoption this document supersedes the *joint* statements of `docs/29`, `docs/35` and `docs/36`; it does not replace their domain detail.
+On adoption this document supersedes the *joint* statements of `docs/29`, `docs/35` and `docs/36`; it does not replace their domain detail. Like `docs/35`/`docs/36`, it yields to the normative `docs/MVP/` set (`MVP/02`, `MVP/05`, `MVP/06`) on any conflict, and `scripts/balance_verify.py` remains the economy gate.
 
 ---
 

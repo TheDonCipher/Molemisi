@@ -187,7 +187,7 @@ A new farmer arrives in **Pula** (Nov–Jan), when the Botswana rains open the l
 | I-11 | Simulator | Errand/Charge split; assert the **P915** faucet. | No |
 | I-12 | Docs | Point `docs/33` §3.1/§4 "three daily charges" prose here (E-3); mark `docs/29` superseded. | No |
 
-**Schema delta (from `DEVELOPMENT_STATE.md`):** all migrations through `20261002000000` are **pushed live** (**39 total, 0 pending**). The Kgotla charges/decay, deep-time/lore, economy metrics, anti-cheat, **Madi** third currency and Year-layer `kgotla_charges` tables are all on the remote DB.
+**Schema delta (from `DEVELOPMENT_STATE.md`):** all migrations through `20261002000000` are **pushed live** (**51 migration files total: 41 pushed live, 10 untracked / not yet pushed, 0 pending among the committed set**). The Kgotla charges/decay, deep-time/lore, economy metrics, anti-cheat, **Madi** third currency and Year-layer `kgotla_charges` tables are all on the remote DB.
 
 **Deferred to v1.1 / future (explicitly out of scope):**
 - Traditional dishes (Dikgobe, Bogobe jwa Lerotse, Ting, Madila, Dried Phane) — `docs/35` §4.3. No Charge may request them until shipped (E-16).

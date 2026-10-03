@@ -74,7 +74,7 @@ Design targets (not implemented):
 
 | Scope                 | Limit        | Window   |
 | --------------------- | ------------ | -------- |
-| Global per IP         | 100 requests | 1 minute |
+| Global per IP         | 60 requests  | 1 minute |
 | Per endpoint per user | 30 requests  | 1 minute |
 | Auth endpoints        | 10 requests  | 1 minute |
 | Payment endpoints     | 5 requests   | 1 minute |

@@ -18,10 +18,13 @@ Phaser 3 prototype `apps/game` was deleted on 2026-09-11; the React `/game` clie
 
 ## Current status
 
-The MVP is **code-complete** and the four gates are green (api tsc 0 · web tsc 0 · **592 Jest
-tests** across 35 suites · `balance_verify.py` PASS). The schema is at **38 migrations**. The
-original 11-migration deploy gap was pushed to the linked Supabase project `nyapfgawanqvnkkjudxb`
-on 2026-09-14, so `/admin`, `/dev` and P2–P9 all run at runtime.
+The MVP is **code-complete** and the four gates are green (api tsc 0 · web tsc 0 · **615 Jest
+tests** across 37 suites · `balance_verify.py` PASS). The schema is at **51 migration files** —
+41 committed and pushed live through `20261002000000_kgotla_year_charges`, and **10 further
+present in the working tree as untracked files** (the M-series security hardening, the atomic
+`inventory_take`/`botho_cap`/`kgotla_charge` helpers, and `spend_chapter_tokens`) not yet committed
+or pushed. The original 11-migration deploy gap was pushed to the linked Supabase project
+`nyapfgawanqvnkkjudxb` on 2026-09-14, so `/admin`, `/dev` and P2–P9 all run at runtime.
 
 Since the 2026-09-16 state note, four further capability areas have landed:
 
@@ -33,8 +36,10 @@ Since the 2026-09-16 state note, four further capability areas have landed:
 - **The decided economy** (`docs/33` → `docs/34`, Waves 1–3): top-ups grant **Madi, never Pula**;
   the store sells decorations on two shelves plus the **Village Pass**; boosts are **cut**
 
-Remaining gaps: real-money payments (stub provider only), wildlife raids, boost effects, and
-automation-unlock persistence. Raids and boosts are deferred from v1 by ruling.
+Remaining gaps: real-money payments (stub provider only), store purchase UI (wired against the
+stub only — no live PSP), wildlife raids, boost effects, and Botho automation-unlock persistence
+(config-only). Raids and boosts are deferred from v1 by ruling; the store UI and automation
+persistence are the open Wave 4 items (`docs/34` §4.3, `KNOWN_LIMITATIONS.md`).
 
 Specs and the marketplace pivot (cash-out to mobile money, P2P Exchange) are captured in
 `docs/MVP/`; the original design suite lives in `docs/01`–`docs/23`.
@@ -103,7 +108,7 @@ molemisi/
 │   ├── game-config/  # Crops, buildings, livestock, crafting, chapters, almanac, bushveld, store, theme
 │   ├── validation/   # Zod schemas
 │   └── simulator/    # Offline balance simulator (not a game client)
-├── supabase/         # Migrations (38), seed, local config
+├── supabase/         # Migrations (51; 41 live + 10 untracked), seed, local config
 ├── assets/           # Pixel-art source (282 manifest entries), synced into web public/
 ├── scripts/          # Asset pipeline, admin/dev bootstrap, live API tests, economy gate
 └── docs/             # As-built notes + design specs + MVP normative set
@@ -117,7 +122,7 @@ Retired art is moved, not deleted: `assets/_archive/` (19 files) holds the withd
 ```bash
 pnpm dev                 # Start web and api (runs assets:sync first)
 pnpm build               # Build all packages
-pnpm test                # Run Jest suites (592 tests across 35 suites)
+pnpm test                # Run Jest suites (615 tests across 37 suites)
 pnpm lint                # Lint all packages
 pnpm typecheck           # Type-check all packages
 pnpm format              # Format with Prettier

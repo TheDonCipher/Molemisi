@@ -1,6 +1,6 @@
 # Known Limitations
 
-As-built gaps and debt as of **2026-10-02** (prior: 2026-09-28). See `DEVELOPMENT_STATE.md` for
+As-built gaps and debt as of **2026-10-03** (prior: 2026-09-28). See `DEVELOPMENT_STATE.md` for
 the live inventory.
 
 ---
@@ -66,7 +66,7 @@ oversight.
 | --- | --- | --- | --- |
 | **W4-a** | **Store purchase UI not wired** | `StoreScreen` exists as a component reference; no live purchase flow against the real endpoint | Wire end-to-end against the stub provider (`docs/34` §4.3) |
 | **W4-b** | **Botho automation unlocks have no persistence** | `BOTHO_THRESHOLDS` + `AUTOMATION_LADDER` + `automationUnlockedAt()` are config-only; nothing stores an unlock, so nothing is granted at runtime | A place to record unlocks — same blocker as `docs/32` 3.4/3.5 |
-| **W4-c** | **Chapter Tokens are unspentable** | `ChapterService.spendTokens()` exists, `ChapterController` exposes no route | `POST /chapters/tokens/spend`, or hide the balance in the UI |
+| **W4-c** | **Chapter Tokens are unspentable — RESOLVED in code** | `ChapterService.spendTokens()` exists **and** `POST /chapters/tokens/spend` is now routed (`chapter.controller.ts:56`); the balance is spendable. The supporting `spend_chapter_tokens` migration is present but **untracked**, so the route is reachable only after that migration is pushed | Push the untracked `spend_chapter_tokens` migration (`docs/38` T-4 / I-7), then the route is fully live against the remote DB |
 | **W4-d** | **Maintenance rhythm not fully rolled out** | `MAINTENANCE.intervalDays` is 30 and `economy.spec.ts` asserts it, but the four `BUILDINGS[*].maintenanceIntervalDays` consumer path is not re-verified end-to-end | Confirm the building path reads the new cadence |
 
 ### Landed (Waves 1–3) — for the avoidance of doubt
@@ -97,13 +97,16 @@ behind it but the stub.
 
 ## Schema push status
 
-### The original deploy gap is closed (2026-09-14); all 39 migrations now pushed live
+### The original deploy gap is closed (2026-09-14); 41 of 51 migrations pushed live, 10 untracked
 
 The 11-migration deploy gap (`000016`–`000120` + `000021`) was pushed to `nyapfgawanqvnkkjudxb`;
 `/admin`, `/dev` and P2–P9 now run at runtime and `/auth/me` resolves roles correctly.
 
-The repo has **39 migrations** and **all are pushed live** to `nyapfgawanqvnkkjudxb` (through
-`20261002000000`); there is no pending schema delta.
+The repo has **51 migration files**: **41 are committed and pushed live** to `nyapfgawanqvnkkjudxb`
+(through `20261002000000`), and **10 further are present in the working tree as untracked files**
+(`20261002000001` → `20261003000020`: the M-series security hardening, the atomic
+`inventory_take`/`botho_cap`/`kgotla_charge` helpers, and `spend_chapter_tokens`). Those 10 are
+**not yet committed or pushed**, so there is a pending schema delta for them.
 
 | Pushed live (2026-10-02) | Summary |
 | --- | --- |
@@ -157,10 +160,38 @@ and `store.spec.ts` asserts the catalogue stays empty.
 ### Bushveld comparative income is answered by telemetry, not a model
 
 `04 §1` requires the Bushveld never to out-earn the fields. The structural half is proven in
-code; the comparative half is modelled in `scripts/balance_verify.py` §8 and reports
-Bushveld net **P153.90/day** vs a 4-plot starter farm's P49/day — an inversion at 4, 8 and 12
-plots that closes by 20 (0.63×). **Ruled 2026-09-11: live income telemetry answers this
-post-launch.** The inversion is a recorded, accepted state, not an open bug.
+code; the comparative half is modelled in `scripts/balance_verify.py` §8.
+
+> **CORRECTED 2026-10-03 — the figures below were a THREE-scene number and are now stale.**
+> `04 §5` ships FOUR scenes: Deep Bushveld got four hotspots in batch 2 (G5, 2026-09-23), but
+> the gate script still modelled `SCENE_COUNT = 3` and omitted the deep scene entirely. It
+> has been corrected to 4. Corrected figures:
+>
+> | | 3 scenes (old, sub-Botho-300) | 4 scenes (current) |
+> |---|---|---|
+> | Kagiso ceiling | 18 pips/day | **24 pips/day** |
+> | gross/day | P162.00 | **P258.00** |
+> | net @1.0× band | P153.90 | **P245.10** |
+> | net @0.5× / 2.0× | P76.95 / P307.80 | **P122.55 / P490.20** |
+>
+> The best deep-scene tap is `db_heartwood` → hardwood P8 at 6 taps × 2 avg (hardwood yields
+> 1–3, not the 2–4 every other material gives) = **P96/day**. Deep Bushveld is **Botho
+> 300-gated**, so the 3-scene column is still the honest *launch* figure and the 4-scene
+> column is the *post-ladder* one; §8 now prints both.
+>
+> **The previously-ruled P153.90 figure was itself stale, not merely the comparison.** The
+> 2026-09-11 ruling was made against a 3-scene model, so it blessed an understatement: the
+> inversion it accepted was measured P245.10/day below and is in fact P245.10/day above.
+>
+> With 4 scenes the inversion now covers **4, 8, 12 AND 20 plots** on the starter basis
+> (5.00× / 2.50× / 1.67× / 1.00×) — previously 20 plots closed the inversion at 0.63× and
+> now it does not. Against the median crop it is 3.01× / 1.50× / 1.00× / 0.60×. The
+> P153.90 inversion at 4, 8 and 12 plots (closing by 20 at 0.63×) remains the accurate
+> *launch* (sub-Botho-300) description.
+>
+> **Ruled 2026-09-11: live income telemetry answers this post-launch.** The inversion is a
+> recorded, accepted state, not an open bug. The widening above sharpens the telemetry ask —
+> it is now a Botho-300 player's question, not a launch-week one.
 
 ---
 
@@ -318,7 +349,7 @@ Not used (ADR-012: optional later). No cache, no distributed rate limit, no job 
 ### Unit coverage is broad; integration coverage is narrow
 
 **37 Jest suites / 615 tests** across the workspace (`apps/api` 28 suites / 417 tests;
-`packages/game-config` 7 / 146; `packages/validation` 1 / 35) — a real suite, and the new
+`packages/game-config` 8 / 163; `packages/validation` 1 / 35) — a real suite, and the new
 `engine`, `economy`, `anti-cheat`, `livestock` and `world-events` suites are the direct
 counter-evidence to the old "thin tests" claim.
 

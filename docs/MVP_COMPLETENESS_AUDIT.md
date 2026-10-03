@@ -3,7 +3,7 @@
 **Date:** 2026-09-11 (refreshed 2026-09-16) · **Arbiter:** `docs/MVP/06_Verification_Rubric.md` (wins on "is it done?") · **Auditor:** Belvedere
 **Scope:** everything `docs/MVP/01`–`06` requires for v1, checked against the actual code *and* the actual database.
 
-> ### ⚠️ SUPERSEDED — read this first (2026-10-02)
+> ### ⚠️ SUPERSEDED — read this first (2026-10-03)
 >
 > This audit describes the state as of **2026-09-16** and its gate counts, migration inventory
 > and rulings are **no longer current**. It is kept as a record of what was verified then.
@@ -11,18 +11,19 @@
 >
 > What changed since this audit was written:
 >
-> | This document says | Reality as of 2026-10-02 |
+> | This document says | Reality as of 2026-10-03 |
 > |---|---|
 > | `jest` (apps/api) **209/209, 18 suites** | **37 suites / 615 tests** across the workspace (api 28/417, game-config 8/163, validation 1/35) |
-> | **29** migration files, 11 unpushed | **39** migration files, **0** pending push (all live) |
-> | Schema current / deployed | **All 39 migrations pushed live** through `20261002000000`; remote is current |
+> | **29** migration files, 11 unpushed | **51** migration files (**41** pushed live, **10** untracked / not yet pushed) |
+> | Schema current / deployed | **41** migrations pushed live through `20261002000000`; 10 further present untracked (not pushed) |
 > | Boosts "withdrawn from sale", still catalogued | **Cut from the catalogue entirely** (`docs/34` §3.3); `BOOSTS` is `readonly never[]` |
 > | Pula granted for BWP | **Top-ups grant Madi, never Pula** (`docs/33` §2, implemented) |
 > | Real-money payments a gap | Still true — `StubPaymentProvider` only |
 > | No mention of | Deterministic simulation engine · anti-cheat · state validation/recovery · economy metrics API · livestock 72 h window + 12 h starvation window |
 >
-> Gates were **re-run and re-verified on 2026-10-02** and remain green: `tsc` api 0, `tsc` web 0,
-> `jest` 615/615, `balance_verify.py` PASS.
+> Gates were **re-run and re-verified on 2026-10-03** and remain green: `tsc` api 0, `tsc` web 0,
+> `jest` 615/615, `balance_verify.py` PASS. (The 10 untracked migrations are new since this gate run
+> and are not yet part of the pushed schema.)
 
 ---
 
@@ -92,16 +93,20 @@ The live schema **now spans P0 through P9** (and the `role` column): the 2026-09
 
 `launch-readiness.spec.ts` proves the **structural** half (Kagiso caps gathering at ≤6/day and cannot be bought) and explicitly states it does **not** prove the comparative half.
 
-**Update (2026-09-11): the comparative half is now modelled.** §8 of `scripts/balance_verify.py` computes the worst case for the invariant — a twice-daily, material-maximising player spending the whole Kagiso budget (6 pips × 3 scenes = 18 pips/day) on the single best material per scene. Bushveld gross **P162/day**; net **P153.90** at the 1.0× band (P76.95 at 0.5×, P307.80 at 2.0×).
+**Update (2026-09-11): the comparative half is now modelled.** §8 of `scripts/balance_verify.py` computes the worst case for the invariant — a twice-daily, material-maximising player spending the whole Kagiso budget on the single best material per scene.
 
-| Farm size | Starter farm P/d | Bush/Farm | Median farm P/d | Bush/Farm |
-|---|---|---|---|---|
-| 4 plots | 49.00 | **3.14×** | 81.52 | **1.89×** |
-| 8 plots | 98.00 | **1.57×** | 163.04 | 0.94× |
-| 12 plots | 147.00 | **1.05×** | 244.56 | 0.63× |
-| 20 plots | 245.00 | 0.63× | 407.60 | 0.38× |
+**Update (2026-10-03): the table below was a THREE-scene model and is STALE — including the P153.90 figure the 2026-09-11 ruling blessed.** Deep Bushveld shipped four hotspots in batch 2 (G5, 2026-09-23) making it four scenes, but the script still hardcoded `SCENE_COUNT = 3`. Corrected: 6 pips × **4** scenes = 24 pips/day; gross **P258/day**; net **P245.10** at 1.0× (P122.55 at 0.5×, P490.20 at 2.0×).
 
-**The invariant is inverted at 4, 8 and 12 plots against a starter-performing farm** (and at 4 plots even against a median-performing one). The script **reports** this rather than asserting it, because the result is entirely a function of the modelling assumption. **This is a ruling, not a bug:** the fix, if any, belongs in the economy spec (Kagiso regen, tap cost, material value, or farm income) — never in the script. See `05 §P10` and `07 §10.1`.
+*Original (3-scene, still accurate for a sub-Botho-300 player — the deep scene is Botho 300-gated):* 6 pips × 3 scenes = 18 pips/day. Bushveld gross **P162/day**; net **P153.90** at the 1.0× band (P76.95 at 0.5×, P307.80 at 2.0×).
+
+| Farm size | Starter farm P/d | Bush/Farm (3 scenes) | Median farm P/d | Bush/Farm (3) | Bush/Farm (**4 scenes**) |
+|---|---|---|---|---|---|
+| 4 plots | 49.00 | **3.14×** | 81.52 | **1.89×** | **5.00× / 3.01×** |
+| 8 plots | 98.00 | **1.57×** | 163.04 | 0.94× | **2.50× / 1.50×** |
+| 12 plots | 147.00 | **1.05×** | 244.56 | 0.63× | **1.67× / 1.00×** |
+| 20 plots | 245.00 | 0.63× | 407.60 | 0.38× | **1.00× / 0.60×** |
+
+**The invariant is inverted at 4, 8 and 12 plots against a starter-performing farm** on the 3-scene (launch) figures, and at **4, 8, 12 AND 20 plots** once Deep Bushveld is unlocked — 20 plots no longer closes the inversion (1.00× vs the old 0.63×). The script **reports** this rather than asserting it, because the result is entirely a function of the modelling assumption. **This is a ruling, not a bug:** the fix, if any, belongs in the economy spec (Kagiso regen, tap cost, material value, or farm income) — never in the script. See `05 §P10` and `07 §10.1`.
 
 **P10 is signed off on the ruling** (2026-09-11): the structural invariant is proven in code, and the comparative half is answered by live income telemetry rather than a pre-launch model. The inversion above is a recorded, accepted state — if live data shows gathering is the optimal route, fix the economy spec, never the gate script.
 
@@ -111,7 +116,7 @@ The live schema **now spans P0 through P9** (and the `role` column): the 2026-09
 
 | # | Spec | State |
 |---|---|---|
-| 1 | **Wildlife raids** (`03 §1.3`; Kraal protects livestock, Farm Boundary protects crops, Ancestral Ward 3-day shield) | **Not implemented.** No raid mechanic anywhere in `apps/api/src` — only config prose ("Protects livestock from overnight raids"). Consequence: **Ancestral Ward protects against nothing.** |
+| 1 | **Wildlife raids** (`03 §1.3`; Kraal protects livestock, Farm Boundary protects crops, Ancestral Ward 3-day shield) | **DEFERRED FROM v1 (ruling 2026-09-11). Not implemented.** No raid mechanic anywhere in `apps/api/src`. The original audit line here quoted the config prose *"Protects livestock from overnight raids"* — that copy no longer exists: both `kraal` and `farm_boundary` `benefit` strings were rewritten on 2026-10-03 to describe what those buildings actually do, because advertising a threat with no mechanic behind it is a consumer-protection problem, not a content gap. `store.spec.ts` now asserts no building benefit mentions a raid/wildlife/predator/thief or an overnight threat. Consequence of the ruling: the Ancestral Ward would have protected against nothing, and all three boosts are cut from the catalogue (`docs/34` §3.3). |
 | 2 | **Boost effects** (`05 §P9`) | **Not wired.** Pula Stone / Ancestral Ward / Breath of the Land are catalogued and (weekly) granted, but there is **no endpoint that applies an effect** — no tank refill / rain guarantee, no shield, no timer completion. |
 | 3 | **P10 manual items** | Open: on-device PWA install (Android **and** iOS), throttled-3G smoke test, production-config confirmation, scripted end-to-end walkthrough in one sitting. |
 | 4 | **`apps/game` deletion** (`07` G2, `01` D3) | ✅ **Done 2026-09-11.** Legacy Phaser prototype removed (418 files); `pnpm-workspace.yaml` now excludes it, `scripts/sync-assets.mjs` + `scripts/build-font.mjs` no longer emit into it, and `eslint.config.js` dropped the `generated-assets.ts` ignore. React `/game` is the only client. |
@@ -160,5 +165,5 @@ To call the MVP complete:
 1. **Migrations `000016`–`000021` pushed + seeded (done 2026-09-14).** The only remaining schema delta is two non-blocking corrective migrations.
 2. **Bushveld comparative gate — RULED (telemetry).** The structural half is proven in code; the comparative inversion is recorded and accepted, to be confirmed by live income telemetry post-launch (ruling 2026-09-11).
 3. **Do the four P10 manual checks.**
-4. **Decide whether wildlife raids + boost effects are in v1 or formally deferred** — right now they are specified-but-absent, which is the worst of both worlds (the Ward is sold and protects nothing).
+4. **Wildlife raids + boost effects — RULED DEFERRED FROM v1 (2026-09-11), and enforced 2026-10-03.** This was previously listed here as an open decision ("the Ward is sold and protects nothing"). The decision was made: both are deferred. The Ward and the other two boosts are cut from the catalogue entirely, and the raid-advertising `benefit` copy on `kraal` / `farm_boundary` has been removed with `store.spec.ts` asserting it stays removed.
 5. **Small UX / cleanup:** `apps/game` deletion is **done** (2026-09-11); the footer nav is **reconciled** (hybrid 4-primary + More). The currency-clarity UI (`?` guide + Wallet section) and Kgotla NPC head-portraits are added. *(The sell-sheet tax transparency is done.)*

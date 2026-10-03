@@ -4,7 +4,7 @@
 > Version: 1.0.0
 > Status: Design spec (target)
 > Last Updated: 2026-09-02
-> Implementation: 2026-09-06 — Source of truth is `supabase/migrations/` (000000–000015), including market, contracts, kgotla, bushveld, events, payments, analytics, config, moderation, notifications, admin role.
+> Implementation: 2026-09-06 — Source of truth is `supabase/migrations/` (000000–000015 originally; the directory now holds **51 migration files** — 41 committed + pushed live through `20261002000000`, and 10 further present as untracked files not yet pushed). The original 16 seed the base schema (market, contracts, kgotla, bushveld, events, payments, analytics, config, moderation, notifications, admin role) and later migrations extend it.
 
 ---
 

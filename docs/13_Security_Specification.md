@@ -165,7 +165,9 @@ function verifyWebhookSignature(payload: string, signature: string): boolean {
 | Game actions  | 30/min  | 1 min  |
 | Market        | 20/min  | 1 min  |
 | Payments      | 5/min   | 1 min  |
-| Global        | 100/min | 1 min  |
+| Global        | 60/min  | 1 min  |
+
+*(As-built: only a single global flat **60/min** in-memory limiter is implemented — the per-route rows above are design intent, not yet enforced. See `KNOWN_LIMITATIONS.md` › "Rate limit is in-process".)*
 
 ### Input Validation
 

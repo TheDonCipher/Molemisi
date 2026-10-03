@@ -1,6 +1,6 @@
 # Molemisi Development State
 
-> Last updated: **2026-10-02**
+> Last updated: **2026-10-03**
 > Scope: as-built inventory of the repository. Design intent lives in `docs/MVP/` (the
 > post-pivot normative set) and `docs/01`–`docs/23` (the original design suite). This
 > file describes what the code and database actually do today.
@@ -9,13 +9,20 @@
 
 ## Headline status
 
-**MVP is code-complete and the four gates are green.** The database is at **39 migrations** and
-no longer blocked on the original deploy gap. Four capability areas have landed since the
+**MVP is code-complete and the four gates are green.** The database is at **49 migration files**
+(41 committed and pushed live; **8 further present in the working tree as untracked files** — the
+M-series security hardening, the atomic `inventory_take`/`botho_cap`/`kgotla_charge` helpers, and
+`spend_chapter_tokens` — not yet committed or pushed). **None of the unapplied migrations have
+been pushed: the DB password is unavailable in this environment, so `supabase db push` is an
+outstanding operator action.** Four capability areas have landed since the
 2026-09-16 state note, plus the first three Waves of the decided economy:
 
-1. **RESOLVED — the full migration set is pushed live.** The linked Supabase project
-   `nyapfgawanqvnkkjudxb` is current through `20261002000000_kgotla_year_charges` (**39 migrations, 0
-   pending**); `/admin`, `/dev` and P2–P9 all run at runtime. The previously load-bearing gap
+1. **PARTIAL — the committed migration set is pushed live.** The linked Supabase project
+   `nyapfgawanqvnkkjudxb` is current through `20261002000000_kgotla_year_charges` (**41 committed
+   migrations, 0 pending among them**); `/admin`, `/dev` and P2–P9 all run at runtime. The 8 newest
+   migrations (`20261002000001` → `20261003000020`: M-series security hardening, atomic helpers, and
+   `spend_chapter_tokens`) are present locally as **untracked** files and are **not yet pushed**.
+   previously load-bearing gap
    (`madi_balance`, `20261001000003`) and the Year-layer `kgotla_charges` table are both live.
 2. **NEW — deterministic simulation engine** (`apps/api/src/simulation/engine/`). One pure
    `runSimulation(input) => output`; no clock reads, no global RNG, no I/O. This is where the
@@ -41,20 +48,63 @@ no longer blocked on the original deploy gap. Four capability areas have landed 
 7. **RULING — Bushveld comparative income** is answered by live telemetry, not a model
    (Princess Eugenia, 2026-09-11). The structural invariant is proven in code; the
    comparative inversion is recorded in `scripts/balance_verify.py` §8 and accepted.
+   **CORRECTED 2026-10-03 — the 2026-09-11 ruling was signed against a stale model.**
+   `SCENE_COUNT` was 3 while Deep Bushveld makes **4** scenes, so both the documented
+   ceiling (P153.90/day) and the inversion range were wrong. With all four scenes
+   modelled, Bushveld base net is **P245.10/day (+P91.20, ×1.59)** and the inversion
+   now spans the **full 4–20 plot range** — previously it stopped at 12 plots, and a
+   20-plot player who roughly broke even on the fields now does not. The Deep Bushveld
+   scene is Botho-300-gated, so P245.10 is the **post-ladder** figure; the sub-300
+   number remains the launch figure. The telemetry ruling stands, but it was made
+   against numbers that did not exist.
 8. **RULING — wildlife raids and boost effects are deferred from v1** (2026-09-11). Since
    `docs/34` §3.3 the three boost SKUs are **removed from the catalogue entirely**, not merely
-   flagged `available: false`.
+   flagged `available: false`. **Enforced in code 2026-10-03:** the raid-advertising `benefit`
+   copy on `kraal` ("Protects livestock from overnight raids.") and `farm_boundary` ("Protects
+   crops from overnight wildlife raids.") has been removed, `RAID_SYSTEM_IMPLEMENTED` is
+   asserted `false`, and `store.spec.ts` proves no building benefit or store SKU may advertise
+   a raid / wildlife threat / overnight attacker. Advertising a threat with no mechanic behind
+   it is a consumer-protection problem, not a content gap. Every `docs/` reference to raids is
+   marked **DEFERRED FROM v1** — none were deleted, since the historical spec is the record of
+   what was ruled on.
 
-Quality gates (run 2026-10-02, clean):
+Quality gates (re-run 2026-10-03 after the security/economy remediation, clean):
 
 | Gate | Result |
 | --- | --- |
 | `tsc --noEmit -p apps/api` | **0** |
 | `tsc --noEmit -p apps/web` | **0** |
-| `jest` (apps/api) | **417 passed / 28 suites** |
-| `jest` (packages/game-config) | **163 passed / 8 suites** |
+| `jest` (apps/api) | **470 passed / 30 suites** |
+| `jest` (packages/game-config) | **211 passed / 9 suites** |
 | `jest` (packages/validation) | **35 passed / 1 suite** |
-| `python scripts/balance_verify.py` | **PASS** |
+| `python scripts/balance_verify.py` | **PASS** (4-scene model) |
+
+> The 2026-10-02 figures were 417/28, 163/8, 35/1. The deltas are the new
+> remediation tests: cross-tenant IDOR (A2), deterministic harvest + bank-before-clear
+> (A3), the atomic Botho cap contract (H1), `state-validation` wiring into anti-cheat
+> (A8), catalogue-item assertions on Year Charges, and four wildlife-raid deferral
+> invariants.
+
+**Verified against the LIVE database** (`nyapfgawanqvnkkjudxb`, service-role
+reads + constraint probes via `scripts/live-db-audit.mjs`). Postgres is **17.6.1**.
+Three defects were confirmed *in production*, not merely in the repo:
+
+1. `ledger_entries.currency` **rejects `'chapter_token'`** (SQLSTATE 23514), so the
+   season-stamp sink destroyed stamps and granted nothing.
+2. `game_ledger_entries` has **no** `user_id`/`player_id`/`amount_change`/`quantity`
+   columns, so six app call sites failed on every write.
+3. 27 historical `topup` payments credited **Pula** (P395 total), violating the
+   `docs/34` §2.2 spend-only Madi contract. Historical rows are **not** rewritten;
+   a reconciliation note is raised instead, for an explicit operator ruling.
+
+The live DB is otherwise healthy: 0 negative balances, 0 negative inventory, 0 orphan
+crops, 0 anti-cheat flags.
+
+> ⚠️ **DDL was never applied.** The Supabase pooler password is not in `.env` (the
+> service-role key is not the DB password), so the new migrations are **written but
+> unapplied**. `inventory_take`, `botho_credit_capped`, `spend_chapter_tokens` and the
+> M-series hardening do not exist on the live server yet. To apply:
+> `supabase db push` (prompts for the DB password).
 
 ---
 
@@ -78,7 +128,7 @@ M13 Mobile/PWA                      [PARTIAL — manifest + SW + iOS splash; no 
 M14 Monetization & Payments         [PARTIAL — stub provider; boosts CUT from the catalogue]
 M14a Decided strategy (2026-10-01) [DECIDED — `docs/33`: 2 currencies + 1 meter, 2 store products (decorations + M50 Village Pass); Pula never sold; Madi spend-only; boosts cut; land tail retuned. Build sequence in `docs/34`; **Waves 1–3 landed**, Wave 4 partial]
 M15 Security / Analytics / Admin    [PARTIAL — admin + dev guards; anti-cheat + economy metrics shipped; analytics ingest only]
-M16 Alpha                          [UNBLOCKED — remaining: push the 9 pending migrations, Wave 4 store UI + automation persistence, real PSP, P10 manual checks]
+M16 Alpha                          [UNBLOCKED — remaining: commit + push the 10 staged (untracked) migrations, finish Wave 4 store UI + automation persistence, real PSP, P10 manual checks]
 ```
 
 ---
@@ -216,7 +266,20 @@ public but the controller class uses `AuthGuard`, so it currently needs a Bearer
 
 ## Database (`supabase/migrations`)
 
-**39 migration files.** All migrations through `20261002000000_kgotla_year_charges` are **pushed live** to the linked project `nyapfgawanqvnkkjudxb`; **0 pending**.
+**49 migration files.** The first 41 (through `20261002000000_kgotla_year_charges`) are committed and **pushed live** to the linked project `nyapfgawanqvnkkjudxb`. The 8 newest (`20261002000003` → `20261003000020`: the atomic `botho_cap` / `kgotla_charge` helpers, the M-series security hardening, and `spend_chapter_tokens`) are present in the working tree but **untracked and unapplied**.
+
+> `20261002000001_profiles_role_guard.sql` and `20261002000002_inventory_take.sql` were
+> originally authored by two agents in parallel, which produced duplicate filename
+> prefixes (`*_harden_profile_privilege_columns`, `*_atomic_inventory_take`). Supabase
+> orders and de-duplicates migrations by filename, so two files sharing a 14-digit
+> prefix break `db push` ordering. The two supersets were merged **into the tracked
+> filenames** on 2026-10-03; all 49 prefixes are now unique.
+
+> ⚠️ **Applying these requires the database password**, which is not in `.env` and
+> not available in this environment. Until `supabase db push` is run, the live server
+> is missing `inventory_take`, `botho_credit_capped`, `spend_chapter_tokens`, the
+> widened `ledger_entries.currency` CHECK, the EXECUTE revokes, and the RLS
+> closures — i.e. **every fix in this batch is code-complete but not yet deployed.**
 
 | Migration | Summary |
 | --- | --- |
@@ -424,7 +487,7 @@ build on push+PR. No Supabase service, no deploy.
 | PWA install | Manifest + SW + full icon set + iOS splash |
 | Payments | **Stub provider only**; boosts **cut** from the catalogue; top-ups grant **Madi** |
 | Botho automation unlocks (300/500) | **Config only** — no persistence layer yet (`docs/34` §1.2) |
-| Chapter Token spend route | **Missing** — `spendTokens()` exists, no controller route (`docs/34` §3.4) |
+| Chapter Token spend route | **RESOLVED** — `POST /chapters/tokens/spend` exists (`chapter.controller.ts:56`, backed by `spendTokens()` and a green spec in `chapter.service.spec.ts`); the supporting `spend_chapter_tokens` migration is present but untracked (`docs/38` T-4 / I-7) |
 | Store purchase UI | **Not wired** — `StoreScreen` is a component reference, no live flow |
 | **Wildlife raids** | **Deferred from v1 (ruling 2026-09-11)** |
 | **Boost effects** | **Cut from the catalogue (`docs/34` §3.3)** |
@@ -444,20 +507,21 @@ build on push+PR. No Supabase service, no deploy.
 ## Current objective
 
 The MVP is runtime-functional with the decided economy's first three Waves landed. Remaining
-work, in order: **push the 9 pending migrations** (`20260914000022` → `20261001000003`) — this is
-now the largest single delta; finish **Wave 4** (store purchase UI, Botho automation
-persistence, Chapter Token spend route); wire **real-money payments** (a PSP behind the existing
+work, in order: **commit + push the 10 staged migrations** (`…harden_profile_privilege_columns` →
+`…spend_chapter_tokens`) — this is now the largest remaining schema delta; finish **Wave 4** (store
+purchase UI, Botho automation persistence; the Chapter Token spend route is now live) — wire
+**real-money payments** (a PSP behind the existing
 `PaymentProvider` interface, which needs no economy change); and complete the **P10 manual
 checks** (PWA install on iOS, throttled-3G smoke, end-to-end walkthrough). Wildlife raids stay
 deferred. Track gaps in `KNOWN_LIMITATIONS.md`.
 
 ## Recommended next tasks
 
-1. Push the 9 pending migrations + seed — the only remaining schema delta.
+1. Commit + push the 10 staged migrations (M-series security hardening + Chapter-Token spend) — the only remaining schema delta.
 2. Wire the store purchase flow end-to-end against the stub provider (`docs/34` §4.3).
 3. Add a persistence layer for Botho automation unlocks, or remove the ladder from the config
    so it stops advertising a reward nothing grants (`docs/34` §1.2).
-4. Expose `POST /chapters/tokens/spend`, or hide the Chapter Token balance in the UI.
+4. ~~Expose `POST /chapters/tokens/spend`~~ — **DONE** (route exists at `chapter.controller.ts:56`; the supporting `spend_chapter_tokens` migration is untracked). Only the 25-stamp souvenir SKU validation + UI affordance remain.
 5. Wire Next.js rewrites for `/api` → `:3001` (single-port / CORS-free preview).
 6. Add the `anti-cheat` review surface to `/admin` and the economy metrics to `/admin/economy`.
 7. ~~Restrict `PUT /config` to `AdminGuard`~~ — **DONE** (both PUT routes).

@@ -4,7 +4,7 @@
 > Version: 1.0.0
 > Status: Design spec (target)
 > Last Updated: 2026-09-02
-> Implementation: 2026-09-06 — NestJS modular monolith + Supabase match this doc. Phaser is **not** hosted inside Next.js; Redis is unused. As-built diagram: `ARCHITECTURE_OVERVIEW.md`.
+> Implementation: 2026-09-06 — NestJS modular monolith + Supabase match this doc. Phaser is **not** hosted inside Next.js (the standalone Phaser prototype `apps/game` was **deleted 2026-09-11**; React `/game` is now the only client); Redis is unused. The repo uses **pnpm 9** + Turborepo (not npm). As-built diagram: `ARCHITECTURE_OVERVIEW.md`.
 
 ---
 
@@ -35,7 +35,7 @@ Molemisi uses a layered architecture with clear separation of concerns:
 │                        CLIENT LAYER                             │
 │                                                                 │
 │  ┌──────────────────┐          ┌──────────────────────────┐     │
-│  │   Next.js Shell  │          │     Phaser Game Client   │     │
+│  │   Next.js Shell  │          │   React /game Client     │     │
 │  │                  │          │                          │     │
 │  │  • Auth UI       │          │  • Farm Scene            │     │
 │  │  • Payments      │          │  • Kgotla Scene          │     │
@@ -104,8 +104,8 @@ Molemisi uses a layered architecture with clear separation of concerns:
 **Scope:** Browser on player's device
 **Responsibilities:**
 
-- Render game visuals (Phaser)
-- Handle user input (Phaser + Next.js)
+- Render game visuals (React `/game` — the standalone Phaser prototype was deleted 2026-09-11)
+- Handle user input (React + Next.js)
 - Manage local UI state (React)
 - Display server-provided data
 - Handle offline detection
@@ -194,11 +194,11 @@ apps/
 - Client components for interactive elements
 - No game logic in Next.js — delegates to NestJS API
 
-### 3.2 Phaser Game Client
+### 3.2 Phaser Game Client *(DELETED — historical design; the prototype `apps/game` was removed 2026-09-11)*
 
 **NFR-FE-002**
 
-The Phaser game client handles all game rendering and interaction.
+The Phaser game client handles all game rendering and interaction. *(Historical — the standalone Phaser prototype `apps/game` was deleted 2026-09-11; React `/game` is now the only client. See `ARCHITECTURE_OVERVIEW.md`.)*
 
 **Responsibilities:**
 
@@ -214,7 +214,7 @@ The Phaser game client handles all game rendering and interaction.
 
 ```
 apps/
-  game/                   # Phaser game client
+  game/                   # Phaser game client (DELETED 2026-09-11)
     src/
       scenes/             # Phaser scenes
       objects/            # Game objects
@@ -228,7 +228,7 @@ apps/
 
 **Key decisions:**
 
-- Uses Phaser 3 with TypeScript
+- Uses Phaser 3 with TypeScript *(historical — prototype deleted 2026-09-11)*
 - Separate from Next.js build (bundled independently)
 - Communicates with NestJS API via HTTP REST
 - No server-authoritative state in client — display only
@@ -240,7 +240,7 @@ apps/
 │              Browser                      │
 │                                           │
 │  ┌──────────┐    ┌──────────────────┐    │
-│  │ Next.js  │    │  Phaser Client   │    │
+│  │ Next.js  │    │ React /game Client│    │
 │  │  Shell   │    │                  │    │
 │  │          │    │  ┌────────────┐  │    │
 │  │  Auth ◄──┼────┼──┤ Game API   │  │    │
@@ -261,7 +261,7 @@ apps/
 
 - Next.js handles login/registration
 - Auth JWT is stored in `localStorage` (`token` and `molemisi_token`), not an httpOnly cookie
-- Phaser `ApiClient` reads the same keys when the standalone client is used
+- The standalone Phaser `ApiClient` (deleted 2026-09-11) previously read the same keys; the React client uses `apps/web/src/lib/api.ts`
 - There is no `/auth/refresh` endpoint; no Next.js token-refresh shell
 
 ---
@@ -432,7 +432,7 @@ Client Request
 | -------------- | ------------------------- | ------------------ |
 | API Server     | NestJS (local)            | Development server |
 | Web App        | Next.js (local)           | Development server |
-| Game Client    | Phaser (bundled)          | Development build  |
+| Game Client    | React /game (bundled)     | Development build  |
 | Database       | Supabase (local or cloud) | Data persistence   |
 | Redis          | Local Docker              | Job queue          |
 | Asset Pipeline | Webpack/Vite              | Asset bundling     |
@@ -468,9 +468,9 @@ Client Request
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN pnpm build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -706,7 +706,7 @@ Each system failure is isolated:
 ```mermaid
 graph TB
     subgraph Client
-        A[Next.js Shell] --> B[Phaser Game]
+        A[Next.js Shell] --> B[React /game]
         A --> C[React UI]
         B --> D[Game API Client]
         C --> E[API Client]
@@ -799,7 +799,7 @@ flowchart TD
     I --> K[Audit Log Entry]
     K --> L[Response to Client]
     L --> M[Client State Update]
-    M --> N[Visual Update in Phaser]
+    M --> N[Visual Update in React]
 ```
 
 ### 11.5 Deployment Architecture (Mermaid)

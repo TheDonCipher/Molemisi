@@ -5,6 +5,8 @@
 **Scope:** A complete year of Kgotla quests: twelve monthly **Charges**, four chapter-long **Council Projects**, the lore that joins them, the reward rules, the yearly loop, and the tests that prove it.
 **Working title:** *A Year at the Kgotla* (Setswana, provisional: *Ngwaga kwa Kgotleng*).
 **Authority:** On adoption, this document replaces every earlier statement on Kgotla quests, the rotating charges and chapter project sequencing. It stands alone: every figure it relies on is reproduced here.
+
+> **Hierarchy note:** this is a *domain* spec for the annual-year system. Where any statement here conflicts with the normative `docs/MVP/` set — in particular `MVP/02` (economy numbers of record), `MVP/05` (phase done-criteria) and `MVP/06` (verification rubric) — **`docs/MVP/` governs**. `scripts/balance_verify.py` remains the economy gate; resolved conflicts are recorded in `docs/37`.
 **Consolidated 2026-10-02 → `docs/37_Consolidated_Playable_Year_Specification.md`:** this file is one of three inputs to the consolidated gameplay spec (with `docs/35` and the decided economy `docs/33`/`docs/34`). On shared points — K10/R-Q1 (rotating charges → ward errands), "Guild"/"Auto-Collector" wording, prize-eligibility math, project schedule, stamp sinks — `docs/37` §2 governs; cast, copy, lore and the Reading of Names remain here.
 
 ---

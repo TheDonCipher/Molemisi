@@ -2,7 +2,7 @@
 
 > **Molemisi Farm Management Simulator**
 > Status: As-built docs track the repo; design specs are intent.
-> **Last updated: 2026-10-02** (prior: 2026-09-14).
+> **Last updated: 2026-10-03** (prior: 2026-09-14).
 
 ---
 
@@ -13,7 +13,7 @@ confusion in this repo, so read top to bottom:
 
 | Tier | Files | Authority | Purpose |
 | --- | --- | --- | --- |
-| **As-built** | `README.md`, `DEVELOPMENT_STATE.md`, `DEVELOPMENT_SETUP.md`, `ARCHITECTURE_OVERVIEW.md`, `KNOWN_LIMITATIONS.md`, `MVP_COMPLETENESS_AUDIT.md`, this file, `SCAFFOLD_AUDIT.md` | **Code + these files** | What the repo does *now* |
+| **As-built** | `README.md`, `DEVELOPMENT_STATE.md`, `DEVELOPMENT_SETUP.md`, `ARCHITECTURE_OVERVIEW.md`, `KNOWN_LIMITATIONS.md`, this file | **Code + these files** | What the repo does *now* |
 | **Normative MVP set** | `docs/MVP/01`–`07`, `docs/MVP/README.md` | **Build from these** | The current v1 specification (post-2026-09-07 marketplace pivot) |
 | **Original design suite** | `docs/01`–`docs/23`, `docs/20_MVP_Implementation_Plan`, `Molemisi-PRD`, `Molemisi _ROADMAP` | **Intent / history** | Pre-pivot product vision |
 
@@ -29,16 +29,20 @@ confusion in this repo, so read top to bottom:
 
 ## Living / as-built documents
 
-| Document | Status (2026-10-02) |
+| Document | Status (2026-10-03) |
 | --- | --- |
 | README.md | Current — overview, quick start, monorepo, status banner |
 | DEVELOPMENT_STATE.md | Current — full as-built inventory |
 | DEVELOPMENT_SETUP.md | Current — local setup, CORS, env, test commands |
 | ARCHITECTURE_OVERVIEW.md | Current — as-built topology + module map |
 | KNOWN_LIMITATIONS.md | Current — the three doc-30 P0s closed; Wave 4 + tooling debt open |
-| MVP_COMPLETENESS_AUDIT.md | **Stale** — gate counts and rulings predate the Wave 1–3 build |
-| SCAFFOLD_AUDIT.md | Historical pointer (M1 scaffold); minor count updates |
 | DOCUMENTATION_AUDIT.md | This file |
+
+> **Historical / superseded audits (NOT as-built authority):** `MVP_COMPLETENESS_AUDIT.md`
+> (superseded 2026-10-02 — its gate counts and rulings predate the Wave 1–3 build) and
+> `SCAFFOLD_AUDIT.md` (M1 scaffold pointer). Read them only for history. The current as-built
+> truth lives in `DEVELOPMENT_STATE.md` and `KNOWN_LIMITATIONS.md`; both carry a supersession
+> banner of their own.
 
 ---
 
@@ -94,7 +98,7 @@ These describe the *product vision* and predate the 2026-09-07 pivot. They are s
 bible for intent, but several sections are now contradicted by the build. Where they conflict,
 the repo and the `docs/MVP/` set win.
 
-| Document | Role | Implementation notes (2026-10-02) |
+| Document | Role | Implementation notes (2026-10-03) |
 | --- | --- | --- |
 | 01 Game Design | Product rules | Mostly reflected in API + config; superseded by `MVP/01` for build. Offline cap and currency rules superseded — see `09` and `10` |
 | 02 System Architecture | Target topology | Phaser-in-Next and Redis not as drawn; two simulation layers exist (live + pure engine) |
@@ -102,7 +106,7 @@ the repo and the `docs/MVP/` set win.
 | 04 Phaser rendering | Target renderer | **Void** — the standalone Phaser client was deleted 2026-09-11. Nothing in the build follows this document |
 | 05 Art direction | Art bible | **§14/§15 rewritten to the real tree**; the 800×600 figure and the atlas conventions were Phaser leftovers. Backgrounds are in `tiles/sky/`, withdrawn art in `_archive/` |
 | 06 Economy | Balance | Config + market tables (numbers now live in `MVP/02`) |
-| 07 Database | Schema | **39 migrations** (was 16; was 29 as of 2026-09-14; all pushed live) |
+| 07 Database | Schema | **51 migration files** (41 committed + pushed live through `20261002000000`; 10 further present untracked, not yet pushed) |
 | 08 API | Endpoint design | Prefix `/api/v1` matches; many paths differ. Now also has `/admin/economy/*` and `/admin/anti-cheat/*`, which this doc never anticipated |
 | 09 Simulation | Offline sim | **§2, §5, §8, §9, §10 rewritten.** Now documents the pure engine, the per-system time-window table, the 12 h starvation window and uncapped building wear |
 | 10 Payments | Monetization | Stub provider only; **boosts cut from the catalogue**; the `PaymentProvider` signature in this doc was wrong and is now corrected |
@@ -130,9 +134,9 @@ live payment providers (008), fully data-driven content (009).
 1. **Client split** — Specs: Phaser renders the farm inside Next. Code: React `/game`.
 2. **Package manager** — Specs often `npm`. Repo is **pnpm 9** + turbo.
 3. **Redis** — Specs list Redis. Not in the stack.
-4. **Rate limits** — Spec 08: 100/min global, per-route limits. Code: 60/min flat.
+4. **Rate limits** — Spec 08 now documents a flat **60/min** global limiter (its design-target table previously read 100/min); code matches at 60/min flat. Per-route limits remain design intent, not enforced (see `KNOWN_LIMITATIONS.md`).
 5. **Versions** — Old docs say `0.1.0` / 16 migrations / 13 SKUs. Code: `game-config`
-   `GAME_VERSION = 1.0.0-mvp`, **39 migrations** (all pushed live), and a store with **no boost SKUs at all**.
+   `GAME_VERSION = 1.0.0-mvp`, **51 migration files** (41 pushed live, 10 untracked), and a store with **no boost SKUs at all**.
 6. **Admin auth** — Spec 18 said "admin JWT role". Code: no JWT role claim; `profiles.is_admin`
    **or** `profiles.role ∈ {admin, dev}`, queried per request.
 7. **Env files** — Spec: `.env.development`. Repo: `.env.example` → `.env.local`.
@@ -175,7 +179,7 @@ live payment providers (008), fully data-driven content (009).
 - ADRs: 12
 - Screen DESIGN.md: 5 (`docs/Screens/`)
 - Jest: **37 suites / 615 tests** (api 28/417 · game-config 8/163 · validation 1/35)
-- Supabase migrations: **39** (all pushed live through `20261002000000`; 0 pending)
+- Supabase migrations: **51 files** (41 committed + pushed live through `20261002000000`; 10 untracked in the working tree, not yet pushed — 0 pending among the committed set)
 - Asset manifest entries: **282** (plus 19 archived files excluded from sync)
 - Store categories: `currency` · `subscription` · `cosmetic` (`boost` **removed**)
 - Currencies: Pula (earned) · Botho (meter) · **Madi** (spend-only premium)
@@ -187,5 +191,6 @@ live payment providers (008), fully data-driven content (009).
 The design suite is still useful as a product bible and the `docs/MVP/` set is the build
 authority. Start at `DEVELOPMENT_STATE.md` and `KNOWN_LIMITATIONS.md`, then open a spec for
 intended behavior. The repo is code-complete for v1 and the `docs/33` → `docs/34` economy is
-landed through Wave 3. The schema is fully pushed (**39 migrations, 0 pending**); `madi_balance`
-and `kgotla_charges` are live, so the store and Year-layer routes resolve against the remote DB.
+landed through Wave 3. **41 of 51 migrations are pushed live** (the 10 newest are untracked and
+not yet pushed); `madi_balance` and `kgotla_charges` are live, so the store and Year-layer routes
+resolve against the remote DB.
