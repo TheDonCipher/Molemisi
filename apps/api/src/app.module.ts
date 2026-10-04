@@ -30,6 +30,10 @@ import { DevModule } from './dev/dev.module';
 import { DatabaseModule } from './database/database.module';
 import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
 import { EconomyModule } from './economy/economy.module';
+import { AchievementsModule } from './achievements/achievements.module';
+import { AvatarModule } from './avatar/avatar.module';
+import { EventsModule } from './events/events.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -73,6 +77,12 @@ import { EconomyModule } from './economy/economy.module';
     DevModule,
     AntiCheatModule,
     EconomyModule,
+    // Net-new MVP scope (19 §4): D5 achievements/ladder, D10 avatar,
+    // D6/D8 Events live service, B1 global Kgotla chat.
+    AchievementsModule,
+    AvatarModule,
+    EventsModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

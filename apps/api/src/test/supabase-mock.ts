@@ -40,6 +40,18 @@ export interface MockDb {
   market_transactions: any[];
   economy_price_snapshots: any[];
   anti_cheat_flags: any[];
+  /** D5/B2 — the achievement catalog + per-player attainment. */
+  achievements: any[];
+  player_achievements: any[];
+  /** D10/B4 — the 3-layer avatar. */
+  player_avatar: any[];
+  /** D6/B3 — chapter Events + per-player grants. */
+  events: any[];
+  event_grants: any[];
+  /** D5/B1 — global Kgotla chat. No moderation tables: ruled out 2026-10-04. */
+  kgotla_messages: any[];
+  /** The identity row: display_name is the Kgotla identity (D4). */
+  profiles: any[];
 }
 
 const PLAYER_WALLET_DEFAULT = (r: any) => ({
@@ -57,6 +69,23 @@ const PLAYER_WALLET_DEFAULT = (r: any) => ({
 
 const TABLE_DEFAULTS: Record<string, (row: any) => any> = {
   player_wallets: PLAYER_WALLET_DEFAULT,
+  // Column defaults Postgres would apply. Without these a spec asserting a
+  // default (e.g. `status: 'open'`) or a timestamp (the chat rate limit reads
+  // `created_at`) would test the service's behaviour against a fiction.
+  kgotla_messages: (r) => ({
+    language: 'en',
+    deleted_at: null,
+    created_at: new Date().toISOString(),
+    ...r,
+  }),
+  player_achievements: (r) => ({ attained_at: new Date().toISOString(), ...r }),
+  event_grants: (r) => ({ quantity: 0, chapter_tokens: 0, claimed_at: new Date().toISOString(), ...r }),
+  player_avatar: (r) => ({
+    equipped_outfit: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...r,
+  }),
 };
 
 export function makeDb(seed: Partial<MockDb> = {}): MockDb {
@@ -85,6 +114,13 @@ export function makeDb(seed: Partial<MockDb> = {}): MockDb {
     market_transactions: seed.market_transactions ?? [],
     economy_price_snapshots: seed.economy_price_snapshots ?? [],
     anti_cheat_flags: seed.anti_cheat_flags ?? [],
+    achievements: seed.achievements ?? [],
+    player_achievements: seed.player_achievements ?? [],
+    player_avatar: seed.player_avatar ?? [],
+    events: seed.events ?? [],
+    event_grants: seed.event_grants ?? [],
+    kgotla_messages: seed.kgotla_messages ?? [],
+    profiles: seed.profiles ?? [],
   };
 }
 
@@ -95,7 +131,7 @@ class MockBuilder {
   private singleMode: 'single' | 'maybeSingle' | null = null;
   private sort: { col: string; asc: boolean } | null = null;
   private write:
-    | { type: 'insert' | 'update' | 'upsert'; row: any; onConflict?: string; ignore?: boolean }
+    | { type: 'insert' | 'update' | 'upsert' | 'delete'; row: any; onConflict?: string; ignore?: boolean }
     | null = null;
   private flushed = false;
   private lastResult: any = null;
@@ -156,6 +192,10 @@ class MockBuilder {
   }
   upsert(row: Record<string, unknown>, opts?: { onConflict?: string }) {
     this.write = { type: 'upsert', row, onConflict: opts?.onConflict };
+    return this;
+  }
+  delete() {
+    this.write = { type: 'delete', row: null };
     return this;
   }
   onConflict(col: string) {
@@ -231,6 +271,13 @@ class MockBuilder {
         const matched = this.store.filter((r) => this.matches(r));
         for (const t of matched) Object.assign(t, w.row);
         this.lastResult = this.selectCalled ? { data: matched, error: null } : { data: null, error: null };
+      } else if (w.type === 'delete') {
+        // Delete the rows the accumulated filters match, in place, so the array
+        // reference held by the MockDb stays valid for later assertions.
+        const remaining = this.store.filter((r) => !this.matches(r));
+        this.store.length = 0;
+        this.store.push(...remaining);
+        this.lastResult = { data: null, error: null };
       } else {
         // Upsert: match on every column of the (possibly composite) conflict
         // key, like Postgres ON CONFLICT (col, ...) â€” not on a literal key name.
