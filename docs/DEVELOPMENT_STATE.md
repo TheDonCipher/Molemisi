@@ -1,6 +1,6 @@
 # Molemisi Development State
 
-> Last updated: **2026-10-03**
+> Last updated: **2026-10-04**
 > Scope: as-built inventory of the repository. Design intent lives in `docs/MVP/` (the
 > post-pivot normative set) and `docs/01`–`docs/23` (the original design suite). This
 > file describes what the code and database actually do today.
@@ -9,21 +9,17 @@
 
 ## Headline status
 
-**MVP is code-complete and the four gates are green.** The database is at **49 migration files**
-(41 committed and pushed live; **8 further present in the working tree as untracked files** — the
-M-series security hardening, the atomic `inventory_take`/`botho_cap`/`kgotla_charge` helpers, and
-`spend_chapter_tokens` — not yet committed or pushed). **None of the unapplied migrations have
-been pushed: the DB password is unavailable in this environment, so `supabase db push` is an
-outstanding operator action.** Four capability areas have landed since the
+**MVP is code-complete and the four gates are green.** The database is at **49 migration files — all committed, pushed, and applied live** to the linked project `nyapfgawanqvnkkjudxb`. (Corrected 2026-10-04: commit `bf235be`, *"all 10 pending migrations apply on live"*, landed the M-series hardening, the atomic helpers, and `spend_chapter_tokens`. Verified: `git ls-files supabase/migrations` = 49, `git status` shows **no** untracked migrations. The prior "49 files / 8–10 untracked and unapplied" state was true before that commit and is now stale. The DB password is no longer an outstanding blocker for this batch — it is applied.) Four capability areas have landed since the
 2026-09-16 state note, plus the first three Waves of the decided economy:
 
-1. **PARTIAL — the committed migration set is pushed live.** The linked Supabase project
-   `nyapfgawanqvnkkjudxb` is current through `20261002000000_kgotla_year_charges` (**41 committed
-   migrations, 0 pending among them**); `/admin`, `/dev` and P2–P9 all run at runtime. The 8 newest
-   migrations (`20261002000001` → `20261003000020`: M-series security hardening, atomic helpers, and
-   `spend_chapter_tokens`) are present locally as **untracked** files and are **not yet pushed**.
-   previously load-bearing gap
-   (`madi_balance`, `20261001000003`) and the Year-layer `kgotla_charges` table are both live.
+1. **RESOLVED — the whole committed migration set is pushed live.** The linked Supabase project
+   `nyapfgawanqvnkkjudxb` is current through `20261003000020_spend_chapter_tokens` (**49 committed
+   migrations, 0 pending**); `/admin`, `/dev` and P2–P9 all run at runtime. The M-series security
+   hardening (`20261002000001` → `20261003000005`: `profiles_role_guard`, `inventory_take`, atomic
+   `botho_cap`/`kgotla_charge`, `m2`–`m8`) and `spend_chapter_tokens` were **pushed live on
+   2026-10-03** (commit `bf235be`). *(Corrected 2026-10-04 — this entry previously said the 8–10
+   newest migrations were untracked and unapplied; that state is stale.)* The
+   `madi_balance` (`20261001000003`) and Year-layer `kgotla_charges` tables are both live.
 2. **NEW — deterministic simulation engine** (`apps/api/src/simulation/engine/`). One pure
    `runSimulation(input) => output`; no clock reads, no global RNG, no I/O. This is where the
    per-system offline time windows now live, in one table (`engine/time.ts`), instead of at
@@ -100,11 +96,7 @@ Three defects were confirmed *in production*, not merely in the repo:
 The live DB is otherwise healthy: 0 negative balances, 0 negative inventory, 0 orphan
 crops, 0 anti-cheat flags.
 
-> ⚠️ **DDL was never applied.** The Supabase pooler password is not in `.env` (the
-> service-role key is not the DB password), so the new migrations are **written but
-> unapplied**. `inventory_take`, `botho_credit_capped`, `spend_chapter_tokens` and the
-> M-series hardening do not exist on the live server yet. To apply:
-> `supabase db push` (prompts for the DB password).
+> ✅ **DDL is applied (corrected 2026-10-04).** The earlier warning that "DDL was never applied" is stale: commit `bf235be` pushed the M-series batch and the commit message records "all 10 migrations are applied live." `inventory_take`, `botho_credit_capped`, `spend_chapter_tokens` and the M-series hardening **exist on the live server**. If a future batch is authored, apply it with `supabase db push` (prompts for the DB password) and verify with `supabase migration list --linked`.
 
 ---
 
@@ -128,7 +120,7 @@ M13 Mobile/PWA                      [PARTIAL — manifest + SW + iOS splash; no 
 M14 Monetization & Payments         [PARTIAL — stub provider; boosts CUT from the catalogue]
 M14a Decided strategy (2026-10-01) [DECIDED — `docs/33`: 2 currencies + 1 meter, 2 store products (decorations + M50 Village Pass); Pula never sold; Madi spend-only; boosts cut; land tail retuned. Build sequence in `docs/34`; **Waves 1–3 landed**, Wave 4 partial]
 M15 Security / Analytics / Admin    [PARTIAL — admin + dev guards; anti-cheat + economy metrics shipped; analytics ingest only]
-M16 Alpha                          [UNBLOCKED — remaining: commit + push the 10 staged (untracked) migrations, finish Wave 4 store UI + automation persistence, real PSP, P10 manual checks]
+M16 Alpha                          [UNBLOCKED — remaining: finish Wave 4 store UI + automation persistence, real PSP, P10 manual checks. Schema is fully pushed (49, all live).]
 ```
 
 ---
@@ -266,7 +258,9 @@ public but the controller class uses `AuthGuard`, so it currently needs a Bearer
 
 ## Database (`supabase/migrations`)
 
-**49 migration files.** The first 41 (through `20261002000000_kgotla_year_charges`) are committed and **pushed live** to the linked project `nyapfgawanqvnkkjudxb`. The 8 newest (`20261002000003` → `20261003000020`: the atomic `botho_cap` / `kgotla_charge` helpers, the M-series security hardening, and `spend_chapter_tokens`) are present in the working tree but **untracked and unapplied**.
+**49 migration files.** All are committed and **pushed live** to the linked project `nyapfgawanqvnkkjudxb` (verified 2026-10-04). This includes the M-series security hardening (`20261002000001` → `20261003000005`: `profiles_role_guard`, `inventory_take`, atomic `botho_cap`/`kgotla_charge`, `m2`–`m8`) and `20261003000020_spend_chapter_tokens`. The atomic helpers, the widened `ledger_entries.currency` CHECK, the EXECUTE revokes and the RLS closures all exist on live.
+
+> **Corrected 2026-10-04.** This section previously claimed the 8–10 newest migrations were "untracked and unapplied". Commit **`bf235be`** (2026-10-03, *"correct m8/m20 SQL so all 10 pending migrations apply on live"*) landed them and the commit message records "both now show Remote timestamps; all 10 migrations are applied live." Re-verify any time with `supabase migration list --linked` — a blank **Remote** column is the only reliable "not applied" signal.
 
 > `20261002000001_profiles_role_guard.sql` and `20261002000002_inventory_take.sql` were
 > originally authored by two agents in parallel, which produced duplicate filename
@@ -330,9 +324,119 @@ API uses the **service-role** client. RLS is defense in depth.
 
 Starter data: registration creates the auth user, profile (`STARTING_PULA` 250), farm
 (`STARTING_PLOTS` 4), and sorghum/maize seed stock. `supabase/seed/seed.sql` inserts market
-prices and config rows. **`pnpm db:seed` is broken** — the root `package.json` delegates to
-`pnpm --filter @molemisi/api db:seed`, which runs `ts-node src/database/seed.ts`, and that file
-does not exist. Use registration + `supabase:reset`.
+prices and config rows. **`pnpm db:seed` now works** — `apps/api/src/database/seed.ts` was
+restored (2026-10-04). It materialises the config canon from `packages/game-config` into
+`item_definitions`, `market_prices`, `game_config`, `achievements` and `chapters`, is idempotent
+(an upsert on each table's natural key; `chapters` uses DO NOTHING so the rollover window is
+never dragged backwards), and supports `--dry-run`. The root script builds `@molemisi/game-config`
+first so the seed always reads current numbers. Direct use: registration + `supabase:reset`.
+
+---
+
+## Net-new MVP scope — landed 2026-10-04
+
+Four feature modules plus their tables, config and tests, built against the 2026-10-04 rulings
+(`docs/MVP/19` §0.0). Gates re-run after the change: `tsc` 0/0 (api + web) · api Jest **34 suites /
+498 tests** · game-config Jest **11 suites / 229 tests** · `balance_verify.py` **PASS** ·
+`pnpm db:seed --dry-run` exit 0.
+
+| Module | API | Tables | Config |
+|---|---|---|---|
+| **Achievements + honour ladder** | `apps/api/src/achievements/` — `GET /achievements`, `GET /achievements/title`, `POST /achievements/evaluate` | `achievements`, `player_achievements` (PK = idempotency guard) | `game-config/src/achievements.ts` |
+| **3-layer avatar** | `apps/api/src/avatar/` — `GET /avatar`, `POST /avatar` (create, once), `PUT /avatar/outfit` | `player_avatar` | `game-config/src/avatar.ts` |
+| **Events live service** | `apps/api/src/events/` — `GET /events`, `POST /events/:id/claim` | `events`, `event_grants` (UNIQUE(player_id,event_id)) | `game-config/src/events.ts` |
+| **Global Kgotla chat** | `apps/api/src/chat/` — `GET /chat`, `POST /chat/messages` | `kgotla_messages` | `game-config/src/chat.ts` |
+
+**Client:** `apps/web/src/lib/{chat,achievements,events,avatar}.ts`, `components/AvatarSprite.tsx`
+(3-layer renderer, hat drawn last and always), and `components/KgotlaCommunityPanel.tsx` — a tabbed
+panel in the Kgotla (**Talk · Events · Honours**) rendered above the council hall. `StoreScreen`
+gained an avatar section (base picker while unchosen, then the wardrobe with a live preview per row).
+
+**Rulings applied in this pass:**
+- **No chat moderation.** The profanity filter, mute/block and report queue were removed from the
+  config, service, controller and the migration before they shipped. What remains is an **anti-flood**
+  guard (interval + rolling window + payload length) — traffic hygiene (`20 §5.4`), not content policy.
+- **The twelve Setswana months are correct.** The "9 of 12 month notes missing" blocker is closed; the
+  calendar reads `SETSWANA_MONTHS` from `game-config`.
+
+**Migrations:** `20261004000001_achievements` · `20261004000002_player_avatar` ·
+`20261004000003_events` · `20261004000004_kgotla_chat`. **53 files total**; the 49 older ones are live,
+**all 53 are APPLIED LIVE** as of 2026-10-04 (`supabase migration list` shows a Remote timestamp on each). Each is one balanced `BEGIN;…COMMIT;` per `11 §4.2`.
+
+**Art:** all 33 new PixelLab keys are now declared in `assets/manifest.json` (315 entries total):
+6 avatar, 8 farm cosmetics, 4 World Tree stages, 9 breathing idle sheets, 6 calendar-education
+assets. The PNGs are not generated yet and every consumer degrades gracefully until they land.
+
+## UI/UX pass — 2026-10-04
+
+Most of the requested surface already existed and was verified rather than rebuilt: the four
+footer screens (`FarmScreen`, `KgotlaScreen`, `BushveldScreen`, `MarketScreen`), the header and
+`Inventory`/`Settings`, `Store`, `Inventory`/`Crafting`, `Wallet`, `Journal`, and a full CSS
+animation set (`farm-coin`, `feed-bob`, `repair-sweep`, `product-pop`, …). The **net-new** work:
+
+| Component | Purpose | Spec |
+|---|---|---|
+| `components/screens/AlmanacScreen.tsx` | **The calendar education surface (B6).** Teaches the twelve Setswana months (from `SETSWANA_MONTHS`), the four `Sekala sa …` chapters with their Begin/Give/Keep/Leave verbs, the current month + chapter, the days-to-rollover, and the World Tree. Wired into the header nav. Computes **no** calendar logic of its own — it renders what `game-config` says, which is why it is complete with no month-notes copy. | `08` D8, `19` W8.4 |
+| `components/BreathingSprite.tsx` | **Ambient breathing loop (B8/W12).** ~3 s cycle, 2–4 px vertical, 2–3 frame sheet. Enforces all four rules: never blocks input (`pointer-events-none`), gated by `useAmbientMotion()`, degrades to the static sprite, and **pauses when the tab is hidden or scrolled out of view**. Wired into `NpcPortrait` (Kgotla) and `AnimalSprite` (Farm). | `08` D1 2nd pass, `22 §11.5` |
+| `components/WorldTree.tsx` | **D2 macro goal.** Four stages at the `04 §7.2` thresholds (40 / 70 / 100%) driven by a **community-restoration meter** (Botho 60% + Council Projects 40%) — deliberately distinct from the Bushveld's per-scene meter. | `08` D2, `19` W9.9 |
+| `components/RewardFloat.tsx` | **`+{amount} 💰`** after a *confirmed* sale. ~1.2 s, transform-only, self-unmounting — never a waiting loop. | `08` D1, `22 §12.2` |
+| `components/Skeleton.tsx` | **Skeleton, never a spinner past 2 s.** Renders nothing for `delayMs`, then shaped blocks; the pulse is itself gated on `useAmbientMotion()`. | `07` UX |
+| `lib/useReducedMotion.ts` | Single accessibility gate: OS `prefers-reduced-motion` **AND** the player's Particles setting. JS-driven loops need this because CSS rules do not stop `setInterval`. | `22 §11.5` |
+| `globals.css` | `@keyframes reward-float` + `.touch-primary` (56 dp) / `.touch-secondary` (48 dp), the latter auto-applied on coarse pointers. | `07` touch targets |
+
+## Dev tooling (D9 / W10) — landed 2026-10-04
+
+The dev affordances are now **in the game**, not behind a walled `/dev` panel, and every one of
+them is gated twice: the client renders `null` for anyone who is not a dev, and the routes sit
+behind `AuthGuard + DevGuard`.
+
+| Surface | Affordance | Calls |
+|---|---|---|
+| **Almanac / calendar** | **Long-press the chapter header** (D9's canonical example), or the gear | `POST /dev/date-jump`, `POST /dev/clock/reset` |
+| **Farm** | Gear, floating over the homestead | `POST /dev/inventory/grant` |
+| **Kgotla** | Gear beside the council-hall plaque | `POST /dev/kgotla/complete-charge` |
+| **any surface** | "Scan game state" in the panel | `GET /dev/state` |
+
+**Two design rules are enforced in code, not left to the client:**
+
+1. **Never the live project** (`09 §7` hazard 2). `ClockService.isLiveProjectUrl()` is a **pure,
+   unit-tested** predicate; `DevService.assertThrowaway()` refuses every mutating route when
+   `SUPABASE_URL` is a hosted project, unless an operator explicitly sets
+   `DEV_TOOLS_ALLOW_LIVE=true`. The UI renders a loud **LIVE PROJECT — tools disabled** banner and
+   disables the buttons rather than implying a tool is safe.
+2. **Nothing bypasses a sanctioned writer.** Spawn goes through `InventoryService.addItem` (the
+   inverse `inventory_take` is paired with, so the slot and stack caps still apply); the date-jump
+   moves a `ClockService` offset and calls the existing `ChapterService.rolloverChapters`, which is
+   what zeroes Chapter Tokens **exactly once** past a rollover — invariant I13, validated without
+   waiting a season. The force-completed Charge pays **capped** Botho, so the dev tool cannot
+   become a faucet.
+
+`GET /dev/state` reports the seven corruption classes (`09 §11`) with the named `planRecovery()`
+action for each, and is **read-only** — it reports, it never repairs.
+
+## Known deferrals (2026-10-04)
+
+- **Homestead cosmetic sprite swap — DEFERRED to a later version.** The `cosmetics` manifest rows
+  (hut / kraal / frame / livestock × Market + Festival) and the store's cosmetic SKUs exist and are
+  purchasable, but the farm scene does **not** yet swap the sprite when one is owned. This is a
+  rendering task deliberately pushed out of the MVP; nothing in the economy depends on it, and the
+  Store still previews the **avatar** outfit layer, which is the cosmetic slot D10 calls mandatory.
+- **PixelLab generation and artist credit — DEFERRED.** All 33 manifest keys are declared, but the
+  PNGs are **not** generated and **no credit line is being published yet**. Every consumer degrades
+  gracefully in the meantime (static sprite → glyph, World Tree → labelled plate, calendar tiles →
+  chapter slug, header/month-strip hidden). Generate later with `pnpm assets:generate && pnpm
+  assets:sync`; nothing needs refactoring when the art lands.
+
+## Verified
+
+`tsc` 0/0 (api + web) · api Jest **35 suites / 505 tests** · game-config Jest **11 suites / 229
+tests** · `balance_verify.py` PASS · **`supabase db push` applied — all 53 migrations live**, the
+four new ones (`20261004000001`…`0004`) confirmed with Remote timestamps on
+`supabase migration list`.
+
+## Still not built (and not fake-done): the progression sim (W10.4), farm reset via the dev panel
+(`POST /admin/players/:id/reset-farm` exists behind `AdminGuard`), and any web-side automated test
+harness (`apps/web` has no Jest config, so the new UI has no unit coverage).
 
 Promote an admin: `node scripts/create-admin.mjs`. Promote a dev: `node scripts/create-dev.mjs`.
 
@@ -487,7 +591,7 @@ build on push+PR. No Supabase service, no deploy.
 | PWA install | Manifest + SW + full icon set + iOS splash |
 | Payments | **Stub provider only**; boosts **cut** from the catalogue; top-ups grant **Madi** |
 | Botho automation unlocks (300/500) | **Config only** — no persistence layer yet (`docs/34` §1.2) |
-| Chapter Token spend route | **RESOLVED** — `POST /chapters/tokens/spend` exists (`chapter.controller.ts:56`, backed by `spendTokens()` and a green spec in `chapter.service.spec.ts`); the supporting `spend_chapter_tokens` migration is present but untracked (`docs/38` T-4 / I-7) |
+| Chapter Token spend route | **RESOLVED** — `POST /chapters/tokens/spend` exists (`chapter.controller.ts:56`, backed by `spendTokens()` and a green spec in `chapter.service.spec.ts`); the supporting `spend_chapter_tokens` migration is **committed and pushed live** (2026-10-03, commit `bf235be`) — *(corrected 2026-10-04; previously said untracked)* |
 | Store purchase UI | **Not wired** — `StoreScreen` is a component reference, no live flow |
 | **Wildlife raids** | **Deferred from v1 (ruling 2026-09-11)** |
 | **Boost effects** | **Cut from the catalogue (`docs/34` §3.3)** |
@@ -521,13 +625,14 @@ deferred. Track gaps in `KNOWN_LIMITATIONS.md`.
 2. Wire the store purchase flow end-to-end against the stub provider (`docs/34` §4.3).
 3. Add a persistence layer for Botho automation unlocks, or remove the ladder from the config
    so it stops advertising a reward nothing grants (`docs/34` §1.2).
-4. ~~Expose `POST /chapters/tokens/spend`~~ — **DONE** (route exists at `chapter.controller.ts:56`; the supporting `spend_chapter_tokens` migration is untracked). Only the 25-stamp souvenir SKU validation + UI affordance remain.
+4. ~~Expose `POST /chapters/tokens/spend`~~ — **DONE** (route exists at `chapter.controller.ts:56`; the supporting `spend_chapter_tokens` migration is committed and pushed live as of 2026-10-03). Only the 25-stamp souvenir SKU validation + UI affordance remain.
 5. Wire Next.js rewrites for `/api` → `:3001` (single-port / CORS-free preview).
 6. Add the `anti-cheat` review surface to `/admin` and the economy metrics to `/admin/economy`.
 7. ~~Restrict `PUT /config` to `AdminGuard`~~ — **DONE** (both PUT routes).
 8. ~~Reconcile the footer nav~~ — **DONE** (hybrid 4-primary + More).
-9. Remove the dead `db:seed` script from the root and `apps/api` `package.json`, or restore
-   `src/database/seed.ts`.
+9. ~~Remove the dead `db:seed` script, or restore `src/database/seed.ts`~~ — **DONE**
+   (2026-10-04: `apps/api/src/database/seed.ts` restored; idempotent, `--dry-run`, builds
+   `game-config` first).
 
 ---
 

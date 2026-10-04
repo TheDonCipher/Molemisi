@@ -1,6 +1,36 @@
 # Architecture Overview
 
-As-built. Design intent that differs is called out. **Last updated 2026-10-03.**
+As-built. Design intent that differs is called out. **Last updated 2026-10-04.**
+
+> ### Amended 2026-10-04 — the MVP/08 design rulings
+>
+> Nine design decisions were ruled on 2026-10-04 (`docs/MVP/08_MVP_Design_Decisions.md`), and a
+> ten-part **implementation document set** (`docs/MVP/09`–`18`) was generated as the build
+> specification for coding agents. The architecture-relevant consequences:
+>
+> **New modules the rulings require** (not yet built — see `docs/MVP/10 §2`):
+>
+> | Module | Ruling | Boundary |
+> | --- | --- | --- |
+> | Achievements | D5 (honorific ladder + achievements) | server-authoritative probe over existing tables; no new table required for the ladder itself |
+> | Events (live) | D6 (Events service grants Bupi/Borotho) | reconciles the two-sources problem — a single live service becomes the writer of event rewards |
+> | Cosmetics / Avatar | D10 (data-driven SKUs, farm + avatar only, 2-layer avatar) | sits on top of the existing Store; `cosmetic_skus` + `player_cosmetics` (see `docs/MVP/15`) |
+>
+> **Content that stays hardcoded** — the Content section below is unchanged and correct: NPCs,
+> contracts, Kgotla projects, Bushveld scenes and world events remain in API source. D5's
+> achievement/honorific system reads player state, it does not make the NPC catalog data-driven.
+>
+> **Crafting is deferred (D7).** `Crafting` continues to exist as a module, but the MVP is
+> **farming-only**; crafting is a v1.1 surface. The `crafting` entries in `packages/game-config`
+> remain config-honoured, they are simply not part of the MVP acceptance set.
+>
+> **Boosts remain cut.** No ruling reverses `docs/34 §3.3`; `BOOSTS` is still `readonly never[]`.
+>
+> **Shipped v1 surface confirmed by the rulings:** global Kgotla chat (B1), achievement system
+> (B2), live Events service (B3), cosmetics/avatar (B4/B7), World Tree lore (B5), calendar
+> education UI (B6). Voice-over (D11) is deferred.
+
+
 
 ## System
 
@@ -76,14 +106,14 @@ The engine (`simulation/engine/`) is pure — instant from `input.now`, randomne
 | Buildings | yes | + storage upgrade on separate controller |
 | Livestock | yes | feed debits rations; per-kraal and per-animal actions |
 | Market | yes | `/market/quote`; chapter events self-seed; prices reconciled |
-| Contracts | yes | catalog hardcoded; payouts capped to Co-op value |
-| Crafting | yes | jobs, batching, substitution |
+| Contracts | yes | catalog hardcoded; payouts capped to Co-op value — **live path predates the MVP/08 set; the contract *catalog* is MVP-scoped, see `docs/MVP/08`** |
+| Crafting | yes | jobs, batching, substitution — **module is live but D7 (2026-10-04) defers crafting out of MVP scope; farming-only for v1** |
 | Letsema | yes | Kgotla contribution endpoint |
 | Progression | yes | Elder tip + scene access |
 | Kgotla | yes | NPCs + projects hardcoded; charge progress bug fixed |
 | Bushveld | yes | Kagiso-driven scenes/hotspots |
 | Chapters | yes | rollover + claim + **token spend** (`POST /chapters/tokens/spend`, live) |
-| WorldEvents | yes | events hardcoded |
+| WorldEvents | yes | events hardcoded — **D6 (2026-10-04) makes this a live service and the sole writer of event rewards (Bupi/Borotho); see `docs/MVP/14 §7`** |
 | Wallet | yes | ledger endpoint; **Pula / Botho / Madi** |
 | Payments | yes | stub provider; ⚠️ webhook behind class-level `AuthGuard` |
 | Store (monetisation) | yes | two cosmetic shelves (Pula / Madi); **boosts cut** |

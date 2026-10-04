@@ -19,12 +19,11 @@ Phaser 3 prototype `apps/game` was deleted on 2026-09-11; the React `/game` clie
 ## Current status
 
 The MVP is **code-complete** and the four gates are green (api tsc 0 · web tsc 0 · **615 Jest
-tests** across 37 suites · `balance_verify.py` PASS). The schema is at **51 migration files** —
-41 committed and pushed live through `20261002000000_kgotla_year_charges`, and **10 further
-present in the working tree as untracked files** (the M-series security hardening, the atomic
-`inventory_take`/`botho_cap`/`kgotla_charge` helpers, and `spend_chapter_tokens`) not yet committed
-or pushed. The original 11-migration deploy gap was pushed to the linked Supabase project
-`nyapfgawanqvnkkjudxb` on 2026-09-14, so `/admin`, `/dev` and P2–P9 all run at runtime.
+tests** across 37 suites · `balance_verify.py` PASS). The schema is at **49 migration files — all
+committed and pushed live** to the linked Supabase project `nyapfgawanqvnkkjudxb` (corrected
+2026-10-04; commit `bf235be` landed the M-series batch and records *"all 10 migrations are applied
+live"*). The original 11-migration deploy gap was pushed on 2026-09-14, so `/admin`, `/dev` and
+P2–P9 all run at runtime.
 
 Since the 2026-09-16 state note, four further capability areas have landed:
 
@@ -36,10 +35,12 @@ Since the 2026-09-16 state note, four further capability areas have landed:
 - **The decided economy** (`docs/33` → `docs/34`, Waves 1–3): top-ups grant **Madi, never Pula**;
   the store sells decorations on two shelves plus the **Village Pass**; boosts are **cut**
 
-Remaining gaps: real-money payments (stub provider only), store purchase UI (wired against the
-stub only — no live PSP), wildlife raids, boost effects, and Botho automation-unlock persistence
-(config-only). Raids and boosts are deferred from v1 by ruling; the store UI and automation
-persistence are the open Wave 4 items (`docs/34` §4.3, `KNOWN_LIMITATIONS.md`).
+Remaining gaps: real-money payments (stub provider only — **the store purchase flow itself is
+wired and verified**), wildlife raids, boost effects, and Botho automation-unlock persistence
+(config-only). Raids and boosts are deferred from v1 by ruling; the automation persistence is the
+open Wave 4 item (`docs/34` §4.3, `KNOWN_LIMITATIONS.md`). Also outstanding: the avatar / Event /
+calendar **art assets** (PixelLab manifest rows now exist; the PNGs are not generated yet — every
+consumer degrades gracefully), and the four migrations of 2026-10-04, which are now **applied live** (53 total).
 
 Specs and the marketplace pivot (cash-out to mobile money, P2P Exchange) are captured in
 `docs/MVP/`; the original design suite lives in `docs/01`–`docs/23`.
@@ -79,10 +80,11 @@ pnpm dev                     # predev runs assets:sync
 
 Do not set `NODE_ENV` in `.env` or `.env.local`. Next.js and NestJS set it themselves.
 
-Register at http://localhost:3000/auth/register. `pnpm db:seed` is **broken** — the root script
-delegates to `pnpm --filter @molemisi/api db:seed`, which runs `ts-node src/database/seed.ts`, and
-**that file does not exist**. Use registration + `supabase:reset` instead. (Removing the dead
-script from both `package.json` files is a standing task — see `KNOWN_LIMITATIONS.md`.)
+Register at http://localhost:3000/auth/register. `pnpm db:seed` **works** — it materialises
+the config canon from `packages/game-config` into `item_definitions`, `market_prices`,
+`game_config`, `achievements` and `chapters`. It is idempotent (an upsert on each table's
+natural key), so a second run is a no-op, and `--dry-run` reports without writing. The root
+script builds `@molemisi/game-config` first so the seed always reads current numbers.
 
 ### Development servers
 
@@ -108,7 +110,7 @@ molemisi/
 │   ├── game-config/  # Crops, buildings, livestock, crafting, chapters, almanac, bushveld, store, theme
 │   ├── validation/   # Zod schemas
 │   └── simulator/    # Offline balance simulator (not a game client)
-├── supabase/         # Migrations (51; 41 live + 10 untracked), seed, local config
+├── supabase/         # Migrations (49, all live), seed, local config
 ├── assets/           # Pixel-art source (282 manifest entries), synced into web public/
 ├── scripts/          # Asset pipeline, admin/dev bootstrap, live API tests, economy gate
 └── docs/             # As-built notes + design specs + MVP normative set
@@ -149,6 +151,14 @@ pnpm simulate            # Run the offline balance simulator (DO NOT point at th
 - Buildings (7), livestock (4), inventory + storage tiers, crafting (timers, batching, substitution)
 - Market (5% Co-op tax, 2.0× price band, authoritative quote), contracts, progression, Elder tip
 - Kgotla (Botho, Letsema, NPCs) with NPC head-portrait dialog, Bushveld (Kagiso, Field Journal, Daily Sparkle), chapters + almanac
+- **Global Kgotla chat** — one shared Setswana/English channel in the Kgotla (poll on a slow interval, visible-tab only; **unmoderated by ruling**, anti-flood only)
+- **Achievements + honorific ladder** — Molemi → Molemi-Morui → Moagi → Motsadi → Mokgosi, earned only, display-only, never purchasable
+- **Events live service** — one chapter-scoped Event per Setswana chapter; grants Bupi/Borotho and pays Chapter Tokens on turn-in; a replayed claim is a no-op
+- **3-layer avatar** — base chosen once, swappable outfit cosmetic, and the always-worn Farmer's Hat drawn on top
+- **Almanac** — the calendar education screen: the twelve Setswana months, the four `Sekala sa …` chapters with their Begin/Give/Keep/Leave verbs, the current month/chapter and the days-to-rollover
+- **World Tree** — four restoration stages on a community-restoration meter (Botho + Council Projects)
+- **Ambient breathing loops** — NPCs in the Kgotla and livestock on the Farm; ~3 s cycle, 2–4 px, 2–3 frames, switched off under reduced motion or Particles-OFF
+- **In-game dev tools** (dev accounts only) — long-press the Almanac chapter header to date-jump, gear affordances on Farm and Kgotla for spawn / force-complete, plus a game-state scan of the seven corruption classes. Refuses to run against the live project
 - Seasons / weather / world events, notifications, PWA (manifest + service worker)
 - Admin dashboard (`AdminGuard`) + dev tooling area (`DevGuard`), in-memory rate limit
 - **Deterministic simulation engine** — pure, seeded, replayable; livestock decays on a 72 h window and self-sustains beyond it, building wear is uncapped

@@ -11,19 +11,35 @@
 >
 > What changed since this audit was written:
 >
-> | This document says | Reality as of 2026-10-03 |
+> | This document says | Reality as of 2026-10-04 |
 > |---|---|
 > | `jest` (apps/api) **209/209, 18 suites** | **37 suites / 615 tests** across the workspace (api 28/417, game-config 8/163, validation 1/35) |
-> | **29** migration files, 11 unpushed | **51** migration files (**41** pushed live, **10** untracked / not yet pushed) |
-> | Schema current / deployed | **41** migrations pushed live through `20261002000000`; 10 further present untracked (not pushed) |
+> | **29** migration files, 11 unpushed | **49** migration files, **all committed and pushed live** (corrected 2026-10-04; commit `bf235be` landed the M-series batch on 2026-10-03) |
+> | Schema current / deployed | **49** migrations pushed live through `20261003000020_spend_chapter_tokens` |
 > | Boosts "withdrawn from sale", still catalogued | **Cut from the catalogue entirely** (`docs/34` §3.3); `BOOSTS` is `readonly never[]` |
 > | Pula granted for BWP | **Top-ups grant Madi, never Pula** (`docs/33` §2, implemented) |
 > | Real-money payments a gap | Still true — `StubPaymentProvider` only |
 > | No mention of | Deterministic simulation engine · anti-cheat · state validation/recovery · economy metrics API · livestock 72 h window + 12 h starvation window |
 >
 > Gates were **re-run and re-verified on 2026-10-03** and remain green: `tsc` api 0, `tsc` web 0,
-> `jest` 615/615, `balance_verify.py` PASS. (The 10 untracked migrations are new since this gate run
-> and are not yet part of the pushed schema.)
+> `jest` 615/615, `balance_verify.py` PASS. **There is no pending schema delta** — the 10 M-series
+> migrations referenced in earlier versions of this banner are now committed and applied live.
+>
+> ### Amended 2026-10-04 — the MVP/08 design rulings
+>
+> Nine design decisions were ruled on 2026-10-04 (`docs/MVP/08_MVP_Design_Decisions.md`) and a
+> ten-part implementation document set (`docs/MVP/09`–`18`) was generated. Two rulings touch this
+> audit's conclusions:
+>
+> - **D7 — crafting/recipes are deferred.** This audit lists crafting as an MVP surface. The MVP
+>   is **farming-only**; crafting, cooking and recipes move to v1.1. Read any "crafting gap" here
+>   as **out of scope by ruling**, not as debt.
+> - **D5/D6/D10 add surfaces this audit did not check.** The MVP acceptance set now also includes
+>   global Kgotla chat, an achievement/honorific ladder, a live Events service, and cosmetics +
+>   a 2-layer avatar. None were in the `docs/MVP/01`–`06` normative set when this audit ran, so
+>   its completeness verdict does not cover them.
+>
+> Everything else in this audit stands as the 2026-09-16 record.
 
 ---
 

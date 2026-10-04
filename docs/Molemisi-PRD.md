@@ -17,6 +17,35 @@
 **Version:** 1.0  
 **Date:** September 2026
 
+> ### Amended 2026-10-04 — the MVP/08 design rulings
+>
+> Nine design decisions were locked on 2026-10-04 (`docs/MVP/08_MVP_Design_Decisions.md`) and a
+> ten-part implementation document set (`docs/MVP/09`–`18`) was generated as the build
+> specification. Where this PRD disagrees with those rulings, **the rulings win**:
+>
+> - **D7 — the MVP is farming-only.** Crafting, cooking, recipes and processed goods are
+>   **deferred to v1.1**. The PRD's crafting systems are v1.1 intent, not v1 scope.
+> - **D2 — lore & framing.** The protagonist is **Sesana**; the world is anchored by the
+>   **World Tree**; the game carries an **educational** layer (agriculture + Setswana culture).
+> - **D3 — agriculture, not decay.** No soil-degradation mechanic; framing is
+>   *"feed the family, then the nation"*.
+> - **D5 — culture & progression.** Global **Kgotla chat**, an **achievement system**, and an
+>   **honorific ladder** (Molemi → Molemi-Morui → Moagi → Motsadi → Mokgosi) replace any generic
+>   "level" framing.
+> - **D6 — Events service.** A single live Events service is the **sole writer of event rewards**
+>   (Bupi / Borotho), reconciling the earlier two-source ambiguity.
+> - **D9 — dev mode is contextual in-game**, not a separate surface.
+> - **D10 — cosmetics.** Data-driven SKUs, **farm + avatar only**, **2-layer avatar**; no
+>   pet/world cosmetics in v1.
+> - **D11 — voice-over deferred.**
+> - **D1 / D4 stand as written** in the PRD.
+>
+> Also note: **Phaser is not the player client.** `apps/game` was deleted 2026-09-11; React
+> `/game` in `apps/web` is the only client. And the currency position is **three currencies** —
+> Pula (soft) · Madi (hard, v1 spend-only) · Chapter Token (seasonal, expires) — see
+> `docs/MVP/02 §6`.
+
+
 ---
 
 # 1. Executive Summary

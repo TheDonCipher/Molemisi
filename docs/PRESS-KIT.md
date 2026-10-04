@@ -7,6 +7,23 @@
 - **Status:** M16 Alpha (in development)
 - **Contact:** via the repository issue tracker
 
+> ### Amended 2026-10-04 — MVP scope ruling (for accuracy in outward copy)
+>
+> The v1 feature set was locked on 2026-10-04 (`docs/MVP/08_MVP_Design_Decisions.md`). Two things
+> matter for press and store copy:
+>
+> - **v1 is farming-only.** Crafting, cooking and recipes are **deferred to v1.1** — do not
+>   promise crafting or cooking in launch copy.
+> - **Confirmed v1 pillars to talk about:** grow Botswana crops · raise livestock · trade at the
+>   village market · community life at the kgotla (incl. **global Kgotla chat**) · a
+>   **progression honorific ladder** (Molemi → Molemi-Morui → Moagi → Motsadi → Mokgosi) ·
+>   **cosmetics for the farm and the avatar** · an **educational layer** on agriculture and
+>   Setswana culture, anchored by the **World Tree** and protagonist **Sesana**.
+> - **Still absent at v1:** voice-over (deferred), wildlife raids, equipment boosts.
+>
+> The **Naming**, Logo and Typography sections below are unchanged and remain authoritative.
+
+
 ---
 
 ## Naming

@@ -1,6 +1,6 @@
 # Molemisi — MVP Specification
 
-**Status:** implementation complete (code); **deployable** — the schema has **51 migration files**: **41 committed and pushed live** to `nyapfgawanqvnkkjudxb` (0 pending among them), and **10 further present in the working tree as untracked files** (not yet pushed), so `/admin`, `/dev` and P2–P9 run at runtime. `20261001000003` (`madi_balance`) and `20261002000000` (`kgotla_charges`) are live, so the store and Year-layer routes resolve. **Last consolidated:** 2026-09-07; status confirmed **2026-10-03**.
+**Status:** implementation complete (code); **deployable** — the schema has **49 migration files, all committed, pushed, and applied live** to `nyapfgawanqvnkkjudxb` (0 pending; verified 2026-10-04 — `git ls-files supabase/migrations` = 49, `git status` shows no untracked migrations, commit `bf235be` landed the M-series batch). `/admin`, `/dev` and P2–P9 run at runtime. `20261001000003` (`madi_balance`) and `20261002000000` (`kgotla_charges`) are live, so the store and Year-layer routes resolve. **Last consolidated:** 2026-09-07; status confirmed **2026-10-04**.
 **Owner of this folder:** Princess Eugenia. **Consolidated by:** Belvedere.
 
 ---

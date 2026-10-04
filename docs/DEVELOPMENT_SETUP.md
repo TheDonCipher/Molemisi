@@ -83,7 +83,7 @@ Copy API URL, Studio URL, anon key, and service role key into `.env.local`.
 pnpm supabase:reset
 ```
 
-Applies `supabase/migrations/*` (51 files) and `supabase/seed/seed.sql`.
+Applies `supabase/migrations/*` (49 files, all live) and `supabase/seed/seed.sql`.
 
 **Do not run `pnpm db:seed`.** The root script delegates to
 `pnpm --filter @molemisi/api db:seed`, which runs `ts-node src/database/seed.ts` — and that file
@@ -91,12 +91,14 @@ does not exist. Use registration + `supabase:reset`.
 
 > **Deploying to the linked remote project:** the local flow (`supabase:start` +
 > `supabase:reset`) targets a Docker instance. The production-shaped target
-> `nyapfgawanqvnkkjudxb` has **41 migrations pushed live** (through `20261002000000_kgotla_year_charges`,
-> 0 pending among those). **`20261001000003` (`madi_balance`)** and **`20261002000000` (`kgotla_charges`)** are applied,
-> so the store, wallet and Year-layer routes resolve against the remote DB. A further **10 migrations are present in the
-> working tree as untracked files** (`20261002000001` → `20261003000020`: the M-series security hardening, the atomic
-> `inventory_take` / `botho_cap` / `kgotla_charge` helpers, `m2`/`m3`/`m5`/`m6` hardening, and `spend_chapter_tokens`) and
-> are **not yet pushed**. See `DEVELOPMENT_STATE.md` Headline status for the full inventory.
+> `nyapfgawanqvnkkjudxb` has **all 49 migrations pushed live** (through
+> `20261003000020_spend_chapter_tokens`, 0 pending). **`20261001000003` (`madi_balance`)**,
+> **`20261002000000` (`kgotla_charges`)**, the M-series security hardening
+> (`20261002000001` → `20261003000005`: `inventory_take` / `botho_cap` / `kgotla_charge` helpers,
+> `m2`/`m3`/`m5`/`m6` hardening) and `spend_chapter_tokens` were **pushed live on 2026-10-03**
+> (commit `bf235be`) — so the store, wallet and Year-layer routes resolve against the remote DB.
+> *(Corrected 2026-10-04 — this note previously said 41 were pushed and 10 were untracked; there is
+> now no pending schema delta.)* See `DEVELOPMENT_STATE.md` Headline status for the full inventory.
 
 ### 6. Dev servers
 

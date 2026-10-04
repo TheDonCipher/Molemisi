@@ -10,6 +10,27 @@
 **Audience:** Lead Developer, Software Engineers, Game Developers, Technical Artists, QA, AI Coding Agents  
 **Primary Objective:** Provide the authoritative sequence for transforming Molemisi from an empty repository into a production-ready web-based pixel farm simulator.
 
+> ### Amended 2026-10-04 — the MVP/08 design rulings
+>
+> The v1 scope was re-cut on 2026-10-04 (`docs/MVP/08_MVP_Design_Decisions.md`) and a ten-part
+> implementation document set (`docs/MVP/09`–`18`) now serves as the **build specification**.
+> The phase gates **P0–P10** (v1) and **P11–P14** (v1.1, gated on B1 legal + B2 PSP) in
+> `docs/MVP/05` / `docs/MVP/06` are the authoritative sequence — treat this roadmap's milestone
+> list (M0–M16) as the historical plan it was.
+>
+> What changed for scope:
+>
+> - **Crafting / cooking / recipes → v1.1 (D7).** The MVP is **farming-only**. Any roadmap
+>   milestone that treats crafting as v1 is now mis-scoped.
+> - **New v1 surfaces (D5/D6/D10):** global Kgotla chat, achievement + honorific ladder, a live
+>   Events service, cosmetics + 2-layer avatar. These are new build items, not previously in the
+>   milestone list.
+> - **Wildlife raids and boost effects remain deferred** (standing ruling) — not v1.
+> - **Deploy reality:** the schema is **49 migrations, all pushed live** (corrected 2026-10-04).
+>   The "M16 Alpha" milestone is materially further along than this document's checklist implies;
+>   use `docs/DEVELOPMENT_STATE.md` and `docs/32_Sprint_Roadmap.md` for live position.
+
+
 ---
 
 # 1. Purpose

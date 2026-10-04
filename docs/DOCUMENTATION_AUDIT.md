@@ -2,7 +2,20 @@
 
 > **Molemisi Farm Management Simulator**
 > Status: As-built docs track the repo; design specs are intent.
-> **Last updated: 2026-10-03** (prior: 2026-09-14).
+> **Last updated: 2026-10-04** (prior: 2026-10-03).
+
+> ### Amended 2026-10-04 — the MVP/08 design rulings
+> Nine design decisions were ruled on 2026-10-04 (`docs/MVP/08_MVP_Design_Decisions.md`), and a
+> ten-part **implementation document set** (`docs/MVP/09`–`18`) was generated for coding agents.
+> The three tiers below now read as follows:
+> - **Normative MVP set** — now `docs/MVP/01`–`06` (normative; `06` wins on "is it done?"),
+>   **`08` (the locked-decision record)**, and **`09`–`18` (the build specification)**.
+> - **As-built** — unchanged files, but the migration figure everywhere is **49, all live** (not
+>   51/41+10; see the correction in `DEVELOPMENT_STATE.md` and `MVP/README.md`).
+> - **Original design suite** — unchanged: intent only, and now further from the rules on
+>   culture/calendar/cosmetics/VO than before.
+> Any living doc that still describes XP/levels, a Guild subscription, boosts, wildlife raids, or
+> player crafting in v1 is stale against `08`.
 
 ---
 
@@ -14,7 +27,9 @@ confusion in this repo, so read top to bottom:
 | Tier | Files | Authority | Purpose |
 | --- | --- | --- | --- |
 | **As-built** | `README.md`, `DEVELOPMENT_STATE.md`, `DEVELOPMENT_SETUP.md`, `ARCHITECTURE_OVERVIEW.md`, `KNOWN_LIMITATIONS.md`, this file | **Code + these files** | What the repo does *now* |
-| **Normative MVP set** | `docs/MVP/01`–`07`, `docs/MVP/README.md` | **Build from these** | The current v1 specification (post-2026-09-07 marketplace pivot) |
+| **Normative MVP set** | `docs/MVP/01`–`06`, `docs/MVP/README.md` | **Build from these** | The current v1 specification (post-2026-09-07 marketplace pivot) |
+| **Locked decisions** | `docs/MVP/08_MVP_Design_Decisions.md` | **Governs where `01`–`06` are silent** | The eleven MVP decisions; nine ruled 2026-10-04 |
+| **Build specification** | `docs/MVP/09`–`18` | **Implementation authority** | Architecture, schema, API, economy, sim, cosmetics, anti-cheat, testing, deployment — written for coding agents |
 | **Original design suite** | `docs/01`–`docs/23`, `docs/20_MVP_Implementation_Plan`, `Molemisi-PRD`, `Molemisi _ROADMAP` | **Intent / history** | Pre-pivot product vision |
 
 **Golden rules:**
@@ -106,7 +121,7 @@ the repo and the `docs/MVP/` set win.
 | 04 Phaser rendering | Target renderer | **Void** — the standalone Phaser client was deleted 2026-09-11. Nothing in the build follows this document |
 | 05 Art direction | Art bible | **§14/§15 rewritten to the real tree**; the 800×600 figure and the atlas conventions were Phaser leftovers. Backgrounds are in `tiles/sky/`, withdrawn art in `_archive/` |
 | 06 Economy | Balance | Config + market tables (numbers now live in `MVP/02`) |
-| 07 Database | Schema | **51 migration files** (41 committed + pushed live through `20261002000000`; 10 further present untracked, not yet pushed) |
+| 07 Database | Schema | **49 migration files — all committed and pushed live** (corrected 2026-10-04; the earlier "51 files, 10 untracked" figure was stale after commit `bf235be`) |
 | 08 API | Endpoint design | Prefix `/api/v1` matches; many paths differ. Now also has `/admin/economy/*` and `/admin/anti-cheat/*`, which this doc never anticipated |
 | 09 Simulation | Offline sim | **§2, §5, §8, §9, §10 rewritten.** Now documents the pure engine, the per-system time-window table, the 12 h starvation window and uncapped building wear |
 | 10 Payments | Monetization | Stub provider only; **boosts cut from the catalogue**; the `PaymentProvider` signature in this doc was wrong and is now corrected |
@@ -136,7 +151,7 @@ live payment providers (008), fully data-driven content (009).
 3. **Redis** — Specs list Redis. Not in the stack.
 4. **Rate limits** — Spec 08 now documents a flat **60/min** global limiter (its design-target table previously read 100/min); code matches at 60/min flat. Per-route limits remain design intent, not enforced (see `KNOWN_LIMITATIONS.md`).
 5. **Versions** — Old docs say `0.1.0` / 16 migrations / 13 SKUs. Code: `game-config`
-   `GAME_VERSION = 1.0.0-mvp`, **51 migration files** (41 pushed live, 10 untracked), and a store with **no boost SKUs at all**.
+   `GAME_VERSION = 1.0.0-mvp`, **49 migration files (all pushed live)**, and a store with **no boost SKUs at all**.
 6. **Admin auth** — Spec 18 said "admin JWT role". Code: no JWT role claim; `profiles.is_admin`
    **or** `profiles.role ∈ {admin, dev}`, queried per request.
 7. **Env files** — Spec: `.env.development`. Repo: `.env.example` → `.env.local`.
@@ -179,7 +194,7 @@ live payment providers (008), fully data-driven content (009).
 - ADRs: 12
 - Screen DESIGN.md: 5 (`docs/Screens/`)
 - Jest: **37 suites / 615 tests** (api 28/417 · game-config 8/163 · validation 1/35)
-- Supabase migrations: **51 files** (41 committed + pushed live through `20261002000000`; 10 untracked in the working tree, not yet pushed — 0 pending among the committed set)
+- Supabase migrations: **49 files, all committed and pushed live** (corrected 2026-10-04 — commit `bf235be` landed the M-series batch; 0 pending)
 - Asset manifest entries: **282** (plus 19 archived files excluded from sync)
 - Store categories: `currency` · `subscription` · `cosmetic` (`boost` **removed**)
 - Currencies: Pula (earned) · Botho (meter) · **Madi** (spend-only premium)
@@ -191,6 +206,6 @@ live payment providers (008), fully data-driven content (009).
 The design suite is still useful as a product bible and the `docs/MVP/` set is the build
 authority. Start at `DEVELOPMENT_STATE.md` and `KNOWN_LIMITATIONS.md`, then open a spec for
 intended behavior. The repo is code-complete for v1 and the `docs/33` → `docs/34` economy is
-landed through Wave 3. **41 of 51 migrations are pushed live** (the 10 newest are untracked and
-not yet pushed); `madi_balance` and `kgotla_charges` are live, so the store and Year-layer routes
+landed through Wave 3. **All 49 migrations are pushed live** (corrected 2026-10-04); `madi_balance`,
+`kgotla_charges` and the M-series hardening are live, so the store and Year-layer routes
 resolve against the remote DB.

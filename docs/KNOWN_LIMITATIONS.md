@@ -1,7 +1,28 @@
 # Known Limitations
 
-As-built gaps and debt as of **2026-10-03** (prior: 2026-09-28). See `DEVELOPMENT_STATE.md` for
+As-built gaps and debt as of **2026-10-04** (prior: 2026-10-03). See `DEVELOPMENT_STATE.md` for
 the live inventory.
+
+> ### Amended 2026-10-04 — the MVP/08 design rulings
+>
+> Nine design decisions were ruled on 2026-10-04 (`docs/MVP/08_MVP_Design_Decisions.md`) and a
+> ten-part implementation document set (`docs/MVP/09`–`18`) was generated. Impact on this file:
+>
+> - **Crafting is no longer an MVP gap — it is deliberately deferred (D7).** The MVP is
+>   **farming-only**; crafting, cooking and recipes move to v1.1. Any "crafting incomplete" read
+>   below should be read as "out of scope by ruling," not as debt.
+> - **Boosts stay cut (unchanged).** No ruling restores the three boost SKUs; `BOOSTS` remains
+>   `readonly never[]` and `store.spec.ts` still asserts the catalogue is empty.
+> - **Wildlife raids stay unimplemented (unchanged).** The 2026-09-11 deferral stands.
+> - **New MVP surfaces that will carry their own gaps once built** — global Kgotla chat (B1),
+>   achievement/honorific system (B2 + D5 ladder Molemi→Molemi-Morui→Moagi→Motsadi→Mokgosi),
+>   live Events service (B3/D6), cosmetics + 2-layer avatar (B4/B7/D10), World Tree lore (B5),
+>   calendar education UI (B6). None exist yet; they are **build items**, not limitations.
+> - **Voice-over remains deferred (D11).** Unchanged from alpha.
+>
+> The **deploy-gap section below is now stale in one line** (W4-c): the
+> `spend_chapter_tokens` migration is **no longer untracked** — it was committed and pushed live
+> 2026-10-03 (commit `bf235be`). See the corrected Schema section.
 
 ---
 
@@ -66,7 +87,7 @@ oversight.
 | --- | --- | --- | --- |
 | **W4-a** | **Store purchase UI not wired** | `StoreScreen` exists as a component reference; no live purchase flow against the real endpoint | Wire end-to-end against the stub provider (`docs/34` §4.3) |
 | **W4-b** | **Botho automation unlocks have no persistence** | `BOTHO_THRESHOLDS` + `AUTOMATION_LADDER` + `automationUnlockedAt()` are config-only; nothing stores an unlock, so nothing is granted at runtime | A place to record unlocks — same blocker as `docs/32` 3.4/3.5 |
-| **W4-c** | **Chapter Tokens are unspentable — RESOLVED in code** | `ChapterService.spendTokens()` exists **and** `POST /chapters/tokens/spend` is now routed (`chapter.controller.ts:56`); the balance is spendable. The supporting `spend_chapter_tokens` migration is present but **untracked**, so the route is reachable only after that migration is pushed | Push the untracked `spend_chapter_tokens` migration (`docs/38` T-4 / I-7), then the route is fully live against the remote DB |
+| **W4-c** | **Chapter Tokens are spendable — RESOLVED** | `ChapterService.spendTokens()` exists **and** `POST /chapters/tokens/spend` is routed (`chapter.controller.ts:56`); the balance is spendable. The `spend_chapter_tokens` migration **was pushed live 2026-10-03** (commit `bf235be`), so the route is fully live against the remote DB. *(Corrected 2026-10-04 — this row previously said the migration was untracked.)* | — closed |
 | **W4-d** | **Maintenance rhythm not fully rolled out** | `MAINTENANCE.intervalDays` is 30 and `economy.spec.ts` asserts it, but the four `BUILDINGS[*].maintenanceIntervalDays` consumer path is not re-verified end-to-end | Confirm the building path reads the new cadence |
 
 ### Landed (Waves 1–3) — for the avoidance of doubt
@@ -97,16 +118,17 @@ behind it but the stub.
 
 ## Schema push status
 
-### The original deploy gap is closed (2026-09-14); 41 of 51 migrations pushed live, 10 untracked
+### The deploy gap is closed — all 49 migrations pushed live (corrected 2026-10-04)
 
 The 11-migration deploy gap (`000016`–`000120` + `000021`) was pushed to `nyapfgawanqvnkkjudxb`;
 `/admin`, `/dev` and P2–P9 now run at runtime and `/auth/me` resolves roles correctly.
 
-The repo has **51 migration files**: **41 are committed and pushed live** to `nyapfgawanqvnkkjudxb`
-(through `20261002000000`), and **10 further are present in the working tree as untracked files**
-(`20261002000001` → `20261003000020`: the M-series security hardening, the atomic
-`inventory_take`/`botho_cap`/`kgotla_charge` helpers, and `spend_chapter_tokens`). Those 10 are
-**not yet committed or pushed**, so there is a pending schema delta for them.
+The repo has **49 migration files, all committed and pushed live** to `nyapfgawanqvnkkjudxb`.
+**Corrected 2026-10-04:** commit **`bf235be`** (2026-10-03, *"correct m8/m20 SQL so all 10 pending
+migrations apply on live"*) landed the M-series security hardening (`20261002000001` →
+`20261003000005`), the atomic `inventory_take`/`botho_cap`/`kgotla_charge` helpers, and
+`spend_chapter_tokens`. **There is no pending schema delta.** (This section previously read "51 files,
+41 pushed, 10 untracked" — stale since that commit.)
 
 | Pushed live (2026-10-02) | Summary |
 | --- | --- |
@@ -374,13 +396,26 @@ Deployment spec is design-only.
 
 ## Tooling debt
 
-### `db:seed` is a dead script in two places
+### ~~`db:seed` is a dead script in two places~~ — **RESOLVED 2026-10-04**
 
-The root `package.json` defines `"db:seed": "pnpm --filter @molemisi/api db:seed"`, and
-`apps/api/package.json` defines `"db:seed": "ts-node src/database/seed.ts"` — but
-**`apps/api/src/database/` contains only `database.module.ts` and `supabase.service.ts`**. The
-command therefore fails on a missing file. Either restore the script or delete both entries;
-leaving it documented-but-broken is how people lose an afternoon.
+`apps/api/src/database/seed.ts` was **restored**. It materialises the config canon from
+`packages/game-config` into `item_definitions`, `market_prices`, `game_config`, `achievements` and
+`chapters`; it is **idempotent** (an upsert on each table's natural key, with `chapters` using
+`DO NOTHING` so a rollover-advanced window is never dragged backwards), supports `--dry-run`, and
+finds the repo `.env` by walking up from its own directory so it works from both `src` and `dist`.
+The root script now builds `@molemisi/game-config` first, so the seed always reads current numbers.
+
+## Deferred from MVP (2026-10-04)
+
+- **Homestead cosmetic sprite swap.** The `cosmetics` manifest rows (hut / kraal / frame /
+  livestock × Market + Festival) and the store's cosmetic SKUs exist and are purchasable, but the
+  farm scene does **not** yet swap the sprite when one is owned. Deliberately pushed to a later
+  version. Nothing in the economy depends on it, and the Store still previews the **avatar** outfit
+  layer, which is the cosmetic slot D10 calls mandatory.
+- **PixelLab generation and artist credit.** All 33 new manifest keys are declared, but the PNGs are
+  **not generated and no credit line is published yet**. Every consumer degrades gracefully in the
+  meantime, so nothing is broken by the delay. Run `pnpm assets:generate && pnpm assets:sync` when
+  the art is ready — no refactoring needed.
 
 ---
 

@@ -4,13 +4,13 @@
 > scaffold was laid down and are deliberately left as written — this document is a provenance
 > record, not a status page. For current numbers see `DEVELOPMENT_STATE.md`.
 >
-> Known drift if you are reading it as current: migrations are **51** (not 29; 41 pushed live, 10 untracked) and the asset
-> manifest holds **282** entries (not 268).
+> Known drift if you are reading it as current: migrations are **49** (not 29; all committed and
+> pushed live as of 2026-10-04) and the asset manifest holds **282** entries (not 268).
 
 > **Molemisi Farm Management Simulator**
 > Version: repo 0.1.0 / game-config 1.0.0-mvp
 > Status: Superseded by implementation
-> Last updated: 2026-09-14 (migration count refreshed 2026-10-03: 51 total)
+> Last updated: 2026-09-14 (migration count refreshed 2026-10-04: 49 total, all live)
 
 This file was the M1 scaffold checklist (2026-09-02). The scaffold is done. Use `docs/DEVELOPMENT_STATE.md` as the live inventory.
 

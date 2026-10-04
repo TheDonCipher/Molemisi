@@ -123,6 +123,8 @@ spacing:
 ---
 
 > Implementation (2026-09-06): React `BushveldScreen`. Phaser `BushveldScene` is not registered. Gather API: `POST /farms/:id/bushveld/gather`.
+>
+> **Amended 2026-10-04 (MVP/08 rulings):** the design tokens and layout below stand. Two content corrections apply project-wide — **XP is retired** (any `XP` gauge/float text below should read as a **progression honorific** tick, not XP; the honorific ladder is Molemi → Molemi-Morui → Moagi → Motsadi → Mokgosi, per D5), and **crafting is out of v1 scope** (D7, farming-only MVP). The Bushveld Kagiso framing is unchanged.
 
 ## Brand & Style
 
@@ -144,7 +146,7 @@ The color system is rooted in the natural geography of the Southern African high
 ### Color Rules
 - **UI Surfaces:** Primary overlays, modal backdrops, and HUD bars build from `#3E2723` (at 95% opacity for windows) layered with an inner `#2C1810` heading header and framed with `#5D4037` borders.
 - **Text Hierarchy:** High-priority headlines and title bar labels use parchment cream (`#F5E6D3`). High-contrast dark text inside amber CTA pills uses `#2C1810`. Muted supporting descriptions use soft earth gray `#BCAAA4`.
-- **System States:** Gauges strictly map function to hue: `#4CAF50` (Crop Growth / Animal Health), `#2196F3` (Hydration / Water), `#FF8F00` (Hunger / Fuel), and `#FFD700` (XP / Botswana Pula currency).
+- **System States:** Gauges strictly map function to hue: `#4CAF50` (Crop Growth / Animal Health), `#2196F3` (Hydration / Water), `#FF8F00` (Hunger / Fuel), and `#FFD700` (Progression / Botswana Pula currency).
 
 ## Typography
 
@@ -152,7 +154,7 @@ Typography bridges readability with modular 16-bit geometric structure.
 
 - **Headlines:** Set in `spaceGrotesk` with bold weights to maintain sturdy, structural presence reminiscent of blocky vintage game title cards without losing cross-platform legibility.
 - **Body:** Rendered in `rubik` to introduce softly curved, friendly geometric glyphs that mirror cozy, relaxed dialogue bubbles and inventory item descriptions.
-- **Labels & Numbers:** Controlled by `spaceMono`. Price tags, crop timers, XP counts, and status indicators align mechanically along strict monospaced tracking, ensuring numbers never jitter or jump as values tick upward.
+- **Labels & Numbers:** Controlled by `spaceMono`. Price tags, crop timers, progression counters, and status indicators align mechanically along strict monospaced tracking, ensuring numbers never jitter or jump as values tick upward.
 
 All text rendered within the design system must align directly to full pixel boundaries, avoiding artificial sub-pixel anti-aliasing fuzziness where feasible.
 
@@ -178,7 +180,7 @@ This design system eschews Gaussian blurs, soft diffused lighting, and modern dr
   - `Layer 4`: In-world tooltips and hovering harvest icons.
   - `Layer 5`: Permanent HUD layer (coin counter, season badge, stamina ring, settings).
   - `Layer 6`: Modals, dialog boards, trading interfaces, and inventory drawers.
-  - `Layer 7`: Floating numeric text (`+5 XP`, `-15 Pula`) and top-tier achievement banners.
+  - `Layer 7`: Floating numeric text (`+1 Honorific`, `-15 Pula`) and top-tier achievement banners.
 
 ## Shapes
 
