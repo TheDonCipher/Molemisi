@@ -26,6 +26,8 @@ import { currentChapterSlug, groundTileForCell } from '@/lib/groundTiles';
 import { deriveAttention, ownsPulse, ATTENTION_STYLE } from '../Attention';
 import { ChapterParticles } from '../ChapterParticles';
 import { PLOT_SELECT_EVENT, ESCAPE_EVENT } from '../GameHotkeys';
+import { BreathingSprite } from '../BreathingSprite';
+import { DevAffordance } from '../dev/DevAffordance';
 
 const SEED_OPTIONS = [
   { name: 'Sorghum', cost: 15, icon: '🌾', trait: 'Drought Resistant', itemType: 'sorghum_seed' },
@@ -151,14 +153,16 @@ function AnimalSprite({
     );
   }
   return (
-    <img
+    <BreathingSprite
       src={`/assets/sprites/animals/${type}/${mood}.png`}
-      alt={type}
+      sheet={`/assets/sprites/animals/idle/${type}_breath.png`}
+      frames={2}
+      periodMs={3000}
+      amplitudePx={2}
       width={size}
       height={size}
-      style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
-      onError={() => setFailed(true)}
-      draggable={false}
+      alt={type}
+      onSourceError={() => setFailed(true)}
     />
   );
 }
@@ -758,6 +762,12 @@ export function FarmScreen() {
       className="relative w-full flex flex-col overflow-hidden select-none"
       style={{ height: 'calc(100dvh - var(--header-h) - var(--footer-h))' }}
     >
+      {/* D9/W10: the dev affordance, floating over the farm. It renders nothing
+          for a player — `useDevTools().enabled` stays false off a dev role. */}
+      <div className="absolute top-2 right-3 z-30">
+        <DevAffordance surface="farm" />
+      </div>
+
       {/* Background — the gradient overlay below is also the fallback backdrop
           if the sprite is missing; no third-party URL is trusted here. */}
       <div

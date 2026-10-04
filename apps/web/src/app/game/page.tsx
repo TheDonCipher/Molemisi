@@ -15,6 +15,7 @@ import { CraftingScreen } from '../../components/screens/CraftingScreen';
 import { SettingsScreen } from '../../components/screens/SettingsScreen';
 import { WalletScreen } from '../../components/screens/WalletScreen';
 import { JournalScreen } from '../../components/screens/JournalScreen';
+import { AlmanacScreen } from '../../components/screens/AlmanacScreen';
 import { hydrateTokenFromSession, initAuthSync } from '../../lib/auth';
 import { GameHotkeys } from '../../components/GameHotkeys';
 
@@ -62,7 +63,7 @@ function GameSkeleton() {
 }
 
 function GameContent() {
-  const { activeNav, loading } = useGame();
+  const { activeNav, loading, botho } = useGame();
 
   const renderScreen = () => {
     const current = activeNav.toLowerCase();
@@ -87,6 +88,9 @@ function GameContent() {
         return <WalletScreen />;
       case 'journal':
         return <JournalScreen />;
+      case 'almanac':
+      case 'calendar':
+        return <AlmanacScreen botho={botho ?? 0} />;
       case 'settings':
       case 'config':
         return <SettingsScreen />;

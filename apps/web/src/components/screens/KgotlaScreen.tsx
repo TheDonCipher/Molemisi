@@ -11,6 +11,9 @@ import type {
 } from '../../lib/kgotla';
 import { useGame } from '../../lib/gameState';
 import { useTranslation } from '../../lib/useTranslation';
+import { KgotlaCommunityPanel } from '../KgotlaCommunityPanel';
+import { BreathingSprite } from '../BreathingSprite';
+import { DevAffordance } from '../dev/DevAffordance';
 
 /**
  * NPC portrait — generated PixelLab art, served from /assets/sprites/npcs/.
@@ -57,12 +60,16 @@ function NpcPortrait({
     );
   }
   return (
-    <img
+    <BreathingSprite
       src={src}
+      sheet={`/assets/sprites/npcs/idle/${id}_breath.png`}
+      frames={2}
+      periodMs={3000}
+      amplitudePx={3}
+      width={px.width}
+      height={px.height}
       alt={name}
-      className="object-contain shrink-0 rounded-sm"
-      style={{ ...px, imageRendering: 'pixelated' as const }}
-      onError={() => setBroken(true)}
+      onSourceError={() => setBroken(true)}
     />
   );
 }
@@ -437,13 +444,17 @@ export function KgotlaScreen() {
 
       {/* Council-hall header plaque */}
       <header className="relative z-10 pt-4 px-4">
-        <div className="mx-auto max-w-md bg-wood-dark/90 border-2 border-wood-border px-4 py-2 text-center shadow-[3px_3px_0_rgba(0,0,0,0.5)]">
-          <h1 className="font-headline text-lg text-cream-surface uppercase tracking-wide">
-            {tl('kgotla')}
-          </h1>
-          <p className="font-mono text-[10px] text-primary uppercase mt-0.5">
-            {tl('kgotlaSubtitle')}
-          </p>
+        <div className="mx-auto max-w-md flex items-center gap-2">
+          <div className="flex-1 bg-wood-dark/90 border-2 border-wood-border px-4 py-2 text-center shadow-[3px_3px_0_rgba(0,0,0,0.5)]">
+            <h1 className="font-headline text-lg text-cream-surface uppercase tracking-wide">
+              {tl('kgotla')}
+            </h1>
+            <p className="font-mono text-[10px] text-primary uppercase mt-0.5">
+              {tl('kgotlaSubtitle')}
+            </p>
+          </div>
+          {/* D9: dev affordance, invisible to players. */}
+          <DevAffordance surface="kgotla" />
         </div>
       </header>
 
@@ -483,6 +494,12 @@ export function KgotlaScreen() {
           </div>
         </div>
       </div>
+
+      {/* The social half of the Kgotla (08 §5 / D5): the global chat, the
+          chapter Events and the earned honour ladder, in one tabbed panel. It
+          sits above the council blocks because the community is the Kgotla —
+          the council hall is only where the council meets. */}
+      <KgotlaCommunityPanel />
 
       {/* Doc 11 §4 — the Village Feast (Nako ya Go Arogana): 20 watermelons shared
           with the village for CAPPED Botho and a keepsake fence. No Pula moves in

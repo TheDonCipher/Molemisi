@@ -36,6 +36,7 @@ export function HeaderNav() {
     { id: 'crafting', label: tl('crafting'), icon: 'handyman', navTarget: 'Crafting' },
     { id: 'inventory', label: tl('bag'), icon: 'backpack', navTarget: 'Inventory' },
     { id: 'journal', label: tl('journal'), icon: 'menu_book', navTarget: 'Journal' },
+    { id: 'almanac', label: 'Almanac', icon: 'calendar_month', navTarget: 'Almanac' },
     { id: 'settings', label: tl('config'), icon: 'settings', navTarget: 'Settings' },
   ];
 

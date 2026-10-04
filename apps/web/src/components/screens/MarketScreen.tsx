@@ -4,6 +4,7 @@ import React from 'react';
 import { useGame, apiFetch, type MarketItem, type InventoryItem } from '@/lib/gameState';
 import { useTranslation } from '@/lib/useTranslation';
 import { PixelIcon } from '@/components/PixelIcon';
+import { RewardFloat } from '../RewardFloat';
 
 /**
  * A read-only preview of a sale, from `GET /market/quote` (07 §7.5). Same numbers
@@ -119,6 +120,14 @@ export function MarketScreen() {
   const { tl } = useTranslation();
 
   const [mode, setMode] = React.useState<'buy' | 'sell'>('buy');
+  /**
+   * D1 / `22 §12.2` — the reward float. It is driven by the SERVER-QUOTED net
+   * (`quote.netProceeds`, tax already removed) and fires only after the sale
+   * resolves, so it can never imply money was credited when the call was
+   * refused. The `key` is a timestamp so two sales in the same second still
+   * produce two distinct floats.
+   */
+  const [reward, setReward] = React.useState<{ amount: number; key: number } | null>(null);
   const [confirmState, setConfirmState] = React.useState<{
     open: boolean;
     title: string;
@@ -203,8 +212,17 @@ export function MarketScreen() {
         </div>
       ),
       fn: () => {
-        void sellInventoryItem(item, qty);
-        setConfirmState((s) => ({ ...s, open: false }));
+        void (async () => {
+          try {
+            await sellInventoryItem(item, qty);
+            // The float uses the SERVER's net figure, not a client re-computation.
+            setReward({ amount: quote.netProceeds, key: Date.now() });
+          } catch {
+            // The action surfaces its own toast; never float money that did not land.
+          } finally {
+            setConfirmState((s) => ({ ...s, open: false }));
+          }
+        })();
       },
     });
   }
@@ -225,6 +243,13 @@ export function MarketScreen() {
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden select-none pb-20 md:pb-10">
+      {/* `+{net} 💰` — fires only after the sale resolves (D1, `22 §12.2`).
+          pointer-events-none, so it never intercepts a tap. */}
+      <RewardFloat
+        amount={reward?.amount ?? 0}
+        trigger={reward?.key}
+        className="top-24"
+      />
       {/* Background — starts below the top bar */}
       <div className="fixed left-0 right-0 bottom-0 top-12 md:top-14 z-0 bg-[#210e0b]">
         <img
