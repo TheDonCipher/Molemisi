@@ -2818,5 +2818,335 @@
     },
     "kind": "pixen",
     "prompt": "Fully mature and ready to harvest, marula tree crop \u2014 slender green trunk with round yellow-green fruit, two-day cycle. Single plant centered and grounded at the bottom of the canvas with a small top-down soil patch beneath it, cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "avatar_base_sesana": {
+    "group": "avatar",
+    "file": "sprites/avatar/base_sesana.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "full-body 32x64 character in everyday field clothes, front-facing neutral standing pose, warm skin tone, simple woven tunic, no hat on the base layer., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "avatar_base_kgale": {
+    "group": "avatar",
+    "file": "sprites/avatar/base_kgale.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "full-body 32x64 character wearing a traditional Setswana wrap and shoulder cloth, front-facing neutral standing pose, no hat on the base layer., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "avatar_base_phane": {
+    "group": "avatar",
+    "file": "sprites/avatar/base_phane.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "full-body 32x64 character in light warm-weather cloth for the long dry season, front-facing neutral standing pose, no hat on the base layer., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "avatar_hat_farmer": {
+    "group": "avatar",
+    "file": "sprites/avatar/hat_farmers.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a single wide-brimmed woven straw farmer hat with an amber band, drawn on its own on a fully transparent background at 32x64 so it can be layered on top of any character body, brim sits low and centered., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "avatar_outfit_mogolo_hat": {
+    "group": "avatar",
+    "file": "sprites/avatar/outfits/mogolo_hat.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "clothing-only overlay for a 32x64 character body: a wide-brimmed farmer smock and shoulder wrap, transparent background, no head, no feet, no hat, aligned to the torso so it layers over a base body., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "avatar_outfit_fest_outfit": {
+    "group": "avatar",
+    "file": "sprites/avatar/outfits/fest_outfit.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "clothing-only overlay for a 32x64 character body: a festive harvest outfit with beaded trim, transparent background, no head, no feet, no hat, aligned to the torso so it layers over a base body., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "calendar_almanac_header": {
+    "group": "ui",
+    "file": "ui/calendar/almanac_header.png",
+    "size": {
+      "w": 320,
+      "h": 80
+    },
+    "kind": "pixen",
+    "prompt": "a horizontal banner showing four round chapter seals in a row, one per Sekala, rain drop, long grass, dry shade and harvest sheaf motifs, no lettering., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "calendar_month_strip": {
+    "group": "ui",
+    "file": "ui/calendar/month_strip.png",
+    "size": {
+      "w": 400,
+      "h": 48
+    },
+    "kind": "pixen",
+    "prompt": "a thin decorative horizontal strip of twelve evenly spaced month markers as small notches with a tiny seasonal glyph above each, no lettering., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "calendar_pula_note": {
+    "group": "ui",
+    "file": "ui/calendar/pula_note.png",
+    "size": {
+      "w": 96,
+      "h": 96
+    },
+    "kind": "pixen",
+    "prompt": "a small square tile of rain falling into a blue Jojo water tank beside a green seedling sprouting from dark soil., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "calendar_phane_note": {
+    "group": "ui",
+    "file": "ui/calendar/phane_note.png",
+    "size": {
+      "w": 96,
+      "h": 96
+    },
+    "kind": "pixen",
+    "prompt": "a small square tile of tall long-growing stalks under a warm late-rain sky with a phane moth on a stem., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "calendar_moriti_note": {
+    "group": "ui",
+    "file": "ui/calendar/moriti_note.png",
+    "size": {
+      "w": 96,
+      "h": 96
+    },
+    "kind": "pixen",
+    "prompt": "a small square tile of an empty cracked water tank beside a dry parched field under a cold pale sky., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "calendar_letlhafula_note": {
+    "group": "ui",
+    "file": "ui/calendar/letlhafula_note.png",
+    "size": {
+      "w": 96,
+      "h": 96
+    },
+    "kind": "pixen",
+    "prompt": "a small square tile of a woven harvest basket heaped with grain beside wind-blown grass., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cosmetic_hut_thatch": {
+    "group": "cosmetics",
+    "file": "sprites/cosmetics/hut_thatch.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a small mud-brick hut with golden thatch roof and a wooden door, front view, homestead prop., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cosmetic_hut_tin": {
+    "group": "cosmetics",
+    "file": "sprites/cosmetics/hut_tin.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a small hut with a bright tin-sheet roof catching the sun, front view, homestead prop., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cosmetic_kraal_wood": {
+    "group": "cosmetics",
+    "file": "sprites/cosmetics/kraal_wood.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a traditional kraal enclosure built from neat wooden poles, front view, homestead prop., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cosmetic_kraal_stone": {
+    "group": "cosmetics",
+    "file": "sprites/cosmetics/kraal_stone.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a traditional kraal enclosure low-walled with grey stone and wooden poles, front view, homestead prop., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cosmetic_frame_beads": {
+    "group": "cosmetics",
+    "file": "sprites/cosmetics/frame_beads.png",
+    "size": {
+      "w": 96,
+      "h": 96
+    },
+    "kind": "pixen",
+    "prompt": "a carved rectangular field frame border strung with colourful beads, top-down border tile, edges only, centre empty and transparent., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cosmetic_frame_bush": {
+    "group": "cosmetics",
+    "file": "sprites/cosmetics/frame_bush.png",
+    "size": {
+      "w": 96,
+      "h": 96
+    },
+    "kind": "pixen",
+    "prompt": "a field frame border interwoven with green thorny bush sprigs, top-down border tile, edges only, centre empty and transparent., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cosmetic_livestock_bell": {
+    "group": "cosmetics",
+    "file": "sprites/cosmetics/livestock_bell.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a single round amber livestock bell with a leather strap, one compact object only., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "cosmetic_livestock_ribbon": {
+    "group": "cosmetics",
+    "file": "sprites/cosmetics/livestock_ribbon.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a single woven festival ribbon bow in amber and cream, one compact object only., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "world_tree_stage_0": {
+    "group": "world",
+    "file": "sprites/world/world_tree_stage_0.png",
+    "size": {
+      "w": 400,
+      "h": 300
+    },
+    "kind": "pixen",
+    "prompt": "a large ancient tree at the edge of a village, completely bare, cracked dry trunk, no leaves, muted dead palette, dry red earth beneath, wide establishing shot., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "world_tree_stage_1": {
+    "group": "world",
+    "file": "sprites/world/world_tree_stage_1.png",
+    "size": {
+      "w": 400,
+      "h": 300
+    },
+    "kind": "pixen",
+    "prompt": "a large ancient tree beginning to recover, slim green shoots and a few small leaves on a sparse crown, wide establishing shot., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "world_tree_stage_2": {
+    "group": "world",
+    "file": "sprites/world/world_tree_stage_2.png",
+    "size": {
+      "w": 400,
+      "h": 300
+    },
+    "kind": "pixen",
+    "prompt": "a large ancient tree in recovery, fuller green canopy with a few blossoms and small birds perched, wide establishing shot., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "world_tree_stage_3": {
+    "group": "world",
+    "file": "sprites/world/world_tree_stage_3.png",
+    "size": {
+      "w": 400,
+      "h": 300
+    },
+    "kind": "pixen",
+    "prompt": "a magnificent fully restored world tree, grand spreading canopy, warm golden light, a few villagers in shade beneath it, wide establishing shot., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_elder_neo_breath": {
+    "group": "idle",
+    "file": "sprites/npcs/idle/elder_neo_breath.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame vertical sprite sheet of a stooped elder in a blanket, identical in every frame except the torso and shoulders rise about three pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_mama_naledi_breath": {
+    "group": "idle",
+    "file": "sprites/npcs/idle/mama_naledi_breath.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame vertical sprite sheet of a woman in a patterned wrap and headscarf, identical in every frame except the torso and shoulders rise about three pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_oupa_kabelo_breath": {
+    "group": "idle",
+    "file": "sprites/npcs/idle/oupa_kabelo_breath.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame vertical sprite sheet of a broad builder with a head wrap and apron, identical in every frame except the torso and shoulders rise about three pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_refilwe_breath": {
+    "group": "idle",
+    "file": "sprites/npcs/idle/refilwe_breath.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame vertical sprite sheet of an herbalist with a woven basket and herb bundle, identical in every frame except the torso and shoulders rise about three pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_thabo_breath": {
+    "group": "idle",
+    "file": "sprites/npcs/idle/thabo_breath.png",
+    "size": {
+      "w": 32,
+      "h": 64
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame vertical sprite sheet of a farmer in a simple work shirt and hat, identical in every frame except the torso and shoulders rise about three pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_chicken_breath": {
+    "group": "idle",
+    "file": "sprites/animals/idle/chicken_breath.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame sprite sheet of a hen, identical in every frame except the body rises about two pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_goat_breath": {
+    "group": "idle",
+    "file": "sprites/animals/idle/goat_breath.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame sprite sheet of a goat, identical in every frame except the body rises about two pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_cow_breath": {
+    "group": "idle",
+    "file": "sprites/animals/idle/cow_breath.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame sprite sheet of a cow, identical in every frame except the body rises about two pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
+  },
+  "idle_pig_breath": {
+    "group": "idle",
+    "file": "sprites/animals/idle/pig_breath.png",
+    "size": {
+      "w": 32,
+      "h": 32
+    },
+    "kind": "pixen",
+    "prompt": "a 2 to 3 frame sprite sheet of a pig, identical in every frame except the body rises about two pixels, transparent background, frames stacked left to right., cozy warm 16-bit pixel art game asset for a Botswana-inspired farm game, soft golden-hour lighting, crisp clean pixels, single 1px dark-brown outline, flat cel shading, no gradients, no anti-aliasing, no text, no watermark, palette of terracotta red-earth #C05C3C, warm grass #5A8F3C, amber #FF8F00, cream #F5E6D3, sky blue #87CEEB and dark brown #3E2723,"
   }
 }
