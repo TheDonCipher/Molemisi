@@ -22,6 +22,10 @@ export * from './weather';
 export * from './store';
 export * from './theme';
 export * from './dialogue';
+export * from './achievements';
+export * from './avatar';
+export * from './chat';
+export * from './events';
 
 export const GAME_VERSION = '1.0.0-mvp';
 
