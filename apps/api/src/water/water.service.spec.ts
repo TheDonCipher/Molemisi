@@ -22,6 +22,10 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
  */
 describe('WaterService', () => {
   const NOW = new Date('2026-09-09T12:00:00.000Z');
+  // docs/38 §2/A1 — refill price depends on the CHAPTER, so the cost-sensitive
+  // specs pin a date inside Chapter 1 (Pula, multiplier 1.0) to keep asserting
+  // the base figures. A separate spec below pins the dry chapter instead.
+  const CH1 = new Date('2026-11-09T12:00:00.000Z');
   const HOUR = 3_600_000;
   // Pass 3.1 — crop growth is multiplied by the CURRENT chapter's growthModifier
   // (one calendar, 04 §9.1). `NOW` is fixed, so this is deterministic; the
@@ -450,12 +454,27 @@ describe('WaterService', () => {
         ok,
       ]);
 
-      const result = await svc.refillTank('farm-1', 'user-1');
+      const result = await svc.refillTank('farm-1', 'user-1', CH1);
 
       expect(result).toMatchObject({ added: 40, cost: 40, waterLevel: 60, capacity: 60 });
       // spendPula is the only sanctioned path (05 §P2): check-and-debit + ledger.
       expect(wallet.spendPula).toHaveBeenCalledWith('user-1', 40, 'water_refill');
       expect(updateTo(calls, 'buildings')!.water_level).toBe(60);
+    });
+
+    it('costs MORE per unit the drier the chapter (docs/38 §2 / A1)', async () => {
+      // Chapter 3 (Mariga, May) is the driest: rainCoverage 0.05 → 2.5× the base,
+      // so the same 40 units cost 100 rather than 40. This is the economic half
+      // of "water is the whole game" — without it scarcity is supply-side only.
+      const { svc, wallet } = makeService([
+        { data: tankRow({ water_level: 20 }), error: null },
+        ok,
+      ]);
+
+      const dry = await svc.refillTank('farm-1', 'user-1', new Date('2026-06-09T12:00:00.000Z'));
+
+      expect(dry).toMatchObject({ added: 40, cost: 100 });
+      expect(wallet.spendPula).toHaveBeenCalledWith('user-1', 100, 'water_refill');
     });
 
     it('is free when the tank is already full', async () => {
@@ -487,7 +506,7 @@ describe('WaterService', () => {
         { data: null, error: { message: 'boom' } },
       ]);
 
-      await expect(svc.refillTank('farm-1', 'user-1')).rejects.toThrow(BadRequestException);
+      await expect(svc.refillTank('farm-1', 'user-1', CH1)).rejects.toThrow(BadRequestException);
       // Money must never be wrong: a failure the player can retry is a failure,
       // but paying for water they never received is theft.
       expect(wallet.credit).toHaveBeenCalledWith('user-1', 'pula', 40, 'refund');

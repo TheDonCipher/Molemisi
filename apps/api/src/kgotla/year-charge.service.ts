@@ -9,7 +9,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { ChapterService } from '../chapters/chapter.service';
 import {
-  chargeForMonth,
+  deliverableCharges,
   cycleKey,
   type ChargeYearEntry,
   type ChargeAsk,
@@ -45,8 +45,11 @@ export class YearChargeService {
   ): Promise<YearChargeView> {
     await this.verifyFarmOwnership(farmId, userId);
     const month = this.botswanaMonth(now);
-    const entry = chargeForMonth(month);
     const cycle = cycleKey(now);
+    // docs/36 K3 / §5.3.2 — a Charge is deliverable for the REST OF ITS CHAPTER,
+    // not only the month it revealed in. `resolvePrimaryCharge` picks the Charge
+    // the player should act on now (an unfinished accepted one first).
+    const entry = await this.resolvePrimaryCharge(farmId, cycle, month);
     if (!entry) {
       return {
         chargeId: null,
@@ -90,9 +93,9 @@ export class YearChargeService {
   ): Promise<YearChargeView> {
     await this.verifyFarmOwnership(farmId, userId);
     const month = this.botswanaMonth(now);
-    const entry = chargeForMonth(month);
-    if (!entry) throw new NotFoundException('No Year Charge is offered this month');
     const cycle = cycleKey(now);
+    const entry = await this.resolvePrimaryCharge(farmId, cycle, month);
+    if (!entry) throw new NotFoundException('No Year Charge is open to accept');
     const existing = await this.findRow(farmId, entry.chargeId, cycle);
     if (existing) return this.getYearCharge(farmId, userId, now);
 
@@ -127,15 +130,15 @@ export class YearChargeService {
   ): Promise<YearChargeTurnInResult> {
     await this.verifyFarmOwnership(farmId, userId);
     const month = this.botswanaMonth(now);
-    const entry = chargeForMonth(month);
-    if (!entry) throw new NotFoundException('No Year Charge is offered this month');
     const cycle = cycleKey(now);
+    const entry = await this.resolvePrimaryCharge(farmId, cycle, month);
+    if (!entry) throw new NotFoundException('No Year Charge is open to turn in');
     const row = await this.findRow(farmId, entry.chargeId, cycle);
     if (!row) {
-      throw new BadRequestException('Accept this month’s Charge before turning it in');
+      throw new BadRequestException('Accept this Charge before turning it in');
     }
     if (row.status === 'claimed') {
-      throw new BadRequestException('You have already claimed this month’s Charge');
+      throw new BadRequestException('You have already claimed this Charge');
     }
 
     const asks = await this.measureAsks(userId, entry.asks);
@@ -188,6 +191,46 @@ export class YearChargeService {
   }
 
   /* ----------------------------------------------------------- internals */
+
+  /**
+   * docs/36 K3 / §5.3.2–§5.4 — which Charge the player should act on right now.
+   *
+   * The Year is a serial with a delivery window that runs to the END OF THE
+   * CHAPTER, not a single calendar month. The previous implementation looked up
+   * `chargeForMonth(month)` only, which silently cut every Charge's window from
+   * three months to one and contradicted K3. Preference order:
+   *
+   *   1. an accepted Charge still inside its window — finish what was started;
+   *   2. the current month's Charge, if it is open;
+   *   3. the earliest still-open, not-yet-claimed Charge of the chapter.
+   *
+   * `deliverableCharges` already excludes a Charge whose window has closed (so a
+   * December Phane Charge is not offered in January) and any Charge from a
+   * chapter that has ended (it has "rested", §5.3.3).
+   */
+  private async resolvePrimaryCharge(
+    farmId: string,
+    cycle: string,
+    month: number,
+  ): Promise<ChargeYearEntry | null> {
+    const open = deliverableCharges(month);
+    if (open.length === 0) return null;
+
+    // At most three Charges per chapter, so a per-Charge read is bounded.
+    const status = new Map<string, string | undefined>();
+    for (const c of open) {
+      const row = await this.findRow(farmId, c.chargeId, cycle);
+      status.set(c.chargeId, row?.status);
+    }
+
+    const active = open.find((c) => status.get(c.chargeId) === 'active');
+    if (active) return active;
+
+    const current = open.find((c) => c.month === month);
+    if (current) return current;
+
+    return open.find((c) => status.get(c.chargeId) !== 'claimed') ?? open[0]!;
+  }
 
   private async findRow(
     farmId: string,

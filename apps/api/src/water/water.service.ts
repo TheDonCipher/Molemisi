@@ -11,6 +11,7 @@ import {
   MAX_OFFLINE_HOURS,
   chapterForDate,
   chapterWeather,
+  waterUnitPricePula,
 } from '@molemisi/game-config';
 
 export interface TankStatus {
@@ -312,11 +313,18 @@ export class WaterService {
   }
 
   /**
-   * Fill the Jojo tank from the water truck. Cost = units added x unit price (Pula),
-   * charged through the wallet so the ledger row is written atomically. Free if the
-   * tank is already full.
+   * Fill the Jojo tank from the water truck. Cost = units added x the CURRENT
+   * CHAPTER's unit price (docs/38 §2/A1), charged through the wallet so the
+   * ledger row is written atomically. Free if the tank is already full.
+   *
+   * `now` is injectable so the chapter (and therefore the price) is a pure
+   * function of the caller's clock, exactly like `advanceFarmGrowth`.
    */
-  async refillTank(farmId: string, userId: string): Promise<RefillResult> {
+  async refillTank(
+    farmId: string,
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<RefillResult> {
     const admin = this.supabaseService.getAdminClient();
     const { data: tank } = await admin
       .from('buildings')
@@ -342,7 +350,13 @@ export class WaterService {
       return { added: 0, cost: 0, waterLevel: current, capacity };
     }
 
-    const cost = Math.ceil(toAdd * WATER.unitPricePula);
+    // docs/38 §2 / A1 — water costs MORE the drier the chapter. The base
+    // (WATER.unitPricePula) is Chapter 1's price; the multiplier is per-chapter
+    // and scales inversely with rainCoverage, so Mariga's "water is the whole
+    // game" is an economic decision and not only a supply one.
+    const chapter = chapterForDate(now);
+    const unitPrice = waterUnitPricePula(chapter.slug);
+    const cost = Math.ceil(toAdd * unitPrice);
     // spendPula is the only sanctioned path (05 §P2) — atomic check-and-debit + ledger.
     await this.wallet.spendPula(userId, cost, 'water_refill');
 

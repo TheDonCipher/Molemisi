@@ -11,6 +11,9 @@ import {
   chargeForMonth,
   chargesForChapter,
   chargeBaseValue,
+  chargeDeliverable,
+  chargeRevealed,
+  deliverableCharges,
   computeChargePula,
   cycleKey,
   projectForChapter,
@@ -18,7 +21,7 @@ import {
   type ChargeYearEntry,
   type GoodCategory,
 } from './chargeYear';
-import { CHAPTERS, chapterForMonth, type ChapterSlug } from './chapters';
+import { CHAPTERS, chapterForMonth, MOPHANE_MONTHS, type ChapterSlug } from './chapters';
 import { ITEMS } from './items';
 
 const CHAPTER_SLUGS: ChapterSlug[] = ['pula', 'phane', 'moriti', 'letlhafula'];
@@ -166,6 +169,75 @@ describe('in-chapter feasibility (docs/36 §8.2, K5)', () => {
         }
       });
     });
+  });
+});
+
+describe('delivery window ⊆ availability window (docs/36 K3, docs/39 §1.2/§4.3)', () => {
+  it('keeps a Charge deliverable for the REST OF ITS CHAPTER, per K3', () => {
+    // straight_rows (Nov) must still be turnable in December and January —
+    // §5.3.2 promises the chapter's leeway, not a single calendar month.
+    const charge = chargeForMonth(11)!;
+    expect(chargeDeliverable(charge, 11)).toBe(true);
+    expect(chargeDeliverable(charge, 12)).toBe(true);
+    expect(chargeDeliverable(charge, 1)).toBe(true);
+    // Once the chapter ends it has rested (§5.3.3) — nothing lost, returns next cycle.
+    expect(chargeRevealed(charge, 2)).toBe(false);
+    expect(chargeDeliverable(charge, 2)).toBe(false);
+  });
+
+  it('does not reveal a later Charge before its own month', () => {
+    // grain_lean_months reveals in January, not in November.
+    expect(chargeRevealed(chargeForMonth(1)!, 11)).toBe(false);
+    expect(chargeRevealed(chargeForMonth(1)!, 1)).toBe(true);
+  });
+
+  it('narrows first_phane to the December gather window (docs/39 §4.3)', () => {
+    const phane = CHARGE_YEAR.find((c) => c.chargeId === 'first_phane')!;
+    expect(phane.deliverableUntil).toBe(12);
+    expect(chargeDeliverable(phane, 12)).toBe(true);
+    // January is inside Chapter 1 but OUTSIDE the Mophane window: an offered ask
+    // nobody can fill. The window must close with the gather window.
+    expect(chargeDeliverable(phane, 1)).toBe(false);
+    expect(MOPHANE_MONTHS).toContain(12);
+    expect(MOPHANE_MONTHS).not.toContain(1);
+  });
+
+  it('never offers a gathered ask outside a Mophane month', () => {
+    for (const c of CHARGE_YEAR) {
+      if (!c.asks.some((a) => a.category === 'gathered')) continue;
+      for (let m = 1; m <= 12; m++) {
+        if (chargeDeliverable(c, m)) expect(MOPHANE_MONTHS).toContain(m);
+      }
+    }
+  });
+
+  it('EVERY ask stays obtainable for the whole delivery window', () => {
+    // The rule the old reveal-month-only check missed: a Charge offered in
+    // month M must be satisfiable in every month of its window, not just the
+    // month it revealed in.
+    for (const c of CHARGE_YEAR) {
+      for (const m of chapterForMonth(c.month).months) {
+        if (!chargeDeliverable(c, m)) continue;
+        const seeds = new Set(chapterForMonth(m).seeds);
+        for (const a of c.asks) {
+          if (a.category === 'grown') {
+            expect(seeds.has(a.item as never)).toBe(true);
+          } else if (a.category === 'gathered') {
+            expect(MOPHANE_MONTHS).toContain(m);
+          }
+          // crafted: ungated, no seasonal dependency (docs/36 §8.2)
+        }
+      }
+    }
+  });
+
+  it('lists exactly the open Charges for a month', () => {
+    const ids = (m: number) => deliverableCharges(m).map((c) => c.chargeId).sort();
+    expect(ids(11)).toEqual(['straight_rows']);
+    expect(ids(12)).toEqual(['first_phane', 'straight_rows']);
+    // January: Charges 1 and 3 open, the Phane Charge closed with its window.
+    expect(ids(1)).toEqual(['grain_lean_months', 'straight_rows']);
+    expect(ids(2)).toEqual(['round_ones']);
   });
 });
 

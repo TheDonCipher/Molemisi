@@ -101,7 +101,7 @@ export const BUILDINGS: Record<string, BuildingConfig> = {
     maintenanceCost: 0,
     maintenanceIntervalDays: 0,
     spriteSheet: 'ui/items/building_barn.png',
-    benefit: 'Basket 24 → Shed 48 → Storehouse 96 slots. Guild subscribers get +50% on top.',
+    benefit: 'Basket 24 → Shed 48 → Storehouse 96 slots. Village Pass members get +50% on top.',
   },
   water_source: {
     id: 'water_source',

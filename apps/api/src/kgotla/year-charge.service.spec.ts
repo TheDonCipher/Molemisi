@@ -29,6 +29,8 @@ describe('YearChargeService — the Kgotla Year layer (I-2)', () => {
   const NOW_NOV = new Date('2026-11-01T10:00:00.000Z');
   // 2027-03-01 10:00 UTC → Botswana 2027-03-01 → month 3 → 'kraal_gate'.
   const NOW_MAR = new Date('2027-03-01T10:00:00.000Z');
+  // 2027-01-15 → Botswana month 1 → still inside Chapter 1 (Nov–Jan).
+  const NOW_JAN = new Date('2027-01-15T10:00:00.000Z');
 
   const inventory = {
     countOwned: jest.fn().mockResolvedValue(0),
@@ -149,6 +151,28 @@ describe('YearChargeService — the Kgotla Year layer (I-2)', () => {
     await expect(service.turnInYearCharge('farm-1', 'user-1', NOW_NOV)).rejects.toBeInstanceOf(
       BadRequestException,
     );
+  });
+
+  it('K3 carry-over: a November Charge is still deliverable in January', async () => {
+    // docs/36 K3/§5.3.2 — the window is the CHAPTER, not one calendar month.
+    // The implementation used chargeForMonth() only, which quietly cut every
+    // Charge to a single month. Accept in November, deliver in January.
+    await service.acceptYearCharge('farm-1', 'user-1', NOW_NOV);
+    inventory.countOwned.mockResolvedValue(10);
+
+    const result = await service.turnInYearCharge('farm-1', 'user-1', NOW_JAN);
+
+    expect(result.chargeId).toBe('straight_rows');
+    expect(result.status).toBe('claimed');
+    expect(pula()).toBe(40);
+  });
+
+  it('docs/39 §4.3: January closes the Phane window and offers the January Charge', async () => {
+    // The December Phane Charge cannot be delivered in January — the Bushveld has
+    // been closed for a month. January falls back to its own Charge.
+    const view = await service.getYearCharge('farm-1', 'user-1', NOW_JAN);
+    expect(view.chargeId).toBe('grain_lean_months');
+    expect(view.month).toBe(1);
   });
 
   it('turns in a multi-ask Charge (kraal_gate), consuming each ask once', async () => {

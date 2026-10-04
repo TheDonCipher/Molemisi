@@ -61,6 +61,17 @@ export interface ChargeYearEntry {
   /** Player-facing Charge name (English; Setswana passes are a later step, docs/36 §9). */
   name: string;
   asks: ChargeAsk[];
+  /**
+   * The last month (inclusive) in which this Charge may be delivered — always a
+   * month of the Charge's OWN chapter. Defaults to that chapter's final month.
+   *
+   * docs/36 K3 / §5.3.2 promises a Charge "stays deliverable until the chapter
+   * ends", so the default is three months of leeway. `first_phane` overrides it
+   * to December because Phane can only be gathered in real months {4, 12}: a
+   * January delivery window would offer an ask the Bushveld cannot fill, which is
+   * the delivery-window ⊆ availability-window rule (docs/39 §4.3 / §1.2).
+   */
+  deliverableUntil?: number;
   /** Botho granted through the capped credit path (docs/36 §5.2 / K6). Always 10. */
   botho: number;
   /** Season stamps (Chapter Tokens) granted; expire with the chapter (docs/38 §0). Always 1. */
@@ -111,6 +122,12 @@ const CHARGE_YEAR_RAW: Omit<ChargeYearEntry, 'pulaReward'>[] = [
     npcId: 'refilwe',
     name: 'The First Phane',
     asks: [{ item: 'phane', qty: 3, base: 10, category: 'gathered' }],
+    // docs/39 §4.3 — Phane is gatherable only in real months {4, 12}
+    // (bushveld.ts activeMonths). Chapter 1 runs Nov–Jan, so the DEFAULT window
+    // would keep this Charge deliverable through 31 January while the Bushveld
+    // has been closed for a month: a visible ask nobody can fulfil. Narrow the
+    // window to December so the delivery window sits inside the gather window.
+    deliverableUntil: 12,
     botho: 10,
     stamp: 1,
     almanacQuests: 1,
@@ -287,6 +304,49 @@ export function chargeForMonth(month: number): ChargeYearEntry | undefined {
 /** Every Charge whose month falls in `slug` (3 per chapter, docs/36 §4). */
 export function chargesForChapter(slug: ChapterSlug): ChargeYearEntry[] {
   return CHARGE_YEAR.filter((c) => chapterForMonth(c.month).slug === slug);
+}
+
+/**
+ * The Charge's own chapter's month list in calendar order — `[11, 12, 1]` for
+ * Pula, which wraps the year. Index arithmetic must run along this array, never
+ * on raw month numbers, or November–January compares backwards.
+ */
+function chapterMonthsOf(month: number): number[] {
+  return chapterForMonth(month).months;
+}
+
+/**
+ * docs/36 §5.3.1 — a Charge is REVEALED once its own month has been reached
+ * within its chapter. A January Charge is not shown in November, and a Charge
+ * from a chapter that has ended has "rested" (§5.3.3): not revealed anywhere.
+ */
+export function chargeRevealed(entry: ChargeYearEntry, currentMonth: number): boolean {
+  const months = chapterMonthsOf(entry.month);
+  if (!months.includes(currentMonth)) return false;
+  return months.indexOf(entry.month) <= months.indexOf(currentMonth);
+}
+
+/**
+ * docs/36 K3 / §5.3.2 — a Charge stays deliverable until its chapter ends, or
+ * until `deliverableUntil`, whichever comes first.
+ *
+ * This is the rule the reveal-month-only test used to miss (docs/39 §1.2): an
+ * ask must stay obtainable for the WHOLE window the Charge is offered, so
+ * `first_phane` narrows its own window to match Phane's gather window.
+ */
+export function chargeDeliverable(entry: ChargeYearEntry, currentMonth: number): boolean {
+  if (!chargeRevealed(entry, currentMonth)) return false;
+  const months = chapterMonthsOf(entry.month);
+  const until = entry.deliverableUntil ?? months[months.length - 1]!;
+  // A misconfigured override pointing outside the Charge's own chapter must not
+  // be able to strand it — fall back to the chapter default rather than hide it.
+  if (!months.includes(until)) return true;
+  return months.indexOf(currentMonth) <= months.indexOf(until);
+}
+
+/** Every Charge a player may act on in `currentMonth`, in calendar order. */
+export function deliverableCharges(currentMonth: number): ChargeYearEntry[] {
+  return CHARGE_YEAR.filter((c) => chargeDeliverable(c, currentMonth));
 }
 
 /**

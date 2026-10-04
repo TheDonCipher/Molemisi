@@ -29,6 +29,8 @@ import {
   PRICE_BAND,
   CRAFTED_BAND,
   WATER,
+  WATER_PRICING,
+  waterUnitPricePula,
   STORAGE_TIERS,
   GUILD_STORAGE_MULTIPLIER,
   effectiveSlotCap,
@@ -43,6 +45,8 @@ import {
   STARTING_PULA,
   BOTHO_THRESHOLDS,
   BOTHO_DAILY_CAP,
+  PRIZE,
+  CHARGE_YEAR,
   TOP_UP_PACKS,
   DAILY_TOP_UP_CAP_BWP,
   BOOSTS,
@@ -238,11 +242,33 @@ describe('Crafting — 02 §6.3', () => {
 });
 
 describe('Economy — 02 §6', () => {
-  it('F5: water is P1.00 per unit, tank 60, refill P60', () => {
+  it('F5: water is P1.00 per unit at the Chapter-1 base, tank 60, refill P60', () => {
     expect(WATER.unitPricePula).toBe(1.0);
     expect(WATER.tankCapacity).toBe(60);
     expect(WATER.fullRefillPula).toBe(60);
     expect(WATER.chargedWhileState).toBe('GROWING');
+  });
+
+  it('docs/38 §2 / A1: chapter water price scales INVERSELY with rainCoverage', () => {
+    // Every chapter must be priced — a missing key would silently fall back to 1.0.
+    expect([...Object.keys(WATER_PRICING)].sort()).toEqual(
+      [...CHAPTERS.map((c) => c.slug)].sort(),
+    );
+
+    // Order the chapters wet → dry; the price must rise monotonically.
+    const wetToDry = [...CHAPTERS].sort((a, b) => b.rainCoverage - a.rainCoverage);
+    expect(wetToDry.map((c) => c.slug)).toEqual(['pula', 'phane', 'letlhafula', 'moriti']);
+
+    const prices = wetToDry.map((c) => waterUnitPricePula(c.slug));
+    for (let i = 1; i < prices.length; i++) {
+      expect(prices[i]!).toBeGreaterThan(prices[i - 1]!);
+    }
+
+    // The rainy chapter is the base price every other figure quotes.
+    expect(waterUnitPricePula('pula')).toBe(WATER.unitPricePula);
+    expect(waterUnitPricePula('moriti')).toBe(2.5);
+    // A full refill in the driest chapter is 60 x 2.5 = 150.
+    expect(Math.ceil(WATER.tankCapacity * waterUnitPricePula('moriti'))).toBe(150);
   });
 
   it('D9: storage tiers are 24 / 48 / 96', () => {
@@ -310,10 +336,26 @@ describe('Economy — 02 §6', () => {
     expect(COOP_TAX_RATE).toBe(0.05);
   });
 
-  it('I4: Botho is capped per day', () => {
+  it('I4: Botho is capped per day, and the prize gate is the MONTHLY delta', () => {
     expect(BOTHO_DAILY_CAP).toBe(50);
     expect(BOTHO_THRESHOLDS.DEEP_BUSHVELD).toBe(300);
-    expect(BOTHO_THRESHOLDS.PRIZE_ELIGIBILITY).toBe(1000);
+
+    // docs/37 C7 / docs/38 T-5 / MVP/02 §6.7 — the decided prize gate is a
+    // MONTHLY Botho delta >= 150, NOT a lifetime total. The legacy lifetime
+    // 1000 rung is retired from BOTHO_LADDER (docs/38 I-8); the constant is
+    // kept only so nothing that still references it breaks at import time.
+    expect(PRIZE.minimumBothoInPeriod).toBe(150);
+    expect(PRIZE.topN).toBe(3);
+    expect(PRIZE.split).toEqual([4, 2, 1]);
+
+    // The legal control (docs/37 C7 / §6.2): a Charge grants +10 Botho and the
+    // spec's conservative bound is at most 3 Charges per calendar month, so
+    // Charges alone credit at most 30 Botho in a month — well under the 150
+    // floor. A payment or an automation therefore cannot buy the prize.
+    const CHARGES_PER_MONTH_MAX = 3;
+    const chargeBothoPerMonth = CHARGES_PER_MONTH_MAX * CHARGE_YEAR[0]!.botho;
+    expect(chargeBothoPerMonth).toBe(30);
+    expect(chargeBothoPerMonth).toBeLessThan(PRIZE.minimumBothoInPeriod);
   });
 
   it('top-up cap is P500/day in BWP, and no single pack IS the cap', () => {

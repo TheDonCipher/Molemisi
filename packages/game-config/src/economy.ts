@@ -80,11 +80,11 @@ export function contractRewardCap(
  * An empty tank HALTS growth. It never kills a crop.
  */
 export const WATER = {
-  /** Pula per tank unit. */
+  /** Pula per tank unit — the BASE (Chapter 1) price. */
   unitPricePula: 1.0,
   /** Jojo tank capacity, in units. */
   tankCapacity: 60,
-  /** Cost of a full refill (the water truck). 60 units x P1.00. */
+  /** Cost of a full refill in Chapter 1 (the water truck). 60 units x P1.00. */
   fullRefillPula: 60,
   /** Water is drawn only while a crop is GROWING — never while it sits ready. */
   chargedWhileState: 'GROWING',
@@ -96,6 +96,42 @@ export const WATER = {
   rainRatePerHour: 2,
   stormRatePerHour: 5,
 } as const;
+
+/**
+ * docs/38 §2 / A1 — per-chapter water PURCHASE multiplier.
+ *
+ * Water cost scales **inversely with `rainCoverage`**: the rainy chapter is the
+ * cheapest place to buy water and the driest is the dearest, which is what gives
+ * Chapter 3's lesson ("water is the whole game") an actual economic bite instead
+ * of only a supply-side one.
+ *
+ * The four tiers are the qualitative ones from docs/38 §2:
+ *
+ * | chapter        | rainCoverage | tier      | multiplier |
+ * | -------------- | ------------ | --------- | ---------- |
+ * | pula (ch1)     | 0.80         | Abundant  | 1.0        |
+ * | phane (ch2)    | 0.50         | Plentiful | 1.4        |
+ * | letlhafula(ch4)| 0.15         | Dear      | 2.2        |
+ * | moriti (ch3)   | 0.05         | Scarce    | 2.5        |
+ *
+ * Ordering note: ch4 (0.15) is cheaper than ch3 (0.05) because it is the less
+ * dry chapter — the tiers follow `rainCoverage`, not chapter index. That
+ * ordering is asserted in `crops.spec.ts`.
+ *
+ * `WATER.unitPricePula` stays the Chapter-1 base so the F5 figures (P1/unit,
+ * P60 full refill) remain the reference price every other doc quotes.
+ */
+export const WATER_PRICING: Readonly<Record<ChapterSlug, number>> = {
+  pula: 1.0,
+  phane: 1.4,
+  letlhafula: 2.2,
+  moriti: 2.5,
+} as const;
+
+/** The price of one tank unit in `chapter`, rounded to whole thebe. */
+export function waterUnitPricePula(chapter: ChapterSlug): number {
+  return Math.round(WATER.unitPricePula * (WATER_PRICING[chapter] ?? 1) * 100) / 100;
+}
 
 /* ------------------------------------------------------------------ Storage */
 /**
