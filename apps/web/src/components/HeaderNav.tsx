@@ -5,6 +5,16 @@ import { useGame, apiFetch } from '../lib/gameState';
 import { useTranslation } from '../lib/useTranslation';
 import { MoreNavMenu } from './MoreNavMenu';
 import { CurrencyGuideModal } from './CurrencyGuide';
+import { CurrencyStrip } from './ui/KalahariHud';
+import { seasonDisplay } from '../lib/season';
+import { DevPanelButton } from './dev/DevAffordance';
+
+/** Chip colour per season tone, matching the Kalahari palette (§2.1). */
+const SEASON_TONE_COLOR: Record<'wet' | 'mild' | 'dry', string> = {
+  wet: '#2196F3',
+  mild: '#8BC34A',
+  dry: '#FF8F00',
+};
 
 interface Notification {
   id: string;
@@ -16,8 +26,10 @@ interface Notification {
 }
 
 export function HeaderNav() {
-  const { pula, activeNav, setActiveNav } = useGame();
+  const { pula, botho, madi, activeNav, setActiveNav, daylight } = useGame();
   const { tl } = useTranslation();
+  // The chapter in effect right now, for the HUD's season chip (GDD §3).
+  const season = seasonDisplay();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showPanel, setShowPanel] = useState(false);
@@ -33,7 +45,8 @@ export function HeaderNav() {
   const SECONDARY_TABS = [
     { id: 'store', label: tl('store'), icon: 'shopping_cart', navTarget: 'Store' },
     { id: 'wallet', label: tl('wallet'), icon: 'account_balance_wallet', navTarget: 'Wallet' },
-    { id: 'crafting', label: tl('crafting'), icon: 'handyman', navTarget: 'Crafting' },
+    // 'crafting' is out of scope for the MVP (Princess Eugenia, 2026-10-05) —
+    // farming focus. The screen + `lib/crafting.ts` remain for post-MVP.
     { id: 'inventory', label: tl('bag'), icon: 'backpack', navTarget: 'Inventory' },
     { id: 'journal', label: tl('journal'), icon: 'menu_book', navTarget: 'Journal' },
     { id: 'almanac', label: 'Almanac', icon: 'calendar_month', navTarget: 'Almanac' },
@@ -108,7 +121,7 @@ export function HeaderNav() {
       {/* safe-pt pads the bar below the notch; the inner row keeps its own
           h-12/md:h-14 so the visual rhythm is unchanged. */}
       <div className="safe-pt">
-        <div className="h-12 md:h-14 w-full px-2 md:px-4 flex items-center justify-between gap-1">
+        <div className="h-12 md:h-14 w-full station-gutter flex items-center justify-between gap-2">
           {/* Brand */}
           <div className="flex items-center gap-1.5 shrink-0">
             <img
@@ -131,37 +144,54 @@ export function HeaderNav() {
             </span>
           </div>
 
-          {/* Pula chip + currency guide. The number is the player's most
-            important always-on readout, so it is a live region rather than
-            bare text — a screen-reader user hears the balance after a sale. */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <div
-              className="flex items-center gap-1 bg-wood-dark px-2 py-1 border border-wood-border"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              aria-label={`Pula balance: ${pula.toLocaleString()}`}
+          {/* Day + chapter chip — GDD §3's persistent HUD is
+              `[Day 42 · ☀️ Pula Season]`. The season is the CHAPTER (read from
+              the real Botswana calendar via lib/season), not the server's plain
+              seasonal string; the rain figure comes from the chapter's own
+              `rainCoverage` so it can never disagree with the balance script.
+              Desktop only — on mobile the Farm screen's sub-HUD carries it. */}
+          <div className="hidden lg:flex items-center gap-1.5 shrink-0" aria-label="Today">
+            <span className="font-mono text-[11px] text-on-surface-variant bg-wood-dark px-2 py-1 border border-wood-border">
+              {daylight}
+            </span>
+            <span
+              className="font-mono text-[11px] bg-wood-dark px-2 py-1 border border-wood-border"
+              title={season.weatherNote}
             >
-              <span className="text-[10px]" aria-hidden="true">
-                💰
+              <span aria-hidden className="mr-1">
+                {season.glyph}
               </span>
-              <span className="font-mono text-[10px] md:text-[11px] text-gold-currency font-bold">
-                {pula.toLocaleString()}
+              <span style={{ color: SEASON_TONE_COLOR[season.tone] }}>{season.name}</span>
+              <span className="text-on-surface-variant ml-1.5" title="Chance of rain this chapter">
+                {season.rainPercent}%
               </span>
-            </div>
+            </span>
+          </div>
+
+          {/* The four-currency ledger (GDD §5.1). Header space is tight on a
+            360px phone, so the strip shows Pula + Botho in the bar and the
+            remaining balances live behind the guide button — a player always
+            sees the two currencies that move, and can always reach the rest.
+            The Pula chip is a live region because it is the readout a player
+            needs announced after a sale. */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <CurrencyStrip balances={{ pula, botho, madi }} show={['pula', 'botho']} />
             <button
               type="button"
               onClick={() => setShowGuide(true)}
-              aria-label="Currency guide"
-              title="Currency guide"
+              aria-label="Currency guide — all four currencies explained"
+              title="Currency guide — all four currencies explained"
               className="w-8 h-8 md:w-7 md:h-7 bg-wood-dark border border-wood-border flex items-center justify-center text-[11px] font-mono text-on-surface-variant hover:text-primary hover:border-primary/50 transition-colors shrink-0 touch-target md:min-h-0 md:min-w-0"
             >
               ?
             </button>
           </div>
 
-          {/* Nav tabs */}
-          <nav className="flex-1 flex justify-center overflow-x-auto scrollbar-none">
+          {/* Nav tabs — desktop only. On mobile (<md) these disappear entirely
+              since the bottom tab bar (MobileFooterNav) already carries Farm ·
+              Kgotla · Bush · Market · Bag · More. Keeping them would duplicate
+              the primary nav and squeeze the currency + bell off-screen. */}
+          <nav className="hidden md:flex flex-1 min-w-0 justify-center overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-0.5">
               {PRIMARY_TABS.map((tab) => {
                 const isActive =
@@ -179,7 +209,7 @@ export function HeaderNav() {
                       // capitalised is the whole mapping — no lookup table.
                       setActiveNav(tab.id.charAt(0).toUpperCase() + tab.id.slice(1))
                     }
-                    className={`px-2 md:px-3 py-1 font-mono text-[10px] md:text-xs uppercase whitespace-nowrap transition-colors ${
+                    className={`px-2 md:px-3 py-1 font-mono text-[11px] md:text-xs uppercase whitespace-nowrap transition-colors ${
                       isActive
                         ? 'text-primary font-bold border-b-2 border-primary'
                         : 'text-on-surface-variant hover:text-cream-surface'
@@ -200,6 +230,16 @@ export function HeaderNav() {
 
           {/* Notification bell + Profile icon */}
           <div className="flex items-center gap-1 shrink-0 relative">
+            {/* Dev tools — renders nothing for a player (`DevPanelButton`
+                returns null unless /dev/status confirms a dev/admin role), so
+                this costs a normal player a single hidden component. It exists
+                so dev controls are reachable from EVERY screen, not only the
+                three that carry an in-world gear. */}
+            <DevPanelButton
+              className="w-8 h-8 md:w-8 md:h-8 bg-wood-dark border-2 border-primary/70 flex items-center justify-center text-sm text-primary hover:border-primary transition-colors touch-target md:min-h-0 md:min-w-0"
+              label="⚙"
+            />
+
             {/* Notification bell */}
             <button
               type="button"
@@ -213,7 +253,7 @@ export function HeaderNav() {
               {unreadCount > 0 && (
                 <span
                   aria-hidden="true"
-                  className="absolute -top-1 -right-1 bg-status-danger text-white text-[8px] font-bold rounded-full min-w-4 h-4 px-0.5 flex items-center justify-center"
+                  className="absolute -top-1 -right-1 bg-status-danger text-white text-[10px] font-bold rounded-full min-w-4 h-4 px-0.5 flex items-center justify-center"
                 >
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
@@ -250,7 +290,7 @@ export function HeaderNav() {
                       <button
                         type="button"
                         onClick={markAllRead}
-                        className="font-mono text-[9px] text-primary hover:underline px-2 py-1 min-h-[44px] flex items-center"
+                        className="font-mono text-[11px] text-primary hover:underline px-2 py-1 min-h-[44px] flex items-center"
                       >
                         Mark all read
                       </button>
@@ -260,7 +300,7 @@ export function HeaderNav() {
                     {notifications.length === 0 ? (
                       <div className="px-3 py-6 text-center">
                         <span className="text-lg">🔔</span>
-                        <p className="font-mono text-[10px] text-on-surface-variant mt-1">
+                        <p className="font-mono text-[11px] text-on-surface-variant mt-1">
                           No notifications yet
                         </p>
                       </div>
@@ -275,13 +315,13 @@ export function HeaderNav() {
                           <div className="flex items-start gap-2">
                             <span className="text-sm shrink-0 mt-0.5">{typeIcon(n.type)}</span>
                             <div className="min-w-0">
-                              <p className="font-mono text-[10px] text-cream-surface font-bold truncate">
+                              <p className="font-mono text-[11px] text-cream-surface font-bold truncate">
                                 {n.title}
                               </p>
-                              <p className="font-mono text-[9px] text-on-surface-variant line-clamp-2">
+                              <p className="font-mono text-[11px] text-on-surface-variant line-clamp-2">
                                 {n.message}
                               </p>
-                              <p className="font-mono text-[8px] text-on-surface-variant/60 mt-0.5">
+                              <p className="font-mono text-[10px] text-on-surface-variant/60 mt-0.5">
                                 {new Date(n.created_at).toLocaleDateString()}
                               </p>
                             </div>

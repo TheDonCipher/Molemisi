@@ -51,17 +51,20 @@ function placement(i: number, count: number) {
 export interface ChapterParticlesProps {
   /** Chapter override; defaults to the real calendar (04 §9.1). */
   chapter?: ChapterSlug;
-  /** How many motes to draw. Keep small — this is ambience, not weather. */
+  /** How many motes to draw. Dense enough to read as weather, not dust. */
   count?: number;
-  /** Opacity ceiling, so the field never competes with the play surface. */
+  /** Opacity ceiling, so the field reads over busy scenes without hiding crops. */
   opacity?: number;
+  /** Base sprite size in px (pixelated). Per-mote scale adds variety. */
+  size?: number;
   className?: string;
 }
 
 export function ChapterParticles({
   chapter,
-  count = 10,
-  opacity = 0.55,
+  count = 28,
+  opacity = 0.9,
+  size = 24,
   className,
 }: ChapterParticlesProps) {
   const slug = chapter ?? chapterForDate(new Date()).slug;
@@ -78,6 +81,10 @@ export function ChapterParticles({
         const { x, y, delay, duration } = placement(i, count);
         // Alternate the two sprites so the field is not one repeated shape.
         const sprite = i % 2 === 0 ? primary : secondary;
+        // Per-mote scale (0.8×–1.4×) keeps the field varied; every third mote
+        // runs larger so the weather reads at a glance on small screens.
+        const scale = i % 3 === 0 ? 1.4 : 0.8 + ((i * 0.37) % 0.6);
+        const px = Math.round(size * scale);
         return (
           <span
             key={i}
@@ -87,14 +94,21 @@ export function ChapterParticles({
               top: `${y}%`,
               animationDelay: `${delay}s`,
               animationDuration: `${duration}s`,
+              zIndex: 1,
             }}
           >
             <img
               src={`/assets/particles/${sprite}.png`}
               alt=""
-              width={16}
-              height={16}
-              style={{ imageRendering: 'pixelated' }}
+              width={px}
+              height={px}
+              style={{
+                imageRendering: 'pixelated',
+                width: px,
+                height: px,
+                // Brighten + slight glow so motes pop over busy farm/bush scenes.
+                filter: 'brightness(1.25) drop-shadow(0 0 3px rgba(255,255,255,0.65))',
+              }}
               draggable={false}
             />
           </span>

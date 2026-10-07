@@ -23,11 +23,14 @@ import { PixelUiIcon } from '../PixelUiIcon';
 import { FarmGround } from '../FarmGround';
 import { WaterWhisperToast } from '../WaterWhisperToast';
 import { currentChapterSlug, groundTileForCell } from '@/lib/groundTiles';
+import { seasonDisplay } from '@/lib/season';
+import { FarmSubHud } from './farm/FarmSubHud';
 import { deriveAttention, ownsPulse, ATTENTION_STYLE } from '../Attention';
 import { ChapterParticles } from '../ChapterParticles';
-import { PLOT_SELECT_EVENT, ESCAPE_EVENT } from '../GameHotkeys';
+import { PLOT_SELECT_EVENT, ESCAPE_EVENT, SELECTION_CLEAR_EVENT } from '../GameHotkeys';
 import { BreathingSprite } from '../BreathingSprite';
 import { DevAffordance } from '../dev/DevAffordance';
+import { ContextMenu, type ContextAction } from '../ui/KalahariOverlays';
 
 const SEED_OPTIONS = [
   { name: 'Sorghum', cost: 15, icon: '🌾', trait: 'Drought Resistant', itemType: 'sorghum_seed' },
@@ -509,11 +512,23 @@ export function FarmScreen() {
       if (selectedPlotId) return setSelectedPlotId(null);
     };
 
+    // GDD §6.3 — Space clears the active selection. Same dismissal ladder as Esc,
+    // minus the modal layers: Space is about the world selection, not about
+    // closing a sheet the player deliberately opened. It peels one level, so a
+    // player mid-flow can step back a single ring rather than losing everything.
+    const onClearSelection = () => {
+      if (selectedBuildingId) return setSelectedBuildingId(null);
+      if (selectedAnimalId) return setSelectedAnimalId(null);
+      if (selectedPlotId) return setSelectedPlotId(null);
+    };
+
     window.addEventListener(PLOT_SELECT_EVENT, onPlotSelect);
     window.addEventListener(ESCAPE_EVENT, onEscape);
+    window.addEventListener(SELECTION_CLEAR_EVENT, onClearSelection);
     return () => {
       window.removeEventListener(PLOT_SELECT_EVENT, onPlotSelect);
       window.removeEventListener(ESCAPE_EVENT, onEscape);
+      window.removeEventListener(SELECTION_CLEAR_EVENT, onClearSelection);
     };
   }, [
     treeSlotPicker,
@@ -543,8 +558,13 @@ export function FarmScreen() {
     setShowCropPicker(false);
 
     if (plot.canPlant) {
+      // A plantable plot has exactly one sensible next step, so the picker opens
+      // directly — the GDD §4.1 flow still holds (tap → select → act), it just
+      // skips a menu whose only enabled entry would be `Plant`.
       setShowCropPicker(true);
     }
+    // Otherwise the plot is selected and the §4.2 context menu renders beneath
+    // the grid: Harvest for a ripe crop, the tank affordance for a growing one.
   };
 
   const handlePlant = (seed: (typeof availableSeeds)[0]) => {
@@ -572,7 +592,103 @@ export function FarmScreen() {
     quickHarvestAll();
   };
 
+  /**
+   * GDD §4.2 — the priority context menu for the selected plot, capped at four
+   * actions by `ContextMenu` itself.
+   *
+   * The GDD's three canonical groups are:
+   *   Empty soil   `[ Plant ]` `[ Fertilize ]` `[ Inspect ]` `[ Cancel ]`
+   *   Growing crop `[ Water ]` `[ Mulch ]` `[ View Lore ]` `[ Cancel ]`
+   *   Ready crop   `[ Harvest ]` `[ Inspect ]` `[ Cancel ]`
+   *
+   * Two of those verbs cannot be honest here yet, and per §4.2 a disabled action
+   * is shown **with its reason** rather than hidden — so they render disabled
+   * with an explanation instead of being quietly dropped:
+   *   - `Fertilize` / `Mulch` have no endpoint or effect wired (open gap).
+   *   - `Water` is per-plot by spec, but P4 retired per-plot watering: one Jojo
+   *     tank serves the whole farm (`04 §1.2`). The action therefore points the
+   *     player at the tank rather than pretending to water a single plot.
+   *
+   * `ready` crops keep `Harvest` first so the urgent action is the one under the
+   * player's thumb.
+   */
+  const plotActions: ContextAction[] = React.useMemo(() => {
+    const plot = selectedPlot;
+    if (!plot) return [];
+
+    const actions: ContextAction[] = [];
+
+    if (plot.canHarvest) {
+      actions.push({
+        id: 'harvest',
+        label: tl('harvest'),
+        icon: 'agriculture',
+        onSelect: handleHarvest,
+        urgent: true,
+      });
+    } else if (plot.canPlant) {
+      actions.push({
+        id: 'plant',
+        label: tl('plant'),
+        icon: 'spa',
+        onSelect: () => setShowCropPicker(true),
+        urgent: true,
+      });
+      actions.push({
+        id: 'fertilize',
+        label: tl('fertilize'),
+        icon: 'compost',
+        onSelect: () => {},
+        disabledReason: 'No fertiliser stock — kraal compost is coming in a later update.',
+      });
+    } else {
+      // Growing. There is no single-plot water action (see the note above), so
+      // the honest affordance is "fill the shared tank".
+      actions.push({
+        id: 'water',
+        label: tl('water'),
+        icon: 'water_drop',
+        onSelect: () => { void refillWell(); },
+        disabledReason: !hasTank
+          ? 'No Jojo tank on the farm yet — build one first.'
+          : waterLevel >= maxWater
+            ? 'The tank is already full.'
+            : `Fills the shared tank for the whole farm. ${waterLevel}/${maxWater}L now.`,
+      });
+    }
+
+    actions.push({
+      id: 'inspect',
+      label: tl('inspect'),
+      icon: 'search',
+      onSelect: () => setActiveNav('Inventory'),
+    });
+
+    actions.push({
+      id: 'close',
+      label: tl('cancel'),
+      icon: 'close',
+      onSelect: () => setSelectedPlotId(null),
+    });
+
+    return actions;
+  }, [selectedPlot, hasTank, waterLevel, maxWater, tl, refillWell, setActiveNav]);
+
   const waterPercent = Math.round((waterLevel / maxWater) * 100);
+
+  // Sub-HUD figures. Rain is the chapter's own `rainCoverage` (the same number
+  // `scripts/balance_verify.py` gates on), so the chip can never disagree with
+  // the balance script. Soil moisture is derived from it: in a wet chapter the
+  // ground holds water, and a tank with reserves keeps it damp. Both are honest
+  // derivations from real state rather than invented telemetry.
+  const seasonView = seasonDisplay();
+  const seasonRainPct = seasonView.rainPercent;
+  const seasonPulse = `${seasonView.daysLeft}d to rollover`;
+  const soilMoisturePct = Math.round(
+    Math.min(100, seasonRainPct * 0.7 + (maxWater > 0 ? waterPercent * 0.3 : 0)),
+  );
+  const soilMoistureLabel =
+    soilMoisturePct >= 60 ? 'Damp' : soilMoisturePct >= 30 ? 'Moist' : 'Arid';
   const readyCount = plots.filter((p) => p.canHarvest).length;
 
   // Buy sheet: the list comes from the server (config is the authority on
@@ -759,12 +875,17 @@ export function FarmScreen() {
     // one place. The old `calc(100dvh - 7.5rem)` / `top-12 md:top-14` pair
     // assumed no notch and a fixed 64px footer.
     <div
-      className="relative w-full flex flex-col overflow-hidden select-none"
+      className="relative w-full flex flex-col overflow-hidden select-none station-shell-fit"
       style={{ height: 'calc(100dvh - var(--header-h) - var(--footer-h))' }}
     >
       {/* D9/W10: the dev affordance, floating over the farm. It renders nothing
-          for a player — `useDevTools().enabled` stays false off a dev role. */}
-      <div className="absolute top-2 right-3 z-30">
+          for a player — `useDevTools().enabled` stays false off a dev role.
+          z-40 keeps it above the scene but below the app header (z-50), and the
+          generous top offset guarantees it is not hidden UNDER that fixed
+          header — the old `top-2 z-30` sat behind it and was effectively
+          invisible. The header also carries a global dev entry now, so this
+          gear is a convenience, not the only way in. */}
+      <div className="absolute top-3 right-3 z-40">
         <DevAffordance surface="farm" />
       </div>
 
@@ -787,7 +908,7 @@ export function FarmScreen() {
 
       {/* Top HUD — pinned inside the screen (D): day + currency, the granary
           counts (B, moved up out of the bottom band) and the sky. */}
-      <div className="relative z-10 flex-none flex flex-col gap-2 px-3 py-2 md:flex-row md:items-center md:justify-between">
+      <div className="relative z-10 flex-none flex flex-col gap-2 station-gutter py-2 md:flex-row md:items-center md:justify-between">
         {/* md:contents dissolves this row so all three chips share one line on
             wide screens while staying two tidy rows on a phone. */}
         <div className="flex items-center justify-between gap-2 md:contents">
@@ -843,22 +964,55 @@ export function FarmScreen() {
         {/* 2.9/V-11 — the season drifts through the scene: water in Pula, leaves in
             Phane, dust in Moriti, sparks in Letlhafula. Decorative only. */}
         <ChapterParticles chapter={chapterSlug} />
-        {/* Weather FX: the sky state the sim rolled, visible over the scene */}
+        {/* Weather FX: the sky state the sim rolled, visible over the scene.
+            Bumped to 80px + full opacity + drop-shadow so rain/storm/drought
+            reads instantly on phones, not just desktops. */}
         {WEATHER_FX_SPRITE[weather] && (
           <img
             src={WEATHER_FX_SPRITE[weather]}
             alt=""
             aria-hidden
-            className="absolute top-2 right-4 w-14 h-14 opacity-90 pointer-events-none"
+            className="absolute top-2 right-4 w-20 h-20 md:w-24 md:h-24 opacity-100 pointer-events-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
             style={{ imageRendering: 'pixelated' }}
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
         )}
-        <div className="mx-auto w-full max-w-2xl lg:max-w-5xl px-4 py-5 lg:flex lg:items-start lg:gap-4">
+        <div className="w-full station-gutter py-4 lg:flex lg:items-start lg:gap-4">
           {/* Left column — the plots and the land ladder */}
           <div className="lg:flex-1 lg:min-w-0">
+          {/* Sub-HUD — the reference's "OVERVIEW SUB-HUD BAR"
+              (`docs/MVP/Screens/FarmScreenWeb/code.html`): a 1→3 column band of
+              atmosphere / Jojo tank / soil-biome cards. Previously this was two
+              hand-rolled `pixel-panel`s; FarmSubHud renders the reference's
+              three-card layout from the same real state. */}
+          <div className="mb-3">
+            <FarmSubHud
+              weatherLabel={tl(WEATHER_VIEW[weather]?.labelKey ?? 'weatherClear')}
+              weatherGlyph={<WeatherGlyph weather={weather} />}
+              weatherNote={seasonView.weatherNote}
+              growthBonus="+10% Growth"
+              seasonName={season}
+              seasonPulse={seasonPulse}
+              hasTank={hasTank}
+              waterLevel={waterLevel}
+              maxWater={maxWater}
+              pumpLabel={tl('pumpWater')}
+              onPump={refillWell}
+              pumping={false}
+              soilMoisturePct={soilMoisturePct}
+              soilLabel={soilMoistureLabel}
+              rainPct={seasonRainPct}
+              rainLabel={seasonRainPct >= 50 ? 'High' : seasonRainPct >= 20 ? 'Moderate' : 'Low'}
+            />
+          </div>
+          <div className="pixel-panel px-3 py-2 mb-3 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px] text-[#FFD700]" aria-hidden>elderly</span>
+            <p className="font-body text-[11px] text-[#F5E6D3] italic leading-snug">
+              “Intercrop sorghum with cowpeas — their roots return life to dry sand.”
+            </p>
+          </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {plots.map((plot, cellIndex) => (
                 <button
@@ -952,6 +1106,23 @@ export function FarmScreen() {
                 </button>
               ))}
             </div>
+
+            {/* GDD §4.2 — the priority context menu for the selected plot.
+                Rendered below the grid rather than as a floating radial so it
+                never covers the plot the player is acting on, and so a 4-action
+                menu never has to fight a 48px touch target for space.
+                Hidden while the crop picker is open: the picker is the deeper
+                layer and two action surfaces at once is the cognitive overload
+                §4.2 exists to prevent. */}
+            {selectedPlot && !showCropPicker && (
+              <div className="mt-3">
+                <ContextMenu
+                  title={`${selectedPlot.cropName} · Plot ${selectedPlot.id}`}
+                  actions={plotActions}
+                  onClose={() => setSelectedPlotId(null)}
+                />
+              </div>
+            )}
 
             {/* Land ladder (C15) — the next rung, quoted from the server row */}
             {nextLand && (
@@ -1136,7 +1307,7 @@ export function FarmScreen() {
       {/* Docked action bar (A) — one strip at column width, replacing the three
           floating pills. The plot action panel and the seed picker take over
           this same slot instead of overlaying it (C). */}
-      <div className="relative z-20 flex-none border-t border-wood-border bg-wood-dark/85 px-3 py-2">
+      <div className="relative z-20 flex-none border-t border-wood-border bg-wood-dark/85 station-gutter py-2">
         {selectedPlot && showCropPicker ? (
           <div className="mx-auto w-full max-w-2xl lg:max-w-5xl">
             <div className="bg-wood-dark/95 p-4 border border-wood-border shadow-[2px_2px_0px_rgba(0,0,0,0.6)] animate-slide-up">
@@ -1740,7 +1911,7 @@ export function FarmScreen() {
                           // The gate and the benefit, stated plainly: no greyed-out
                           // mystery button and no dead end.
                           <span
-                            className={`font-mono text-[9px] block ${
+                            className={`font-mono text-[10px] block ${
                               treeLocked ? 'text-status-warning' : 'text-gold-currency'
                             }`}
                           >
@@ -1813,7 +1984,7 @@ export function FarmScreen() {
                     className="w-6 h-8 object-contain"
                     style={{ imageRendering: 'pixelated' }}
                   />
-                  <span className="font-mono text-[9px] text-cream-surface/90">{p.label}</span>
+                  <span className="font-mono text-[10px] text-cream-surface/90">{p.label}</span>
                 </button>
               ))}
               {freePlots.length === 0 && (
@@ -1822,7 +1993,7 @@ export function FarmScreen() {
                 </p>
               )}
             </div>
-            <p className="font-mono text-[9px] text-on-surface-variant mt-2">
+            <p className="font-mono text-[10px] text-on-surface-variant mt-2">
               {tl('heritageShade')}
             </p>
           </div>
